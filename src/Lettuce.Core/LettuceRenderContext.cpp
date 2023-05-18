@@ -1,4 +1,4 @@
-export module Lettuce.Core
+export module Lettuce.Core;
 
 import <iostream>
 
