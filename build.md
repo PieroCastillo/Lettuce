@@ -11,20 +11,17 @@ Install SDL2 package (use x64 triplet).
 For example, if you are using windows run the follow command:
 
 ```cmd
-    vcpkg install SDL2 --triplet x64-windows
+vcpkg install glfw3 
 ```
 ### Step 2 
-set an enviroment variable called ´´´VC_PKG_CMAKE´´´ that contains the file ´´´vcpkg.cmake´´´
-Example:
-if that file is contained in the path ´´´C:/dev/vcpkg/scripts/buildsystems/´´´ so 
-the value of the variable ´´´VC_PKG_CMAKE´´´  is ´´´C:/dev/vcpkg/scripts/buildsystems/´´´
+
 ### Step 3
 run the follow command in the console:
 ```cmd
-cmake -S . -B bin
+cmake --preset=vcpkg -G "Visual Studio 17 2022"
 ```
 ## Build
 To build run the follow command:
 ```cmd
-cmake --build bin 
+cmake --build build
 ```

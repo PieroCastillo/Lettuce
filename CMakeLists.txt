@@ -1,27 +1,25 @@
-cmake_minimum_required(VERSION 3.25)
-project(LettuceV2 VERSION 0.0.1.0)
-set(CMAKE_CXX_STANDARD 23)
-set(CMAKE_EXPERIMENTAL_CXX_MODULE_CMAKE_API "2182bf5c-ef0d-489a-91da-49dbc3090d2a")
+cmake_minimum_required(VERSION 3.30)
+
+#required to import std feature
+set(CMAKE_EXPERIMENTAL_CXX_IMPORT_STD "0e5b6991-d74f-4b3d-a41c-cf096e0b2508")
+
+project(LettuceV2 LANGUAGES CXX VERSION 0.0.1.0)
+#enables C++ modules feature
+# make sure c++ 20 is set
+set(CMAKE_CXX_STANDARD 23)# turn on the dynamic depends for ninja
 set(CMAKE_EXPERIMENTAL_CXX_MODULE_DYNDEP 1)
-set(CMAKE_CXX_EXTENSIONS Off)
-set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-#modules usage
-#add_module_library(Hello moduleF.ixx)
-#add_executable(Main main.cpp)
-#target_link_libraries(Main Hello)
+# turn on the experimental API
+set(CMAKE_EXPERIMENTAL_CXX_MODULE_CMAKE_API  "2182bf5c-ef0d-489a-91da-49dbc3090d2a")
+if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+  include(gcc_modules.cmake)
+endif()
 
-#include(modules.cmake)
+#enanles import std support
+#set(CMAKE_CXX_MODULE_STD 1)
 
-include("C:/dev/vcpkg/vcpkg/scripts/buildsystems/vcpkg.cmake")
 
 find_package(Vulkan REQUIRED)
 find_package(glfw3 REQUIRED)
-#if(GLFW_FOUND) # Works with some other methods
-#    message(STATUS "GLFW3_INCLUDE_PATH=${GLFW3_INCLUDE_PATH}")
-#    message(STATUS "GLFW_LIBRARIES=${GLFW_LIBRARIES}")
-#else( GLFW_FOUND )
-#    message(FATAL_ERROR "GLFW3 not found")
-#endif( GLFW_FOUND )
 
 # Dividir la versión en sus componentes
 string(REPLACE "." ";" VERSION_LIST ${PROJECT_VERSION})
@@ -47,6 +45,8 @@ target_sources(Lettuce
         FILE_SET cxx_modules TYPE CXX_MODULES FILES
         ${LETTUCE_SOURCES}
 )
+# target_compile_features(Lettuce PRIVATE cxx_std_23
+#                                 INTERFACE cxx_std_20)
 add_executable(ClearScreenSample
         ClearScreenSample/app.cpp)
 target_link_libraries(Lettuce Vulkan::Vulkan)
