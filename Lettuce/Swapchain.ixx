@@ -108,8 +108,8 @@ export namespace Lettuce::Core
             createImageViews();
         }
 
-        void AcquireNextImage(int acquireImageSemaphoreIndex, int fenceIndex) {
-            auto res = vkAcquireNextImageKHR(_device._device, _swapchain, std::numeric_limits<uint64_t>::max(), _sync.semaphores[acquireImageSemaphoreIndex], _sync.fences[fenceIndex], &index);
+        void AcquireNextImage(int acquireImageSemaphoreIndex) {
+            auto res = vkAcquireNextImageKHR(_device._device, _swapchain, std::numeric_limits<uint64_t>::max(), _sync.semaphores[acquireImageSemaphoreIndex], nullptr, &index);
             std::cout << res << std::endl;
         }
 

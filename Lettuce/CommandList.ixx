@@ -16,13 +16,16 @@ import :SynchronizationStructure;
 
 using namespace std;
 
-export namespace Lettuce::Core{
-    enum QueueType {
+export namespace Lettuce::Core
+{
+    enum QueueType
+    {
         Graphics,
         Present
     };
 
-    class CommandList{
+    class CommandList
+    {
     public:
         VkCommandPool _commandPool = VK_NULL_HANDLE;
         VkCommandBuffer _commandBuffer = VK_NULL_HANDLE;
@@ -30,14 +33,15 @@ export namespace Lettuce::Core{
         Device _device;
         SynchronizationStructure _sync;
 
-        void Create(Device &device, SynchronizationStructure &sync, QueueType queueType = Graphics) {
+        void Create(Device &device, SynchronizationStructure &sync, QueueType queueType = Graphics)
+        {
             _sync = sync;
             _device = device;
             VkCommandPoolCreateInfo cmdPoolCI = {
                 .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
-                .flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT
-            };
-            if(queueType == Graphics) {
+                .flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT};
+            if (queueType == Graphics)
+            {
                 cmdPoolCI.queueFamilyIndex = _device._gpu.graphicsFamily.value();
             }
             std::cout << "papu" << std::endl;
@@ -52,114 +56,101 @@ export namespace Lettuce::Core{
             checkResult(vkAllocateCommandBuffers(_device._device, &cmdBufferAI, &_commandBuffer), "CommandBuffer allocated successfully");
         }
 
-        void Begin() {
+        void Begin()
+        {
             VkCommandBufferBeginInfo cmdBeginCI = {
-                .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO
-            };
+                .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO};
             auto res = vkBeginCommandBuffer(_commandBuffer, &cmdBeginCI);
             std::cout << res << std::endl;
         }
 
-        void End() {
+        void End()
+        {
             auto res = vkEndCommandBuffer(_commandBuffer);
             std::cout << res << std::endl;
         }
 
-        void BeginRendering(Swapchain swapchain, float r = 1, float g = 1, float b = 1, float a = 1) {
-            std::array<VkClearValue,2> clearValues{};
-            clearValues[0].color        = {{r, g, b, a}};
+        void BeginRendering(Swapchain swapchain, float r = 1, float g = 1, float b = 1, float a = 1)
+        {
+            std::array<VkClearValue, 2> clearValues{};
+            clearValues[0].color = {{r, g, b, a}};
             clearValues[1].depthStencil = {1.0f, 0};
 
-            // VkImageSubresourceRange range = { VK_IMAGE_ASPECT_COLOR_BIT,0,VK_REMAINING_MIP_LEVELS,0,VK_REMAINING_ARRAY_LAYERS};
-            // VkImageSubresourceRange depth_range{range};
-            // depth_range.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
-            //barrier
-
-            VkRenderingAttachmentInfo depthAttachmentInfo ={
+            const VkRenderingAttachmentInfo colorAttachmentI{
                 .sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
-                .clearValue = clearValues[1],
-                .imageLayout = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL,
-                .imageView = swapchain.dep
+                .imageView = swapchain.swapChainImageViews[swapchain.index],
+                .imageLayout = VK_IMAGE_LAYOUT_ATTACHMENT_OPTIMAL,
+                .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
+                .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
+                .clearValue = {{r, g, b, a}}};
 
-            };
+            auto renderArea = VkRect2D{
+                .offset = {0, 0},
+                .extent = {swapchain.width, swapchain.height}};
 
-            VkRenderingAttachmentInfoKHR color_attachment_info = {
-                .sType                        = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO_KHR,
-                .imageView                    = swapchain.swapChainImageViews[swapchain.index],        // color_attachment.image_view;
-                .imageLayout                  = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-                .resolveMode                  = VK_RESOLVE_MODE_NONE,
-                .loadOp                       = VK_ATTACHMENT_LOAD_OP_CLEAR,
-                .storeOp                      = VK_ATTACHMENT_STORE_OP_STORE,
-                .clearValue                   = clearValues[0]
-            };
-            //
-            // VkRenderingAttachmentInfoKHR depth_attachment_info = {
-            //     .sType                        = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO_KHR,
-            //     .imageView                    = depth_stencil.view,
-            //     .imageLayout                  = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL,
-            //     .resolveMode                  = VK_RESOLVE_MODE_NONE,
-            //     .loadOp                       = VK_ATTACHMENT_LOAD_OP_CLEAR,
-            //     .storeOp                      = VK_ATTACHMENT_STORE_OP_DONT_CARE,
-            //     .clearValue                   = clearValues[1],
-            // };
-
-            auto render_area = VkRect2D{VkOffset2D{}, VkExtent2D{swapchain.width, swapchain.height}};
-            VkRenderingInfoKHR renderI = {
-                .sType                = VK_STRUCTURE_TYPE_RENDERING_INFO_KHR,
-                .renderArea           = render_area,
-                .layerCount       = 1,
-                .viewMask             = 0,
+            const VkRenderingInfo renderI{
+                .sType = VK_STRUCTURE_TYPE_RENDERING_INFO,
+                .renderArea = renderArea,
+                .layerCount = 1,
                 .colorAttachmentCount = 1,
-                .pColorAttachments    = &color_attachment_info,
-                //.pStencilAttachment   = VK_NULL_HANDLE,
-                //.pDepthAttachment = &depth_attachment_info,
+                .pColorAttachments = &colorAttachmentI,
             };
-            // if (!(depth_format == VK_FORMAT_D16_UNORM || depth_format == VK_FORMAT_D32_SFLOAT))
-            // {
-            //     renderI.pStencilAttachment = &depth_attachment_info;
-            // }
 
             vkCmdBeginRendering(_commandBuffer, &renderI);
         }
 
-        void EndRendering(Swapchain swapchain) {
+        void EndRendering()
+        {
             vkCmdEndRendering(_commandBuffer);
         }
 
-        void Send(int acquireImageSemaphoreIndex, int renderSemaphoreIndex) {
-            VkSemaphoreSubmitInfo waitSemaphoreSubmitInfo = {
-                .sType     = VK_STRUCTURE_TYPE_SEMAPHORE_SUBMIT_INFO,
-                .semaphore = _sync.semaphores[acquireImageSemaphoreIndex],
-                .stageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT
-            };
-            VkSemaphoreSubmitInfo signalSemaphoreSubmitInfo = {
-                .sType     = VK_STRUCTURE_TYPE_SEMAPHORE_SUBMIT_INFO,
-                .semaphore = _sync.semaphores[renderSemaphoreIndex]
+        void Send(int acquireImageSemaphoreIndex, int renderSemaphoreIndex, int fenceIndex)
+        {
+            // VkSemaphoreSubmitInfo waitSemaphoreSubmitInfo = {
+            //     .sType = VK_STRUCTURE_TYPE_SEMAPHORE_SUBMIT_INFO,
+            //     .semaphore = _sync.semaphores[acquireImageSemaphoreIndex],
+            //     .stageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT};
+            // VkSemaphoreSubmitInfo signalSemaphoreSubmitInfo = {
+            //     .sType = VK_STRUCTURE_TYPE_SEMAPHORE_SUBMIT_INFO,
+            //     .semaphore = _sync.semaphores[renderSemaphoreIndex]};
+
+            // VkCommandBufferSubmitInfo cmdSubmitInfo = {
+            //     .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_SUBMIT_INFO,
+            //     .commandBuffer = _commandBuffer};
+
+            VkPipelineStageFlags waitStages[] = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
+            VkSubmitInfo submitI = {
+                .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
+                .waitSemaphoreCount = 1,
+                .pWaitSemaphores = &(_sync.semaphores[acquireImageSemaphoreIndex]),
+                .pWaitDstStageMask = waitStages,
+                .commandBufferCount = 1,
+                .pCommandBuffers = &_commandBuffer,
+                .signalSemaphoreCount = 1,
+                .pSignalSemaphores = &(_sync.semaphores[renderSemaphoreIndex]),
             };
 
-            VkCommandBufferSubmitInfo cmdSubmitInfo = {
-                .sType         = VK_STRUCTURE_TYPE_COMMAND_BUFFER_SUBMIT_INFO,
-                .commandBuffer = _commandBuffer
-            };
-
-            VkSubmitInfo2 graphicsSubmitInfo = {
-                .sType                    = VK_STRUCTURE_TYPE_SUBMIT_INFO_2,
-                .waitSemaphoreInfoCount   = 1,
-                .pWaitSemaphoreInfos      = &waitSemaphoreSubmitInfo,
-                .commandBufferInfoCount   = 1,
-                .pCommandBufferInfos      = &cmdSubmitInfo,
-                .signalSemaphoreInfoCount = 1,
-                .pSignalSemaphoreInfos    = &signalSemaphoreSubmitInfo,
-            };
-            auto res = vkQueueSubmit2(_device._graphicsQueue, 1, &graphicsSubmitInfo, VK_NULL_HANDLE);
+            // VkSubmitInfo2 graphicsSubmitInfo = {
+            //     .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO_2,
+            //     .waitSemaphoreInfoCount = 1,
+            //     .pWaitSemaphoreInfos = &waitSemaphoreSubmitInfo,
+            //     .commandBufferInfoCount = 1,
+            //     .pCommandBufferInfos = &cmdSubmitInfo,
+            //     .signalSemaphoreInfoCount = 1,
+            //     .pSignalSemaphoreInfos = &signalSemaphoreSubmitInfo,
+            // };
+            // auto res = vkQueueSubmit2(_device._graphicsQueue, 1, &graphicsSubmitInfo, VK_NULL_HANDLE);
+            auto res = vkQueueSubmit(_device._graphicsQueue, 1, &submitI, _sync.fences[fenceIndex]);
             std::cout << res << std::endl;
         }
 
-        void Reset(){
+        void Reset()
+        {
             vkResetCommandBuffer(_commandBuffer, 0);
         }
 
-        void Destroy(){
+        void Destroy()
+        {
             vkFreeCommandBuffers(_device._device, _commandPool, 1, &_commandBuffer);
             vkDestroyCommandPool(_device._device, _commandPool, nullptr);
         }

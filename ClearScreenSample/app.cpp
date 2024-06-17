@@ -58,17 +58,14 @@ void draw(){
     std::cout << "frame" << std::endl;
     sync.WaitForFence(fenceIndex);
     sync.ResetAllFences();
-    swapchain.AcquireNextImage(acquireImageSemaphoreIndex, fenceIndex);
-    std::cout << "cmd begin" << std::endl;
-    //commandList.Reset();
-    //commandList.Begin();
-    // //commandList.BeginRendering(swapchain, 0.2,0.5,0.3);
-    // //
-    // //commandList.EndRendering(swapchain);
-    // std::cout << "cmd end" << std::endl;
-    //commandList.End();
-    std::cout << "cmd sended" << std::endl;
-    //commandList.Send(acquireImageSemaphoreIndex, renderSemaphoreIndex);
+    swapchain.AcquireNextImage(acquireImageSemaphoreIndex);
+    commandList.Reset();
+    commandList.Begin();
+    //TODO: fix these
+    // commandList.BeginRendering(swapchain, 0.2,0.5,0.3);
+    // commandList.EndRendering();
+    commandList.End();
+    commandList.Send(acquireImageSemaphoreIndex, renderSemaphoreIndex, fenceIndex);
     std::cout << "swp present" << std::endl;
     swapchain.Present(renderSemaphoreIndex);
     device.Wait();

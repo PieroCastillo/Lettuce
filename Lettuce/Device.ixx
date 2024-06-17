@@ -105,9 +105,15 @@ export namespace Lettuce::Core
             VkPhysicalDeviceFeatures features;
             vkGetPhysicalDeviceFeatures(_pdevice, &features);
 
-            //enables dynamic rendering
+            // VkPhysicalDeviceSynchronization2Features sync2Feature ={
+            //     .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SYNCHRONIZATION_2_FEATURES,
+            //     .synchronization2 = VK_TRUE
+            // };
+
+            // enables dynamic rendering
             VkPhysicalDeviceDynamicRenderingFeatures dynamicRenderingFeature = {
                 .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DYNAMIC_RENDERING_FEATURES,
+                //.pNext = &sync2Feature,
                 .dynamicRendering = VK_TRUE,
             };
 
@@ -120,8 +126,7 @@ export namespace Lettuce::Core
                 .ppEnabledLayerNames = nullptr,
                 .enabledExtensionCount = (uint32_t)requestedExtensionsNames.size(),
                 .ppEnabledExtensionNames = requestedExtensionsNames.data(),
-                .pEnabledFeatures = &features
-            };
+                .pEnabledFeatures = &features};
 
             checkResult(vkCreateDevice(_pdevice, &deviceCI, nullptr, &_device), "device created successfully");
 
