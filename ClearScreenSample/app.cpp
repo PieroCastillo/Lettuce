@@ -49,26 +49,26 @@ void initLettuce() {
         std::cout << "    gpu ptr:         " << gpu._pdevice << std::endl;
     }
     device.Create(instance, gpus.front(), {});
-    sync.Create(device, 1, 2);
+    sync.Create(device, 1, 2);  
     swapchain.Create(device, sync, width, height);
     commandList.Create(device, sync);
 }
-
+   
 void draw(){
     std::cout << "frame" << std::endl;
-    sync.ResetAllFences();
     sync.WaitForFence(fenceIndex);
+    sync.ResetAllFences();
     swapchain.AcquireNextImage(acquireImageSemaphoreIndex, fenceIndex);
     std::cout << "cmd begin" << std::endl;
-    commandList.Reset();
-    commandList.Begin();
-    //commandList.BeginRendering(swapchain, 0.2,0.5,0.3);
-    //
-    //commandList.EndRendering(swapchain);
-    std::cout << "cmd end" << std::endl;
-    commandList.End();
+    //commandList.Reset();
+    //commandList.Begin();
+    // //commandList.BeginRendering(swapchain, 0.2,0.5,0.3);
+    // //
+    // //commandList.EndRendering(swapchain);
+    // std::cout << "cmd end" << std::endl;
+    //commandList.End();
     std::cout << "cmd sended" << std::endl;
-    commandList.Send(acquireImageSemaphoreIndex, renderSemaphoreIndex);
+    //commandList.Send(acquireImageSemaphoreIndex, renderSemaphoreIndex);
     std::cout << "swp present" << std::endl;
     swapchain.Present(renderSemaphoreIndex);
     device.Wait();

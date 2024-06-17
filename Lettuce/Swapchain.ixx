@@ -124,7 +124,7 @@ export namespace Lettuce::Core
             };
 
             vkQueuePresentKHR(_device._presentQueue, &presentI);
-            vkQueueWaitIdle(_device._presentQueue);
+            //vkQueueWaitIdle(_device._presentQueue);
         }
 
         void Destroy() {

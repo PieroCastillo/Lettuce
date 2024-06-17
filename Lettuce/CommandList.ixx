@@ -68,14 +68,21 @@ export namespace Lettuce::Core{
         void BeginRendering(Swapchain swapchain, float r = 1, float g = 1, float b = 1, float a = 1) {
             std::array<VkClearValue,2> clearValues{};
             clearValues[0].color        = {{r, g, b, a}};
-            clearValues[1].depthStencil = {0.0f, 0};
+            clearValues[1].depthStencil = {1.0f, 0};
 
             // VkImageSubresourceRange range = { VK_IMAGE_ASPECT_COLOR_BIT,0,VK_REMAINING_MIP_LEVELS,0,VK_REMAINING_ARRAY_LAYERS};
             // VkImageSubresourceRange depth_range{range};
             // depth_range.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
             //barrier
 
-            //send rendering info
+            VkRenderingAttachmentInfo depthAttachmentInfo ={
+                .sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
+                .clearValue = clearValues[1],
+                .imageLayout = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL,
+                .imageView = swapchain.dep
+
+            };
+
             VkRenderingAttachmentInfoKHR color_attachment_info = {
                 .sType                        = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO_KHR,
                 .imageView                    = swapchain.swapChainImageViews[swapchain.index],        // color_attachment.image_view;
