@@ -4,7 +4,8 @@
 module;
 #include <iostream>
 #include <array>
-#include <vulkan/vulkan.h>
+#define VOLK_IMPLEMENTATION
+#include <volk.h>
 
 export module Lettuce:CommandList;
 

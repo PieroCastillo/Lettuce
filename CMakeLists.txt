@@ -19,6 +19,7 @@ endif()
 
 
 find_package(Vulkan REQUIRED)
+find_package(volk CONFIG REQUIRED)
 find_package(glfw3 REQUIRED)
 
 # Dividir la versión en sus componentes
@@ -49,5 +50,5 @@ target_sources(Lettuce
 #                                 INTERFACE cxx_std_20)
 add_executable(ClearScreenSample
         ClearScreenSample/app.cpp)
-target_link_libraries(Lettuce Vulkan::Vulkan)
+target_link_libraries(Lettuce  PRIVATE volk::volk_headers)
 target_link_libraries(ClearScreenSample Lettuce glfw)

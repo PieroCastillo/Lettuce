@@ -1,7 +1,8 @@
 {
   "dependencies": [
     "glfw3",
+    "glm",
     "vulkan",
-    "glm"
+    "volk"
   ]
 }

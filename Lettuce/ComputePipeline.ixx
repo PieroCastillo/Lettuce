@@ -3,14 +3,16 @@
 //
 module;
 #include <iostream>
-#include <vulkan/vulkan.h>
+#define VOLK_IMPLEMENTATION
+#include <volk.h>
 
 export module Lettuce:ComputePipeline;
 
 using namespace std;
 
-export namespace Lettuce::Core{
-    class ComputePipeline{
-
+export namespace Lettuce::Core
+{
+    class ComputePipeline
+    {
     };
 }

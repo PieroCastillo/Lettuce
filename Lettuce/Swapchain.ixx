@@ -5,7 +5,8 @@ module;
 
 #include <iostream>
 #include <string>
-#include <vulkan/vulkan.h>
+#define VOLK_IMPLEMENTATION
+#include <volk.h>
 
 export module Lettuce:Swapchain;
 
@@ -29,25 +30,26 @@ export namespace Lettuce::Core
         VkFormat imageFormat;
         VkExtent2D extent;
 
-
-        void loadImages() {
+        void loadImages()
+        {
             vkGetSwapchainImagesKHR(_device._device, _swapchain, &imageCount, nullptr);
             swapChainImages.resize(imageCount);
             vkGetSwapchainImagesKHR(_device._device, _swapchain, &imageCount, swapChainImages.data());
         }
 
-        void createImageViews() {
+        void createImageViews()
+        {
             swapChainImageViews.resize(swapChainImages.size());
-            for (size_t i = 0; i < swapChainImages.size(); i++) {
+            for (size_t i = 0; i < swapChainImages.size(); i++)
+            {
                 VkImageViewCreateInfo imageViewCI = {
                     .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
                     .image = swapChainImages[i],
                     .viewType = VK_IMAGE_VIEW_TYPE_2D,
                     .format = imageFormat,
-                    .components = { VK_COMPONENT_SWIZZLE_IDENTITY, VK_COMPONENT_SWIZZLE_IDENTITY, VK_COMPONENT_SWIZZLE_IDENTITY, VK_COMPONENT_SWIZZLE_IDENTITY},
-                    .subresourceRange = { VK_IMAGE_ASPECT_COLOR_BIT, 0,1, 0, 1 }
-                };
-                checkResult(vkCreateImageView(_device._device, &imageViewCI, nullptr, &swapChainImageViews[i]),"imageView " + to_string(i) );
+                    .components = {VK_COMPONENT_SWIZZLE_IDENTITY, VK_COMPONENT_SWIZZLE_IDENTITY, VK_COMPONENT_SWIZZLE_IDENTITY, VK_COMPONENT_SWIZZLE_IDENTITY},
+                    .subresourceRange = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1}};
+                checkResult(vkCreateImageView(_device._device, &imageViewCI, nullptr, &swapChainImageViews[i]), "imageView " + to_string(i));
             }
         }
 
@@ -61,18 +63,20 @@ export namespace Lettuce::Core
         uint32_t width;
         uint32_t height;
 
-        void Create(Device &device, SynchronizationStructure &sync, uint32_t initialWidth, uint32_t initialHeight){
+        void Create(Device &device, SynchronizationStructure &sync, uint32_t initialWidth, uint32_t initialHeight)
+        {
             _device = device;
             _sync = sync;
             auto capabilities = _device._gpu.capabilities;
             imageCount = capabilities.minImageCount + 1;
-            if (capabilities.maxImageCount > 0 && imageCount > capabilities.maxImageCount) {
+            if (capabilities.maxImageCount > 0 && imageCount > capabilities.maxImageCount)
+            {
                 imageCount = capabilities.maxImageCount;
             }
             imageFormat = _device._gpu.surfaceFormat.format;
             width = initialWidth;
             height = initialHeight;
-            extent = { initialWidth, initialHeight };
+            extent = {initialWidth, initialHeight};
             VkSwapchainCreateInfoKHR swapchainCI = {
                 .sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR,
                 .surface = _device._instance._surface,
@@ -89,16 +93,18 @@ export namespace Lettuce::Core
                 .compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR,
                 .presentMode = _device._gpu.presentMode,
                 .clipped = VK_TRUE,
-                .oldSwapchain = VK_NULL_HANDLE
-            };
+                .oldSwapchain = VK_NULL_HANDLE};
 
-            uint32_t queueFamilyIndices[] = { _device._gpu.graphicsFamily.value(), _device._gpu.presentFamily.value()};
+            uint32_t queueFamilyIndices[] = {_device._gpu.graphicsFamily.value(), _device._gpu.presentFamily.value()};
 
-            if (_device._gpu.graphicsFamily.value() != _device._gpu.presentFamily.value()) {
+            if (_device._gpu.graphicsFamily.value() != _device._gpu.presentFamily.value())
+            {
                 swapchainCI.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
                 swapchainCI.queueFamilyIndexCount = 2;
                 swapchainCI.pQueueFamilyIndices = queueFamilyIndices;
-            } else {
+            }
+            else
+            {
                 swapchainCI.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
             }
 
@@ -108,14 +114,16 @@ export namespace Lettuce::Core
             createImageViews();
         }
 
-        void AcquireNextImage(int acquireImageSemaphoreIndex) {
+        void AcquireNextImage(int acquireImageSemaphoreIndex)
+        {
             auto res = vkAcquireNextImageKHR(_device._device, _swapchain, std::numeric_limits<uint64_t>::max(), _sync.semaphores[acquireImageSemaphoreIndex], nullptr, &index);
             std::cout << res << std::endl;
         }
 
-        void Present(int renderSemaphoreIndex) {
+        void Present(int renderSemaphoreIndex)
+        {
             VkPresentInfoKHR presentI = {
-                .sType =  VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
+                .sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
                 .waitSemaphoreCount = 1,
                 .pWaitSemaphores = &_sync.semaphores[renderSemaphoreIndex],
                 .swapchainCount = 1,
@@ -124,11 +132,13 @@ export namespace Lettuce::Core
             };
 
             vkQueuePresentKHR(_device._presentQueue, &presentI);
-            //vkQueueWaitIdle(_device._presentQueue);
+            // vkQueueWaitIdle(_device._presentQueue);
         }
 
-        void Destroy() {
-            for (auto imageView : swapChainImageViews) {
+        void Destroy()
+        {
+            for (auto imageView : swapChainImageViews)
+            {
                 vkDestroyImageView(_device._device, imageView, nullptr);
             }
             vkDestroySwapchainKHR(_device._device, _swapchain, nullptr);

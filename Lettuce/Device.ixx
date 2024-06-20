@@ -5,7 +5,8 @@ module;
 
 #include <iostream>
 #include <set>
-#include <vulkan/vulkan.h>
+#define VOLK_IMPLEMENTATION
+#include <volk.h>
 
 export module Lettuce:Device;
 
