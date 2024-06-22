@@ -2,8 +2,6 @@
 // Created by piero on 11/02/2024.
 //
 module;
-#define VOLK_IMPLEMENTATION
-#include <volk.h>
 export module Lettuce;
 
 export import :Instance;

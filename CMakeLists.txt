@@ -18,7 +18,7 @@ endif()
 #set(CMAKE_CXX_MODULE_STD 1)
 
 
-find_package(Vulkan REQUIRED)
+# find_package(Vulkan REQUIRED)
 find_package(volk CONFIG REQUIRED)
 find_package(glfw3 REQUIRED)
 

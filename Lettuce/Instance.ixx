@@ -139,16 +139,27 @@ export namespace Lettuce::Core
             VkInstanceCreateInfo instanceCI = {
                 .sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO,
                 .pApplicationInfo = &appI,
-                .enabledLayerCount = (uint32_t)requestedLayersNames.size(),
-                .ppEnabledLayerNames = requestedLayersNames.data(),
-                .enabledExtensionCount = (uint32_t)requestedExtensionsNames.size(),
-                .ppEnabledExtensionNames = requestedExtensionsNames.data()};
+                .ppEnabledLayerNames = nullptr,
+                .ppEnabledExtensionNames = nullptr};
+
+            if (requestedLayersNames.size() > 0)
+            {
+                instanceCI.enabledLayerCount = (uint32_t)requestedLayersNames.size();
+                instanceCI.ppEnabledLayerNames = requestedLayersNames.data();
+            }
+
+            if (requestedExtensionsNames.size() > 0)
+            {
+                instanceCI.enabledExtensionCount = (uint32_t)requestedExtensionsNames.size();
+                instanceCI.ppEnabledExtensionNames = requestedExtensionsNames.data();
+            }
 
             if (_debug)
             {
                 instanceCI.pNext = &debugUtilsCI;
             }
 
+            std::cout << "before" << std::endl;
             checkResult(vkCreateInstance(&instanceCI, nullptr, &_instance), "instance created successfully");
             volkLoadInstance(_instance);
             if (_debug)
