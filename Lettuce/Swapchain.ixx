@@ -25,7 +25,6 @@ export namespace Lettuce::Core
         std::vector<VkPresentModeKHR> presentModes;
 
         uint32_t imageCount;
-        VkFormat imageFormat;
         VkExtent2D extent;
 
         void loadImages()
@@ -60,6 +59,7 @@ export namespace Lettuce::Core
         uint32_t index;
         uint32_t width;
         uint32_t height;
+        VkFormat imageFormat;
 
         void Create(Device &device, SynchronizationStructure &sync, uint32_t initialWidth, uint32_t initialHeight)
         {
