@@ -131,7 +131,7 @@ export namespace Lettuce::Core
                 .applicationVersion = VK_MAKE_API_VERSION(appVersion.variant, appVersion.major, appVersion.minor, appVersion.patch),
                 .pEngineName = "Lettuce Rendering Engine",
                 .engineVersion = VK_MAKE_API_VERSION(VARIANT_VERSION, MAJOR_VERSION, MINOR_VERSION, PATCH_VERSION),
-                .apiVersion = VK_VERSION_1_3};
+                .apiVersion = VK_MAKE_VERSION(1,3,0)};
             listExtensions();
             loadPlatformAndFeatures();
             listLayers();
@@ -159,7 +159,6 @@ export namespace Lettuce::Core
                 instanceCI.pNext = &debugUtilsCI;
             }
 
-            std::cout << "before" << std::endl;
             checkResult(vkCreateInstance(&instanceCI, nullptr, &_instance), "instance created successfully");
             volkLoadInstance(_instance);
             if (_debug)
