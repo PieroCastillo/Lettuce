@@ -15,8 +15,6 @@ import :Swapchain;
 import :GPU;
 import :SynchronizationStructure;
 
-using namespace std;
-
 export namespace Lettuce::Core
 {
     enum QueueType

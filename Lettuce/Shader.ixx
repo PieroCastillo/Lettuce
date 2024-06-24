@@ -8,8 +8,6 @@ module;
 
 export module Lettuce:Shader;
 
-using namespace std;
-
 export namespace Lettuce::Core
 {
     class Shader

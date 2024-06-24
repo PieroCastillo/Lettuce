@@ -8,8 +8,6 @@ module;
 
 export module Lettuce:ComputePipeline;
 
-using namespace std;
-
 export namespace Lettuce::Core
 {
     class ComputePipeline

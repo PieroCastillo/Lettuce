@@ -15,8 +15,6 @@ import :Instance;
 import :SynchronizationStructure;
 import :GPU;
 
-using namespace std;
-
 export namespace Lettuce::Core
 {
     class Swapchain
@@ -49,7 +47,7 @@ export namespace Lettuce::Core
                     .format = imageFormat,
                     .components = {VK_COMPONENT_SWIZZLE_IDENTITY, VK_COMPONENT_SWIZZLE_IDENTITY, VK_COMPONENT_SWIZZLE_IDENTITY, VK_COMPONENT_SWIZZLE_IDENTITY},
                     .subresourceRange = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1}};
-                checkResult(vkCreateImageView(_device._device, &imageViewCI, nullptr, &swapChainImageViews[i]), "imageView " + to_string(i));
+                checkResult(vkCreateImageView(_device._device, &imageViewCI, nullptr, &swapChainImageViews[i]), "imageView " + std::to_string(i));
             }
         }
 

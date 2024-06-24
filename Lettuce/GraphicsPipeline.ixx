@@ -8,11 +8,10 @@ module;
 
 export module Lettuce:GraphicsPipeline;
 
-using namespace std;
-
 export namespace Lettuce::Core
 {
     class GraphicsPipeline
     {
+
     };
 }

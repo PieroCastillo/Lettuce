@@ -5,6 +5,7 @@ module;
 
 #include <iostream>
 #include <set>
+#include <vector>
 #define VOLK_IMPLEMENTATION
 #include <volk.h>
 
@@ -14,16 +15,14 @@ import :Instance;
 import :GPU;
 import :Utils;
 
-using namespace std;
-
 export namespace Lettuce::Core
 {
     class Device
     {
     private:
-        vector<char *> availableExtensionsNames;
-        vector<char *> availableLayersNames;
-        vector<const char *> requestedExtensionsNames;
+        std::vector<char *> availableExtensionsNames;
+        std::vector<char *> availableLayersNames;
+        std::vector<const char *> requestedExtensionsNames;
         std::vector<const char *> requestedLayersNames;
 
         void listExtensions()
@@ -31,12 +30,12 @@ export namespace Lettuce::Core
             uint32_t availableExtensionCount = 0;
             // std::cout << *_pdevice << std::endl;
             vkEnumerateDeviceExtensionProperties(_pdevice, nullptr, &availableExtensionCount, nullptr);
-            vector<VkExtensionProperties> availableExtensions(availableExtensionCount);
+            std::vector<VkExtensionProperties> availableExtensions(availableExtensionCount);
             vkEnumerateDeviceExtensionProperties(_pdevice, nullptr, &availableExtensionCount, availableExtensions.data());
             for (auto ext : availableExtensions)
             {
                 availableExtensionsNames.push_back(ext.extensionName);
-                cout << "available device extensions :" << ext.extensionName << endl;
+                std::cout << "available device extensions :" << ext.extensionName << std::endl;
             }
         }
 
@@ -44,12 +43,12 @@ export namespace Lettuce::Core
         {
             uint32_t availableLayerCount = 0;
             vkEnumerateDeviceLayerProperties(_pdevice, &availableLayerCount, nullptr);
-            vector<VkLayerProperties> availableLayers(availableLayerCount);
+            std::vector<VkLayerProperties> availableLayers(availableLayerCount);
             vkEnumerateDeviceLayerProperties(_pdevice, &availableLayerCount, availableLayers.data());
             for (auto layer : availableLayers)
             {
                 availableLayersNames.push_back(layer.layerName);
-                cout << "available device layer : " << layer.layerName << endl;
+                std::cout << "available device layer : " << layer.layerName << std::endl;
             }
         }
 
@@ -76,7 +75,7 @@ export namespace Lettuce::Core
         VkQueue _presentQueue;
         GPU _gpu;
 
-        void Create(Instance &instance, GPU &gpu, vector<char *> requestedExtensions)
+        void Create(Instance &instance, GPU &gpu, std::vector<char *> requestedExtensions)
         {
             _pdevice = gpu._pdevice;
             _instance = instance;

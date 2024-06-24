@@ -11,8 +11,6 @@ module;
 
 export module Lettuce:GPU;
 
-using namespace std;
-
 export namespace Lettuce::Core
 {
     class GPU
@@ -34,7 +32,7 @@ export namespace Lettuce::Core
         bool geometryShaderPresent = false;
         std::optional<uint32_t> graphicsFamily;
         std::optional<uint32_t> presentFamily;
-        vector<char *> availableExtensionsNames;
+        std::vector<char *> availableExtensionsNames;
 
         void Create(VkSurfaceKHR &surface, VkPhysicalDevice &device)
         {

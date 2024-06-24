@@ -61,6 +61,9 @@ void draw(){
     commandList.Reset();
     commandList.Begin();
     commandList.BeginRendering(swapchain, 0.2,0.5,0.3);
+
+    
+
     commandList.EndRendering();
     commandList.End();
     commandList.Send(acquireImageSemaphoreIndex, renderSemaphoreIndex, fenceIndex);

@@ -26,17 +26,15 @@ import :Version;
 import :Utils;
 // import :Loader;
 
-using namespace std;
-
 export namespace Lettuce::Core
 {
     class Instance
     {
     private:
         bool isSurfaceCreated = false;
-        vector<char *> availableExtensionsNames;
-        vector<char *> availableLayersNames;
-        vector<const char *> requestedExtensionsNames;
+        std::vector<char *> availableExtensionsNames;
+        std::vector<char *> availableLayersNames;
+        std::vector<const char *> requestedExtensionsNames;
         std::vector<const char *> requestedLayersNames;
         VkDebugUtilsMessengerEXT debugMessenger;
 
@@ -63,12 +61,12 @@ export namespace Lettuce::Core
         {
             uint32_t availableExtensionCount = 0;
             vkEnumerateInstanceExtensionProperties(nullptr, &availableExtensionCount, nullptr);
-            vector<VkExtensionProperties> availableExtensions(availableExtensionCount);
+            std::vector<VkExtensionProperties> availableExtensions(availableExtensionCount);
             vkEnumerateInstanceExtensionProperties(nullptr, &availableExtensionCount, availableExtensions.data());
             for (auto ext : availableExtensions)
             {
                 availableExtensionsNames.push_back(ext.extensionName);
-                cout << "available instance extensions :" << ext.extensionName << endl;
+                std::cout << "available instance extensions :" << ext.extensionName << std::endl;
             }
         }
 
@@ -76,12 +74,12 @@ export namespace Lettuce::Core
         {
             uint32_t availableLayerCount = 0;
             vkEnumerateInstanceLayerProperties(&availableLayerCount, nullptr);
-            vector<VkLayerProperties> availableLayers(availableLayerCount);
+            std::vector<VkLayerProperties> availableLayers(availableLayerCount);
             vkEnumerateInstanceLayerProperties(&availableLayerCount, availableLayers.data());
             for (auto layer : availableLayers)
             {
                 availableLayersNames.push_back(layer.layerName);
-                cout << "available instance layer : " << layer.layerName << endl;
+                std::cout << "available instance layer : " << layer.layerName << std::endl;
             }
         }
 
@@ -103,7 +101,7 @@ export namespace Lettuce::Core
         VkSurfaceKHR _surface;
         bool _debug = false;
 
-        void Create(string appName, Version appVersion, std::vector<char *> requestedExtensions)
+        void Create(std::string appName, Version appVersion, std::vector<char *> requestedExtensions)
         {
             for (auto ext : requestedExtensions)
             {
@@ -189,7 +187,7 @@ export namespace Lettuce::Core
             std::vector<VkPhysicalDevice> physicalDevices(physicalDevicesCount);
             vkEnumeratePhysicalDevices(_instance, &physicalDevicesCount, physicalDevices.data());
 
-            list<GPU> gpus(physicalDevicesCount - 1);
+            std::list<GPU> gpus(physicalDevicesCount - 1);
             for (auto dev : physicalDevices)
             {
                 std::cout << "before pass ptr: " << dev << std::endl;
