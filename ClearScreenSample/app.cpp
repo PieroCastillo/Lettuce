@@ -55,18 +55,15 @@ void initLettuce() {
 }
    
 void draw(){
-    std::cout << "frame" << std::endl;
     sync.WaitForFence(fenceIndex);
     sync.ResetAllFences();
     swapchain.AcquireNextImage(acquireImageSemaphoreIndex);
     commandList.Reset();
     commandList.Begin();
-    //TODO: fix these
-    // commandList.BeginRendering(swapchain, 0.2,0.5,0.3);
-    // commandList.EndRendering();
+    commandList.BeginRendering(swapchain, 0.2,0.5,0.3);
+    commandList.EndRendering();
     commandList.End();
     commandList.Send(acquireImageSemaphoreIndex, renderSemaphoreIndex, fenceIndex);
-    std::cout << "swp present" << std::endl;
     swapchain.Present(renderSemaphoreIndex);
     device.Wait();
 }

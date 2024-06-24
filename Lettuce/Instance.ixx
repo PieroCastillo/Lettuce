@@ -46,8 +46,15 @@ export namespace Lettuce::Core
             const VkDebugUtilsMessengerCallbackDataEXT *pCallbackData,
             void *pUserData)
         {
-
-            std::cerr << "validation layer: " << pCallbackData->pMessage << std::endl;
+            //false positives
+            switch (pCallbackData->messageIdNumber)
+            {
+            case 1219306694:
+                break;
+            default:
+                std::cerr << "validation layer says: "<< "["<< pCallbackData->messageIdNumber << "] " << pCallbackData->pMessage << std::endl;
+                break;
+            }
 
             return VK_FALSE;
         }

@@ -45,7 +45,6 @@ export namespace Lettuce::Core
             {
                 cmdPoolCI.queueFamilyIndex = _device._gpu.graphicsFamily.value();
             }
-            std::cout << "papu" << std::endl;
             checkResult(vkCreateCommandPool(_device._device, &cmdPoolCI, nullptr, &_commandPool), "CommandPool created successfully");
 
             VkCommandBufferAllocateInfo cmdBufferAI = {
@@ -61,14 +60,12 @@ export namespace Lettuce::Core
         {
             VkCommandBufferBeginInfo cmdBeginCI = {
                 .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO};
-            auto res = vkBeginCommandBuffer(_commandBuffer, &cmdBeginCI);
-            std::cout << res << std::endl;
+            vkBeginCommandBuffer(_commandBuffer, &cmdBeginCI);
         }
 
         void End()
         {
-            auto res = vkEndCommandBuffer(_commandBuffer);
-            std::cout << res << std::endl;
+            vkEndCommandBuffer(_commandBuffer);
         }
 
         void BeginRendering(Swapchain swapchain, float r = 1, float g = 1, float b = 1, float a = 1)
@@ -142,7 +139,7 @@ export namespace Lettuce::Core
             // };
             // auto res = vkQueueSubmit2(_device._graphicsQueue, 1, &graphicsSubmitInfo, VK_NULL_HANDLE);
             auto res = vkQueueSubmit(_device._graphicsQueue, 1, &submitI, _sync.fences[fenceIndex]);
-            std::cout << res << std::endl;
+            //std::cout << res << std::endl;
         }
 
         void Reset()

@@ -116,8 +116,7 @@ export namespace Lettuce::Core
 
         void AcquireNextImage(int acquireImageSemaphoreIndex)
         {
-            auto res = vkAcquireNextImageKHR(_device._device, _swapchain, std::numeric_limits<uint64_t>::max(), _sync.semaphores[acquireImageSemaphoreIndex], nullptr, &index);
-            std::cout << res << std::endl;
+            vkAcquireNextImageKHR(_device._device, _swapchain, std::numeric_limits<uint64_t>::max(), _sync.semaphores[acquireImageSemaphoreIndex], nullptr, &index);
         }
 
         void Present(int renderSemaphoreIndex)
@@ -128,7 +127,7 @@ export namespace Lettuce::Core
                 .pWaitSemaphores = &_sync.semaphores[renderSemaphoreIndex],
                 .swapchainCount = 1,
                 .pSwapchains = &_swapchain,
-                .pImageIndices = &index,
+                .pImageIndices = &index
             };
 
             vkQueuePresentKHR(_device._presentQueue, &presentI);
