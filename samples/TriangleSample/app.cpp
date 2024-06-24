@@ -23,6 +23,7 @@ Lettuce::Core::Device device;
 Lettuce::Core::Swapchain swapchain;
 Lettuce::Core::CommandList commandList;
 Lettuce::Core::SynchronizationStructure sync;
+Lettuce::Core::PipelineConnector connector;
 const int acquireImageSemaphoreIndex = 0;
 const int renderSemaphoreIndex = 1;
 const int fenceIndex = 0;
@@ -52,6 +53,7 @@ void initLettuce() {
     sync.Create(device, 1, 2);  
     swapchain.Create(device, sync, width, height);
     commandList.Create(device, sync);
+    connector.Create(device);
 }
    
 void draw(){
@@ -90,7 +92,7 @@ void initWindow() {
     glfwInit();
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
     glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
-    window = glfwCreateWindow(width, height, "Lettuce ClearScreenSample", nullptr, nullptr);
+    window = glfwCreateWindow(width, height, "Lettuce TriangleSample", nullptr, nullptr);
 }
 
 void endWindow() {

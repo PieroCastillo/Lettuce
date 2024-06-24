@@ -9,6 +9,7 @@ export import :GPU;
 export import :Version;
 export import :Device;
 export import :CommandList;
+export import :PipelineConnector;
 export import :ComputePipeline;
 export import :GraphicsPipeline;
 export import :Shader;
