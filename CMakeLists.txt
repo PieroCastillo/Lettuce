@@ -49,6 +49,9 @@ target_sources(Lettuce
 # target_compile_features(Lettuce PRIVATE cxx_std_23
 #                                 INTERFACE cxx_std_20)
 add_executable(ClearScreenSample
-        ClearScreenSample/app.cpp)
+        samples/ClearScreenSample/app.cpp)
+add_executable(TriangleSample
+        samples/TriangleSample/app.cpp)
 target_link_libraries(Lettuce  PRIVATE volk::volk_headers)
 target_link_libraries(ClearScreenSample Lettuce glfw)
+target_link_libraries(TriangleSample Lettuce glfw)
