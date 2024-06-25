@@ -39,7 +39,7 @@ add_definitions(-DMINOR_VERSION=${MINOR_VERSION})
 add_definitions(-DPATCH_VERSION=${PATCH_VERSION})
 
 # Buscar todos los archivos con extensión .ixx dentro de la carpeta Lettuce
-file(GLOB LETTUCE_SOURCES Lettuce/*.ixx)
+file(GLOB LETTUCE_SOURCES Lettuce/*.ixx Lettuce/Compilers/*.ixx)
 
 add_library(Lettuce)
 target_sources(Lettuce

@@ -14,6 +14,7 @@ import :Utils;
 
 export namespace Lettuce::Core
 {
+    
     typedef enum LettucePipelineStage
     {
         Vertex = 0x00000001,

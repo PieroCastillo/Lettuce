@@ -13,6 +13,7 @@ export module Lettuce:Shader;
 import :Device;
 import :PipelineConnector;
 import :Utils;
+import :ICompiler;
 
 export namespace Lettuce::Core
 {
@@ -22,20 +23,21 @@ export namespace Lettuce::Core
         Device _device;
         LettucePipelineStage _stage;
         VkShaderModule _shaderModule;
+        std::string _name;
 
-        void Create(Device &device)
+        template<class T = Compilers::Compiler>
+        void Create(Device &device, T compiler, std::string text, std::string mainMethod, LettucePipelineStage stage, bool optimize = false)
         {
             _device = device;
-        }
-
-        void Compile(std::string text, std::string mainMethod, LettucePipelineStage stage)
-        {
             _stage = stage;
+            _name = mainMethod;
+
+            auto code = compiler.Compile(text, mainMethod, stage, optimize);
 
             VkShaderModuleCreateInfo shaderModuleCI = {
                 .sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,
-                // size_t                       codeSize;
-                // uint32_t*              pCode;
+                .codeSize = code.size(),
+                .pCode = code.data(),
             };
             checkResult(vkCreateShaderModule(_device._device, &shaderModuleCI, nullptr, &_shaderModule), std::to_string(_stage) + " shader module created sucessfully");
         }

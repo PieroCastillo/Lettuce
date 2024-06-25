@@ -24,6 +24,10 @@ Lettuce::Core::Swapchain swapchain;
 Lettuce::Core::CommandList commandList;
 Lettuce::Core::SynchronizationStructure sync;
 Lettuce::Core::PipelineConnector connector;
+Lettuce::Core::GraphicsPipeline graphicsPipeline;
+Lettuce::Core::Shader fragmentShader;
+Lettuce::Core::Shader vertexShader;
+Lettuce::Core::Compilers::GLSLCompiler compiler;
 const int acquireImageSemaphoreIndex = 0;
 const int renderSemaphoreIndex = 1;
 const int fenceIndex = 0;
@@ -55,6 +59,8 @@ void initLettuce() {
     commandList.Create(device, sync);
     connector.Create(device);
 
+    //fragmentShader.Create<Lettuce::Core::Compilers::GLSLCompiler>(device, compiler, "", "", Lettuce::Core::LettucePipelineStage::Fragment, true);
+    //graphicsPipeline.Create(device, connector, swapchain);
 }
    
 void draw(){

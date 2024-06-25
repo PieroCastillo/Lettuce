@@ -17,3 +17,5 @@ export import :Swapchain;
 export import :Utils;
 // export import :Loader;
 export import :SynchronizationStructure;
+export import :ICompiler;
+export import :GLSLCompiler;
