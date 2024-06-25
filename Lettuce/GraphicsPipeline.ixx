@@ -3,6 +3,7 @@
 //
 module;
 #include <iostream>
+#include <vector>
 #define VOLK_IMPLEMENTATION
 #include <volk.h>
 
@@ -12,15 +13,29 @@ import :Device;
 import :Utils;
 import :PipelineConnector;
 import :Swapchain;
+import :Shader;
 
 export namespace Lettuce::Core
 {
     // TODO: implement PipelineCache, ShaderStages, DynamicState
     class GraphicsPipeline
     {
+    public:
         Device _device;
         VkPipelineLayout _pipelineLayout;
         VkPipeline _pipeline;
+        std::vector<VkPipelineShaderStageCreateInfo> stages;
+
+        void AddShaderStage(Shader shader)
+        {
+            VkPipelineShaderStageCreateInfo pipelineShaderStageCI = {
+                .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
+                .stage = (VkShaderStageFlagBits)shader._stage,
+                .module = shader._shaderModule,
+                // const char*                         pName;
+            };
+            stages.emplace_back(pipelineShaderStageCI);
+        }
 
         void Create(Device &device, PipelineConnector &connector, Swapchain &swapchain)
         {
@@ -39,12 +54,13 @@ export namespace Lettuce::Core
             };
             VkPipelineInputAssemblyStateCreateInfo inputAssemblyStateCI = {
                 .sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO,
-
             };
             VkPipelineViewportStateCreateInfo viewportStateCI = {
-                .sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO};
+                .sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO,
+            };
             VkPipelineRasterizationStateCreateInfo rasterizationStateCI = {
-                .sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO};
+                .sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO,
+            };
             VkPipelineMultisampleStateCreateInfo multisampleStateCI = {
                 .sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO,
             };
@@ -52,14 +68,15 @@ export namespace Lettuce::Core
                 .sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO,
             };
             VkPipelineColorBlendStateCreateInfo colorBlendStateCI = {
-                .sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO};
+                .sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO,
+            };
 
             VkGraphicsPipelineCreateInfo graphicsPipelineCI = {
                 .sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
                 .pNext = &pipelineRenderingCI,
                 //                 VkPipelineCreateFlags                            flags;
-                // uint32_t                                         stageCount;
-                // const VkPipelineShaderStageCreateInfo*           pStages;
+                .stageCount = (uint32_t)stages.size(),
+                .pStages = stages.data(),
                 .pVertexInputState = &vertexInputStateCI,
                 .pInputAssemblyState = &inputAssemblyStateCI,
                 // const VkPipelineTessellationStateCreateInfo*     pTessellationState;

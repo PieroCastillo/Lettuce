@@ -54,6 +54,7 @@ void initLettuce() {
     swapchain.Create(device, sync, width, height);
     commandList.Create(device, sync);
     connector.Create(device);
+
 }
    
 void draw(){
@@ -64,7 +65,7 @@ void draw(){
     commandList.Begin();
     commandList.BeginRendering(swapchain, 0.2,0.5,0.3);
 
-    
+    //TODO: implement graphics pipeline, shaderc compiler 
 
     commandList.EndRendering();
     commandList.End();
@@ -75,6 +76,7 @@ void draw(){
 
 void endLettuce() {
     commandList.Destroy();
+    connector.Destroy();
     swapchain.Destroy();
     sync.Destroy();
     device.Destroy();

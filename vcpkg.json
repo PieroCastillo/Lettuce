@@ -2,7 +2,13 @@
   "dependencies": [
     "glfw3",
     "glm",
+    "volk",
     "vulkan",
-    "volk"
+    {
+      "name": "vulkan-sdk-components",
+      "features": [
+        "tools"
+      ]
+    }
   ]
 }

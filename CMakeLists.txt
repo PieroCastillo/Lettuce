@@ -19,6 +19,7 @@ endif()
 
 
 # find_package(Vulkan REQUIRED)
+find_package(Vulkan REQUIRED COMPONENTS shaderc_combined)
 find_package(volk CONFIG REQUIRED)
 find_package(glfw3 REQUIRED)
 
@@ -52,6 +53,6 @@ add_executable(ClearScreenSample
         samples/ClearScreenSample/app.cpp)
 add_executable(TriangleSample
         samples/TriangleSample/app.cpp)
-target_link_libraries(Lettuce  PRIVATE volk::volk_headers)
+target_link_libraries(Lettuce  PRIVATE volk::volk_headers Vulkan::shaderc_combined)
 target_link_libraries(ClearScreenSample Lettuce glfw)
 target_link_libraries(TriangleSample Lettuce glfw)
