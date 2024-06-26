@@ -32,6 +32,47 @@ const int acquireImageSemaphoreIndex = 0;
 const int renderSemaphoreIndex = 1;
 const int fenceIndex = 0;
 
+std::string fragmentShaderText = R"(
+#version 320 es
+
+precision mediump float;
+
+layout(location = 0) in vec3 in_color;
+
+layout(location = 0) out vec4 out_color;
+
+void main()
+{
+	out_color = vec4(in_color, 1.0);
+})";
+
+std::string vertexShaderText = R"( 
+#version 320 es
+
+precision mediump float;
+
+layout(location = 0) out vec3 out_color;
+
+vec2 triangle_positions[3] = vec2[](
+    vec2(0.5, -0.5),
+    vec2(0.5, 0.5),
+    vec2(-0.5, 0.5)
+);
+
+vec3 triangle_colors[3] = vec3[](
+    vec3(1.0, 0.0, 0.0),
+    vec3(0.0, 1.0, 0.0),
+    vec3(0.0, 0.0, 1.0)
+);
+
+void main()
+{
+    gl_Position = vec4(triangle_positions[gl_VertexIndex], 0.5, 1.0);
+
+    out_color = triangle_colors[gl_VertexIndex];
+}
+)";
+
 int main()
 {
     initWindow();
@@ -57,10 +98,11 @@ void initLettuce() {
     sync.Create(device, 1, 2);  
     swapchain.Create(device, sync, width, height);
     commandList.Create(device, sync);
-    connector.Create(device);
+    connector.Build(device);
 
-    //fragmentShader.Create<Lettuce::Core::Compilers::GLSLCompiler>(device, compiler, "", "", Lettuce::Core::LettucePipelineStage::Fragment, true);
-    //graphicsPipeline.Create(device, connector, swapchain);
+    //fragmentShader.Create(device, compiler, fragmentShaderText, "main", Lettuce::Core::LettucePipelineStage::Fragment, true);
+    //vertexShader.Create(device, compiler, vertexShaderText, "main", Lettuce::Core::LettucePipelineStage::Vertex, true);
+    //graphicsPipeline.Build(device, connector, swapchain);
 }
    
 void draw(){
@@ -71,9 +113,10 @@ void draw(){
     commandList.Begin();
     commandList.BeginRendering(swapchain, 0.2,0.5,0.3);
 
+    //commandList.BindGraphicsPipeline(graphicsPipeline);
     //TODO: implement graphics pipeline, shaderc compiler 
 
-    commandList.EndRendering();
+    commandList.EndRendering(swapchain);
     commandList.End();
     commandList.Send(acquireImageSemaphoreIndex, renderSemaphoreIndex, fenceIndex);
     swapchain.Present(renderSemaphoreIndex);

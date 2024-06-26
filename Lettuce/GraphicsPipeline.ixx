@@ -37,7 +37,7 @@ export namespace Lettuce::Core
             stages.emplace_back(pipelineShaderStageCI);
         }
 
-        void Create(Device &device, PipelineConnector &connector, Swapchain &swapchain)
+        void Build(Device &device, PipelineConnector &connector, Swapchain &swapchain)
         {
             _device = device;
             _pipelineLayout = connector._pipelineLayout;

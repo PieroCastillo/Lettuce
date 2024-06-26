@@ -26,7 +26,7 @@ export namespace Lettuce::Core
         std::string _name;
 
         template<class T = Compilers::Compiler>
-        void Create(Device &device, T compiler, std::string text, std::string mainMethod, LettucePipelineStage stage, bool optimize = false)
+        void Create(Device &device, T &compiler, std::string text, std::string mainMethod, LettucePipelineStage stage, bool optimize = false)
         {
             _device = device;
             _stage = stage;
@@ -36,7 +36,7 @@ export namespace Lettuce::Core
 
             VkShaderModuleCreateInfo shaderModuleCI = {
                 .sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,
-                .codeSize = code.size(),
+                .codeSize = code.size() * sizeof(uint32_t),
                 .pCode = code.data(),
             };
             checkResult(vkCreateShaderModule(_device._device, &shaderModuleCI, nullptr, &_shaderModule), std::to_string(_stage) + " shader module created sucessfully");

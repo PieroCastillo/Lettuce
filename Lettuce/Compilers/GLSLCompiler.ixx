@@ -17,10 +17,6 @@ export namespace Lettuce::Core::Compilers
 {
     class GLSLCompiler : public ICompiler
     {
-    private:
-        shaderc::Compiler compiler;
-        shaderc::CompileOptions options;
-
     public:
         void Load() override
         {
@@ -60,13 +56,17 @@ export namespace Lettuce::Core::Compilers
                 throw std::exception("shader stage doesn't supported by shaderc");
             }
 
+            shaderc::Compiler compiler;
+            shaderc::CompileOptions options;
+
             if (optimize)
                 options.SetOptimizationLevel(shaderc_optimization_level_size);
 
+            auto pre = compiler.PreprocessGlsl(text, kind, "shader_src", options);
             try
             {
                 shaderc::SpvCompilationResult module =
-                    compiler.CompileGlslToSpv(text, kind, mainMethod.c_str(), options);
+                    compiler.CompileGlslToSpv({pre.cbegin(), pre.cend()}, kind, "shader_src", options);
 
                 if (module.GetCompilationStatus() != shaderc_compilation_status_success)
                 {
@@ -76,13 +76,14 @@ export namespace Lettuce::Core::Compilers
             }
             catch (std::exception e)
             {
+                std::cerr << e.what() << std::endl;
                 throw e;
             }
         }
 
         void Destroy() override
         {
-            compiler.~Compiler();
+            // compiler.~Compiler();
         }
     };
 }

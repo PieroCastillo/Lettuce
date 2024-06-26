@@ -14,6 +14,7 @@ import :Device;
 import :Swapchain;
 import :GPU;
 import :SynchronizationStructure;
+import :GraphicsPipeline;
 
 export namespace Lettuce::Core
 {
@@ -68,6 +69,33 @@ export namespace Lettuce::Core
 
         void BeginRendering(Swapchain swapchain, float r = 1, float g = 1, float b = 1, float a = 1)
         {
+            const VkImageMemoryBarrier image_memory_barrier{
+                .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
+                .dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+                .oldLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+                .newLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+                .image = swapchain.swapChainImages[swapchain.index],
+                .subresourceRange = {
+                    .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+                    .baseMipLevel = 0,
+                    .levelCount = 1,
+                    .baseArrayLayer = 0,
+                    .layerCount = 1,
+                }};
+
+            vkCmdPipelineBarrier(
+                _commandBuffer,
+                VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,             // srcStageMask
+                VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, // dstStageMask
+                0,
+                0,
+                nullptr,
+                0,
+                nullptr,
+                1,                    // imageMemoryBarrierCount
+                &image_memory_barrier // pImageMemoryBarriers
+            );
+
             std::array<VkClearValue, 2> clearValues{};
             clearValues[0].color = {{r, g, b, a}};
             clearValues[1].depthStencil = {1.0f, 0};
@@ -95,9 +123,36 @@ export namespace Lettuce::Core
             vkCmdBeginRendering(_commandBuffer, &renderI);
         }
 
-        void EndRendering()
+        void EndRendering(Swapchain swapchain)
         {
             vkCmdEndRendering(_commandBuffer);
+
+            const VkImageMemoryBarrier image_memory_barrier{
+                .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
+                .srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+                .oldLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+                .newLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
+                .image = swapchain.swapChainImages[swapchain.index],
+                .subresourceRange = {
+                    .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+                    .baseMipLevel = 0,
+                    .levelCount = 1,
+                    .baseArrayLayer = 0,
+                    .layerCount = 1,
+                }};
+
+            vkCmdPipelineBarrier(
+                _commandBuffer,
+                VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, // srcStageMask
+                VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,          // dstStageMask
+                0,
+                0,
+                nullptr,
+                0,
+                nullptr,
+                1,                    // imageMemoryBarrierCount
+                &image_memory_barrier // pImageMemoryBarriers
+            );
         }
 
         void Send(int acquireImageSemaphoreIndex, int renderSemaphoreIndex, int fenceIndex)
@@ -137,8 +192,31 @@ export namespace Lettuce::Core
             // };
             // auto res = vkQueueSubmit2(_device._graphicsQueue, 1, &graphicsSubmitInfo, VK_NULL_HANDLE);
             auto res = vkQueueSubmit(_device._graphicsQueue, 1, &submitI, _sync.fences[fenceIndex]);
-            //std::cout << res << std::endl;
+            // std::cout << res << std::endl;
         }
+
+        void BindGraphicsPipeline(GraphicsPipeline pipeline)
+        {
+            vkCmdBindPipeline(_commandBuffer, VkPipelineBindPoint::VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline._pipeline);
+        }
+
+        void Draw(uint32_t vertexCount, uint32_t instanceCount, uint32_t firstVertex, uint32_t firstInstance)
+        {
+            vkCmdDraw(_commandBuffer, vertexCount, instanceCount, firstVertex, firstInstance);
+        }
+
+        // void SetViewport(float width, float height, float minDepth = 0.0f, float maxDepth = 1.0f, float x = 0.0f, float y = 0.0f){
+        //     VkViewport viewport = {
+        //         .x = x,
+        //         .y = y,
+        //         .width = width,
+        //         .height = height,
+        //         .minDepth = minDepth,
+        //         .maxDepth = maxDepth,
+        //     };
+
+        //     vkCmdSetViewport(_commandBuffer, 0, 1, &viewport);
+        // }
 
         void Reset()
         {

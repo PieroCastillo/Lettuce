@@ -46,7 +46,7 @@ export namespace Lettuce::Core
                                         .size = sizeof(T1)});
         }
 
-        void Create(Device &device)
+        void Build(Device &device)
         {
             _device = device;
 
