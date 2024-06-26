@@ -22,7 +22,7 @@ export namespace Lettuce::Core::Compilers
         {
         }
 
-        std::vector<uint32_t> Compile(std::string text, std::string mainMethod, LettucePipelineStage stage, bool optimize = false) override
+        std::vector<uint32_t> Compile(std::string text, std::string inputFile, LettucePipelineStage stage, bool optimize = false) override
         {
             shaderc_shader_kind kind;
 
@@ -62,11 +62,11 @@ export namespace Lettuce::Core::Compilers
             if (optimize)
                 options.SetOptimizationLevel(shaderc_optimization_level_size);
 
-            auto pre = compiler.PreprocessGlsl(text, kind, "shader_src", options);
+            //auto pre = compiler.PreprocessGlsl(text, kind, "shader_src", options);
             try
             {
                 shaderc::SpvCompilationResult module =
-                    compiler.CompileGlslToSpv({pre.cbegin(), pre.cend()}, kind, "shader_src", options);
+                    compiler.CompileGlslToSpv(text, kind, inputFile.c_str(), options);
 
                 if (module.GetCompilationStatus() != shaderc_compilation_status_success)
                 {

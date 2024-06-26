@@ -26,13 +26,13 @@ export namespace Lettuce::Core
         std::string _name;
 
         template<class T = Compilers::Compiler>
-        void Create(Device &device, T &compiler, std::string text, std::string mainMethod, LettucePipelineStage stage, bool optimize = false)
+        void Create(Device &device, T &compiler, std::string text, std::string mainMethod, std::string inputFile, LettucePipelineStage stage, bool optimize = false)
         {
             _device = device;
             _stage = stage;
             _name = mainMethod;
 
-            auto code = compiler.Compile(text, mainMethod, stage, optimize);
+            auto code = compiler.Compile(text, inputFile, stage, optimize);
 
             VkShaderModuleCreateInfo shaderModuleCI = {
                 .sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,

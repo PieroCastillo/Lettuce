@@ -15,7 +15,7 @@ void endLettuce();
 void mainLoop();
 void draw();
 
-GLFWwindow* window;
+GLFWwindow *window;
 const int width = 800;
 const int height = 600;
 Lettuce::Core::Instance instance;
@@ -27,13 +27,11 @@ Lettuce::Core::PipelineConnector connector;
 Lettuce::Core::GraphicsPipeline graphicsPipeline;
 Lettuce::Core::Shader fragmentShader;
 Lettuce::Core::Shader vertexShader;
-Lettuce::Core::Compilers::GLSLCompiler compiler;
 const int acquireImageSemaphoreIndex = 0;
 const int renderSemaphoreIndex = 1;
 const int fenceIndex = 0;
 
-std::string fragmentShaderText = R"(
-#version 320 es
+const std::string fragmentShaderText = R"(#version 320 es
 
 precision mediump float;
 
@@ -46,8 +44,7 @@ void main()
 	out_color = vec4(in_color, 1.0);
 })";
 
-std::string vertexShaderText = R"( 
-#version 320 es
+const std::string vertexShaderText = R"(#version 320 es
 
 precision mediump float;
 
@@ -83,38 +80,43 @@ int main()
     return 0;
 }
 
-void initLettuce() {
+void initLettuce()
+{
     instance._debug = true;
-    instance.Create("TriangleSample", Lettuce::Core::Version{ 0,1,0,0 }, {});
+    instance.Create("TriangleSample", Lettuce::Core::Version{0, 1, 0, 0}, {});
     instance.CreateSurface(glfwGetWin32Window(window), GetModuleHandle(nullptr));
     auto gpus = instance.getGPUs();
-    for(auto gpu : gpus) {
+    for (auto gpu : gpus)
+    {
         std::cout << "available device: " << gpu.deviceName << std::endl;
         std::cout << "    graphics family: " << gpu.graphicsFamily.value() << std::endl;
         std::cout << "    present family : " << gpu.presentFamily.value() << std::endl;
         std::cout << "    gpu ptr:         " << gpu._pdevice << std::endl;
     }
     device.Create(instance, gpus.front(), {});
-    sync.Create(device, 1, 2);  
+    sync.Create(device, 1, 2);
     swapchain.Create(device, sync, width, height);
     commandList.Create(device, sync);
     connector.Build(device);
 
-    //fragmentShader.Create(device, compiler, fragmentShaderText, "main", Lettuce::Core::LettucePipelineStage::Fragment, true);
-    //vertexShader.Create(device, compiler, vertexShaderText, "main", Lettuce::Core::LettucePipelineStage::Vertex, true);
-    //graphicsPipeline.Build(device, connector, swapchain);
+    Lettuce::Core::Compilers::GLSLCompiler compiler;
+
+    fragmentShader.Create(device, compiler, fragmentShaderText, "main", "fragment.glsl", Lettuce::Core::LettucePipelineStage::Fragment, true);
+    vertexShader.Create(device, compiler, vertexShaderText, "main", "vertex.glsl", Lettuce::Core::LettucePipelineStage::Vertex, true);
+    // graphicsPipeline.Build(device, connector, swapchain);
 }
-   
-void draw(){
+
+void draw()
+{
     sync.WaitForFence(fenceIndex);
     sync.ResetAllFences();
     swapchain.AcquireNextImage(acquireImageSemaphoreIndex);
     commandList.Reset();
     commandList.Begin();
-    commandList.BeginRendering(swapchain, 0.2,0.5,0.3);
+    commandList.BeginRendering(swapchain, 0.2, 0.5, 0.3);
 
-    //commandList.BindGraphicsPipeline(graphicsPipeline);
-    //TODO: implement graphics pipeline, shaderc compiler 
+    // commandList.BindGraphicsPipeline(graphicsPipeline);
+    // TODO: implement graphics pipeline, shaderc compiler
 
     commandList.EndRendering(swapchain);
     commandList.End();
@@ -123,7 +125,8 @@ void draw(){
     device.Wait();
 }
 
-void endLettuce() {
+void endLettuce()
+{
     commandList.Destroy();
     connector.Destroy();
     swapchain.Destroy();
@@ -132,21 +135,25 @@ void endLettuce() {
     instance.Destroy();
 }
 
-void mainLoop() {
-    while (!glfwWindowShouldClose(window)) {
+void mainLoop()
+{
+    while (!glfwWindowShouldClose(window))
+    {
         glfwPollEvents();
         draw();
     }
 }
 
-void initWindow() {
+void initWindow()
+{
     glfwInit();
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
     glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
     window = glfwCreateWindow(width, height, "Lettuce TriangleSample", nullptr, nullptr);
 }
 
-void endWindow() {
+void endWindow()
+{
     glfwDestroyWindow(window);
     glfwTerminate();
 }
