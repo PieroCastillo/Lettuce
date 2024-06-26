@@ -103,7 +103,13 @@ void initLettuce()
 
     fragmentShader.Create(device, compiler, fragmentShaderText, "main", "fragment.glsl", Lettuce::Core::LettucePipelineStage::Fragment, true);
     vertexShader.Create(device, compiler, vertexShaderText, "main", "vertex.glsl", Lettuce::Core::LettucePipelineStage::Vertex, true);
-    // graphicsPipeline.Build(device, connector, swapchain);
+
+    graphicsPipeline.AddShaderStage(fragmentShader);
+    graphicsPipeline.AddShaderStage(vertexShader);
+    graphicsPipeline.Build(device, connector, swapchain);
+
+    fragmentShader.Destroy();
+    vertexShader.Destroy();
 }
 
 void draw()
@@ -115,7 +121,13 @@ void draw()
     commandList.Begin();
     commandList.BeginRendering(swapchain, 0.2, 0.5, 0.3);
 
-    // commandList.BindGraphicsPipeline(graphicsPipeline);
+    commandList.BindGraphicsPipeline(graphicsPipeline);
+    commandList.SetViewport(width, height);
+    commandList.SetTopology(Lettuce::Core::LettuceTopology::TriangleList);
+    commandList.SetScissor(swapchain);
+    commandList.SetLineWidth(1.0f);
+    commandList.Draw(3, 1, 0, 0);
+
     // TODO: implement graphics pipeline, shaderc compiler
 
     commandList.EndRendering(swapchain);
@@ -128,6 +140,7 @@ void draw()
 void endLettuce()
 {
     commandList.Destroy();
+    graphicsPipeline.Destroy();
     connector.Destroy();
     swapchain.Destroy();
     sync.Destroy();

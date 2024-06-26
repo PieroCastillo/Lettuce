@@ -24,6 +24,21 @@ export namespace Lettuce::Core
         Present
     };
 
+    typedef enum LettuceTopology
+    {
+        PointList = 0,
+        LineList = 1,
+        LineStrip = 2,
+        TriangleList = 3,
+        TriangleStrip = 4,
+        TriangleFan = 5,
+        LineListWithAdjacency = 6,
+        LineStripWithAdjacency = 7,
+        TriangleListWithAdjacency = 8,
+        TriangleStripWithAdjacency = 9,
+        PatchList = 10,
+    };
+
     class CommandList
     {
     public:
@@ -205,18 +220,38 @@ export namespace Lettuce::Core
             vkCmdDraw(_commandBuffer, vertexCount, instanceCount, firstVertex, firstInstance);
         }
 
-        // void SetViewport(float width, float height, float minDepth = 0.0f, float maxDepth = 1.0f, float x = 0.0f, float y = 0.0f){
-        //     VkViewport viewport = {
-        //         .x = x,
-        //         .y = y,
-        //         .width = width,
-        //         .height = height,
-        //         .minDepth = minDepth,
-        //         .maxDepth = maxDepth,
-        //     };
+        void SetScissor(Swapchain swapchain, int32_t xOffset = 0, int32_t yOffset = 0)
+        {
+            VkRect2D scissor = {
+                .offset = {xOffset, yOffset},
+                .extent = swapchain.extent,
+            };
+            vkCmdSetScissor(_commandBuffer, 0, 1, &scissor);
+        }
 
-        //     vkCmdSetViewport(_commandBuffer, 0, 1, &viewport);
-        // }
+        void SetViewport(float width, float height, float minDepth = 0.0f, float maxDepth = 1.0f, float x = 0.0f, float y = 0.0f)
+        {
+            VkViewport viewport = {
+                .x = x,
+                .y = y,
+                .width = width,
+                .height = height,
+                .minDepth = minDepth,
+                .maxDepth = maxDepth,
+            };
+
+            vkCmdSetViewport(_commandBuffer, 0, 1, &viewport);
+        }
+
+        void SetLineWidth(float lineWidth)
+        {
+            vkCmdSetLineWidth(_commandBuffer, lineWidth);
+        }
+
+        void SetTopology(LettuceTopology topology)
+        {
+            vkCmdSetPrimitiveTopology(_commandBuffer, (VkPrimitiveTopology)topology);
+        }
 
         void Reset()
         {

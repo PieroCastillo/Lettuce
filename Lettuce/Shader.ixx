@@ -39,7 +39,7 @@ export namespace Lettuce::Core
                 .codeSize = code.size() * sizeof(uint32_t),
                 .pCode = code.data(),
             };
-            checkResult(vkCreateShaderModule(_device._device, &shaderModuleCI, nullptr, &_shaderModule), std::to_string(_stage) + " shader module created sucessfully");
+            checkResult(vkCreateShaderModule(_device._device, &shaderModuleCI, nullptr, &_shaderModule),  std::to_string(_stage) + " shader module created sucessfully");
         }
 
         void Destroy()
