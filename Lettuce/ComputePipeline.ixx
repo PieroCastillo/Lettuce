@@ -11,6 +11,8 @@ export module Lettuce:ComputePipeline;
 import :Device;
 import :Utils;
 import :PipelineConnector;
+import :Shader;
+import :Swapchain;
 
 export namespace Lettuce::Core
 {
@@ -21,15 +23,22 @@ export namespace Lettuce::Core
         VkPipelineLayout _pipelineLayout;
         VkPipeline _pipeline;
 
-        void Build(Device &device, PipelineConnector &connector, Swapchain &swapchain)
+        void Build(Device &device, PipelineConnector &connector, Swapchain &swapchain, Shader &shader)
         {
             _pipelineLayout = connector._pipelineLayout;
+
+            VkPipelineShaderStageCreateInfo pipelineShaderStageCI = {
+                .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
+                .stage = (VkShaderStageFlagBits)shader._stage,
+                .module = shader._shaderModule,
+                .pName = shader._name.c_str(),
+            };
 
             VkComputePipelineCreateInfo computePipelineCI = {
                 .sType = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO,
                 // const void*                        pNext;
                 // VkPipelineCreateFlags              flags;
-                // VkPipelineShaderStageCreateInfo    stage;
+                .stage = pipelineShaderStageCI,
                 .layout = _pipelineLayout,
                 // VkPipeline                         basePipelineHandle;
                 // int32_t                            basePipelineIndex;
