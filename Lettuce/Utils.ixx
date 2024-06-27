@@ -25,6 +25,38 @@ export module Lettuce:Utils;
 
 export namespace Lettuce::Core
 {
+    typedef enum Format32
+    {
+        Vec1F = 100, // VK_FORMAT_R32_SFLOAT = 100,
+        Vec2F = 103, // VK_FORMAT_R32G32_SFLOAT = 103,
+        Vec3F = 106, // VK_FORMAT_R32G32B32_SFLOAT = 106,
+        Vec4F = 109, // VK_FORMAT_R32G32B32A32_SFLOAT = 109,
+        Vec1I = 99,  // VK_FORMAT_R32_SINT = 99,
+        Vec2I = 102, // VK_FORMAT_R32G32_SINT = 102,
+        Vec3I = 105, // VK_FORMAT_R32G32B32_SINT = 105,
+        Vec4I = 108, // VK_FORMAT_R32G32B32A32_SINT = 108,
+        Vec1U = 98,  // VK_FORMAT_R32_UINT = 98,
+        Vec2U = 101, // VK_FORMAT_R32G32_UINT = 101,
+        Vec3U = 104, // VK_FORMAT_R32G32B32_UINT = 104,
+        Vec4U = 103, // VK_FORMAT_R32G32B32A32_UINT = 107,
+    };
+
+    typedef enum Format64
+    {
+        Vec1F = 112, // VK_FORMAT_R64_SFLOAT
+        Vec2F = 115, // VK_FORMAT_R64G64_SFLOAT
+        Vec3F = 118, // VK_FORMAT_R64G64B64_SFLOAT
+        Vec4F = 121, // VK_FORMAT_R64G64B64A64_SFLOAT
+        Vec1I = 111, // VK_FORMAT_R64_SINT
+        Vec2I = 114, // VK_FORMAT_R64G64_SINT
+        Vec3I = 117, // VK_FORMAT_R64G64B64_SINT
+        Vec4I = 120, // VK_FORMAT_R64G64B64A64_SINT
+        Vec1U = 110, // VK_FORMAT_R64_UINT
+        Vec2U = 113, // VK_FORMAT_R64G64_UINT
+        Vec3U = 116, // VK_FORMAT_R64G64B64_UINT
+        Vec4U = 119, // VK_FORMAT_R64G64B64A64_UINT
+    };
+
     void checkResult(const VkResult result, std::string onSucessMessage = "created successfully!")
     {
         if (result == VK_SUCCESS)
