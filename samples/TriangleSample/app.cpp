@@ -127,9 +127,7 @@ void draw()
     commandList.SetScissor(swapchain);
     commandList.SetLineWidth(1.0f);
     commandList.Draw(3, 1, 0, 0);
-
-    // TODO: implement graphics pipeline, shaderc compiler
-
+    
     commandList.EndRendering(swapchain);
     commandList.End();
     commandList.Send(acquireImageSemaphoreIndex, renderSemaphoreIndex, fenceIndex);
