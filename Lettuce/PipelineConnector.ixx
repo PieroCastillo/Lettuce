@@ -63,7 +63,7 @@ export namespace Lettuce::Core
             if (descriptorSetLayouts.size() > 0)
             {
                 pipelineLayoutCI.pSetLayouts = descriptorSetLayouts.data();
-                pipelineLayoutCI.pushConstantRangeCount = (uint32_t)descriptorSetLayouts.size();
+                pipelineLayoutCI.setLayoutCount = (uint32_t)descriptorSetLayouts.size();
             }
 
             checkResult(vkCreatePipelineLayout(_device._device, &pipelineLayoutCI, nullptr, &_pipelineLayout), "PipelineLayout created sucessfully");
