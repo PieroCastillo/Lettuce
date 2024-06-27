@@ -19,3 +19,6 @@ export import :Utils;
 export import :SynchronizationStructure;
 export import :ICompiler;
 export import :GLSLCompiler;
+export import :Texture;
+export import :Buffer;
+export import :Descriptor;

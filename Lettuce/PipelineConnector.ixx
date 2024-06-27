@@ -14,7 +14,6 @@ import :Utils;
 
 export namespace Lettuce::Core
 {
-    
     typedef enum LettucePipelineStage
     {
         Vertex = 0x00000001,
@@ -37,6 +36,13 @@ export namespace Lettuce::Core
         std::vector<VkPushConstantRange> pushConstants;
         //TODO: enable descriptor sets
         std::vector<VkDescriptorSetLayout> descriptorSetLayouts;
+
+        void AddDescriptor(){
+            // VkDescriptorPool;
+            // VkDescriptorSet;
+            // VkDescriptorSetLayout;
+            // VkDescriptorSetLayoutBinding;
+        }
 
         template <typename T1>
         void AddPushConstant(uint32_t offset, LettucePipelineStage stage)
