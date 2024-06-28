@@ -59,7 +59,7 @@ vec2 triangle_positions[3] = vec2[](
 vec3 triangle_colors[3] = vec3[](
     vec3(1.0, 0.0, 0.0),
     vec3(0.0, 1.0, 0.0),
-    vec3(0.0, 0.0, 1.0)
+    vec3(0.0, 0.5, 0.2)
 );
 
 void main()

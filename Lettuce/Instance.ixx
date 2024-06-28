@@ -177,7 +177,6 @@ export namespace Lettuce::Core
         {
             isSurfaceCreated = true;
             checkResult(CreateVkSurface(_instance, window, process, _surface, nullptr), "surface created successfully");
-            // std::cout << CreateVkSurface(_instance,window,process,_surface,nullptr) << std::endl;
         }
 
         std::list<GPU> getGPUs()
@@ -190,11 +189,9 @@ export namespace Lettuce::Core
             std::list<GPU> gpus(physicalDevicesCount - 1);
             for (auto dev : physicalDevices)
             {
-                std::cout << "before pass ptr: " << dev << std::endl;
                 GPU gpu;
                 gpu.Create(_surface, dev);
                 gpus.push_front(gpu);
-                // std::cout << "in function gpu ptr: " << gpus.front()._pdevice << std::endl;
             }
             return gpus;
         }

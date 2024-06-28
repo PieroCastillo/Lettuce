@@ -42,9 +42,9 @@ export namespace Lettuce::Core
         void AddVertexAttribute(uint32_t binding, uint32_t location, uint32_t offset, int format)
         {
             VkVertexInputAttributeDescription attributeDescription = {
+                .location = location,
                 .binding = binding,
                 .format = (VkFormat)format,
-                .location = location,
                 .offset = offset,
             };
             vertexInputAttributes.emplace_back(attributeDescription);

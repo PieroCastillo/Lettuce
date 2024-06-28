@@ -14,6 +14,16 @@ import :Utils;
 
 export namespace Lettuce::Core
 {
+    enum class MemoryProperty
+    {
+        DeviceLocal = 0x00000001,     // VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
+        HostVisible = 0x00000002,     // VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT
+        HostCoherent = 0x00000004,    // VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
+        HostCached = 0x00000008,      // VK_MEMORY_PROPERTY_HOST_CACHED_BIT
+        LazilyAllocated = 0x00000010, // VK_MEMORY_PROPERTY_LAZILY_ALLOCATED_BIT
+        Protected = 0x00000020,       // VK_MEMORY_PROPERTY_PROTECTED_BIT
+    };
+
     enum class BufferUsage
     {
         TransferSrc = 0x00000001,
@@ -43,23 +53,81 @@ export namespace Lettuce::Core
         MicromapStorage = 0x01000000,
     };
 
-    // template <typename T>
     class Buffer
     {
         Device _device;
         VkBuffer _buffer;
+        VkDeviceMemory _memory;
+        uint32_t _size;
 
-        void Create(Device &device)
+        void Create(Device &device, uint32_t size, BufferUsage usage, MemoryProperty properties)
         {
             _device = device;
+            _size = size;
 
-            // VkBufferCreateInfo bufferCI = {
-            //     .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
-            //     //.usage = VkBufferUsageFlagBits::
-            //     .size = sizeof(T),
-            // };
+            VkBufferCreateInfo bufferCI = {
+                .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
+                .size = size,
+                .usage = (VkBufferUsageFlags)usage,
+                .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
+            };
 
-            // checkResult(vkCreateBuffer(_device._device, &bufferCI, nullptr, &_buffer), "buffer created sucessfully");
+            checkResult(vkCreateBuffer(_device._device, &bufferCI, nullptr, &_buffer), "buffer created sucessfully");
+
+            VkMemoryRequirements memRequirements;
+            vkGetBufferMemoryRequirements(_device._device, _buffer, &memRequirements);
+
+            VkMemoryAllocateInfo memoryAI = {
+                .sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
+                .allocationSize = memRequirements.size,
+               // .memoryTypeIndex = findMemoryType(memRequirements.memoryTypeBits, properties),
+            };
+
+            checkResult(vkAllocateMemory(_device._device, &memoryAI, nullptr, &_memory), "memory allocated sucessfully");
+
+            vkBindBufferMemory(_device._device, _buffer, _memory, 0);
+        }
+
+        void SetData(void *src)
+        {
+            void *data;
+            vkMapMemory(_device._device, _memory, 0, _size, 0, &data);
+            memcpy(data, src, _size);
+            vkUnmapMemory(_device._device, _memory);
+        }
+
+        void CopyTo(Buffer buffer){
+            VkCommandBufferAllocateInfo commandBufferAI = {
+
+            };
+            VkCommandBuffer cmd;
+            vkAllocateCommandBuffers(_device._device, &commandBufferAI, &cmd);
+
+            VkCommandBufferBeginInfo cmdBeginI = {
+
+            };
+            vkBeginCommandBuffer(cmd, &cmdBeginI);
+
+            VkBufferCopy bufferC ={
+
+            };
+            vkCmdCopyBuffer(cmd, _buffer, buffer._buffer, 1, &bufferC);
+
+            vkEndCommandBuffer(cmd);
+
+            VkSubmitInfo submitI = {
+
+            };
+            vkQueueSubmit(_device._graphicsQueue, 1, &submitI, nullptr);
+            vkQueueWaitIdle(_device._graphicsQueue);
+
+            vkFreeCommandBuffers()
+        }
+
+        void Destroy()
+        {
+            vkDestroyBuffer(_device._device, _buffer, nullptr);
+            vkFreeMemory(_device._device, _memory, nullptr);
         }
     };
 }
