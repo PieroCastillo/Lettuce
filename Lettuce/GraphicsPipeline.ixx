@@ -45,7 +45,7 @@ export namespace Lettuce::Core
                 .binding = binding,
                 .format = (VkFormat)format,
                 .location = location,
-                .offset = offset
+                .offset = offset,
             };
             vertexInputAttributes.emplace_back(attributeDescription);
         }
@@ -80,12 +80,14 @@ export namespace Lettuce::Core
                 .vertexAttributeDescriptionCount = 0,
             };
 
-            if(vertexInputAttributes.size() > 0){
+            if (vertexInputAttributes.size() > 0)
+            {
                 vertexInputStateCI.vertexAttributeDescriptionCount = (uint32_t)vertexInputAttributes.size();
                 vertexInputStateCI.pVertexAttributeDescriptions = vertexInputAttributes.data();
             }
 
-            if(vertexInputBindings.size() > 0){
+            if (vertexInputBindings.size() > 0)
+            {
                 vertexInputStateCI.vertexBindingDescriptionCount = (uint32_t)vertexInputBindings.size();
                 vertexInputStateCI.pVertexBindingDescriptions = vertexInputBindings.data();
             }

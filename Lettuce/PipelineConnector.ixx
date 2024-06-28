@@ -34,10 +34,11 @@ export namespace Lettuce::Core
         Device _device;
         VkPipelineLayout _pipelineLayout;
         std::vector<VkPushConstantRange> pushConstants;
-        //TODO: enable descriptor sets
+        // TODO: enable descriptor sets
         std::vector<VkDescriptorSetLayout> descriptorSetLayouts;
 
-        void AddDescriptor(){
+        void AddDescriptor()
+        {
             // VkDescriptorPool;
             // VkDescriptorSet;
             // VkDescriptorSetLayout;

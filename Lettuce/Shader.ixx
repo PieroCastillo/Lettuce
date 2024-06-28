@@ -25,7 +25,7 @@ export namespace Lettuce::Core
         VkShaderModule _shaderModule;
         std::string _name;
 
-        template<class T = Compilers::Compiler>
+        template <class T = Compilers::Compiler>
         void Create(Device &device, T &compiler, std::string text, std::string mainMethod, std::string inputFile, LettucePipelineStage stage, bool optimize = false)
         {
             _device = device;

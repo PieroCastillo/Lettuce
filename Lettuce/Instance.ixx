@@ -44,13 +44,13 @@ export namespace Lettuce::Core
             const VkDebugUtilsMessengerCallbackDataEXT *pCallbackData,
             void *pUserData)
         {
-            //false positives
+            // false positives
             switch (pCallbackData->messageIdNumber)
             {
             case 1219306694:
                 break;
             default:
-                std::cerr << "validation layer says: "<< "["<< pCallbackData->messageIdNumber << "] " << pCallbackData->pMessage << std::endl;
+                std::cerr << "validation layer says: " << "[" << pCallbackData->messageIdNumber << "] " << pCallbackData->pMessage << std::endl;
                 break;
             }
 
@@ -136,7 +136,7 @@ export namespace Lettuce::Core
                 .applicationVersion = VK_MAKE_API_VERSION(appVersion.variant, appVersion.major, appVersion.minor, appVersion.patch),
                 .pEngineName = "Lettuce Rendering Engine",
                 .engineVersion = VK_MAKE_API_VERSION(VARIANT_VERSION, MAJOR_VERSION, MINOR_VERSION, PATCH_VERSION),
-                .apiVersion = VK_MAKE_VERSION(1,3,0)};
+                .apiVersion = VK_MAKE_VERSION(1, 3, 0)};
             listExtensions();
             loadPlatformAndFeatures();
             listLayers();

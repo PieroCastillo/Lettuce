@@ -62,7 +62,7 @@ export namespace Lettuce::Core::Compilers
             if (optimize)
                 options.SetOptimizationLevel(shaderc_optimization_level_size);
 
-            //auto pre = compiler.PreprocessGlsl(text, kind, "shader_src", options);
+            // auto pre = compiler.PreprocessGlsl(text, kind, "shader_src", options);
             try
             {
                 shaderc::SpvCompilationResult module =

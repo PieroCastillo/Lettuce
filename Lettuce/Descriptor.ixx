@@ -14,12 +14,14 @@ import :Utils;
 
 export namespace Lettuce::Core
 {
-    class Descriptor{
+    class Descriptor
+    {
         Device _device;
         VkDescriptorPool _descriptorPool;
         VkDescriptorSet _descriptorSet;
 
-        void Create(Device &device){
+        void Create(Device &device)
+        {
             _device = device;
 
             // VkDescriptorPoolSize size = {
@@ -27,12 +29,12 @@ export namespace Lettuce::Core
             // }
 
             // VkDescriptorPoolCreateInfo descriptorPoolCI = {
-                
+
             // };
         }
 
-        void Destroy(){
-
+        void Destroy()
+        {
         }
     };
 }

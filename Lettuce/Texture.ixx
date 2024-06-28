@@ -14,7 +14,7 @@ import :Utils;
 
 export namespace Lettuce::Core
 {
-    class Texture{
-
+    class Texture
+    {
     };
 }
