@@ -14,7 +14,7 @@ import :Utils;
 
 export namespace Lettuce::Core
 {
-    typedef enum BufferUsage
+    enum class BufferUsage
     {
         TransferSrc = 0x00000001,
         TransferDst = 0x00000002,

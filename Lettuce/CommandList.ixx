@@ -18,13 +18,13 @@ import :GraphicsPipeline;
 
 export namespace Lettuce::Core
 {
-    enum QueueType
+    enum class QueueType
     {
         Graphics,
         Present
     };
 
-    typedef enum LettuceTopology
+    enum class LettuceTopology
     {
         PointList = 0,
         LineList = 1,
@@ -48,14 +48,14 @@ export namespace Lettuce::Core
         Device _device;
         SynchronizationStructure _sync;
 
-        void Create(Device &device, SynchronizationStructure &sync, QueueType queueType = Graphics)
+        void Create(Device &device, SynchronizationStructure &sync, QueueType queueType = QueueType::Graphics)
         {
             _sync = sync;
             _device = device;
             VkCommandPoolCreateInfo cmdPoolCI = {
                 .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
                 .flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT};
-            if (queueType == Graphics)
+            if (queueType == QueueType::Graphics)
             {
                 cmdPoolCI.queueFamilyIndex = _device._gpu.graphicsFamily.value();
             }

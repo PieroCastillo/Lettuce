@@ -25,7 +25,7 @@ export module Lettuce:Utils;
 
 export namespace Lettuce::Core
 {
-    typedef enum Format32
+    enum class Format32
     {
         Vec1F = 100, // VK_FORMAT_R32_SFLOAT = 100,
         Vec2F = 103, // VK_FORMAT_R32G32_SFLOAT = 103,
@@ -41,7 +41,7 @@ export namespace Lettuce::Core
         Vec4U = 103, // VK_FORMAT_R32G32B32A32_UINT = 107,
     };
 
-    typedef enum Format64
+    enum class Format64
     {
         Vec1F = 112, // VK_FORMAT_R64_SFLOAT
         Vec2F = 115, // VK_FORMAT_R64G64_SFLOAT

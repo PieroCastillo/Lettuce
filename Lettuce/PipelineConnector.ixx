@@ -14,7 +14,7 @@ import :Utils;
 
 export namespace Lettuce::Core
 {
-    typedef enum LettucePipelineStage
+    enum class LettucePipelineStage
     {
         Vertex = 0x00000001,
         TessellationControl = 0x00000002,
