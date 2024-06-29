@@ -58,12 +58,22 @@ export namespace Lettuce::Core
         Device _device;
         VkBuffer _buffer;
         VkDeviceMemory _memory;
+        VkCommandPool _pool;
         uint32_t _size;
 
         void Create(Device &device, uint32_t size, BufferUsage usage, MemoryProperty properties)
         {
             _device = device;
             _size = size;
+            if (usage == BufferUsage::TransferSrc)
+            {
+                VkCommandPoolCreateInfo poolCI = {
+                    .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
+                    .flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT,
+                    .queueFamilyIndex = _device._gpu.graphicsFamily.value(),
+                };
+                checkResult(vkCreateCommandPool(_device._device, &poolCI, nullptr, &_pool), "CommandPool of Buffer created sucessfully");
+            }
 
             VkBufferCreateInfo bufferCI = {
                 .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
@@ -80,7 +90,7 @@ export namespace Lettuce::Core
             VkMemoryAllocateInfo memoryAI = {
                 .sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
                 .allocationSize = memRequirements.size,
-               // .memoryTypeIndex = findMemoryType(memRequirements.memoryTypeBits, properties),
+                .memoryTypeIndex = _device._gpu.FindMemoryType(memRequirements.memoryTypeBits, (VkMemoryPropertyFlags)properties),
             };
 
             checkResult(vkAllocateMemory(_device._device, &memoryAI, nullptr, &_memory), "memory allocated sucessfully");
@@ -96,32 +106,37 @@ export namespace Lettuce::Core
             vkUnmapMemory(_device._device, _memory);
         }
 
-        void CopyTo(Buffer buffer){
+        void CopyTo(Buffer buffer)
+        {
             VkCommandBufferAllocateInfo commandBufferAI = {
-
+                .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
+                .commandPool = _pool,
+                .level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
+                .commandBufferCount = 1,
             };
             VkCommandBuffer cmd;
             vkAllocateCommandBuffers(_device._device, &commandBufferAI, &cmd);
 
             VkCommandBufferBeginInfo cmdBeginI = {
-
-            };
+                .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
+                .flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT};
             vkBeginCommandBuffer(cmd, &cmdBeginI);
 
-            VkBufferCopy bufferC ={
-
+            VkBufferCopy bufferC = {
+                .size = _size,
             };
             vkCmdCopyBuffer(cmd, _buffer, buffer._buffer, 1, &bufferC);
 
             vkEndCommandBuffer(cmd);
 
             VkSubmitInfo submitI = {
-
-            };
+                .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
+                .commandBufferCount = 1,
+                .pCommandBuffers = &cmd};
             vkQueueSubmit(_device._graphicsQueue, 1, &submitI, nullptr);
             vkQueueWaitIdle(_device._graphicsQueue);
 
-            vkFreeCommandBuffers()
+            vkFreeCommandBuffers(_device._device, _pool, 1, &cmd);
         }
 
         void Destroy()

@@ -54,7 +54,8 @@ export namespace Lettuce::Core
             _device = device;
             VkCommandPoolCreateInfo cmdPoolCI = {
                 .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
-                .flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT};
+                .flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT,
+            };
             if (queueType == QueueType::Graphics)
             {
                 cmdPoolCI.queueFamilyIndex = _device._gpu.graphicsFamily.value();
