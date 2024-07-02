@@ -15,9 +15,12 @@ import :Swapchain;
 import :GPU;
 import :SynchronizationStructure;
 import :GraphicsPipeline;
+import :Buffer;
 
 export namespace Lettuce::Core
 {
+    //todo:  convert enum into flags
+
     enum class QueueType
     {
         Graphics,
@@ -214,6 +217,14 @@ export namespace Lettuce::Core
         void BindGraphicsPipeline(GraphicsPipeline pipeline)
         {
             vkCmdBindPipeline(_commandBuffer, VkPipelineBindPoint::VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline._pipeline);
+        }
+
+        void BindVertexBuffer(Buffer vertexBuffer){
+            vkCmdBindVertexBuffers(_commandBuffer, 0,1, {vertexBuffer._buffer},{0});
+        }
+
+        void BindIndexBuffer(Buffer indexBuffer){
+            vkCmdBindIndexBuffer(_commandBuffer, indexBuffer._buffer, 0, VkIndexType::VK_INDEX_TYPE_UINT32);
         }
 
         void Draw(uint32_t vertexCount, uint32_t instanceCount, uint32_t firstVertex, uint32_t firstInstance)

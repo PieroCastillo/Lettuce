@@ -14,7 +14,7 @@ import :Utils;
 
 export namespace Lettuce::Core
 {
-    enum class MemoryProperty
+    enum class MemoryProperty : uint32_t
     {
         DeviceLocal = 0x00000001,     // VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
         HostVisible = 0x00000002,     // VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT
@@ -24,7 +24,7 @@ export namespace Lettuce::Core
         Protected = 0x00000020,       // VK_MEMORY_PROPERTY_PROTECTED_BIT
     };
 
-    enum class BufferUsage
+    enum class BufferUsage : uint32_t
     {
         TransferSrc = 0x00000001,
         TransferDst = 0x00000002,
@@ -142,6 +142,34 @@ export namespace Lettuce::Core
             vkFreeCommandBuffers(_device._device, _pool, 1, &cmd);
         }
 
+        template <typename T>
+        static Buffer CreateVertexBuffer(Device &device, std::vector<T> vertices)
+        {
+            return CreateBufferWithStaging(device, BufferUsage::VertexBuffer, sizeof(vertices[0]) * vertices.size(), vertices.data());
+        }
+
+        static Buffer CreateIndexBuffer(Device &device, std::vector<size_t> indices)
+        {
+            return CreateBufferWithStaging(device, BufferUsage::IndexBuffer, sizeof(indices[0]) * indices.size(), indices.data());
+        }
+
+        static Buffer CreateBufferWithStaging(Device &device, BufferUsage bufferDstUsage, uint32_t size, void *data)
+        {
+            Buffer stagingBuffer;
+            Buffer buffer;
+            stagingBuffer.Create(&device, size, BufferUsage::TransferSrc,
+                                 MemoryProperty::HostVisible | MemoryProperty::HostCoherent);
+            stagingBuffer.SetData(data);
+
+            auto usage = BufferUsage::TransferDst;
+            usage |= bufferDstUsage;
+            buffer.Create(&device, size, usage,
+                          MemoryProperty::DeviceLocal);
+            stagingBuffer.CopyTo(buffer);
+            stagingBuffer.Destroy();
+            return buffer;
+        }
+
         void Destroy()
         {
             vkDestroyBuffer(_device._device, _buffer, nullptr);
@@ -149,7 +177,7 @@ export namespace Lettuce::Core
 
             if (_usage == BufferUsage::TransferSrc)
             {
-                vkDestroyCommandPool(_device._device, &_pool, nullptr);
+                vkDestroyCommandPool(_device._device, _pool, nullptr);
             }
         }
     };
