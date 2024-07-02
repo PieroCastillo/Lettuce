@@ -221,12 +221,12 @@ export namespace Lettuce::Core
 
         void BindVertexBuffers(uint32_t firstBinding, uint32_t bindingCount, std::vector<Buffer> &buffers, std::vector<uint32_t> &offsets)
         {
-            std::vector<VkBuffer> _buffers;
-            for (auto buffer : buffers)
-            {
-                _buffers.emplace_back(buffer);
-            }
-            vkCmdBindVertexBuffers(_commandBuffer, firstBinding, bindingCount, , offsets.data());
+            // std::vector<VkBuffer> _buffers;
+            // for (auto buffer : buffers)
+            // {
+            //     _buffers.emplace_back(buffer);
+            // }
+            // vkCmdBindVertexBuffers(_commandBuffer, firstBinding, bindingCount, , offsets.data());
         }
 
         void BindVertexBuffer(Buffer vertexBuffer)
