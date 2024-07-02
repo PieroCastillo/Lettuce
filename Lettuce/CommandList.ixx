@@ -19,7 +19,7 @@ import :Buffer;
 
 export namespace Lettuce::Core
 {
-    //todo:  convert enum into flags
+    // todo:  convert enum into flags
 
     enum class QueueType
     {
@@ -219,11 +219,23 @@ export namespace Lettuce::Core
             vkCmdBindPipeline(_commandBuffer, VkPipelineBindPoint::VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline._pipeline);
         }
 
-        void BindVertexBuffer(Buffer vertexBuffer){
-            vkCmdBindVertexBuffers(_commandBuffer, 0,1, {vertexBuffer._buffer},{0});
+        void BindVertexBuffers(uint32_t firstBinding, uint32_t bindingCount, std::vector<Buffer> &buffers, std::vector<uint32_t> &offsets)
+        {
+            std::vector<VkBuffer> _buffers;
+            for (auto buffer : buffers)
+            {
+                _buffers.emplace_back(buffer);
+            }
+            vkCmdBindVertexBuffers(_commandBuffer, firstBinding, bindingCount, , offsets.data());
         }
 
-        void BindIndexBuffer(Buffer indexBuffer){
+        void BindVertexBuffer(Buffer vertexBuffer)
+        {
+            vkCmdBindVertexBuffers(_commandBuffer, 0, 1, {vertexBuffer._buffer}, {0});
+        }
+
+        void BindIndexBuffer(Buffer indexBuffer)
+        {
             vkCmdBindIndexBuffer(_commandBuffer, indexBuffer._buffer, 0, VkIndexType::VK_INDEX_TYPE_UINT32);
         }
 
@@ -263,21 +275,6 @@ export namespace Lettuce::Core
         void SetTopology(LettuceTopology topology)
         {
             vkCmdSetPrimitiveTopology(_commandBuffer, (VkPrimitiveTopology)topology);
-        }
-
-        void BindVertexBuffers(uint32_t firstBinding, uint32_t bindingCount, std::vector<Buffer> &buffers, std::vector<uint32_t> &offsets)
-        {
-            std::vector<VkBuffer> _buffers;
-            for (auto buffer : buffers)
-            {
-                _buffers.emplace_back(buffer);
-            }
-            vkCmdBindVertexBuffers(_commandBuffer, firstBinding, bindingCount, , offsets.data());
-        }
-
-        void BindIndexBuffers(Buffer &buffer)
-        {
-            vkCmdBindIndexBuffer(_commandBuffer, buffer._buffer, 0, VK_INDEX_TYPE_UINT16);
         }
 
         void Reset()
