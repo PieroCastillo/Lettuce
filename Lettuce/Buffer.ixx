@@ -60,11 +60,14 @@ export namespace Lettuce::Core
         VkDeviceMemory _memory;
         VkCommandPool _pool;
         uint32_t _size;
+        BufferUsage _usage;
 
         void Create(Device &device, uint32_t size, BufferUsage usage, MemoryProperty properties)
         {
             _device = device;
             _size = size;
+            _usage = usage;
+
             if (usage == BufferUsage::TransferSrc)
             {
                 VkCommandPoolCreateInfo poolCI = {
@@ -143,6 +146,11 @@ export namespace Lettuce::Core
         {
             vkDestroyBuffer(_device._device, _buffer, nullptr);
             vkFreeMemory(_device._device, _memory, nullptr);
+
+            if (_usage == BufferUsage::TransferSrc)
+            {
+                vkDestroyCommandPool(_device._device, &_pool, nullptr);
+            }
         }
     };
 }
