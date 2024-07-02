@@ -15,6 +15,7 @@ import :Swapchain;
 import :GPU;
 import :SynchronizationStructure;
 import :GraphicsPipeline;
+import :Buffer;
 
 export namespace Lettuce::Core
 {
@@ -252,6 +253,21 @@ export namespace Lettuce::Core
         void SetTopology(LettuceTopology topology)
         {
             vkCmdSetPrimitiveTopology(_commandBuffer, (VkPrimitiveTopology)topology);
+        }
+
+        void BindVertexBuffers(uint32_t firstBinding, uint32_t bindingCount, std::vector<Buffer> &buffers, std::vector<uint32_t> &offsets)
+        {
+            std::vector<VkBuffer> _buffers;
+            for (auto buffer : buffers)
+            {
+                _buffers.emplace_back(buffer);
+            }
+            vkCmdBindVertexBuffers(_commandBuffer, firstBinding, bindingCount, , offsets.data());
+        }
+
+        void BindIndexBuffers(Buffer &buffer)
+        {
+            vkCmdBindIndexBuffer(_commandBuffer, buffer._buffer, 0, VK_INDEX_TYPE_UINT16);
         }
 
         void Reset()
