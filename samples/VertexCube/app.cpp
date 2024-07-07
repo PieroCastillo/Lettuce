@@ -31,9 +31,9 @@ const int acquireImageSemaphoreIndex = 0;
 const int renderSemaphoreIndex = 1;
 const int fenceIndex = 0;
 
-struct Vertex = {
+// struct Vertex = {
 
-};
+// };
 
 const std::string fragmentShaderText = R"(#version 320 es
 
