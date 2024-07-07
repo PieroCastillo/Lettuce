@@ -9,12 +9,12 @@ Lettuce is a rendering Vulkan-based library
 - [x] GPU
 - [x] Swapchain (basic)
   - [ ] Resizable
-- [ ] CommandList (partial)
+- [x] CommandList (partial)
 - [ ] GraphicsPipeline
 - [ ] ComputePipeline
 - [ ] Buffer
 - [ ] Images
-- [ ] Dynamic rendering
+- [x] Dynamic rendering
 - [ ] Synchronization2
 ### Lettuce 2D
 ### Lettuce Compute

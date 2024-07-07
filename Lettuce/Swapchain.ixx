@@ -125,8 +125,7 @@ export namespace Lettuce::Core
                 .pWaitSemaphores = &_sync.semaphores[renderSemaphoreIndex],
                 .swapchainCount = 1,
                 .pSwapchains = &_swapchain,
-                .pImageIndices = &index
-            };
+                .pImageIndices = &index};
 
             vkQueuePresentKHR(_device._presentQueue, &presentI);
             // vkQueueWaitIdle(_device._presentQueue);

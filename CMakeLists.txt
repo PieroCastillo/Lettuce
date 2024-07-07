@@ -47,12 +47,17 @@ target_sources(Lettuce
         FILE_SET cxx_modules TYPE CXX_MODULES FILES
         ${LETTUCE_SOURCES}
 )
+
+target_include_directories(Lettuce PRIVATE Lettuce)
 # target_compile_features(Lettuce PRIVATE cxx_std_23
 #                                 INTERFACE cxx_std_20)
 add_executable(ClearScreenSample
         samples/ClearScreenSample/app.cpp)
 add_executable(TriangleSample
         samples/TriangleSample/app.cpp)
+add_executable(VertexCube
+        samples/VertexCube/app.cpp)
 target_link_libraries(Lettuce  PRIVATE volk::volk_headers Vulkan::shaderc_combined)
 target_link_libraries(ClearScreenSample Lettuce glfw)
 target_link_libraries(TriangleSample Lettuce glfw)
+target_link_libraries(VertexCube Lettuce glfw)

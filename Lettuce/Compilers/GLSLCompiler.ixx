@@ -22,34 +22,34 @@ export namespace Lettuce::Core::Compilers
         {
         }
 
-        std::vector<uint32_t> Compile(std::string text, std::string inputFile, LettucePipelineStage stage, bool optimize = false) override
+        std::vector<uint32_t> Compile(std::string text, std::string inputFile, PipelineStage stage, bool optimize = false) override
         {
             shaderc_shader_kind kind;
 
             switch (stage)
             {
-            case LettucePipelineStage::Vertex:
+            case PipelineStage::Vertex:
                 kind = shaderc_vertex_shader;
                 break;
-            case LettucePipelineStage::TessellationControl:
+            case PipelineStage::TessellationControl:
                 kind = shaderc_tess_control_shader;
                 break;
-            case LettucePipelineStage::TessellationEvaluation:
+            case PipelineStage::TessellationEvaluation:
                 kind = shaderc_tess_evaluation_shader;
                 break;
-            case LettucePipelineStage::Geometry:
+            case PipelineStage::Geometry:
                 kind = shaderc_geometry_shader;
                 break;
-            case LettucePipelineStage::Fragment:
+            case PipelineStage::Fragment:
                 kind = shaderc_fragment_shader;
                 break;
-            case LettucePipelineStage::Compute:
+            case PipelineStage::Compute:
                 kind = shaderc_compute_shader;
                 break;
-            case LettucePipelineStage::Task:
+            case PipelineStage::Task:
                 kind = shaderc_task_shader;
                 break;
-            case LettucePipelineStage::Mesh:
+            case PipelineStage::Mesh:
                 kind = shaderc_mesh_shader;
                 break;
             default:

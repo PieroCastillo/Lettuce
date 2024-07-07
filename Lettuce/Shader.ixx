@@ -21,12 +21,12 @@ export namespace Lettuce::Core
     {
     public:
         Device _device;
-        LettucePipelineStage _stage;
+        PipelineStage _stage;
         VkShaderModule _shaderModule;
         std::string _name;
 
         template <class T = Compilers::Compiler>
-        void Create(Device &device, T &compiler, std::string text, std::string mainMethod, std::string inputFile, LettucePipelineStage stage, bool optimize = false)
+        void Create(Device &device, T &compiler, std::string text, std::string mainMethod, std::string inputFile, PipelineStage stage, bool optimize = false)
         {
             _device = device;
             _stage = stage;

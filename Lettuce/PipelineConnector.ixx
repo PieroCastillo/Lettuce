@@ -14,7 +14,7 @@ import :Utils;
 
 export namespace Lettuce::Core
 {
-    enum class LettucePipelineStage
+    enum class PipelineStage
     {
         Vertex = 0x00000001,
         TessellationControl = 0x00000002,
@@ -46,7 +46,7 @@ export namespace Lettuce::Core
         }
 
         template <typename T1>
-        void AddPushConstant(uint32_t offset, LettucePipelineStage stage)
+        void AddPushConstant(uint32_t offset, PipelineStage stage)
         {
             pushConstants.emplace_back({.stageFlags = stage,
                                         .offset = offset,

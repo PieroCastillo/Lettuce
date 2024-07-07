@@ -19,7 +19,12 @@ import :Buffer;
 
 export namespace Lettuce::Core
 {
-    // todo:  convert enum into flags
+    enum class IndexType
+    {
+        UInt16 = 0,
+        UInt32 = 1,
+        UInt8 = 1000265000, // Provided by VK_KHR_index_type_uint8
+    };
 
     enum class QueueType
     {
@@ -27,7 +32,7 @@ export namespace Lettuce::Core
         Present
     };
 
-    enum class LettuceTopology
+    enum class Topology
     {
         PointList = 0,
         LineList = 1,
@@ -231,17 +236,22 @@ export namespace Lettuce::Core
 
         void BindVertexBuffer(Buffer vertexBuffer)
         {
-            vkCmdBindVertexBuffers(_commandBuffer, 0, 1, {vertexBuffer._buffer}, {0});
+            // vkCmdBindVertexBuffers(_commandBuffer, 0, 1, {vertexBuffer._buffer}, {0});
         }
 
-        void BindIndexBuffer(Buffer indexBuffer)
+        void BindIndexBuffer(Buffer indexBuffer, IndexType indexType)
         {
-            vkCmdBindIndexBuffer(_commandBuffer, indexBuffer._buffer, 0, VkIndexType::VK_INDEX_TYPE_UINT32);
+            vkCmdBindIndexBuffer(_commandBuffer, indexBuffer._buffer, 0, (VkIndexType)indexType);
         }
 
         void Draw(uint32_t vertexCount, uint32_t instanceCount, uint32_t firstVertex, uint32_t firstInstance)
         {
             vkCmdDraw(_commandBuffer, vertexCount, instanceCount, firstVertex, firstInstance);
+        }
+
+        void DrawIndexed(uint32_t indexCount, uint32_t instanceCount = 1, uint32_t firstIndex = 0, int32_t vertexOffset = 0, uint32_t firstInstance = 0)
+        {
+            vkCmdDrawIndexed(_commandBuffer, indexCount, instanceCount, firstIndex, vertexOffset, firstInstance);
         }
 
         void SetScissor(Swapchain swapchain, int32_t xOffset = 0, int32_t yOffset = 0)
@@ -272,7 +282,7 @@ export namespace Lettuce::Core
             vkCmdSetLineWidth(_commandBuffer, lineWidth);
         }
 
-        void SetTopology(LettuceTopology topology)
+        void SetTopology(Topology topology)
         {
             vkCmdSetPrimitiveTopology(_commandBuffer, (VkPrimitiveTopology)topology);
         }

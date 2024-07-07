@@ -31,8 +31,8 @@ const int acquireImageSemaphoreIndex = 0;
 const int renderSemaphoreIndex = 1;
 const int fenceIndex = 0;
 
-struct Vertex={
-    
+struct Vertex = {
+
 };
 
 const std::string fragmentShaderText = R"(#version 320 es
@@ -105,8 +105,8 @@ void initLettuce()
 
     Lettuce::Core::Compilers::GLSLCompiler compiler;
 
-    fragmentShader.Create(device, compiler, fragmentShaderText, "main", "fragment.glsl", Lettuce::Core::LettucePipelineStage::Fragment, true);
-    vertexShader.Create(device, compiler, vertexShaderText, "main", "vertex.glsl", Lettuce::Core::LettucePipelineStage::Vertex, true);
+    fragmentShader.Create(device, compiler, fragmentShaderText, "main", "fragment.glsl", Lettuce::Core::PipelineStage::Fragment, true);
+    vertexShader.Create(device, compiler, vertexShaderText, "main", "vertex.glsl", Lettuce::Core::PipelineStage::Vertex, true);
 
     graphicsPipeline.AddShaderStage(fragmentShader);
     graphicsPipeline.AddShaderStage(vertexShader);
@@ -127,7 +127,7 @@ void draw()
 
     commandList.BindGraphicsPipeline(graphicsPipeline);
     commandList.SetViewport(width, height);
-    commandList.SetTopology(Lettuce::Core::LettuceTopology::TriangleList);
+    commandList.SetTopology(Lettuce::Core::Topology::TriangleList);
     commandList.SetScissor(swapchain);
     commandList.SetLineWidth(1.0f);
     commandList.Draw(3, 1, 0, 0);

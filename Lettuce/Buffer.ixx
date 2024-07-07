@@ -6,6 +6,7 @@ module;
 #include <vector>
 #define VOLK_IMPLEMENTATION
 #include <volk.h>
+#include <otherUtils.h>
 
 export module Lettuce:Buffer;
 
@@ -23,6 +24,7 @@ export namespace Lettuce::Core
         LazilyAllocated = 0x00000010, // VK_MEMORY_PROPERTY_LAZILY_ALLOCATED_BIT
         Protected = 0x00000020,       // VK_MEMORY_PROPERTY_PROTECTED_BIT
     };
+    MAKE_ENUM_FLAGS(MemoryProperty)
 
     enum class BufferUsage : uint32_t
     {
@@ -52,9 +54,11 @@ export namespace Lettuce::Core
         MicromapBuildInputReadOnly = 0x00800000,
         MicromapStorage = 0x01000000,
     };
+    MAKE_ENUM_FLAGS(BufferUsage)
 
     class Buffer
     {
+    public:
         Device _device;
         VkBuffer _buffer;
         VkDeviceMemory _memory;
@@ -157,13 +161,13 @@ export namespace Lettuce::Core
         {
             Buffer stagingBuffer;
             Buffer buffer;
-            stagingBuffer.Create(&device, size, BufferUsage::TransferSrc,
+            stagingBuffer.Create(device, size, BufferUsage::TransferSrc,
                                  MemoryProperty::HostVisible | MemoryProperty::HostCoherent);
             stagingBuffer.SetData(data);
 
             auto usage = BufferUsage::TransferDst;
             usage |= bufferDstUsage;
-            buffer.Create(&device, size, usage,
+            buffer.Create(device, size, usage,
                           MemoryProperty::DeviceLocal);
             stagingBuffer.CopyTo(buffer);
             stagingBuffer.Destroy();

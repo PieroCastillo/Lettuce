@@ -4,11 +4,6 @@
     "glm",
     "volk",
     "vulkan",
-    {
-      "name": "vulkan-sdk-components",
-      "features": [
-        "tools"
-      ]
-    }
+    "vulkan-sdk-components"
   ]
 }

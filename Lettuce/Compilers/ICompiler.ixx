@@ -15,7 +15,7 @@ export namespace Lettuce::Core::Compilers
     {
     public:
         virtual void Load() = 0;
-        virtual std::vector<uint32_t> Compile(std::string text, std::string inputFile, LettucePipelineStage stage, bool optimize) = 0;
+        virtual std::vector<uint32_t> Compile(std::string text, std::string inputFile, PipelineStage stage, bool optimize) = 0;
         virtual void Destroy() = 0;
     };
 }
