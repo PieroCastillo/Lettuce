@@ -18,6 +18,7 @@ import :GPU;
 import :SynchronizationStructure;
 import :GraphicsPipeline;
 import :Buffer;
+import :Descriptor;
 
 export namespace Lettuce::Core
 {
@@ -228,6 +229,10 @@ export namespace Lettuce::Core
         void BindGraphicsPipeline(GraphicsPipeline pipeline)
         {
             vkCmdBindPipeline(_commandBuffer[index], VkPipelineBindPoint::VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline._pipeline);
+        }
+
+        void BindDescriptorSetToGraphics(PipelineConnector connector, Descriptor descriptor){
+            vkCmdBindDescriptorSets(_commandBuffer[index], VkPipelineBindPoint::VK_PIPELINE_BIND_POINT_GRAPHICS, connector._pipelineLayout, 0, 2, descriptor._descriptorSet, 0, nullptr);
         }
 
         void BindVertexBuffers(uint32_t firstBinding, uint32_t bindingCount, std::vector<Buffer> &buffers, std::vector<uint32_t> &offsets)
