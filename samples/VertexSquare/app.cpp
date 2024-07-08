@@ -67,7 +67,8 @@ layout(location = 0) out vec4 outColor;
 
 void main()
 {
-	outColor = vec4(constants.color, 1.0);
+	//outColor = vec4(constants.color, 1.0);
+    outColor = vec4(1.0,1.0,1.0, 1.0);
 })";
 
 const std::string vertexShaderText = R"(#version 320 es
@@ -81,7 +82,8 @@ layout(location = 0) in vec2 inPosition;
 
 void main()
 {
-    gl_Position = vec4(ubo.rotation*vec3(inPosition,0.0), 1.0);
+    //gl_Position = vec4(ubo.rotation*vec3(inPosition,0.5), 1.0);
+    gl_Position = vec4(inPosition,0.0, 1.0);
 }
 )";
 
@@ -121,6 +123,7 @@ void initLettuce()
     descriptor.AddDescriptorBinding(0, Lettuce::Core::DescriptorType::UniformBuffer, 1, Lettuce::Core::PipelineStage::Vertex);
     descriptor.Build(device);
 
+    connector.AddDescriptor(descriptor);
     connector.AddPushConstant<PushConstants>(0, Lettuce::Core::PipelineStage::Fragment);
     connector.Build(device);
 
@@ -159,20 +162,21 @@ void draw()
     swapchain.AcquireNextImage(acquireImageSemaphoreIndex);
     commandList.Reset();
     commandList.Begin();
-    commandList.BeginRendering(swapchain, 0.9, 0.9, 0.9);
+    commandList.BeginRendering(swapchain, 0.2, 0.2, 0.2);
 
     update();
 
+    commandList.BindDescriptorSetToGraphics(connector, descriptor);
     commandList.BindGraphicsPipeline(graphicsPipeline);
     commandList.BindVertexBuffer(vertexBuffer);
     commandList.BindIndexBuffer(indexBuffer, Lettuce::Core::IndexType::UInt16);
-    commandList.BindDescriptorSetToGraphics(connector, descriptor);
     commandList.PushConstant(connector, Lettuce::Core::PipelineStage::Fragment, constants);
 
     commandList.SetViewport(width, height);
     commandList.SetTopology(Lettuce::Core::Topology::TriangleList);
     commandList.SetScissor(swapchain);
     commandList.SetLineWidth(1.0f);
+
     commandList.DrawIndexed((uint32_t)indices.size());
 
     commandList.EndRendering(swapchain);

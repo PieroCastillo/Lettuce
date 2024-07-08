@@ -94,6 +94,7 @@ export namespace Lettuce::Core
 
             VkPipelineInputAssemblyStateCreateInfo inputAssemblyStateCI = {
                 .sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO,
+                .topology = VkPrimitiveTopology::VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
             };
             VkPipelineViewportStateCreateInfo viewportStateCI = {
                 .sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO,

@@ -233,7 +233,7 @@ export namespace Lettuce::Core
 
         void BindDescriptorSetToGraphics(PipelineConnector &connector, Descriptor &descriptor)
         {
-            vkCmdBindDescriptorSets(_commandBuffer[index], VkPipelineBindPoint::VK_PIPELINE_BIND_POINT_GRAPHICS, connector._pipelineLayout, 0, 2, &descriptor._descriptorSet, 0, nullptr);
+            vkCmdBindDescriptorSets(_commandBuffer[index], VkPipelineBindPoint::VK_PIPELINE_BIND_POINT_GRAPHICS, connector._pipelineLayout, 0, 1, &descriptor._descriptorSet, 0, nullptr);
         }
 
         void BindVertexBuffers(uint32_t firstBinding, uint32_t bindingCount, std::vector<Buffer> &buffers, std::vector<uint32_t> &offsets)
