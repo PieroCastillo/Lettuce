@@ -151,8 +151,9 @@ export namespace Lettuce::Core
         {
             return CreateBufferWithStaging(device, BufferUsage::VertexBuffer, sizeof(vertices[0]) * vertices.size(), vertices.data());
         }
-
-        static Buffer CreateIndexBuffer(Device &device, std::vector<size_t> indices)
+        template <typename T, typename = std::enable_if_t<
+                                  std::is_integral<T>::value && std::is_unsigned<T>::value>>
+        static Buffer CreateIndexBuffer(Device &device, std::vector<T> indices)
         {
             return CreateBufferWithStaging(device, BufferUsage::IndexBuffer, sizeof(indices[0]) * indices.size(), indices.data());
         }
@@ -171,6 +172,14 @@ export namespace Lettuce::Core
                           MemoryProperty::DeviceLocal);
             stagingBuffer.CopyTo(buffer);
             stagingBuffer.Destroy();
+            return buffer;
+        }
+
+        template <typename T>
+        static Buffer CreateUniformBuffer(Device &device, T *data){
+            Buffer buffer;
+            buffer.Create(device, sizeof(T), BufferUsage::UniformBuffer, MemoryProperty::HostVisible | MemoryProperty::HostCoherent);
+            vkMapMemory(device._device, buffer._memory, 0, sizeof(T), 0, (void**)&data);
             return buffer;
         }
 

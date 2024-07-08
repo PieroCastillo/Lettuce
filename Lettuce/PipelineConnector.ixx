@@ -21,10 +21,9 @@ export namespace Lettuce::Core
         Device _device;
         VkPipelineLayout _pipelineLayout;
         std::vector<VkPushConstantRange> pushConstants;
-        // TODO: enable descriptor sets
         std::vector<VkDescriptorSetLayout> descriptorSetLayouts;
 
-        void AddDescriptor(Descriptor descriptor)
+        void AddDescriptor(Descriptor &descriptor)
         {
             descriptorSetLayouts.emplace_back(descriptor._setLayout);
         }
@@ -32,9 +31,12 @@ export namespace Lettuce::Core
         template <typename T1>
         void AddPushConstant(uint32_t offset, PipelineStage stage)
         {
-            pushConstants.emplace_back({.stageFlags = stage,
-                                        .offset = offset,
-                                        .size = sizeof(T1)});
+            VkPushConstantRange pushConstantRange = {
+                .stageFlags = (VkShaderStageFlags)stage,
+                .offset = offset,
+                .size = sizeof(T1),
+            };
+            pushConstants.emplace_back(pushConstantRange);
         }
 
         void Build(Device &device)

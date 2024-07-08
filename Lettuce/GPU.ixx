@@ -11,6 +11,8 @@ module;
 
 export module Lettuce:GPU;
 
+import :Utils;
+
 export namespace Lettuce::Core
 {
     class GPU
@@ -66,6 +68,7 @@ export namespace Lettuce::Core
                     return i;
                 }
             }
+            return 0;
         }
 
     private:

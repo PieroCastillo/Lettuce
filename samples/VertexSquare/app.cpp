@@ -1,8 +1,14 @@
 //
 // Created by piero on 10/02/2024.
-// this example is made to test PushConstansts, DescriptorSets, WriteDescriptors and Bindings
+// this example is made to test PushConstansts, DescriptorSets, Buffers and Indexing
 //
 #include <iostream>
+#include <vector>
+#define GLM_ENABLE_EXPERIMENTAL
+#include <glm/glm.hpp>
+#include <glm/mat3x3.hpp>
+#include <glm/gtx/matrix_transform_2d.hpp>
+#include <glm/vec3.hpp>
 #include <GLFW/glfw3.h>
 #define GLFW_EXPOSE_NATIVE_WIN32
 #include <GLFW/glfw3native.h>
@@ -24,56 +30,65 @@ Lettuce::Core::Device device;
 Lettuce::Core::Swapchain swapchain;
 Lettuce::Core::CommandList commandList;
 Lettuce::Core::SynchronizationStructure sync;
+Lettuce::Core::Descriptor descriptor;
 Lettuce::Core::PipelineConnector connector;
 Lettuce::Core::GraphicsPipeline graphicsPipeline;
 Lettuce::Core::Shader fragmentShader;
 Lettuce::Core::Shader vertexShader;
+Lettuce::Core::Buffer vertexBuffer;
+Lettuce::Core::Buffer indexBuffer;
+Lettuce::Core::Buffer uniformBuffer;
 const int acquireImageSemaphoreIndex = 0;
 const int renderSemaphoreIndex = 1;
 const int fenceIndex = 0;
 
-// struct Vertex = {
+struct Vertex
+{
+    glm::vec2 inPosition;
+};
 
-// };
+struct UBO
+{
+    glm::mat3x3 rotation;
+};
+
+struct PushConstants{
+    glm::vec3 color;
+};
 
 const std::string fragmentShaderText = R"(#version 320 es
 
 precision mediump float;
 
-layout(location = 0) in vec3 in_color;
-
-layout(location = 0) out vec4 out_color;
+layout(push_constant) uniform PushConstants{
+    vec3 color;
+} constants;
+layout(location = 0) out vec4 outColor;
 
 void main()
 {
-	out_color = vec4(in_color, 1.0);
+	outColor = vec4(constants.color, 1.0);
 })";
 
 const std::string vertexShaderText = R"(#version 320 es
 
 precision mediump float;
 
-layout(location = 0) out vec3 out_color;
-
-vec2 triangle_positions[3] = vec2[](
-    vec2(0.5, -0.5),
-    vec2(0.5, 0.5),
-    vec2(-0.5, 0.5)
-);
-
-vec3 triangle_colors[3] = vec3[](
-    vec3(1.0, 0.0, 0.0),
-    vec3(0.0, 1.0, 0.0),
-    vec3(0.0, 0.0, 1.0)
-);
+layout(binding = 0) uniform UBO {
+    mat3 rotation;
+} ubo;
+layout(location = 0) in vec2 inPosition;
 
 void main()
 {
-    gl_Position = vec4(triangle_positions[gl_VertexIndex], 0.5, 1.0);
-
-    out_color = triangle_colors[gl_VertexIndex];
+    gl_Position = vec4(ubo.rotation*vec3(inPosition,0.0), 1.0);
 }
 )";
+
+UBO ubo;
+PushConstants constants;
+std::vector<Vertex> vertices = {{{-0.5f, -0.5f}}, {{0.5f, -0.5f}}, {{0.5f, 0.5f}}, {{-0.5f, 0.5f}}};
+std::vector<uint16_t> indices = {0, 1, 2, 2, 3, 0};
 
 int main()
 {
@@ -102,6 +117,11 @@ void initLettuce()
     sync.Create(device, 1, 2);
     swapchain.Create(device, sync, width, height);
     commandList.Create(device, sync);
+
+    descriptor.AddDescriptorBinding(0, Lettuce::Core::DescriptorType::UniformBuffer, 1, Lettuce::Core::PipelineStage::Vertex);
+    descriptor.Build(device);
+
+    connector.AddPushConstant<PushConstants>(0, Lettuce::Core::PipelineStage::Fragment);
     connector.Build(device);
 
     Lettuce::Core::Compilers::GLSLCompiler compiler;
@@ -109,13 +129,28 @@ void initLettuce()
     fragmentShader.Create(device, compiler, fragmentShaderText, "main", "fragment.glsl", Lettuce::Core::PipelineStage::Fragment, true);
     vertexShader.Create(device, compiler, vertexShaderText, "main", "vertex.glsl", Lettuce::Core::PipelineStage::Vertex, true);
 
+    graphicsPipeline.AddVertexBindingDescription<Vertex>(0);
+    graphicsPipeline.AddVertexAttribute(0, 0, offsetof(Vertex, inPosition), (int)Lettuce::Core::Format32::Vec2F);
     graphicsPipeline.AddShaderStage(fragmentShader);
     graphicsPipeline.AddShaderStage(vertexShader);
-    graphicsPipeline.Build(device, connector, swapchain);
+    graphicsPipeline.Build(device, connector, swapchain, Lettuce::Core::FrontFace::CounterClockwise);
 
     fragmentShader.Destroy();
     vertexShader.Destroy();
+
+    indexBuffer = Lettuce::Core::Buffer::CreateIndexBuffer(device, indices);
+    vertexBuffer = Lettuce::Core::Buffer::CreateVertexBuffer(device, vertices);
+    uniformBuffer = Lettuce::Core::Buffer::CreateUniformBuffer(device, &ubo);
+
+    std::vector<Lettuce::Core::Buffer> buffers = {uniformBuffer};
+    descriptor.Update<UBO>(0, buffers);
 }
+
+void update(){
+    constants.color = glm::vec3(0.5,0.3,0.4);
+    ubo.rotation = glm::rotate(glm::mat3x3(1.0f), glm::radians(90.0f));
+}
+
 
 void draw()
 {
@@ -124,14 +159,21 @@ void draw()
     swapchain.AcquireNextImage(acquireImageSemaphoreIndex);
     commandList.Reset();
     commandList.Begin();
-    commandList.BeginRendering(swapchain, 0.2, 0.5, 0.3);
+    commandList.BeginRendering(swapchain, 0.9, 0.9, 0.9);
+
+    update();
 
     commandList.BindGraphicsPipeline(graphicsPipeline);
+    commandList.BindVertexBuffer(vertexBuffer);
+    commandList.BindIndexBuffer(indexBuffer, Lettuce::Core::IndexType::UInt16);
+    commandList.BindDescriptorSetToGraphics(connector, descriptor);
+    commandList.PushConstant(connector, Lettuce::Core::PipelineStage::Fragment, constants);
+
     commandList.SetViewport(width, height);
     commandList.SetTopology(Lettuce::Core::Topology::TriangleList);
     commandList.SetScissor(swapchain);
     commandList.SetLineWidth(1.0f);
-    commandList.Draw(3, 1, 0, 0);
+    commandList.DrawIndexed((uint32_t)indices.size());
 
     commandList.EndRendering(swapchain);
     commandList.End();
@@ -139,12 +181,15 @@ void draw()
     swapchain.Present(renderSemaphoreIndex);
     device.Wait();
 }
-
 void endLettuce()
 {
     commandList.Destroy();
+    indexBuffer.Destroy();
+    vertexBuffer.Destroy();
+    uniformBuffer.Destroy();
     graphicsPipeline.Destroy();
     connector.Destroy();
+    descriptor.Destroy();
     swapchain.Destroy();
     sync.Destroy();
     device.Destroy();

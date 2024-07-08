@@ -16,26 +16,6 @@ import :Buffer;
 
 export namespace Lettuce::Core
 {
-    enum class DescriptorType
-    {
-        Sampler = 0,
-        CombinedImageSampler = 1,
-        SampledImage = 2,
-        StorageImage = 3,
-        UniformTexelBuffer = 4,
-        StorageTexelBuffer = 5,
-        UniformBuffer = 6,
-        StorageBuffer = 7,
-        UniformBufferDynamic = 8,
-        StorageBufferDynamic = 9,
-        InputAttachment = 10,
-        // Provided by VK_VERSION_1_3
-        InlineUniformBlock = 1000138000,
-        // Provided by VK_KHR_acceleration_structure
-        AccelerationStructure = 1000150000,
-        Mutable = 1000351000,
-    };
-
     class Descriptor
     {
     public:

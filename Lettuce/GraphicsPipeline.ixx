@@ -61,7 +61,7 @@ export namespace Lettuce::Core
             stages.emplace_back(pipelineShaderStageCI);
         }
 
-        void Build(Device &device, PipelineConnector &connector, Swapchain &swapchain)
+        void Build(Device &device, PipelineConnector &connector, Swapchain &swapchain, FrontFace frontFace = FrontFace::Clockwise)
         {
             _device = device;
             _pipelineLayout = connector._pipelineLayout;
@@ -103,7 +103,7 @@ export namespace Lettuce::Core
             VkPipelineRasterizationStateCreateInfo rasterizationStateCI = {
                 .sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO,
                 .cullMode = VK_CULL_MODE_BACK_BIT,
-                .frontFace = VK_FRONT_FACE_CLOCKWISE,
+                .frontFace = (VkFrontFace)frontFace,
             };
             VkPipelineMultisampleStateCreateInfo multisampleStateCI = {
                 .sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO,

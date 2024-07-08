@@ -226,12 +226,13 @@ export namespace Lettuce::Core
             // std::cout << res << std::endl;
         }
 
-        void BindGraphicsPipeline(GraphicsPipeline pipeline)
+        void BindGraphicsPipeline(GraphicsPipeline &pipeline)
         {
             vkCmdBindPipeline(_commandBuffer[index], VkPipelineBindPoint::VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline._pipeline);
         }
 
-        void BindDescriptorSetToGraphics(PipelineConnector connector, Descriptor descriptor){
+        void BindDescriptorSetToGraphics(PipelineConnector &connector, Descriptor &descriptor)
+        {
             vkCmdBindDescriptorSets(_commandBuffer[index], VkPipelineBindPoint::VK_PIPELINE_BIND_POINT_GRAPHICS, connector._pipelineLayout, 0, 2, &descriptor._descriptorSet, 0, nullptr);
         }
 
@@ -245,13 +246,13 @@ export namespace Lettuce::Core
             // vkCmdBindVertexBuffers(_commandBuffer[index], firstBinding, bindingCount, , offsets.data());
         }
 
-        void BindVertexBuffer(Buffer vertexBuffer)
+        void BindVertexBuffer(Buffer &vertexBuffer)
         {
             VkDeviceSize offset = 0;
             vkCmdBindVertexBuffers(_commandBuffer[index], 0, 1, &vertexBuffer._buffer, &offset);
         }
 
-        void BindIndexBuffer(Buffer indexBuffer, IndexType indexType)
+        void BindIndexBuffer(Buffer &indexBuffer, IndexType indexType)
         {
             vkCmdBindIndexBuffer(_commandBuffer[index], indexBuffer._buffer, 0, (VkIndexType)indexType);
         }
