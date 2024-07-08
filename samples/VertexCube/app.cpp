@@ -1,5 +1,6 @@
 //
 // Created by piero on 10/02/2024.
+// this example is made to test PushConstansts, DescriptorSets, WriteDescriptors and Bindings
 //
 #include <iostream>
 #include <GLFW/glfw3.h>

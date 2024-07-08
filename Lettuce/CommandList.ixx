@@ -236,7 +236,8 @@ export namespace Lettuce::Core
 
         void BindVertexBuffer(Buffer vertexBuffer)
         {
-            // vkCmdBindVertexBuffers(_commandBuffer, 0, 1, {vertexBuffer._buffer}, {0});
+            VkDeviceSize offset = 0;
+            vkCmdBindVertexBuffers(_commandBuffer, 0, 1, &vertexBuffer._buffer, &offset);
         }
 
         void BindIndexBuffer(Buffer indexBuffer, IndexType indexType)
@@ -285,6 +286,11 @@ export namespace Lettuce::Core
         void SetTopology(Topology topology)
         {
             vkCmdSetPrimitiveTopology(_commandBuffer, (VkPrimitiveTopology)topology);
+        }
+
+        template<typename T>
+        void PushConstant(PipelineConnector &connector, PipelineStage stage, T &constant, uint32_t offset = 0){
+            vkCmdPushConstants(_commandBuffer, connector._pipelineLayout, (VkShaderStageFlags)stage, offset, sizeof(T), &constant);
         }
 
         void Reset()
