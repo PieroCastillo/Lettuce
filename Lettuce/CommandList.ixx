@@ -6,6 +6,8 @@ module;
 #include <array>
 #define VOLK_IMPLEMENTATION
 #include <volk.h>
+#include <algorithm>
+#include <cstdint>
 
 export module Lettuce:CommandList;
 
@@ -51,13 +53,16 @@ export namespace Lettuce::Core
     {
     public:
         VkCommandPool _commandPool = VK_NULL_HANDLE;
-        VkCommandBuffer _commandBuffer = VK_NULL_HANDLE;
+        std::vector<VkCommandBuffer> _commandBuffer;
+        uint32_t _count;
+        int index = 0;
 
         Device _device;
         SynchronizationStructure _sync;
 
-        void Create(Device &device, SynchronizationStructure &sync, QueueType queueType = QueueType::Graphics)
+        void Create(Device &device, SynchronizationStructure &sync, QueueType queueType = QueueType::Graphics, uint32_t count = 1)
         {
+            _count = std::max(count, 1U);
             _sync = sync;
             _device = device;
             VkCommandPoolCreateInfo cmdPoolCI = {
@@ -74,21 +79,22 @@ export namespace Lettuce::Core
                 .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
                 .commandPool = _commandPool,
                 .level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
-                .commandBufferCount = 1,
+                .commandBufferCount = _count,
             };
-            checkResult(vkAllocateCommandBuffers(_device._device, &cmdBufferAI, &_commandBuffer), "CommandBuffer allocated successfully");
+            _commandBuffer.resize(count);
+            checkResult(vkAllocateCommandBuffers(_device._device, &cmdBufferAI, _commandBuffer.data()), "CommandBuffer allocated successfully");
         }
 
         void Begin()
         {
             VkCommandBufferBeginInfo cmdBeginCI = {
                 .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO};
-            vkBeginCommandBuffer(_commandBuffer, &cmdBeginCI);
+            vkBeginCommandBuffer(_commandBuffer[index], &cmdBeginCI);
         }
 
         void End()
         {
-            vkEndCommandBuffer(_commandBuffer);
+            vkEndCommandBuffer(_commandBuffer[index]);
         }
 
         void BeginRendering(Swapchain swapchain, float r = 1, float g = 1, float b = 1, float a = 1)
@@ -108,7 +114,7 @@ export namespace Lettuce::Core
                 }};
 
             vkCmdPipelineBarrier(
-                _commandBuffer,
+                _commandBuffer[index],
                 VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,             // srcStageMask
                 VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, // dstStageMask
                 0,
@@ -144,12 +150,12 @@ export namespace Lettuce::Core
                 .pColorAttachments = &colorAttachmentI,
             };
 
-            vkCmdBeginRendering(_commandBuffer, &renderI);
+            vkCmdBeginRendering(_commandBuffer[index], &renderI);
         }
 
         void EndRendering(Swapchain swapchain)
         {
-            vkCmdEndRendering(_commandBuffer);
+            vkCmdEndRendering(_commandBuffer[index]);
 
             const VkImageMemoryBarrier image_memory_barrier{
                 .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
@@ -166,7 +172,7 @@ export namespace Lettuce::Core
                 }};
 
             vkCmdPipelineBarrier(
-                _commandBuffer,
+                _commandBuffer[index],
                 VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, // srcStageMask
                 VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,          // dstStageMask
                 0,
@@ -191,7 +197,7 @@ export namespace Lettuce::Core
 
             // VkCommandBufferSubmitInfo cmdSubmitInfo = {
             //     .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_SUBMIT_INFO,
-            //     .commandBuffer = _commandBuffer};
+            //     .commandBuffer = _commandBuffer[index]};
 
             VkPipelineStageFlags waitStages[] = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
             VkSubmitInfo submitI = {
@@ -200,7 +206,7 @@ export namespace Lettuce::Core
                 .pWaitSemaphores = &(_sync.semaphores[acquireImageSemaphoreIndex]),
                 .pWaitDstStageMask = waitStages,
                 .commandBufferCount = 1,
-                .pCommandBuffers = &_commandBuffer,
+                .pCommandBuffers = &_commandBuffer[index],
                 .signalSemaphoreCount = 1,
                 .pSignalSemaphores = &(_sync.semaphores[renderSemaphoreIndex]),
             };
@@ -221,7 +227,7 @@ export namespace Lettuce::Core
 
         void BindGraphicsPipeline(GraphicsPipeline pipeline)
         {
-            vkCmdBindPipeline(_commandBuffer, VkPipelineBindPoint::VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline._pipeline);
+            vkCmdBindPipeline(_commandBuffer[index], VkPipelineBindPoint::VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline._pipeline);
         }
 
         void BindVertexBuffers(uint32_t firstBinding, uint32_t bindingCount, std::vector<Buffer> &buffers, std::vector<uint32_t> &offsets)
@@ -231,28 +237,28 @@ export namespace Lettuce::Core
             // {
             //     _buffers.emplace_back(buffer);
             // }
-            // vkCmdBindVertexBuffers(_commandBuffer, firstBinding, bindingCount, , offsets.data());
+            // vkCmdBindVertexBuffers(_commandBuffer[index], firstBinding, bindingCount, , offsets.data());
         }
 
         void BindVertexBuffer(Buffer vertexBuffer)
         {
             VkDeviceSize offset = 0;
-            vkCmdBindVertexBuffers(_commandBuffer, 0, 1, &vertexBuffer._buffer, &offset);
+            vkCmdBindVertexBuffers(_commandBuffer[index], 0, 1, &vertexBuffer._buffer, &offset);
         }
 
         void BindIndexBuffer(Buffer indexBuffer, IndexType indexType)
         {
-            vkCmdBindIndexBuffer(_commandBuffer, indexBuffer._buffer, 0, (VkIndexType)indexType);
+            vkCmdBindIndexBuffer(_commandBuffer[index], indexBuffer._buffer, 0, (VkIndexType)indexType);
         }
 
         void Draw(uint32_t vertexCount, uint32_t instanceCount, uint32_t firstVertex, uint32_t firstInstance)
         {
-            vkCmdDraw(_commandBuffer, vertexCount, instanceCount, firstVertex, firstInstance);
+            vkCmdDraw(_commandBuffer[index], vertexCount, instanceCount, firstVertex, firstInstance);
         }
 
         void DrawIndexed(uint32_t indexCount, uint32_t instanceCount = 1, uint32_t firstIndex = 0, int32_t vertexOffset = 0, uint32_t firstInstance = 0)
         {
-            vkCmdDrawIndexed(_commandBuffer, indexCount, instanceCount, firstIndex, vertexOffset, firstInstance);
+            vkCmdDrawIndexed(_commandBuffer[index], indexCount, instanceCount, firstIndex, vertexOffset, firstInstance);
         }
 
         void SetScissor(Swapchain swapchain, int32_t xOffset = 0, int32_t yOffset = 0)
@@ -261,7 +267,7 @@ export namespace Lettuce::Core
                 .offset = {xOffset, yOffset},
                 .extent = swapchain.extent,
             };
-            vkCmdSetScissor(_commandBuffer, 0, 1, &scissor);
+            vkCmdSetScissor(_commandBuffer[index], 0, 1, &scissor);
         }
 
         void SetViewport(float width, float height, float minDepth = 0.0f, float maxDepth = 1.0f, float x = 0.0f, float y = 0.0f)
@@ -275,32 +281,36 @@ export namespace Lettuce::Core
                 .maxDepth = maxDepth,
             };
 
-            vkCmdSetViewport(_commandBuffer, 0, 1, &viewport);
+            vkCmdSetViewport(_commandBuffer[index], 0, 1, &viewport);
         }
 
         void SetLineWidth(float lineWidth)
         {
-            vkCmdSetLineWidth(_commandBuffer, lineWidth);
+            vkCmdSetLineWidth(_commandBuffer[index], lineWidth);
         }
 
         void SetTopology(Topology topology)
         {
-            vkCmdSetPrimitiveTopology(_commandBuffer, (VkPrimitiveTopology)topology);
+            vkCmdSetPrimitiveTopology(_commandBuffer[index], (VkPrimitiveTopology)topology);
         }
 
-        template<typename T>
-        void PushConstant(PipelineConnector &connector, PipelineStage stage, T &constant, uint32_t offset = 0){
-            vkCmdPushConstants(_commandBuffer, connector._pipelineLayout, (VkShaderStageFlags)stage, offset, sizeof(T), &constant);
+        template <typename T>
+        void PushConstant(PipelineConnector &connector, PipelineStage stage, T &constant, uint32_t offset = 0)
+        {
+            vkCmdPushConstants(_commandBuffer[index], connector._pipelineLayout, (VkShaderStageFlags)stage, offset, sizeof(T), &constant);
         }
 
         void Reset()
         {
-            vkResetCommandBuffer(_commandBuffer, 0);
+            vkResetCommandBuffer(_commandBuffer[index], 0);
         }
 
         void Destroy()
         {
-            vkFreeCommandBuffers(_device._device, _commandPool, 1, &_commandBuffer);
+            for (uint32_t i = 0; i < _count; i++)
+            {
+                vkFreeCommandBuffers(_device._device, _commandPool, 1, &_commandBuffer[i]);
+            }
             vkDestroyCommandPool(_device._device, _commandPool, nullptr);
         }
     };

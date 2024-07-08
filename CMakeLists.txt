@@ -55,9 +55,9 @@ add_executable(ClearScreenSample
         samples/ClearScreenSample/app.cpp)
 add_executable(TriangleSample
         samples/TriangleSample/app.cpp)
-add_executable(VertexCube
-        samples/VertexCube/app.cpp)
+add_executable(VertexSquare
+        samples/VertexSquare/app.cpp)
 target_link_libraries(Lettuce  PRIVATE volk::volk_headers Vulkan::shaderc_combined)
 target_link_libraries(ClearScreenSample Lettuce glfw)
 target_link_libraries(TriangleSample Lettuce glfw)
-target_link_libraries(VertexCube Lettuce glfw)
+target_link_libraries(VertexSquare Lettuce glfw)

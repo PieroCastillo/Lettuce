@@ -88,7 +88,7 @@ int main()
 void initLettuce()
 {
     instance._debug = true;
-    instance.Create("Vertex Cube Sample", Lettuce::Core::Version{0, 1, 0, 0}, {});
+    instance.Create("Vertex Square Sample", Lettuce::Core::Version{0, 1, 0, 0}, {});
     instance.CreateSurface(glfwGetWin32Window(window), GetModuleHandle(nullptr));
     auto gpus = instance.getGPUs();
     for (auto gpu : gpus)
@@ -165,7 +165,7 @@ void initWindow()
     glfwInit();
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
     glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
-    window = glfwCreateWindow(width, height, "Lettuce Vertex Cube Sample", nullptr, nullptr);
+    window = glfwCreateWindow(width, height, "Lettuce Vertex Square Sample", nullptr, nullptr);
 }
 
 void endWindow()

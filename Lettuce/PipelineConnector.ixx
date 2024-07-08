@@ -11,6 +11,7 @@ export module Lettuce:PipelineConnector;
 
 import :Device;
 import :Utils;
+import :Descriptor;
 
 export namespace Lettuce::Core
 {
@@ -23,12 +24,9 @@ export namespace Lettuce::Core
         // TODO: enable descriptor sets
         std::vector<VkDescriptorSetLayout> descriptorSetLayouts;
 
-        void AddDescriptor()
+        void AddDescriptor(Descriptor descriptor)
         {
-            // VkDescriptorPool;
-            // VkDescriptorSet;
-            // VkDescriptorSetLayout;
-            // VkDescriptorSetLayoutBinding;
+            descriptorSetLayouts.emplace_back(descriptor._setLayout);
         }
 
         template <typename T1>
