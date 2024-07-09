@@ -30,7 +30,6 @@ export namespace Lettuce::Core
 
         void AddDescriptorBinding(uint32_t binding,
                                   DescriptorType type,
-                                  uint32_t descriptorCount,
                                   PipelineStage stage)
         // const VkSampler *pImmutableSamplers)
         {
@@ -46,7 +45,7 @@ export namespace Lettuce::Core
             bindings.emplace_back(setBinding);
         }
 
-        void Build(Device &device)
+        void BuildLayout(Device &device)
         {
             _device = device;
 
@@ -56,7 +55,10 @@ export namespace Lettuce::Core
                 .pBindings = bindings.data(),
             };
             checkResult(vkCreateDescriptorSetLayout(_device._device, &descriptorSetLayoutCI, nullptr, &_setLayout), "Descriptor set Layout created successfully");
+        }
 
+        void Build()
+        {
             std::vector<VkDescriptorPoolSize> sizes;
             uint32_t maxSets = 0;
             for (auto t : typesMap)

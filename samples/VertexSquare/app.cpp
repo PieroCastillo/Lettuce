@@ -52,11 +52,12 @@ struct UBO
     glm::mat3x3 rotation;
 };
 
-struct PushConstants{
+struct PushConstants
+{
     glm::vec3 color;
 };
 
-const std::string fragmentShaderText = R"(#version 320 es
+const std::string fragmentShaderText = R"(#version 450
 
 precision mediump float;
 
@@ -67,23 +68,23 @@ layout(location = 0) out vec4 outColor;
 
 void main()
 {
-	//outColor = vec4(constants.color, 1.0);
-    outColor = vec4(1.0,1.0,1.0, 1.0);
+	outColor = vec4(constants.color, 1.0);
+  //  outColor = vec4(1.0,1.0,1.0, 1.0);
 })";
 
-const std::string vertexShaderText = R"(#version 320 es
+const std::string vertexShaderText = R"(#version 450
 
 precision mediump float;
 
-layout(binding = 0) uniform UBO {
+layout(set = 0,binding = 0) uniform UBO {
     mat3 rotation;
 } ubo;
 layout(location = 0) in vec2 inPosition;
 
 void main()
 {
-    //gl_Position = vec4(ubo.rotation*vec3(inPosition,0.5), 1.0);
-    gl_Position = vec4(inPosition,0.0, 1.0);
+    gl_Position = vec4(ubo.rotation*vec3(inPosition,0.0), 1.0);
+    //gl_Position = vec4(inPosition,0.0, 1.0);
 }
 )";
 
@@ -120,8 +121,8 @@ void initLettuce()
     swapchain.Create(device, sync, width, height);
     commandList.Create(device, sync);
 
-    descriptor.AddDescriptorBinding(0, Lettuce::Core::DescriptorType::UniformBuffer, 1, Lettuce::Core::PipelineStage::Vertex);
-    descriptor.Build(device);
+    descriptor.AddDescriptorBinding(0, Lettuce::Core::DescriptorType::UniformBuffer, Lettuce::Core::PipelineStage::Vertex);
+    descriptor.BuildLayout(device);
 
     connector.AddDescriptor(descriptor);
     connector.AddPushConstant<PushConstants>(0, Lettuce::Core::PipelineStage::Fragment);
@@ -136,7 +137,7 @@ void initLettuce()
     graphicsPipeline.AddVertexAttribute(0, 0, offsetof(Vertex, inPosition), (int)Lettuce::Core::Format32::Vec2F);
     graphicsPipeline.AddShaderStage(fragmentShader);
     graphicsPipeline.AddShaderStage(vertexShader);
-    graphicsPipeline.Build(device, connector, swapchain, Lettuce::Core::FrontFace::CounterClockwise);
+    graphicsPipeline.Build(device, connector, swapchain, Lettuce::Core::FrontFace::Clockwise);
 
     fragmentShader.Destroy();
     vertexShader.Destroy();
@@ -144,16 +145,20 @@ void initLettuce()
     indexBuffer = Lettuce::Core::Buffer::CreateIndexBuffer(device, indices);
     vertexBuffer = Lettuce::Core::Buffer::CreateVertexBuffer(device, vertices);
     uniformBuffer = Lettuce::Core::Buffer::CreateUniformBuffer(device, &ubo);
+    descriptor.Build();
 
     std::vector<Lettuce::Core::Buffer> buffers = {uniformBuffer};
     descriptor.Update<UBO>(0, buffers);
 }
 
-void update(){
-    constants.color = glm::vec3(0.5,0.3,0.4);
-    ubo.rotation = glm::rotate(glm::mat3x3(1.0f), glm::radians(90.0f));
-}
+void update()
+{
+    constants.color = glm::vec3(0.6, 0.6, 0.1);
+    UBO ubo1;
+    ubo1.rotation = glm::rotate(glm::mat3x3(1.0f), glm::radians(0.0f));
 
+    memcpy(&ubo, &ubo1, sizeof(UBO));
+}
 
 void draw()
 {
@@ -165,17 +170,16 @@ void draw()
     commandList.BeginRendering(swapchain, 0.2, 0.2, 0.2);
 
     update();
-
-    commandList.BindDescriptorSetToGraphics(connector, descriptor);
-    commandList.BindGraphicsPipeline(graphicsPipeline);
-    commandList.BindVertexBuffer(vertexBuffer);
-    commandList.BindIndexBuffer(indexBuffer, Lettuce::Core::IndexType::UInt16);
-    commandList.PushConstant(connector, Lettuce::Core::PipelineStage::Fragment, constants);
-
     commandList.SetViewport(width, height);
     commandList.SetTopology(Lettuce::Core::Topology::TriangleList);
     commandList.SetScissor(swapchain);
     commandList.SetLineWidth(1.0f);
+
+    commandList.BindGraphicsPipeline(graphicsPipeline);
+    commandList.PushConstant(connector, Lettuce::Core::PipelineStage::Fragment, constants);
+    commandList.BindVertexBuffer(vertexBuffer);
+    commandList.BindIndexBuffer(indexBuffer, Lettuce::Core::IndexType::UInt16);
+    commandList.BindDescriptorSetToGraphics(connector, descriptor);
 
     commandList.DrawIndexed((uint32_t)indices.size());
 
