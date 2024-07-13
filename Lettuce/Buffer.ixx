@@ -176,10 +176,10 @@ export namespace Lettuce::Core
         }
 
         template <typename T>
-        static Buffer CreateUniformBuffer(Device &device, T *data){
+        static Buffer CreateUniformBuffer(Device &device, T **data){
             Buffer buffer;
             buffer.Create(device, sizeof(T), BufferUsage::UniformBuffer, MemoryProperty::HostVisible | MemoryProperty::HostCoherent);
-            vkMapMemory(device._device, buffer._memory, 0, sizeof(T), 0, (void**)&data);
+            vkMapMemory(device._device, buffer._memory, 0, sizeof(T), 0, (void**)data);
             return buffer;
         }
 
