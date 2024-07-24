@@ -222,7 +222,7 @@ export namespace Lettuce::Core
             //     .pSignalSemaphoreInfos = &signalSemaphoreSubmitInfo,
             // };
             // auto res = vkQueueSubmit2(_device._graphicsQueue, 1, &graphicsSubmitInfo, VK_NULL_HANDLE);
-            auto res = vkQueueSubmit(_device._graphicsQueue, 1, &submitI, _sync.fences[fenceIndex]);
+            vkQueueSubmit(_device._graphicsQueue, 1, &submitI, _sync.fences[fenceIndex]);
             // std::cout << res << std::endl;
         }
 

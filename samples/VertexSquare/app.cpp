@@ -4,6 +4,7 @@
 //
 #include <iostream>
 #include <vector>
+#include <string>
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/glm.hpp>
 #include <glm/mat3x3.hpp>
@@ -21,6 +22,8 @@ void initLettuce();
 void endLettuce();
 void mainLoop();
 void draw();
+void update();
+glm::mat2x2 rotationMatrix2D(float angle);
 
 GLFWwindow *window;
 const int width = 800;
@@ -38,6 +41,7 @@ Lettuce::Core::Shader vertexShader;
 Lettuce::Core::Buffer vertexBuffer;
 Lettuce::Core::Buffer indexBuffer;
 Lettuce::Core::Buffer uniformBuffer;
+Lettuce::Core::Buffer uniformBuffer2;
 const int acquireImageSemaphoreIndex = 0;
 const int renderSemaphoreIndex = 1;
 const int fenceIndex = 0;
@@ -49,7 +53,12 @@ struct Vertex
 
 struct UBO
 {
-    glm::mat3x3 rotation;
+    glm::mat2x2 rotation;
+};
+
+struct UBOFrag
+{
+    glm::vec3 color;
 };
 
 struct PushConstants
@@ -59,36 +68,43 @@ struct PushConstants
 
 const std::string fragmentShaderText = R"(#version 450
 
-precision mediump float;
+precision highp float;
 
 layout(push_constant) uniform PushConstants{
     vec3 color;
 } constants;
+
+layout(set=0, binding=1) uniform UBOFrag{
+    vec3 color;
+} ubo;
+
 layout(location = 0) out vec4 outColor;
 
 void main()
 {
-	outColor = vec4(constants.color, 1.0);
+	outColor = vec4(ubo.color + constants.color, 1.0);
+	//outColor = vec4(constants.color, 1.0);
   //  outColor = vec4(1.0,1.0,1.0, 1.0);
 })";
 
 const std::string vertexShaderText = R"(#version 450
 
-precision mediump float;
-
-layout(set = 0,binding = 0) uniform UBO {
-    mat3 rotation;
+layout(set = 0, binding = 0) uniform UBO {
+    mat2 rotation;
 } ubo;
 layout(location = 0) in vec2 inPosition;
 
 void main()
 {
-    gl_Position = vec4(ubo.rotation*vec3(inPosition,0.0), 1.0);
-    //gl_Position = vec4(inPosition,0.0, 1.0);
+    vec2 t = ubo.rotation * inPosition;
+    gl_Position = vec4(t.x, t.y, 0.0, 1.0);
 }
 )";
 
 UBO ubo;
+UBO *uboPtr = &ubo;
+UBOFrag uboFrag;
+UBOFrag *uboFragPtr = &uboFrag;
 PushConstants constants;
 std::vector<Vertex> vertices = {{{-0.5f, -0.5f}}, {{0.5f, -0.5f}}, {{0.5f, 0.5f}}, {{-0.5f, 0.5f}}};
 std::vector<uint16_t> indices = {0, 1, 2, 2, 3, 0};
@@ -122,6 +138,7 @@ void initLettuce()
     commandList.Create(device, sync);
 
     descriptor.AddDescriptorBinding(0, Lettuce::Core::DescriptorType::UniformBuffer, Lettuce::Core::PipelineStage::Vertex);
+    descriptor.AddDescriptorBinding(1, Lettuce::Core::DescriptorType::UniformBuffer, Lettuce::Core::PipelineStage::Fragment);
     descriptor.BuildLayout(device);
 
     connector.AddDescriptor(descriptor);
@@ -144,20 +161,40 @@ void initLettuce()
 
     indexBuffer = Lettuce::Core::Buffer::CreateIndexBuffer(device, indices);
     vertexBuffer = Lettuce::Core::Buffer::CreateVertexBuffer(device, vertices);
-    uniformBuffer = Lettuce::Core::Buffer::CreateUniformBuffer(device, &ubo);
+
+    uboPtr->rotation = rotationMatrix2D(0);
+    uniformBuffer = Lettuce::Core::Buffer::CreateUniformBuffer(device, &uboPtr);
+
+    uboFrag.color = glm::vec3(0.2f, 0.2f, 0.2f);
+    uniformBuffer2 = Lettuce::Core::Buffer::CreateUniformBuffer(device, &uboFragPtr);
+
     descriptor.Build();
 
-    std::vector<Lettuce::Core::Buffer> buffers = {uniformBuffer};
-    descriptor.Update<UBO>(0, buffers);
+    // std::vector<Lettuce::Core::Buffer> buffers = {uniformBuffer};
+    //  buffers.resize(1);
+    //  buffers.push_back(uniformBuffer);
+    // descriptor.Update<UBO>(0, buffers);
+    descriptor.Update<UBO>(0, uniformBuffer);
+    descriptor.Update<UBOFrag>(1, uniformBuffer2);
 }
 
 void update()
 {
     constants.color = glm::vec3(0.6, 0.6, 0.1);
     UBO ubo1;
-    ubo1.rotation = glm::rotate(glm::mat3x3(1.0f), glm::radians(0.0f));
+    ubo1.rotation = rotationMatrix2D(0);
 
-    memcpy(&ubo, &ubo1, sizeof(UBO));
+    memcpy(uboPtr, &ubo1, sizeof(UBO));
+
+    // std::cout << ((*uboPtr).rotation)[0][0] << std::endl;
+    // std::cout << ((*uboPtr).rotation)[1][0] << std::endl;
+    // std::cout << ((*uboPtr).rotation)[0][1] << std::endl;
+    // std::cout << ((*uboPtr).rotation)[1][1] << std::endl;
+
+    UBOFrag uboFrag1;
+    uboFrag1.color = glm::vec3(0.2f);
+
+    memcpy(uboFragPtr, &uboFrag1, sizeof(UBOFrag));
 }
 
 void draw()
@@ -169,17 +206,16 @@ void draw()
     commandList.Begin();
     commandList.BeginRendering(swapchain, 0.2, 0.2, 0.2);
 
-    update();
+    commandList.BindGraphicsPipeline(graphicsPipeline);
+    commandList.BindDescriptorSetToGraphics(connector, descriptor);
+    commandList.PushConstant(connector, Lettuce::Core::PipelineStage::Fragment, constants);
+    commandList.BindVertexBuffer(vertexBuffer);
+    commandList.BindIndexBuffer(indexBuffer, Lettuce::Core::IndexType::UInt16);
+
     commandList.SetViewport(width, height);
     commandList.SetTopology(Lettuce::Core::Topology::TriangleList);
     commandList.SetScissor(swapchain);
     commandList.SetLineWidth(1.0f);
-
-    commandList.BindGraphicsPipeline(graphicsPipeline);
-    commandList.PushConstant(connector, Lettuce::Core::PipelineStage::Fragment, constants);
-    commandList.BindVertexBuffer(vertexBuffer);
-    commandList.BindIndexBuffer(indexBuffer, Lettuce::Core::IndexType::UInt16);
-    commandList.BindDescriptorSetToGraphics(connector, descriptor);
 
     commandList.DrawIndexed((uint32_t)indices.size());
 
@@ -195,6 +231,7 @@ void endLettuce()
     indexBuffer.Destroy();
     vertexBuffer.Destroy();
     uniformBuffer.Destroy();
+    uniformBuffer2.Destroy();
     graphicsPipeline.Destroy();
     connector.Destroy();
     descriptor.Destroy();
@@ -209,6 +246,7 @@ void mainLoop()
     while (!glfwWindowShouldClose(window))
     {
         glfwPollEvents();
+        update();
         draw();
     }
 }
@@ -225,4 +263,12 @@ void endWindow()
 {
     glfwDestroyWindow(window);
     glfwTerminate();
+}
+
+glm::mat2x2 rotationMatrix2D(float angle)
+{
+    float cos = glm::cos(angle);
+    float sin = glm::sin(angle);
+    glm::mat2x2 m = {cos, sin, (-1)*sin, cos};
+    return m;
 }

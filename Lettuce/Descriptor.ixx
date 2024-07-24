@@ -5,6 +5,7 @@ module;
 #include <iostream>
 #include <vector>
 #include <map>
+#include <string>
 #define VOLK_IMPLEMENTATION
 #include <volk.h>
 
@@ -71,8 +72,14 @@ export namespace Lettuce::Core
                 sizes.emplace_back(size);
             }
 
+            for (auto size : sizes)
+            {
+                std::cout << "descriptor count: " << size.descriptorCount << "descriptor type int: " << size.type << std::endl;
+            }
+
             VkDescriptorPoolCreateInfo descriptorPoolCI = {
                 .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
+                .flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT,
                 // VkDescriptorPoolCreateFlags flags;
                 .maxSets = 1,
                 .poolSizeCount = (uint32_t)sizes.size(),
@@ -90,16 +97,39 @@ export namespace Lettuce::Core
         };
 
         template <typename TBufferDataType>
+        void Update(uint32_t binding, Buffer &buffer)
+        {
+            VkDescriptorBufferInfo descriptorBufferI = {
+                .buffer = buffer._buffer,
+                .offset = 0,
+                .range = sizeof(TBufferDataType),
+            };
+
+            VkWriteDescriptorSet write = {
+                .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+                .dstSet = _descriptorSet,
+                .dstBinding = binding,
+                .dstArrayElement = 0,
+                .descriptorCount = 1,
+                .descriptorType = bindingsMap[binding],
+                .pBufferInfo = &descriptorBufferI,
+            };
+            vkUpdateDescriptorSets(_device._device, 1, &write, 0, nullptr);
+        }
+
+        template <typename TBufferDataType>
         void Update(uint32_t binding, std::vector<Buffer> &buffers)
         {
             std::vector<VkDescriptorBufferInfo> buffersI;
-            for (auto buffer : buffers)
+            for (auto &buffer : buffers)
             {
                 VkDescriptorBufferInfo descriptorBufferI = {
                     .buffer = buffer._buffer,
                     .offset = 0,
                     .range = sizeof(TBufferDataType),
                 };
+                std::cout << "buffer ptr in Descriptor: " << buffer._buffer << std::endl;
+                std::cout << "object size in Descriptor: " << std::to_string(sizeof(TBufferDataType)) << std::endl;
                 buffersI.emplace_back(descriptorBufferI);
             }
 

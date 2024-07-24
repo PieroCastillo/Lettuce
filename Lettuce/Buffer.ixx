@@ -102,7 +102,7 @@ export namespace Lettuce::Core
 
             checkResult(vkAllocateMemory(_device._device, &memoryAI, nullptr, &_memory), "memory allocated sucessfully");
 
-            vkBindBufferMemory(_device._device, _buffer, _memory, 0);
+            checkResult(vkBindBufferMemory(_device._device, _buffer, _memory, 0), "binded successfully");
         }
 
         void SetData(void *src)
@@ -176,10 +176,12 @@ export namespace Lettuce::Core
         }
 
         template <typename T>
-        static Buffer CreateUniformBuffer(Device &device, T **data){
+        static Buffer CreateUniformBuffer(Device &device, T **data)
+        {
             Buffer buffer;
             buffer.Create(device, sizeof(T), BufferUsage::UniformBuffer, MemoryProperty::HostVisible | MemoryProperty::HostCoherent);
-            vkMapMemory(device._device, buffer._memory, 0, sizeof(T), 0, (void**)data);
+            checkResult(vkMapMemory(device._device, buffer._memory, 0, sizeof(T), 0, (void **)data), "mapped sucessfully");
+            // vkInvalidateMappedMemoryRanges(device._device, 1, );
             return buffer;
         }
 
