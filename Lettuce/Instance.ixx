@@ -87,6 +87,7 @@ export namespace Lettuce::Core
         {
             auto name = GetSurfaceExtensionNameByPlatform();
             std::cout << "surface ext name: " << name << std::endl;
+            // all needed vk extensions here
             requestedExtensionsNames.emplace_back(VK_KHR_SURFACE_EXTENSION_NAME);
             if (_debug)
             {

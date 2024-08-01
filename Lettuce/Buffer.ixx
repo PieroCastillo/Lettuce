@@ -126,7 +126,8 @@ export namespace Lettuce::Core
 
             VkCommandBufferBeginInfo cmdBeginI = {
                 .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
-                .flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT};
+                .flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT,
+                };
             vkBeginCommandBuffer(cmd, &cmdBeginI);
 
             VkBufferCopy bufferC = {
@@ -139,8 +140,24 @@ export namespace Lettuce::Core
             VkSubmitInfo submitI = {
                 .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
                 .commandBufferCount = 1,
-                .pCommandBuffers = &cmd};
+                .pCommandBuffers = &cmd,
+            };
             vkQueueSubmit(_device._graphicsQueue, 1, &submitI, nullptr);
+            // VkCommandBufferSubmitInfo cmdSubmitInfo = {
+            //     .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_SUBMIT_INFO,
+            //     .commandBuffer = cmd,
+            //     .deviceMask = 0,
+            // };
+
+            // VkSubmitInfo2 submitI = {
+            //     .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO_2,
+            //     .waitSemaphoreInfoCount = 0,
+            //     .commandBufferInfoCount = 1,
+            //     .pCommandBufferInfos = &cmdSubmitInfo,
+            //     .signalSemaphoreInfoCount = 0,
+            // };
+            // checkResult(vkQueueSubmit2(_device._graphicsQueue, 1, &submitI, VK_NULL_HANDLE), "cmd buffer submitted sucessfully");
+        
             vkQueueWaitIdle(_device._graphicsQueue);
 
             vkFreeCommandBuffers(_device._device, _pool, 1, &cmd);
@@ -180,8 +197,8 @@ export namespace Lettuce::Core
         {
             Buffer buffer;
             buffer.Create(device, sizeof(T), BufferUsage::UniformBuffer, MemoryProperty::HostVisible | MemoryProperty::HostCoherent);
-            checkResult(vkMapMemory(device._device, buffer._memory, 0, sizeof(T), 0, (void **)data), "mapped sucessfully");
-            // vkInvalidateMappedMemoryRanges(device._device, 1, );
+            // checkResult(vkMapMemory(device._device, buffer._memory, 0, sizeof(T), 0, (void **)data), "mapped sucessfully");
+            //  vkInvalidateMappedMemoryRanges(device._device, 1, );
             return buffer;
         }
 

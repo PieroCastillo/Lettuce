@@ -174,49 +174,50 @@ void initLettuce()
     //  buffers.resize(1);
     //  buffers.push_back(uniformBuffer);
     // descriptor.Update<UBO>(0, buffers);
-    descriptor.Update<UBO>(0, uniformBuffer);
     descriptor.Update<UBOFrag>(1, uniformBuffer2);
+    descriptor.Update<UBO>(0, uniformBuffer);
 }
 
+const float dalpha = 0.0005f;
+float alpha = 0;
 void update()
 {
     constants.color = glm::vec3(0.6, 0.6, 0.1);
-    UBO ubo1;
-    ubo1.rotation = rotationMatrix2D(0);
+    ubo.rotation = rotationMatrix2D(alpha);
+    alpha += dalpha;
 
-    memcpy(uboPtr, &ubo1, sizeof(UBO));
+    uniformBuffer.SetData((void *)uboPtr);
 
     // std::cout << ((*uboPtr).rotation)[0][0] << std::endl;
     // std::cout << ((*uboPtr).rotation)[1][0] << std::endl;
     // std::cout << ((*uboPtr).rotation)[0][1] << std::endl;
     // std::cout << ((*uboPtr).rotation)[1][1] << std::endl;
 
-    UBOFrag uboFrag1;
-    uboFrag1.color = glm::vec3(0.2f);
-
-    memcpy(uboFragPtr, &uboFrag1, sizeof(UBOFrag));
+    uboFrag.color = glm::vec3(0.2f);
+    uniformBuffer2.SetData((void *)uboFragPtr);
 }
 
 void draw()
 {
     sync.WaitForFence(fenceIndex);
-    sync.ResetAllFences();
     swapchain.AcquireNextImage(acquireImageSemaphoreIndex);
+    sync.ResetAllFences();
     commandList.Reset();
     commandList.Begin();
     commandList.BeginRendering(swapchain, 0.2, 0.2, 0.2);
 
     commandList.BindGraphicsPipeline(graphicsPipeline);
-    commandList.BindDescriptorSetToGraphics(connector, descriptor);
     commandList.PushConstant(connector, Lettuce::Core::PipelineStage::Fragment, constants);
-    commandList.BindVertexBuffer(vertexBuffer);
-    commandList.BindIndexBuffer(indexBuffer, Lettuce::Core::IndexType::UInt16);
 
     commandList.SetViewport(width, height);
     commandList.SetTopology(Lettuce::Core::Topology::TriangleList);
     commandList.SetScissor(swapchain);
     commandList.SetLineWidth(1.0f);
 
+    commandList.BindVertexBuffer(vertexBuffer);
+    commandList.BindIndexBuffer(indexBuffer, Lettuce::Core::IndexType::UInt16);
+    commandList.BindDescriptorSetToGraphics(connector, descriptor);
+    
     commandList.DrawIndexed((uint32_t)indices.size());
 
     commandList.EndRendering(swapchain);
@@ -269,6 +270,6 @@ glm::mat2x2 rotationMatrix2D(float angle)
 {
     float cos = glm::cos(angle);
     float sin = glm::sin(angle);
-    glm::mat2x2 m = {cos, sin, (-1)*sin, cos};
+    glm::mat2x2 m = {cos, sin, (-1) * sin, cos};
     return m;
 }

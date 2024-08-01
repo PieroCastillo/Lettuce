@@ -114,18 +114,18 @@ export namespace Lettuce::Core
                     .layerCount = 1,
                 }};
 
-            vkCmdPipelineBarrier(
-                _commandBuffer[index],
-                VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,             // srcStageMask
-                VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, // dstStageMask
-                0,
-                0,
-                nullptr,
-                0,
-                nullptr,
-                1,                    // imageMemoryBarrierCount
-                &image_memory_barrier // pImageMemoryBarriers
-            );
+            // vkCmdPipelineBarrier(
+            //     _commandBuffer[index],
+            //     VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,             // srcStageMask
+            //     VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, // dstStageMask
+            //     0,
+            //     0,
+            //     nullptr,
+            //     0,
+            //     nullptr,
+            //     1,                    // imageMemoryBarrierCount
+            //     &image_memory_barrier // pImageMemoryBarriers
+            // );
 
             std::array<VkClearValue, 2> clearValues{};
             clearValues[0].color = {{r, g, b, a}};
@@ -172,34 +172,22 @@ export namespace Lettuce::Core
                     .layerCount = 1,
                 }};
 
-            vkCmdPipelineBarrier(
-                _commandBuffer[index],
-                VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, // srcStageMask
-                VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,          // dstStageMask
-                0,
-                0,
-                nullptr,
-                0,
-                nullptr,
-                1,                    // imageMemoryBarrierCount
-                &image_memory_barrier // pImageMemoryBarriers
-            );
+            // vkCmdPipelineBarrier(
+            //     _commandBuffer[index],
+            //     VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, // srcStageMask
+            //     VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,          // dstStageMask
+            //     0,
+            //     0,
+            //     nullptr,
+            //     0,
+            //     nullptr,
+            //     1,                    // imageMemoryBarrierCount
+            //     &image_memory_barrier // pImageMemoryBarriers
+            // );
         }
 
         void Send(int acquireImageSemaphoreIndex, int renderSemaphoreIndex, int fenceIndex)
         {
-            // VkSemaphoreSubmitInfo waitSemaphoreSubmitInfo = {
-            //     .sType = VK_STRUCTURE_TYPE_SEMAPHORE_SUBMIT_INFO,
-            //     .semaphore = _sync.semaphores[acquireImageSemaphoreIndex],
-            //     .stageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT};
-            // VkSemaphoreSubmitInfo signalSemaphoreSubmitInfo = {
-            //     .sType = VK_STRUCTURE_TYPE_SEMAPHORE_SUBMIT_INFO,
-            //     .semaphore = _sync.semaphores[renderSemaphoreIndex]};
-
-            // VkCommandBufferSubmitInfo cmdSubmitInfo = {
-            //     .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_SUBMIT_INFO,
-            //     .commandBuffer = _commandBuffer[index]};
-
             VkPipelineStageFlags waitStages[] = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
             VkSubmitInfo submitI = {
                 .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
@@ -212,18 +200,7 @@ export namespace Lettuce::Core
                 .pSignalSemaphores = &(_sync.semaphores[renderSemaphoreIndex]),
             };
 
-            // VkSubmitInfo2 graphicsSubmitInfo = {
-            //     .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO_2,
-            //     .waitSemaphoreInfoCount = 1,
-            //     .pWaitSemaphoreInfos = &waitSemaphoreSubmitInfo,
-            //     .commandBufferInfoCount = 1,
-            //     .pCommandBufferInfos = &cmdSubmitInfo,
-            //     .signalSemaphoreInfoCount = 1,
-            //     .pSignalSemaphoreInfos = &signalSemaphoreSubmitInfo,
-            // };
-            // auto res = vkQueueSubmit2(_device._graphicsQueue, 1, &graphicsSubmitInfo, VK_NULL_HANDLE);
-            vkQueueSubmit(_device._graphicsQueue, 1, &submitI, _sync.fences[fenceIndex]);
-            // std::cout << res << std::endl;
+            checkResult(vkQueueSubmit(_device._graphicsQueue, 1, &submitI, _sync.fences[fenceIndex]), "cmd submitted successfully");
         }
 
         void BindGraphicsPipeline(GraphicsPipeline &pipeline)
