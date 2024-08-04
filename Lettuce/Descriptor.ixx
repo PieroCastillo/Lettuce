@@ -23,7 +23,7 @@ export namespace Lettuce::Core
         Device _device;
         VkDescriptorSetLayout _setLayout;
         VkDescriptorPool _descriptorPool;
-        VkDescriptorSet _descriptorSet;
+        std::vector<VkDescriptorSet> _descriptorSets;
 
         std::vector<VkDescriptorSetLayoutBinding> bindings;
         std::map<uint32_t, VkDescriptorType> bindingsMap;
@@ -50,15 +50,29 @@ export namespace Lettuce::Core
         {
             _device = device;
 
+            const VkDescriptorBindingFlags flag =
+                VK_DESCRIPTOR_BINDING_VARIABLE_DESCRIPTOR_COUNT_BIT |
+                VK_DESCRIPTOR_BINDING_PARTIALLY_BOUND_BIT |
+                VK_DESCRIPTOR_BINDING_UPDATE_AFTER_BIND_BIT |
+                VK_DESCRIPTOR_BINDING_UPDATE_UNUSED_WHILE_PENDING_BIT;
+
+            std::vector<VkDescriptorBindingFlags> flags(bindings.size(), flag);
+
+            VkDescriptorSetLayoutBindingFlagsCreateInfo bindingFlags = {
+                .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_BINDING_FLAGS_CREATE_INFO,
+                .bindingCount = (uint32_t)flags.size(),
+                .pBindingFlags = flags.data(),
+            };
             VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCI = {
                 .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
-                .bindingCount = (uint32_t)bindings.size(),
-                .pBindings = bindings.data(),
+                .pNext = &bindingFlags,
+                .flags = VK_DESCRIPTOR_SET_LAYOUT_CREATE_UPDATE_AFTER_BIND_POOL_BIT,
             };
+
             checkResult(vkCreateDescriptorSetLayout(_device._device, &descriptorSetLayoutCI, nullptr, &_setLayout), "Descriptor set Layout created successfully");
         }
 
-        void Build()
+        void Build(std::vector<uint32_t> descriptorCounts)
         {
             std::vector<VkDescriptorPoolSize> sizes;
             uint32_t maxSets = 0;
@@ -79,21 +93,27 @@ export namespace Lettuce::Core
 
             VkDescriptorPoolCreateInfo descriptorPoolCI = {
                 .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
-                .flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT,
-                // VkDescriptorPoolCreateFlags flags;
-                .maxSets = 1,
+                .flags = VkDescriptorPoolCreateFlagBits::VK_DESCRIPTOR_POOL_CREATE_UPDATE_AFTER_BIND_BIT,
+                .maxSets = maxSets,
                 .poolSizeCount = (uint32_t)sizes.size(),
                 .pPoolSizes = sizes.data(),
             };
             checkResult(vkCreateDescriptorPool(_device._device, &descriptorPoolCI, nullptr, &_descriptorPool), "DescriptorPool created sucessfully");
 
+            VkDescriptorSetVariableDescriptorCountAllocateInfo variableAI = {
+                .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_VARIABLE_DESCRIPTOR_COUNT_ALLOCATE_INFO,
+                .descriptorSetCount = (uint32_t)descriptorCounts.size(),
+                .pDescriptorCounts = descriptorCounts.data(),
+            };
+
             VkDescriptorSetAllocateInfo descriptorSetAI = {
                 .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
+                .pNext = &variableAI,
                 .descriptorPool = _descriptorPool,
                 .descriptorSetCount = 1,
                 .pSetLayouts = &_setLayout,
             };
-            checkResult(vkAllocateDescriptorSets(_device._device, &descriptorSetAI, &_descriptorSet), "DescriptorSet allocated sucessfully");
+            checkResult(vkAllocateDescriptorSets(_device._device, &descriptorSetAI, _descriptorSets.data()), "DescriptorSet allocated sucessfully");
         };
 
         template <typename TBufferDataType>
@@ -147,7 +167,7 @@ export namespace Lettuce::Core
 
         void Destroy()
         {
-            vkFreeDescriptorSets(_device._device, _descriptorPool, 1, &_descriptorSet);
+            vkFreeDescriptorSets(_device._device, _descriptorPool, 1, _descriptorSets.data());
             vkDestroyDescriptorPool(_device._device, _descriptorPool, nullptr);
             vkDestroyDescriptorSetLayout(_device._device, _setLayout, nullptr);
         }

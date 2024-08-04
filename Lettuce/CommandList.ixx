@@ -89,13 +89,15 @@ export namespace Lettuce::Core
         void Begin()
         {
             VkCommandBufferBeginInfo cmdBeginCI = {
-                .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO};
-            vkBeginCommandBuffer(_commandBuffer[index], &cmdBeginCI);
+                .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO, 
+                .flags = VkCommandBufferUsageFlagBits::VK_COMMAND_BUFFER_USAGE_RENDER_PASS_CONTINUE_BIT,
+            };
+            checkResult(vkBeginCommandBuffer(_commandBuffer[index], &cmdBeginCI));
         }
 
         void End()
         {
-            vkEndCommandBuffer(_commandBuffer[index]);
+            checkResult(vkEndCommandBuffer(_commandBuffer[index]));
         }
 
         void BeginRendering(Swapchain swapchain, float r = 1, float g = 1, float b = 1, float a = 1)

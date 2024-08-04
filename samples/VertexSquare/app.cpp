@@ -42,8 +42,8 @@ Lettuce::Core::Buffer vertexBuffer;
 Lettuce::Core::Buffer indexBuffer;
 Lettuce::Core::Buffer uniformBuffer;
 Lettuce::Core::Buffer uniformBuffer2;
-const int acquireImageSemaphoreIndex = 0;
-const int renderSemaphoreIndex = 1;
+const int renderCompleteSemaphoreIndex = 0;
+const int presentCompleteSemaphoreIndex = 1;
 const int fenceIndex = 0;
 
 struct Vertex
@@ -53,7 +53,7 @@ struct Vertex
 
 struct UBO
 {
-    glm::mat2x2 rotation;
+    glm::mat2 rotation;
 };
 
 struct UBOFrag
@@ -130,7 +130,6 @@ void initLettuce()
         std::cout << "available device: " << gpu.deviceName << std::endl;
         std::cout << "    graphics family: " << gpu.graphicsFamily.value() << std::endl;
         std::cout << "    present family : " << gpu.presentFamily.value() << std::endl;
-        std::cout << "    gpu ptr:         " << gpu._pdevice << std::endl;
     }
     device.Create(instance, gpus.front(), {});
     sync.Create(device, 1, 2);
@@ -200,7 +199,7 @@ void update()
 void draw()
 {
     sync.WaitForFence(fenceIndex);
-    swapchain.AcquireNextImage(acquireImageSemaphoreIndex);
+    swapchain.AcquireNextImage(presentCompleteSemaphoreIndex);
     sync.ResetAllFences();
     commandList.Reset();
     commandList.Begin();
@@ -222,8 +221,8 @@ void draw()
 
     commandList.EndRendering(swapchain);
     commandList.End();
-    commandList.Send(acquireImageSemaphoreIndex, renderSemaphoreIndex, fenceIndex);
-    swapchain.Present(renderSemaphoreIndex);
+    commandList.Send(presentCompleteSemaphoreIndex, renderCompleteSemaphoreIndex, fenceIndex);
+    swapchain.Present(renderCompleteSemaphoreIndex);
     device.Wait();
 }
 void endLettuce()
