@@ -1,54 +1,28 @@
 //
-// Created by piero on 14/02/2024.
+// Created by piero on 3/08/2024.
 //
 module;
 #include <iostream>
-#include <vector>
 #define VOLK_IMPLEMENTATION
 #include <volk.h>
+#include <vector>
+#include <string>
 
-export module Lettuce:GraphicsPipeline;
+export module Lettuce:MeshPipeline;
 
 import :Device;
 import :Utils;
-import :PipelineConnector;
-import :Swapchain;
-import :Shader;
 
 export namespace Lettuce::Core
 {
-    // TODO: implement PipelineCache, ShaderStages, DynamicState
-    class GraphicsPipeline
+    /// @brief This is a Pipeline that allow use Mesh Rendering 
+    class MeshPipeline
     {
     public:
         Device _device;
         VkPipelineLayout _pipelineLayout;
         VkPipeline _pipeline;
         std::vector<VkPipelineShaderStageCreateInfo> stages;
-        std::vector<VkVertexInputBindingDescription> vertexInputBindings;
-        std::vector<VkVertexInputAttributeDescription> vertexInputAttributes;
-
-        template <typename T>
-        void AddVertexBindingDescription(uint32_t binding)
-        {
-            VkVertexInputBindingDescription bindingDescription = {
-                .binding = binding,
-                .stride = sizeof(T),
-                .inputRate = VK_VERTEX_INPUT_RATE_VERTEX,
-            };
-            vertexInputBindings.emplace_back(bindingDescription);
-        }
-
-        void AddVertexAttribute(uint32_t binding, uint32_t location, uint32_t offset, int format)
-        {
-            VkVertexInputAttributeDescription attributeDescription = {
-                .location = location,
-                .binding = binding,
-                .format = (VkFormat)format,
-                .offset = offset,
-            };
-            vertexInputAttributes.emplace_back(attributeDescription);
-        }
 
         void AddShaderStage(Shader &shader)
         {
@@ -58,6 +32,9 @@ export namespace Lettuce::Core
                 .module = shader._shaderModule,
                 .pName = shader._name.c_str(),
             };
+            if(shader._stage != PipelineStage::Mesh | shader._stage != PipelineStage::Task | shader._stage != PipelineStage::Fragment ){
+                throw new std::exception("Mesh Pipeline support Task|Mesh|Fragment shaders only");
+            }
             stages.emplace_back(pipelineShaderStageCI);
         }
 
@@ -67,34 +44,12 @@ export namespace Lettuce::Core
             _pipelineLayout = connector._pipelineLayout;
 
             // required for dynamic rendering
-            const VkPipelineRenderingCreateInfoKHR pipelineRenderingCI{
+            const VkPipelineRenderingCreateInfoKHR pipelineRenderingCI {
                 .sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO_KHR,
                 .colorAttachmentCount = 1,
                 .pColorAttachmentFormats = &swapchain.imageFormat,
             };
 
-            VkPipelineVertexInputStateCreateInfo vertexInputStateCI = {
-                .sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO,
-                .vertexBindingDescriptionCount = 0,
-                .vertexAttributeDescriptionCount = 0,
-            };
-
-            if (vertexInputAttributes.size() > 0)
-            {
-                vertexInputStateCI.vertexAttributeDescriptionCount = (uint32_t)vertexInputAttributes.size();
-                vertexInputStateCI.pVertexAttributeDescriptions = vertexInputAttributes.data();
-            }
-
-            if (vertexInputBindings.size() > 0)
-            {
-                vertexInputStateCI.vertexBindingDescriptionCount = (uint32_t)vertexInputBindings.size();
-                vertexInputStateCI.pVertexBindingDescriptions = vertexInputBindings.data();
-            }
-
-            VkPipelineInputAssemblyStateCreateInfo inputAssemblyStateCI = {
-                .sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO,
-                .topology = VkPrimitiveTopology::VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
-            };
             VkPipelineViewportStateCreateInfo viewportStateCI = {
                 .sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO,
                 .viewportCount = 1,
@@ -141,9 +96,8 @@ export namespace Lettuce::Core
                 //                 VkPipelineCreateFlags                            flags;
                 .stageCount = (uint32_t)stages.size(),
                 .pStages = stages.data(),
-                .pVertexInputState = &vertexInputStateCI,
-                .pInputAssemblyState = &inputAssemblyStateCI,
-                // const VkPipelineTessellationStateCreateInfo*     pTessellationState;
+                .pVertexInputState = nullptr,
+                .pInputAssemblyState = nullptr,
                 .pViewportState = &viewportStateCI,
                 .pRasterizationState = &rasterizationStateCI,
                 .pMultisampleState = &multisampleStateCI,
@@ -157,7 +111,7 @@ export namespace Lettuce::Core
                 // int32_t                                          basePipelineIndex;
             };
 
-            checkResult(vkCreateGraphicsPipelines(_device._device, VK_NULL_HANDLE, 1, &graphicsPipelineCI, nullptr, &_pipeline), "graphics pipeline created sucessfully");
+            checkResult(vkCreateGraphicsPipelines(_device._device, VK_NULL_HANDLE, 1, &graphicsPipelineCI, nullptr, &_pipeline), "mesh pipeline created sucessfully");
         }
 
         void Destroy()

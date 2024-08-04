@@ -25,10 +25,21 @@ export module Lettuce:Utils;
 
 export namespace Lettuce::Core
 {
-    enum class FrontFace : uint32_t {
-    CounterClockwise = 0,
-    Clockwise = 1,
-};
+    enum class SamplerAddressMode : uint32_t
+    {
+        Repeat = 0,
+        MirroredRepeat = 1,
+        ClampToEdge = 2,
+        ClampToBorder = 3,
+        // Provided by VK_VERSION_1_2, VK_KHR_sampler_mirror_clamp_to_edge
+        MirrorClampToEdge = 4,
+    };
+
+    enum class FrontFace : uint32_t
+    {
+        CounterClockwise = 0,
+        Clockwise = 1,
+    };
 
     enum class DescriptorType
     {
@@ -100,7 +111,7 @@ export namespace Lettuce::Core
     {
         if (result == VK_SUCCESS)
         {
-            std::cout << onSucessMessage << std::endl;
+            // std::cout << onSucessMessage << std::endl;
         }
         else if (result != VK_SUCCESS)
         {

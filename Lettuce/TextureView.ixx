@@ -14,23 +14,17 @@ import :Utils;
 
 export namespace Lettuce::Core
 {
-    class Texture
+    class TextureView
     {
         Device _device;
-        VkImage _image;
 
         void Build(Device &device)
         {
             _device = device;
-
-            // VkImageCreateInfo imageCI = {
-                
-            // };  
         }
 
         void Destroy()
         {
-            vkDestroyImage(_device._device, _image, nullptr);
         }
     };
 }
