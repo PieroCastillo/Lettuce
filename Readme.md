@@ -14,12 +14,13 @@ Lettuce is a rendering Vulkan-based library
 - [ ] ComputePipeline
 - [x] Buffer (partial)
   - [ ] All Buffer Types
-- [ ] Images
+- [ ] Textures
+- [x] Samplers
 - [x] Dynamic rendering (I'm going to remove this)
 - [x] Dynamic states
 - [ ] Timeline Semaphores
 - [ ] Descriptor Indexing
-- [ ] VK_EXT_buffer_device_address
+- [ ] Buffer Device Address
 - [ ] VK_EXT_memory_budget
 - [ ] VK_EXT_conservative_rasterization
 - [ ] VK_KHR_fragment_shading_rate
