@@ -62,9 +62,14 @@ export namespace Lettuce::Core
             if (_instance.IsSurfaceCreated())
             {
                 requestedExtensionsNames.emplace_back(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
-                requestedExtensionsNames.emplace_back(VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME);
+                requestedExtensionsNames.emplace_back(VK_KHR_TIMELINE_SEMAPHORE_EXTENSION_NAME);
+                requestedExtensionsNames.emplace_back(VK_KHR_FRAGMENT_SHADING_RATE_EXTENSION_NAME);
+                requestedExtensionsNames.emplace_back(VK_KHR_SPIRV_1_4_EXTENSION_NAME);
+                requestedExtensionsNames.emplace_back(VK_EXT_CONDITIONAL_RENDERING_EXTENSION_NAME);
+                requestedExtensionsNames.emplace_back(VK_EXT_MEMORY_BUDGET_EXTENSION_NAME);
+                // requestedExtensionsNames.emplace_back(VK_EXT_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME);
+                requestedExtensionsNames.emplace_back(VK_EXT_MESH_SHADER_EXTENSION_NAME);
             }
-            // vulkan 1.3 add dynamic rendering and synchronization2 to the core
         }
 
     public:
@@ -104,10 +109,51 @@ export namespace Lettuce::Core
 
             VkPhysicalDeviceFeatures features;
             vkGetPhysicalDeviceFeatures(_pdevice, &features);
-            
+
+            VkPhysicalDeviceBufferDeviceAddressFeatures bufferDeviceAddressFeature = {
+                .sType = VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO,
+                .bufferDeviceAddress = VK_TRUE,
+                .bufferDeviceAddressCaptureReplay = VK_TRUE,
+            };
+
+            VkPhysicalDeviceFragmentShadingRateFeaturesKHR fragmentShadingRateFeature = {
+                .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADING_RATE_FEATURES_KHR,
+                .pNext = &bufferDeviceAddressFeature,
+                .pipelineFragmentShadingRate = VK_TRUE,
+                .primitiveFragmentShadingRate = VK_TRUE,
+                .attachmentFragmentShadingRate = VK_TRUE,
+            };
+
+            VkPhysicalDeviceTimelineSemaphoreFeatures timelineSemaphoreFeature = {
+
+                .sType = VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO,
+                .pNext = &fragmentShadingRateFeature,
+                .timelineSemaphore = VK_TRUE,
+            };
+
+            VkPhysicalDeviceMeshShaderFeaturesEXT meshShaderFeature = {
+                .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MESH_SHADER_FEATURES_EXT,
+                .pNext = &timelineSemaphoreFeature,
+                .taskShader = VK_TRUE,
+                .meshShader = VK_TRUE,
+            };
+
+            VkPhysicalDeviceDescriptorIndexingFeatures deviceDescriptorIndexingFeature = {
+                .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES,
+                .pNext = &meshShaderFeature,
+                .shaderSampledImageArrayNonUniformIndexing = VK_TRUE,
+                .descriptorBindingUniformBufferUpdateAfterBind = VK_TRUE,
+                .descriptorBindingSampledImageUpdateAfterBind = VK_TRUE,
+                .descriptorBindingUpdateUnusedWhilePending = VK_TRUE,
+                .descriptorBindingPartiallyBound = VK_TRUE,
+                .descriptorBindingVariableDescriptorCount = VK_TRUE,
+                .runtimeDescriptorArray = VK_TRUE,
+            };
+
             // enables dynamic rendering
             VkPhysicalDeviceDynamicRenderingFeatures dynamicRenderingFeature = {
                 .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DYNAMIC_RENDERING_FEATURES,
+                .pNext = &deviceDescriptorIndexingFeature,
                 .dynamicRendering = VK_TRUE,
             };
 
