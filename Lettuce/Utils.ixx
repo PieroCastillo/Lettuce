@@ -25,6 +25,12 @@ export module Lettuce:Utils;
 
 export namespace Lettuce::Core
 {
+    enum class QueueType
+    {
+        Graphics,
+        Present
+    };
+    
     enum class SamplerAddressMode : uint32_t
     {
         Repeat = 0,

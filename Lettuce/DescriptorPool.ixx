@@ -15,18 +15,17 @@ import :Utils;
 
 export namespace Lettuce::Core
 {
-    class Sampler
+    class DescriptorPool
     {
         Device _device;
 
-        void Build(Device &device,)
+        void Build(Device &device)
         {
             _device = device;
         }
 
         void Destroy()
         {
-            
         }
     };
 }
