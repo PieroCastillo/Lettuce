@@ -7,6 +7,7 @@ module;
 #define VOLK_IMPLEMENTATION
 #include <volk.h>
 #include <otherUtils.h>
+#include <vma/vk_mem_alloc.h>
 
 export module Lettuce:Buffer;
 
@@ -61,12 +62,20 @@ export namespace Lettuce::Core
     public:
         Device _device;
         VkBuffer _buffer;
-        VkDeviceMemory _memory;
+        VmaAllocation _allocation;
         VkCommandPool _pool;
         uint32_t _size;
         BufferUsage _usage;
 
-        void Create(Device &device, uint32_t size, BufferUsage usage, MemoryProperty properties)
+        /// @brief Creates a Buffer, this is a contiguous block of memory thats holds some data
+        /// @param device the logical device
+        /// @param size size of the buffer, in bytes
+        /// @param usage usage of the buffer
+        /// @param allocationFlags
+        /// @param memoryUsage
+        void Create(Device &device, uint32_t size, BufferUsage usage,
+                    VmaAllocationCreateFlags allocationFlags = VmaAllocationCreateFlagBits::VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT,
+                    VmaMemoryUsage memoryUsage = VmaMemoryUsage::VMA_MEMORY_USAGE_AUTO)
         {
             _device = device;
             _size = size;
@@ -89,30 +98,29 @@ export namespace Lettuce::Core
                 .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
             };
 
-            checkResult(vkCreateBuffer(_device._device, &bufferCI, nullptr, &_buffer), "buffer created sucessfully");
-
-            VkMemoryRequirements memRequirements;
-            vkGetBufferMemoryRequirements(_device._device, _buffer, &memRequirements);
-
-            VkMemoryAllocateInfo memoryAI = {
-                .sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
-                .allocationSize = memRequirements.size,
-                .memoryTypeIndex = _device._gpu.FindMemoryType(memRequirements.memoryTypeBits, (VkMemoryPropertyFlags)properties),
+            VmaAllocationCreateInfo allocationCI = {
+                .flags = allocationFlags,
+                .usage = memoryUsage,
             };
 
-            checkResult(vkAllocateMemory(_device._device, &memoryAI, nullptr, &_memory), "memory allocated sucessfully");
-
-            checkResult(vkBindBufferMemory(_device._device, _buffer, _memory, 0), "binded successfully");
+            checkResult(vmaCreateBuffer(_device.allocator, &bufferCI, &allocationCI, &_buffer, &_allocation, nullptr), "buffer created sucessfully");
         }
 
+        /// @brief Maps data from host memory to buffer
+        /// @param src pinter to data to be mapped
         void SetData(void *src)
         {
             void *data;
-            vkMapMemory(_device._device, _memory, 0, _size, 0, &data);
+            checkResult(vmaMapMemory(_device.allocator, _allocation, &data), "mapped sucessfully");
             memcpy(data, src, _size);
-            vkUnmapMemory(_device._device, _memory);
+            vmaUnmapMemory(_device.allocator, _allocation);
+            checkResult(vmaFlushAllocation(_device.allocator, _allocation, 0, _size), "flushed");
         }
 
+        /// @brief Copy data from host visible Buffer to device prefered Buffer, 
+        /// the usage of this function is for staging buffers creation only, another
+        /// usage may have unexpected behaviors.
+        /// @param buffer the dst buffer
         void CopyTo(Buffer buffer)
         {
             VkCommandBufferAllocateInfo commandBufferAI = {
@@ -127,7 +135,7 @@ export namespace Lettuce::Core
             VkCommandBufferBeginInfo cmdBeginI = {
                 .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
                 .flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT,
-                };
+            };
             vkBeginCommandBuffer(cmd, &cmdBeginI);
 
             VkBufferCopy bufferC = {
@@ -143,21 +151,7 @@ export namespace Lettuce::Core
                 .pCommandBuffers = &cmd,
             };
             vkQueueSubmit(_device._graphicsQueue, 1, &submitI, nullptr);
-            // VkCommandBufferSubmitInfo cmdSubmitInfo = {
-            //     .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_SUBMIT_INFO,
-            //     .commandBuffer = cmd,
-            //     .deviceMask = 0,
-            // };
 
-            // VkSubmitInfo2 submitI = {
-            //     .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO_2,
-            //     .waitSemaphoreInfoCount = 0,
-            //     .commandBufferInfoCount = 1,
-            //     .pCommandBufferInfos = &cmdSubmitInfo,
-            //     .signalSemaphoreInfoCount = 0,
-            // };
-            // checkResult(vkQueueSubmit2(_device._graphicsQueue, 1, &submitI, VK_NULL_HANDLE), "cmd buffer submitted sucessfully");
-        
             vkQueueWaitIdle(_device._graphicsQueue);
 
             vkFreeCommandBuffers(_device._device, _pool, 1, &cmd);
@@ -180,13 +174,12 @@ export namespace Lettuce::Core
             Buffer stagingBuffer;
             Buffer buffer;
             stagingBuffer.Create(device, size, BufferUsage::TransferSrc,
-                                 MemoryProperty::HostVisible | MemoryProperty::HostCoherent);
+                                 VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT | VMA_ALLOCATION_CREATE_MAPPED_BIT);
             stagingBuffer.SetData(data);
 
             auto usage = BufferUsage::TransferDst;
             usage |= bufferDstUsage;
-            buffer.Create(device, size, usage,
-                          MemoryProperty::DeviceLocal);
+            buffer.Create(device, size, usage, VMA_ALLOCATION_CREATE_MAPPED_BIT, VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE);
             stagingBuffer.CopyTo(buffer);
             stagingBuffer.Destroy();
             return buffer;
@@ -196,16 +189,13 @@ export namespace Lettuce::Core
         static Buffer CreateUniformBuffer(Device &device, T **data)
         {
             Buffer buffer;
-            buffer.Create(device, sizeof(T), BufferUsage::UniformBuffer, MemoryProperty::HostVisible | MemoryProperty::HostCoherent);
-            // checkResult(vkMapMemory(device._device, buffer._memory, 0, sizeof(T), 0, (void **)data), "mapped sucessfully");
-            //  vkInvalidateMappedMemoryRanges(device._device, 1, );
+            buffer.Create(device, sizeof(T), BufferUsage::UniformBuffer, VMA_ALLOCATION_CREATE_HOST_ACCESS_RANDOM_BIT, VMA_MEMORY_USAGE_AUTO_PREFER_HOST);
             return buffer;
         }
 
         void Destroy()
         {
-            vkDestroyBuffer(_device._device, _buffer, nullptr);
-            vkFreeMemory(_device._device, _memory, nullptr);
+            vmaDestroyBuffer(_device.allocator, _buffer, _allocation);
 
             if (_usage == BufferUsage::TransferSrc)
             {

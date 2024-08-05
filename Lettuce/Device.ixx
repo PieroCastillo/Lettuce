@@ -8,6 +8,7 @@ module;
 #include <vector>
 #define VOLK_IMPLEMENTATION
 #include <volk.h>
+#include <vma/vk_mem_alloc.h>
 
 export module Lettuce:Device;
 
@@ -78,6 +79,7 @@ export namespace Lettuce::Core
         VkDevice _device;
         VkQueue _graphicsQueue;
         VkQueue _presentQueue;
+        VmaAllocator allocator;
         GPU _gpu;
 
         void Create(Instance &instance, GPU &gpu, std::vector<char *> requestedExtensions)
@@ -110,6 +112,7 @@ export namespace Lettuce::Core
             VkPhysicalDeviceFeatures features;
             vkGetPhysicalDeviceFeatures(_pdevice, &features);
 
+            // here we enable device features, like Buffer Device Address, Timeline Semaphores, etc
             VkPhysicalDeviceBufferDeviceAddressFeatures bufferDeviceAddressFeature = {
                 .sType = VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO,
                 .bufferDeviceAddress = VK_TRUE,
@@ -171,6 +174,22 @@ export namespace Lettuce::Core
 
             checkResult(vkCreateDevice(_pdevice, &deviceCI, nullptr, &_device), "device created successfully");
 
+            VmaVulkanFunctions vulkanFunctions = {
+                .vkGetInstanceProcAddr = vkGetInstanceProcAddr,
+                .vkGetDeviceProcAddr = vkGetDeviceProcAddr,
+                .vkGetDeviceBufferMemoryRequirements = vkGetDeviceBufferMemoryRequirements,
+                .vkGetDeviceImageMemoryRequirements = vkGetDeviceImageMemoryRequirements,
+            };
+            
+            VmaAllocatorCreateInfo allocatorI = {
+                .physicalDevice = _pdevice,
+                .device = _device,
+                .pVulkanFunctions = &vulkanFunctions,
+                .instance = instance,
+                .vulkanApiVersion = VK_API_VERSION_1_3,
+            };
+            checkResult(vmaCreateAllocator(&allocatorI, &allocator), "allocator created successfully");
+
             vkGetDeviceQueue(_device, gpu.graphicsFamily.value(), 0, &_graphicsQueue);
             vkGetDeviceQueue(_device, gpu.presentFamily.value(), 0, &_presentQueue);
         }
@@ -182,6 +201,7 @@ export namespace Lettuce::Core
 
         void Destroy()
         {
+            vmaDestroyAllocator(allocator);
             vkDestroyDevice(_device, nullptr);
         }
     };

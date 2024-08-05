@@ -4,6 +4,7 @@
     "glm",
     "volk",
     "vulkan",
-    "vulkan-sdk-components"
+    "vulkan-sdk-components",
+    "vulkan-memory-allocator"
   ]
 }

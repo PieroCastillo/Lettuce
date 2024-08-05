@@ -20,6 +20,7 @@ endif()
 
 # find_package(Vulkan REQUIRED)
 find_package(Vulkan REQUIRED COMPONENTS shaderc_combined)
+find_package(VulkanMemoryAllocator CONFIG REQUIRED)
 find_package(volk CONFIG REQUIRED)
 find_package(glfw3 REQUIRED)
 
@@ -47,6 +48,12 @@ target_sources(Lettuce
         FILE_SET cxx_modules TYPE CXX_MODULES FILES
         ${LETTUCE_SOURCES}
 )
+add_library(Lettuce3D)
+target_sources(Lettuce3D
+        PUBLIC
+        FILE_SET cxx_modules TYPE CXX_MODULES FILES
+        ${LETTUCE_SOURCES}
+)
 
 target_include_directories(Lettuce PRIVATE Lettuce)
 # target_compile_features(Lettuce PRIVATE cxx_std_23
@@ -57,7 +64,8 @@ add_executable(TriangleSample
         samples/TriangleSample/app.cpp)
 add_executable(VertexSquare
         samples/VertexSquare/app.cpp)
-target_link_libraries(Lettuce  PRIVATE volk::volk_headers Vulkan::shaderc_combined)
+target_link_libraries(Lettuce  PRIVATE volk::volk_headers Vulkan::shaderc_combined GPUOpen::VulkanMemoryAllocator)
+target_link_libraries(Lettuce3D  PRIVATE Lettuce volk::volk_headers Vulkan::shaderc_combined)
 target_link_libraries(ClearScreenSample Lettuce glfw)
 target_link_libraries(TriangleSample Lettuce glfw)
 target_link_libraries(VertexSquare Lettuce glfw)
