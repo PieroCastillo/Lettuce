@@ -8,6 +8,7 @@ module;
 export module Lettuce:ICompiler;
 
 import :PipelineConnector;
+import :Utils;
 
 export namespace Lettuce::Core::Compilers
 {

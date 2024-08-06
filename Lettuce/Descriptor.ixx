@@ -61,7 +61,7 @@ export namespace Lettuce::Core
                 .dstBinding = binding,
                 .dstArrayElement = 0,
                 .descriptorCount = 1,
-                .descriptorType = ,
+                .descriptorType = (VkDescriptorType)bindings[binding].descriptorType,
                 .pBufferInfo = &descriptorBufferI,
             };
             writes.push_back(write);

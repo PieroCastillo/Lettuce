@@ -17,13 +17,14 @@ export namespace Lettuce::Core
 {
     class Sampler
     {
+    public:
         Device _device;
         VkSampler _sampler;
 
         void Build(Device &device,
-                   SamplerAddressMode addressModeU = SamplerAddressMode.Repeat,
-                   SamplerAddressMode addressModeV = SamplerAddressMode.Repeat,
-                   SamplerAddressMode addressModeW = SamplerAddressMode.Repeat)
+                   SamplerAddressMode addressModeU = SamplerAddressMode::Repeat,
+                   SamplerAddressMode addressModeV = SamplerAddressMode::Repeat,
+                   SamplerAddressMode addressModeW = SamplerAddressMode::Repeat)
         {
             _device = device;
 

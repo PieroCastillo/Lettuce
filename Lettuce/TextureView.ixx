@@ -7,7 +7,7 @@ module;
 #define VOLK_IMPLEMENTATION
 #include <volk.h>
 
-export module Lettuce:Texture;
+export module Lettuce:TextureView;
 
 import :Device;
 import :Utils;
@@ -17,6 +17,7 @@ export namespace Lettuce::Core
 {
     class TextureView
     {
+    public:
         Device _device;
         Texture _texture;
         VkImageView _imageView;
@@ -28,7 +29,7 @@ export namespace Lettuce::Core
 
             VkImageViewCreateInfo imageViewCI = {
                 .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
-                .image = &texture._image,
+                .image = texture._image,
                 .viewType = VK_IMAGE_VIEW_TYPE_2D,
                 // and arrays
                 .format = VK_FORMAT_B8G8R8A8_SRGB,

@@ -17,8 +17,9 @@ import :Descriptor;
 
 export namespace Lettuce::Core
 {
-    class DescriptorPool
+    class DescriptorLayout
     {
+    public:
         Device _device;
         VkDescriptorSetLayout _setLayout;
         VkDescriptorPool _descriptorPool;
@@ -114,9 +115,9 @@ export namespace Lettuce::Core
 
         std::vector<Descriptor> GetDescriptors()
         {
-            std::vector<Descriptor> descriptors(_count);
+            std::vector<Descriptor> descriptors(_descriptorSets.size());
 
-            for (int i = 0; i < _count; i++)
+            for (int i = 0; i < _descriptorSets.size(); i++)
             {
                 Descriptor descriptor;
                 descriptor._descriptorSet = _descriptorSets[i];

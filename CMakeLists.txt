@@ -58,14 +58,14 @@ target_sources(Lettuce3D
 target_include_directories(Lettuce PRIVATE Lettuce)
 # target_compile_features(Lettuce PRIVATE cxx_std_23
 #                                 INTERFACE cxx_std_20)
-# add_executable(ClearScreenSample
-#         samples/ClearScreenSample/app.cpp)
+add_executable(ClearScreenSample
+        samples/ClearScreenSample/app.cpp)
 # add_executable(TriangleSample
 #         samples/TriangleSample/app.cpp)
 # add_executable(VertexSquare
 #         samples/VertexSquare/app.cpp)
 target_link_libraries(Lettuce  PRIVATE volk::volk_headers Vulkan::shaderc_combined GPUOpen::VulkanMemoryAllocator)
 # target_link_libraries(Lettuce3D  PRIVATE Lettuce volk::volk_headers Vulkan::shaderc_combined)
-# target_link_libraries(ClearScreenSample Lettuce glfw)
+target_link_libraries(ClearScreenSample Lettuce glfw)
 # target_link_libraries(TriangleSample Lettuce glfw)
 # target_link_libraries(VertexSquare Lettuce glfw)
