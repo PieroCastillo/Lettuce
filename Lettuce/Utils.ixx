@@ -4,6 +4,9 @@
 module;
 #include <iostream>
 #include <stdexcept>
+#include <vector>
+#include <list>
+#include <functional>
 // #define VK_NO_PROTOTYPES
 #if defined(_WIN32)
 #define VK_USE_PLATFORM_WIN32_KHR
@@ -20,6 +23,7 @@ module;
 #endif
 #define VOLK_IMPLEMENTATION
 #include <volk.h>
+#include <otherUtils.h>
 
 export module Lettuce:Utils;
 

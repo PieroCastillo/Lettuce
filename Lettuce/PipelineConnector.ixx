@@ -11,7 +11,7 @@ export module Lettuce:PipelineConnector;
 
 import :Device;
 import :Utils;
-import :Descriptor;
+import :DescriptorLayout;
 
 export namespace Lettuce::Core
 {
@@ -23,7 +23,7 @@ export namespace Lettuce::Core
         std::vector<VkPushConstantRange> pushConstants;
         std::vector<VkDescriptorSetLayout> descriptorSetLayouts;
 
-        void AddDescriptor(Descriptor &descriptor)
+        void AddDescriptor(DescriptorLayout &descriptor)
         {
             descriptorSetLayouts.emplace_back(descriptor._setLayout);
         }

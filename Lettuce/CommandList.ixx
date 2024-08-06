@@ -44,11 +44,11 @@ export namespace Lettuce::Core
         PatchList = 10,
     };
 
+    /// @brief This is a interface to use VkCommandBuffer
     class CommandList
     {
     public:
         VkCommandBuffer _commandBuffer;
-        uint32_t _count;
 
         Device _device;
         SynchronizationStructure _sync;
@@ -62,7 +62,7 @@ export namespace Lettuce::Core
         void Begin()
         {
             VkCommandBufferBeginInfo cmdBeginCI = {
-                .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO, 
+                .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
                 .flags = VkCommandBufferUsageFlagBits::VK_COMMAND_BUFFER_USAGE_RENDER_PASS_CONTINUE_BIT,
             };
             checkResult(vkBeginCommandBuffer(_commandBuffer, &cmdBeginCI));
@@ -134,6 +134,11 @@ export namespace Lettuce::Core
             vkCmdBindDescriptorSets(_commandBuffer, VkPipelineBindPoint::VK_PIPELINE_BIND_POINT_GRAPHICS, connector._pipelineLayout, 0, 1, &descriptor._descriptorSet, 0, nullptr);
         }
 
+        void BindDescriptorSetToCompute(PipelineConnector &connector, Descriptor &descriptor)
+        {
+            vkCmdBindDescriptorSets(_commandBuffer, VkPipelineBindPoint::VK_PIPELINE_BIND_POINT_COMPUTE, connector._pipelineLayout, 0, 1, &descriptor._descriptorSet, 0, nullptr);
+        }
+
         void BindVertexBuffers(uint32_t firstBinding, uint32_t bindingCount, std::vector<Buffer> &buffers, std::vector<uint32_t> &offsets)
         {
             // std::vector<VkBuffer> _buffers;
@@ -163,6 +168,21 @@ export namespace Lettuce::Core
         void DrawIndexed(uint32_t indexCount, uint32_t instanceCount = 1, uint32_t firstIndex = 0, int32_t vertexOffset = 0, uint32_t firstInstance = 0)
         {
             vkCmdDrawIndexed(_commandBuffer, indexCount, instanceCount, firstIndex, vertexOffset, firstInstance);
+        }
+
+        void DrawIndirect(Buffer indirectBuffer, uint32_t drawCount, uint32_t stride, uint32_t offset = 0)
+        {
+            vkCmdDrawIndirect(_commandBuffer, indirectBuffer._buffer, offset, drawCount, stride);
+        }
+
+        void DrawMesh(uint32_t groupCountX, uint32_t groupCountY, uint32_t groupCountZ)
+        {
+            vkCmdDrawMeshTasksEXT(_commandBuffer, groupCountX, groupCountY, groupCountZ);
+        }
+
+        void Dispatch(uint32_t groupCountX, uint32_t groupCountY, uint32_t groupCountZ)
+        {
+            vkCmdDispatch(_commandBuffer, groupCountX, groupCountY, groupCountZ);
         }
 
         void SetScissor(Swapchain swapchain, int32_t xOffset = 0, int32_t yOffset = 0)

@@ -19,10 +19,12 @@ export namespace Lettuce::Core
     // TODO: Add Load images capability
     class Texture
     {
+    public:
         Device _device;
         VkImage _image;
         VmaAllocation _allocation;
         uint32_t _width, _height, _depth, _mipLevels, _layerCount;
+        VkImageLayout imageLayout = VkImageLayout::VK_IMAGE_LAYOUT_PREINITIALIZED;
 
         void Build(Device &device, uint32_t width, uint32_t height, uint32_t depth = 1,
                    VkImageUsageFlagBits imageUsage = VK_IMAGE_USAGE_SAMPLED_BIT,
@@ -36,6 +38,8 @@ export namespace Lettuce::Core
             _mipLevels = mipLevels;
             _layerCount = layerCount;
 
+            auto usage = imageUsage | VkImageUsageFlagBits::VK_IMAGE_USAGE_TRANSFER_DST_BIT;
+
             VkImageCreateInfo imageCI = {
                 .sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
                 .imageType = VkImageType::VK_IMAGE_TYPE_2D,
@@ -45,7 +49,7 @@ export namespace Lettuce::Core
                 .arrayLayers = layerCount,
                 .samples = VkSampleCountFlagBits::VK_SAMPLE_COUNT_1_BIT,
                 .tiling = VkImageTiling::VK_IMAGE_TILING_OPTIMAL,
-                .usage = imageUsage | VkImageUsageFlagBits::VK_IMAGE_USAGE_TRANSFER_DST_BIT,
+                .usage = (VkImageUsageFlags)usage,
                 .sharingMode = VkSharingMode::VK_SHARING_MODE_EXCLUSIVE,
                 .initialLayout = VkImageLayout::VK_IMAGE_LAYOUT_PREINITIALIZED,
             };

@@ -12,6 +12,9 @@ export module Lettuce:MeshPipeline;
 
 import :Device;
 import :Utils;
+import :PipelineConnector;
+import :Shader;
+import :Swapchain;
 
 export namespace Lettuce::Core
 {

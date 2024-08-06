@@ -23,6 +23,6 @@ export import :Texture;
 export import :TextureView;
 export import :Buffer;
 export import :Descriptor;
-export import :DescriptorPool;
+export import :DescriptorLayout;
 export import :Sampler;
 export import :MeshPipeline;

@@ -185,7 +185,7 @@ export namespace Lettuce::Core
                 .physicalDevice = _pdevice,
                 .device = _device,
                 .pVulkanFunctions = &vulkanFunctions,
-                .instance = instance,
+                .instance = _instance._instance,
                 .vulkanApiVersion = VK_API_VERSION_1_3,
             };
             checkResult(vmaCreateAllocator(&allocatorI, &allocator), "allocator created successfully");
