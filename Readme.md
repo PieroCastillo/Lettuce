@@ -24,6 +24,10 @@ Lettuce is a rendering Vulkan-based library
 - [ ] VK_EXT_memory_budget
 - [ ] VK_EXT_conservative_rasterization
 - [ ] VK_KHR_fragment_shading_rate
+- [ ] Multi-thread Rendering
+- [ ] Async compute
+- [ ] Indirect Drawing
+- [ ] Work Graphs (when it becomes available to Vulkan standard)
 ### Lettuce 2D
 ### Lettuce Compute
 ### Lettuce 3D
