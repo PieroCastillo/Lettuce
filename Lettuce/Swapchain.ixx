@@ -5,6 +5,7 @@ module;
 
 #include <iostream>
 #include <string>
+#include <algorithm>
 #define VOLK_IMPLEMENTATION
 #include <volk.h>
 
@@ -12,7 +13,7 @@ export module Lettuce:Swapchain;
 
 import :Device;
 import :Instance;
-import :SynchronizationStructure;
+import :Semaphore;
 import :GPU;
 
 export namespace Lettuce::Core
@@ -51,7 +52,6 @@ export namespace Lettuce::Core
 
     public:
         Device _device;
-        SynchronizationStructure _sync;
         VkSwapchainKHR _swapchain = VK_NULL_HANDLE;
         std::vector<VkImage> swapChainImages;
         std::vector<VkImageView> swapChainImageViews;
@@ -61,10 +61,9 @@ export namespace Lettuce::Core
         VkFormat imageFormat;
         VkExtent2D extent;
 
-        void Create(Device &device, SynchronizationStructure &sync, uint32_t initialWidth, uint32_t initialHeight)
+        void Create(Device &device, uint32_t initialWidth, uint32_t initialHeight)
         {
             _device = device;
-            _sync = sync;
             auto capabilities = _device._gpu.capabilities;
             imageCount = capabilities.minImageCount + 1;
             if (capabilities.maxImageCount > 0 && imageCount > capabilities.maxImageCount)
@@ -91,7 +90,8 @@ export namespace Lettuce::Core
                 .compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR,
                 .presentMode = _device._gpu.presentMode,
                 .clipped = VK_TRUE,
-                .oldSwapchain = VK_NULL_HANDLE};
+                .oldSwapchain = VK_NULL_HANDLE,
+            };
 
             uint32_t queueFamilyIndices[] = {_device._gpu.graphicsFamily.value(), _device._gpu.presentFamily.value()};
 
@@ -112,22 +112,23 @@ export namespace Lettuce::Core
             createImageViews();
         }
 
-        void AcquireNextImage(int acquireImageSemaphoreIndex)
+        void AcquireNextImage(BSemaphore acquireImageSemaphore)
         {
-            vkAcquireNextImageKHR(_device._device, _swapchain, std::numeric_limits<uint64_t>::max(), _sync.semaphores[acquireImageSemaphoreIndex], nullptr, &index);
+            vkAcquireNextImageKHR(_device._device, _swapchain, std::numeric_limits<uint64_t>::max(), acquireImageSemaphore._semaphore, nullptr, &index);
         }
 
-        void Present(int renderSemaphoreIndex)
+        void Present(BSemaphore renderSemaphore)
         {
             VkPresentInfoKHR presentI = {
                 .sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
                 .waitSemaphoreCount = 1,
-                .pWaitSemaphores = &_sync.semaphores[renderSemaphoreIndex],
+                .pWaitSemaphores = &renderSemaphore._semaphore,
                 .swapchainCount = 1,
                 .pSwapchains = &_swapchain,
-                .pImageIndices = &index};
+                .pImageIndices = &index,
+            };
 
-            vkQueuePresentKHR(_device._presentQueue, &presentI);
+            checkResult(vkQueuePresentKHR(_device._presentQueue, &presentI));
             // vkQueueWaitIdle(_device._presentQueue);
         }
 

@@ -41,7 +41,7 @@ export namespace Lettuce::Core
             AllocateCommandBuffers();
         }
 
-        std::vector<CommandList> GetCommandLists(SynchronizationStructure &sync)
+        std::vector<CommandList> GetCommandLists()
         {
             std::vector<CommandList> cmds(_count);
 
@@ -49,7 +49,7 @@ export namespace Lettuce::Core
             {
                 CommandList cmd;
                 cmd._commandBuffer = _commandBuffers[i];
-                cmd.Create(_device, sync);
+                cmd.Create(_device);
                 cmds[i] = cmd;
             }
 

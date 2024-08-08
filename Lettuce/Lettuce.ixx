@@ -16,7 +16,7 @@ export import :GraphicsPipeline;
 export import :Shader;
 export import :Swapchain;
 export import :Utils;
-export import :SynchronizationStructure;
+export import :Semaphore;
 export import :ICompiler;
 export import :GLSLCompiler;
 export import :Texture;

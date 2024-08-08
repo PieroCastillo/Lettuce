@@ -4,10 +4,11 @@
 module;
 #include <iostream>
 #include <array>
-#define VOLK_IMPLEMENTATION
-#include <volk.h>
+#include <vector>
 #include <algorithm>
 #include <cstdint>
+#define VOLK_IMPLEMENTATION
+#include <volk.h>
 
 export module Lettuce:CommandList;
 
@@ -15,8 +16,10 @@ import :Utils;
 import :Device;
 import :Swapchain;
 import :GPU;
-import :SynchronizationStructure;
+import :Semaphore;
 import :GraphicsPipeline;
+import :ComputePipeline;
+import :MeshPipeline;
 import :Buffer;
 import :Descriptor;
 
@@ -49,13 +52,10 @@ export namespace Lettuce::Core
     {
     public:
         VkCommandBuffer _commandBuffer;
-
         Device _device;
-        SynchronizationStructure _sync;
 
-        void Create(Device &device, SynchronizationStructure &sync)
+        void Create(Device &device)
         {
-            _sync = sync;
             _device = device;
         }
 
@@ -85,11 +85,13 @@ export namespace Lettuce::Core
                 .imageLayout = VK_IMAGE_LAYOUT_ATTACHMENT_OPTIMAL,
                 .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
                 .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
-                .clearValue = {{r, g, b, a}}};
+                .clearValue = {{r, g, b, a}},
+            };
 
             auto renderArea = VkRect2D{
                 .offset = {0, 0},
-                .extent = {swapchain.width, swapchain.height}};
+                .extent = {swapchain.width, swapchain.height},
+            };
 
             const VkRenderingInfo renderI{
                 .sType = VK_STRUCTURE_TYPE_RENDERING_INFO,
@@ -107,21 +109,47 @@ export namespace Lettuce::Core
             vkCmdEndRendering(_commandBuffer);
         }
 
-        void Send(int acquireImageSemaphoreIndex, int renderSemaphoreIndex, int fenceIndex)
+        /// @brief send CommandLists to the Queue, use VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT when the CommandLists are going to be presented
+        /// @param cmds
+        /// @param waitStages
+        /// @param semaphores
+        /// @param waitValues
+        /// @param signalValues
+        static void Send(Device device, std::vector<CommandList> cmds,
+                         VkPipelineStageFlags waitStage,
+                         std::vector<TSemaphore> semaphores,
+                         std::vector<uint64_t> waitValues,
+                         std::vector<uint64_t> signalValues)
         {
-            VkPipelineStageFlags waitStages[] = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
-            VkSubmitInfo submitI = {
-                .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
-                .waitSemaphoreCount = 1,
-                .pWaitSemaphores = &(_sync.semaphores[acquireImageSemaphoreIndex]),
-                .pWaitDstStageMask = waitStages,
-                .commandBufferCount = 1,
-                .pCommandBuffers = &_commandBuffer,
-                .signalSemaphoreCount = 1,
-                .pSignalSemaphores = &(_sync.semaphores[renderSemaphoreIndex]),
+            std::vector<VkCommandBuffer> vkCmds;
+            std::vector<VkSemaphore> vkSemaphores;
+
+            std::transform(cmds.begin(), cmds.end(), std::back_inserter(vkCmds), [](CommandList x)
+                           { return x._commandBuffer; });
+            std::transform(semaphores.begin(), semaphores.end(), std::back_inserter(vkSemaphores), [](TSemaphore x)
+                           { return x._semaphore; });
+
+            VkTimelineSemaphoreSubmitInfo timelineSemaphoreSubmitI = {
+                .sType = VK_STRUCTURE_TYPE_SEMAPHORE_SUBMIT_INFO,
+                .waitSemaphoreValueCount = (uint32_t)waitValues.size(),
+                .pWaitSemaphoreValues = waitValues.data(),
+                .signalSemaphoreValueCount = (uint32_t)signalValues.size(),
+                .pSignalSemaphoreValues = signalValues.data(),
             };
 
-            checkResult(vkQueueSubmit(_device._graphicsQueue, 1, &submitI, _sync.fences[fenceIndex]), "cmd submitted successfully");
+            VkSubmitInfo submitI = {
+                .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
+                .pNext = &timelineSemaphoreSubmitI,
+                .waitSemaphoreCount = (uint32_t)semaphores.size(),
+                .pWaitSemaphores = vkSemaphores.data(),
+                .pWaitDstStageMask = &waitStage,
+                .commandBufferCount = (uint32_t)cmds.size(),
+                .pCommandBuffers = vkCmds.data(),
+                .signalSemaphoreCount = (uint32_t)semaphores.size(),
+                .pSignalSemaphores = vkSemaphores.data(),
+            };
+
+            checkResult(vkQueueSubmit(device._graphicsQueue, 1, &submitI, VK_NULL_HANDLE));
         }
 
         void BindGraphicsPipeline(GraphicsPipeline &pipeline)
