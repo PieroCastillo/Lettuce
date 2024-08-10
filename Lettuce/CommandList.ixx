@@ -7,7 +7,6 @@ module;
 #include <vector>
 #include <algorithm>
 #include <cstdint>
-#define VOLK_IMPLEMENTATION
 #include <volk.h>
 
 export module Lettuce:CommandList;
@@ -116,7 +115,7 @@ export namespace Lettuce::Core
         /// @param waitValues
         /// @param signalValues
         static void Send(Device device, std::vector<CommandList> cmds,
-                         VkPipelineStageFlags waitStage,
+                         AccessStage waitStage,
                          std::vector<TSemaphore> semaphores,
                          std::vector<uint64_t> waitValues,
                          std::vector<uint64_t> signalValues)
@@ -136,13 +135,13 @@ export namespace Lettuce::Core
                 .signalSemaphoreValueCount = (uint32_t)signalValues.size(),
                 .pSignalSemaphoreValues = signalValues.data(),
             };
-
+            auto w = (VkPipelineStageFlags)waitStage;
             VkSubmitInfo submitI = {
                 .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
                 .pNext = &timelineSemaphoreSubmitI,
                 .waitSemaphoreCount = (uint32_t)semaphores.size(),
                 .pWaitSemaphores = vkSemaphores.data(),
-                .pWaitDstStageMask = &waitStage,
+                .pWaitDstStageMask = &w,
                 .commandBufferCount = (uint32_t)cmds.size(),
                 .pCommandBuffers = vkCmds.data(),
                 .signalSemaphoreCount = (uint32_t)semaphores.size(),

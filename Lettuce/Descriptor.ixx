@@ -6,7 +6,6 @@ module;
 #include <vector>
 #include <map>
 #include <string>
-#define VOLK_IMPLEMENTATION
 #include <volk.h>
 
 export module Lettuce:Descriptor;

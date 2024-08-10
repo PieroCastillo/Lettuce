@@ -42,13 +42,13 @@ add_definitions(-DPATCH_VERSION=${PATCH_VERSION})
 # Buscar todos los archivos con extensión .ixx dentro de la carpeta Lettuce
 file(GLOB LETTUCE_SOURCES Lettuce/*.ixx Lettuce/Compilers/*.ixx)
 
-add_library(Lettuce)
+add_library(Lettuce SHARED)
 target_sources(Lettuce
         PUBLIC
         FILE_SET cxx_modules TYPE CXX_MODULES FILES
         ${LETTUCE_SOURCES}
 )
-add_library(Lettuce3D)
+add_library(Lettuce3D SHARED)
 target_sources(Lettuce3D
         PUBLIC
         FILE_SET cxx_modules TYPE CXX_MODULES FILES
@@ -64,7 +64,7 @@ add_executable(ClearScreenSample
 #         samples/TriangleSample/app.cpp)
 # add_executable(VertexSquare
 #         samples/VertexSquare/app.cpp)
-target_link_libraries(Lettuce  PRIVATE volk::volk_headers Vulkan::shaderc_combined GPUOpen::VulkanMemoryAllocator)
+target_link_libraries(Lettuce  PRIVATE volk::volk Vulkan::shaderc_combined GPUOpen::VulkanMemoryAllocator)
 # target_link_libraries(Lettuce3D  PRIVATE Lettuce volk::volk_headers Vulkan::shaderc_combined)
 target_link_libraries(ClearScreenSample Lettuce glfw)
 # target_link_libraries(TriangleSample Lettuce glfw)

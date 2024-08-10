@@ -6,7 +6,6 @@ module;
 #include <iostream>
 #include <string>
 #include <algorithm>
-#define VOLK_IMPLEMENTATION
 #include <volk.h>
 
 export module Lettuce:Swapchain;

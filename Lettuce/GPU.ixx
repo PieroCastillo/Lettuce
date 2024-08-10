@@ -6,7 +6,6 @@ module;
 #include <iostream>
 #include <optional>
 #include <vector>
-#define VOLK_IMPLEMENTATION
 #include <volk.h>
 
 export module Lettuce:GPU;

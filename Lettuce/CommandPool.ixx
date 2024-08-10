@@ -3,11 +3,10 @@
 //
 module;
 #include <iostream>
-#define VOLK_IMPLEMENTATION
-#include <volk.h>
 #include <vector>
 #include <string>
 #include <optional>
+#include <volk.h>
 
 export module Lettuce:CommandPool;
 
@@ -19,6 +18,7 @@ export namespace Lettuce::Core
 {
     class CommandPool
     {
+    public:
         Device _device;
         VkCommandPool _commandPool = VK_NULL_HANDLE;
         std::vector<VkCommandBuffer> _commandBuffers;

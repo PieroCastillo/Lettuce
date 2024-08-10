@@ -7,11 +7,9 @@ module;
 #include <vector>
 #include <list>
 #include <functional>
-// #define VK_NO_PROTOTYPES
 #if defined(_WIN32)
 #define VK_USE_PLATFORM_WIN32_KHR
 #include <ddkernel.h>
-// #include <vulkan/vulkan_win32.h>
 #endif
 #if defined(__linux__) || defined(__unix__)
 #define VK_USE_PLATFORM_XLIB_KHR
@@ -21,7 +19,6 @@ module;
 #define VK_USE_PLATFORM_MACOS_MVK
 // #include <vulkan/vulkan_macos.h>
 #endif
-#define VOLK_IMPLEMENTATION
 #include <volk.h>
 #include <otherUtils.h>
 
@@ -29,12 +26,38 @@ export module Lettuce:Utils;
 
 export namespace Lettuce::Core
 {
+    enum class AccessStage
+    {
+        TopOfPipe = 0x00000001,
+        DrawIndirect = 0x00000002,
+        VertexInput = 0x00000004,
+        VertexShader = 0x00000008,
+        TessellationControlShader = 0x00000010,
+        TessellationEvaluationShader = 0x00000020,
+        GeometryShader = 0x00000040,
+        FragmentShader = 0x00000080,
+        EarlyFragmentTests = 0x00000100,
+        LateFragmentTests = 0x00000200,
+        ColorAttachmentOutput = 0x00000400,
+        ComputeShader = 0x00000800,
+        Transfer = 0x00001000,
+        BottomOfPipe = 0x00002000,
+        Host = 0x00004000,
+        AllGraphics = 0x00008000,
+        AllCommands = 0x00010000,
+        None = 0,
+        // Provided by VK_EXT_mesh_shader
+        TaskShader = 0x00080000,
+        // Provided by VK_EXT_mesh_shader
+        MeshShader = 0x00100000,
+    };
+
     enum class QueueType
     {
         Graphics,
         Present
     };
-    
+
     enum class SamplerAddressMode : uint32_t
     {
         Repeat = 0,
