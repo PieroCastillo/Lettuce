@@ -4,4 +4,4 @@
 module;
 export module Lettuce3D;
 
-export import :Scene3D;
+export import :Scene;

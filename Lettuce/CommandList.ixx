@@ -7,7 +7,7 @@ module;
 #include <vector>
 #include <algorithm>
 #include <cstdint>
-#include <volk.h>
+#include "volk.h"
 
 export module Lettuce:CommandList;
 

@@ -15,7 +15,7 @@ module;
 #include <vector>
 #include <cstdint>
 #include <list>
-#include <volk.h>
+#include "volk.h"
 export module Lettuce:Instance;
 
 import :GPU;

@@ -4,7 +4,7 @@
 module;
 #include <iostream>
 #include <vector>
-#include <volk.h>
+#include "volk.h"
 
 export module Lettuce:TextureView;
 

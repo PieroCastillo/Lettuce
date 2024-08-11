@@ -6,7 +6,8 @@ module;
 #include <iostream>
 #include <optional>
 #include <vector>
-#include <volk.h>
+#define VK_NO_PROTOTYPES
+#include "volk.h"
 
 export module Lettuce:GPU;
 

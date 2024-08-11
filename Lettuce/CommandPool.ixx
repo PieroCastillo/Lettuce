@@ -6,7 +6,8 @@ module;
 #include <vector>
 #include <string>
 #include <optional>
-#include <volk.h>
+#define VOLK_IMPLEMENTATION
+#include "volk.h"
 
 export module Lettuce:CommandPool;
 

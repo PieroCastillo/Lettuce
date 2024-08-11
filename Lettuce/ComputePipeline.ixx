@@ -3,7 +3,7 @@
 //
 module;
 #include <iostream>
-#include <volk.h>
+#include "volk.h"
 
 export module Lettuce:ComputePipeline;
 

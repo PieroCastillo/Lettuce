@@ -6,7 +6,7 @@ module;
 #include <iostream>
 #include <string>
 #include <exception>
-#include <shaderc/shaderc.hpp>
+#include "shaderc/shaderc.hpp"
 
 export module Lettuce:GLSLCompiler;
 

@@ -3,9 +3,9 @@
 //
 module;
 #include <iostream>
-#include <volk.h>
 #include <vector>
 #include <string>
+#include "volk.h"
 
 export module Lettuce:Sampler;
 

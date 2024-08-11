@@ -4,9 +4,10 @@
 module;
 #include <iostream>
 #include <vector>
-#include <volk.h>
-#include <otherUtils.h>
-#include <vma/vk_mem_alloc.h>
+#define VOLK_IMPLEMENTATION
+#include "volk.h"
+#include "otherUtils.h"
+#include "vma/vk_mem_alloc.h"
 
 export module Lettuce:Buffer;
 

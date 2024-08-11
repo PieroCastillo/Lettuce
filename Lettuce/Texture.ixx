@@ -4,8 +4,9 @@
 module;
 #include <iostream>
 #include <vector>
-#include <volk.h>
-#include <vma/vk_mem_alloc.h>
+#define VK_NO_PROTOTYPES
+#include "vma/vk_mem_alloc.h"
+#include "volk.h"
 
 export module Lettuce:Texture;
 

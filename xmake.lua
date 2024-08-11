@@ -1,0 +1,21 @@
+add_requires("vulkan-memory-allocator", "vulkansdk", "shaderc", "volk","vulkansdk", "glm", "glfw")
+set_languages("c++20")
+
+target("Lettuce")
+    set_kind("shared")
+    add_packages("vulkan-memory-allocator", "vulkansdk", "shaderc", "volk")
+    add_includedirs("Lettuce")
+    add_headerfiles("Lettuce/**.h")
+    add_defines("VARIANT_VERSION=0","MAJOR_VERSION=1","MINOR_VERSION=0","PATCH_VERSION=0")
+    add_files("Lettuce/**.ixx", {public = true})
+
+target("Lettuce3D")
+    set_kind("shared")
+    add_deps("Lettuce")
+    add_files("Lettuce3D/*.ixx")
+
+target("ClearScreenApp")
+    set_kind("binary")
+    add_packages("glfw", "glm")
+    add_deps("Lettuce")
+    add_files("samples/ClearScreenSample/*.cpp")

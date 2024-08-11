@@ -3,16 +3,14 @@
 //
 module;
 #include <iostream>
-#define VOLK_IMPLEMENTATION
-#include <volk.h>
 #include <vector>
 #include <string>
 
 export module Lettuce3D:Scene3D;
 
-export namespace Lettuce3D
+export namespace Lettuce
 {
-    class Scene3D
+    class Scene
     {
     
     };

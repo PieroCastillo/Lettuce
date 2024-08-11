@@ -3,9 +3,10 @@
 //
 module;
 #include <iostream>
-#include <volk.h>
 #include <vector>
 #include <string>
+#define VK_NO_PROTOTYPES
+#include "volk.h"
 
 export module Lettuce:MeshPipeline;
 

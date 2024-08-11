@@ -19,8 +19,8 @@ module;
 #define VK_USE_PLATFORM_MACOS_MVK
 // #include <vulkan/vulkan_macos.h>
 #endif
-#include <volk.h>
-#include <otherUtils.h>
+#include "volk.h"
+#include "otherUtils.h"
 
 export module Lettuce:Utils;
 
