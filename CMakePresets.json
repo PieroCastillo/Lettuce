@@ -2,6 +2,18 @@
     "version": 2,
     "configurePresets": [
         {
+            "name": "vcpkg-ninja",
+            "displayName": "Build with Ninja and vcpkg",
+            "description": "Sets Ninja generator, build and install directory",
+            "generator": "Ninja",
+            "binaryDir": "${sourceDir}/build",
+            "cacheVariables": {
+                "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
+                "CMAKE_BUILD_TYPE": "Debug",
+                "CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install/${presetName}"
+            }
+        },
+        {
             "name": "vcpkg-vs",
             "displayName": "Build with Visual Studio and vcpkg",
             "description": "Sets Visual Studio generator, build and install directory",

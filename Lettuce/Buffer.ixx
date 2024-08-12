@@ -4,6 +4,7 @@
 module;
 #include <iostream>
 #include <vector>
+#define VOLK_IMPLEMENTATION
 #include <volk.h>
 #include <otherUtils.h>
 #include <vma/vk_mem_alloc.h>

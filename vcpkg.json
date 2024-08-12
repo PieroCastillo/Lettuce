@@ -3,8 +3,8 @@
     "glfw3",
     "glm",
     "volk",
+    "vulkan-memory-allocator",
     "vulkan",
-    "vulkan-sdk-components",
-    "vulkan-memory-allocator"
+    "vulkan-sdk-components"
   ]
 }

@@ -208,6 +208,7 @@ export namespace Lettuce::Core
             {
                 DestroyDebugUtilsMessengerEXT(_instance, debugMessenger, nullptr);
             }
+            volkFinalize();
             vkDestroyInstance(_instance, nullptr);
         }
     };
