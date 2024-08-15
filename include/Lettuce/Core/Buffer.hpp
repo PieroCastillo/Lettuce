@@ -1,6 +1,7 @@
 //
 // Created by piero on 26/06/2024
 //
+#pragma once
 #include <iostream>
 #include <vector>
 #include <volk.h>

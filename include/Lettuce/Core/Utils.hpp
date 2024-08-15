@@ -1,6 +1,7 @@
 //
 // Created by piero on 15/02/2024.
 //
+#pragma once
 #include <iostream>
 #include <stdexcept>
 #include <vector>

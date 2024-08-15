@@ -1,10 +1,12 @@
 //
 // Created by piero on 26/06/2024
 //
+#pragma once
 #include <iostream>
 #include <vector>
 #include <volk.h>
 #include <vma/vk_mem_alloc.h>
+#include <Device.hpp>
 
 namespace Lettuce::Core
 {

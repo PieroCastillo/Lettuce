@@ -4,13 +4,15 @@
 #include <string>
 #include <vector>
 
-namespace Lettuce::Core::Compilers
+virtual void Lettuce::Core::Compilers::ICompiler::Load()
 {
-    class ICompiler
-    {
-    public:
-        virtual void Load() = 0;
-        virtual std::vector<uint32_t> Compile(std::string text, std::string inputFile, PipelineStage stage, bool optimize) = 0;
-        virtual void Destroy() = 0;
-    };
+    return;
+}
+virtual std::vector<uint32_t> Lettuce::Core::Compilers::ICompiler::Compile(std::string text, std::string inputFile, PipelineStage stage, bool optimize)
+{
+    return;
+}
+virtual void Lettuce::Core::Compilers::ICompiler::Destroy()
+{
+    return;
 }

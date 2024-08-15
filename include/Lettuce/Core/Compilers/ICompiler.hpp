@@ -1,6 +1,7 @@
 //
 // created by piero on 25/06/2024
 //
+#pragma once
 #include <string>
 #include <vector>
 

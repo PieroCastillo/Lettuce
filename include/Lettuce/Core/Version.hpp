@@ -1,6 +1,7 @@
 //
 // Created by piero on 12/02/2024.
 //
+#pragma once
 #include <cstdint>
 
 namespace Lettuce::Core
