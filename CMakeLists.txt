@@ -23,14 +23,11 @@ add_definitions(-DMAJOR_VERSION=${MAJOR_VERSION})
 add_definitions(-DMINOR_VERSION=${MINOR_VERSION})
 add_definitions(-DPATCH_VERSION=${PATCH_VERSION})
 
-file(GLOB LETTUCE_HEADERS include/Lettuce/Core/*.hpp include/Lettuce/Core/Compilers/*.hpp)
 file(GLOB LETTUCE_SOURCES Lettuce/Core/*.cpp Lettuce/core/Compilers/*.cpp)
 
 add_library(Lettuce)
 target_sources(Lettuce PRIVATE ${LETTUCE_SOURCES})
-target_include_directories(Lettuce PUBLIC ${LETTUCE_HEADERS})
-include()
-
+target_include_directories(Lettuce PUBLIC include)
 # add_executable(ClearScreenSample
 #         samples/ClearScreenSample/app.cpp)
 # add_executable(TriangleSample

@@ -5,6 +5,8 @@
 #include <iostream>
 #include <vector>
 #include <volk.h>
+#include "Device.hpp"
+#include "DescriptorLayout.hpp"
 
 namespace Lettuce::Core
 {

@@ -6,6 +6,7 @@
 #include <map>
 #include <string>
 #include <volk.h>
+#include "Lettuce/Core/Descriptor.hpp"
 
 namespace Lettuce::Core
 {

@@ -3,14 +3,17 @@
 //
 #include <iostream>
 #include <vector>
-#define VOLK_IMPLEMENTATION
 #include <volk.h>
-#include <otherUtils.h>
+#include <Device.hpp>
+#include <Utils.hpp>
 #include <vma/vk_mem_alloc.h>
+#include "Lettuce/Core/Buffer.hpp"
 
-void Lettuce::Core::Buffer::Create(Device &device, uint32_t size, BufferUsage usage,
-                                   VmaAllocationCreateFlags allocationFlags = VmaAllocationCreateFlagBits::VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT,
-                                   VmaMemoryUsage memoryUsage = VmaMemoryUsage::VMA_MEMORY_USAGE_AUTO)
+using namespace Lettuce::Core;
+
+void Buffer::Create(Device &device, uint32_t size, BufferUsage usage,
+                    VmaAllocationCreateFlags allocationFlags = VmaAllocationCreateFlagBits::VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT,
+                    VmaMemoryUsage memoryUsage = VmaMemoryUsage::VMA_MEMORY_USAGE_AUTO)
 {
     _device = device;
     _size = size;
@@ -43,7 +46,7 @@ void Lettuce::Core::Buffer::Create(Device &device, uint32_t size, BufferUsage us
 
 /// @brief Maps data from host memory to buffer
 /// @param src pinter to data to be mapped
-void Lettuce::Core::Buffer::SetData(void *src)
+void Buffer::SetData(void *src)
 {
     void *data;
     checkResult(vmaMapMemory(_device.allocator, _allocation, &data), "mapped sucessfully");
@@ -56,7 +59,7 @@ void Lettuce::Core::Buffer::SetData(void *src)
 /// the usage of this function is for staging buffers creation only, another
 /// usage may have unexpected behaviors.
 /// @param buffer the dst buffer
-void Lettuce::Core::Buffer::CopyTo(Buffer buffer)
+void Buffer::CopyTo(Buffer buffer)
 {
     VkCommandBufferAllocateInfo commandBufferAI = {
         .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
@@ -93,19 +96,18 @@ void Lettuce::Core::Buffer::CopyTo(Buffer buffer)
 }
 
 template <typename T>
-static Lettuce::Core::Buffer Lettuce::Core::Buffer::CreateVertexBuffer(Device &device, std::vector<T> vertices)
+Buffer Buffer::CreateVertexBuffer(Device &device, std::vector<T> vertices)
 {
     return CreateBufferWithStaging(device, BufferUsage::VertexBuffer, sizeof(vertices[0]) * vertices.size(), vertices.data());
 }
 
-template <typename T, typename = std::enable_if_t<
-                          std::is_integral<T>::value && std::is_unsigned<T>::value>>
-static Lettuce::Core::Buffer Lettuce::Core::Buffer::CreateIndexBuffer(Device &device, std::vector<T> indices)
+template <typename T, typename = std::enable_if_t<std::is_integral<T>::value && std::is_unsigned<T>::value>>
+Buffer Buffer::CreateIndexBuffer(Device &device, std::vector<T> indices)
 {
     return CreateBufferWithStaging(device, BufferUsage::IndexBuffer, sizeof(indices[0]) * indices.size(), indices.data());
 }
 
-static Lettuce::Core::Buffer Lettuce::Core::Buffer::CreateBufferWithStaging(Device &device, BufferUsage bufferDstUsage, uint32_t size, void *data)
+Buffer Core::Buffer::CreateBufferWithStaging(Device &device, BufferUsage bufferDstUsage, uint32_t size, void *data)
 {
     Buffer stagingBuffer;
     Buffer buffer;
@@ -122,14 +124,14 @@ static Lettuce::Core::Buffer Lettuce::Core::Buffer::CreateBufferWithStaging(Devi
 }
 
 template <typename T>
-static Lettuce::Core::Buffer Lettuce::Core::Buffer::CreateUniformBuffer(Device &device, T **data)
+Buffer Buffer::CreateUniformBuffer(Device &device, T **data)
 {
     Buffer buffer;
     buffer.Create(device, sizeof(T), BufferUsage::UniformBuffer, VMA_ALLOCATION_CREATE_HOST_ACCESS_RANDOM_BIT, VMA_MEMORY_USAGE_AUTO_PREFER_HOST);
     return buffer;
 }
 
-void Lettuce::Core::Buffer::Destroy()
+void Buffer::Destroy()
 {
     vmaDestroyBuffer(_device.allocator, _buffer, _allocation);
 

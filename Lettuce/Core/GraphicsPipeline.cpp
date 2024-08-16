@@ -4,6 +4,7 @@
 #include <iostream>
 #include <vector>
 #include <volk.h>
+#include "Lettuce/Core/GraphicsPipeline.hpp"
 
 namespace Lettuce::Core
 {

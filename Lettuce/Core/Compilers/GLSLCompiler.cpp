@@ -7,6 +7,8 @@
 #include <exception>
 #include <shaderc/shaderc.hpp>
 #include "Lettuce/Core/Utils.hpp"
+#include "Lettuce/Core/Compilers/ICompiler.hpp"
+#include "Lettuce/Core/Compilers/GLSLCompiler.hpp"
 
 using namespace Lettuce::Core;
 

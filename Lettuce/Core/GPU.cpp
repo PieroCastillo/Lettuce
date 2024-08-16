@@ -6,6 +6,7 @@
 #include <optional>
 #include <vector>
 #include <volk.h>
+#include "Lettuce/Core/GPU.hpp"
 
 using namespace Lettuce::Core;
 

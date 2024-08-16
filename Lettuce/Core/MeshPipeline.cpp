@@ -5,6 +5,7 @@
 #include <volk.h>
 #include <vector>
 #include <string>
+#include "Lettuce/Core/MeshPipeline.hpp"
 
 namespace Lettuce::Core
 {

@@ -20,7 +20,7 @@
 // #include <vulkan/vulkan_macos.h>
 #endif
 #include <volk.h>
-#include "Lettuce/Core/Utils.h"
+#include "Lettuce/Core/Utils.hpp"
 
 using namespace Lettuce::Core;
 

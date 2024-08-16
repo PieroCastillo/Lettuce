@@ -7,6 +7,7 @@
 #include <string>
 #include <algorithm>
 #include <volk.h>
+#include "Device.hpp"
 
 namespace Lettuce::Core
 {

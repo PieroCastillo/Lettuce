@@ -6,6 +6,7 @@
 #include <string>
 #include <optional>
 #include <volk.h>
+#include "Lettuce/Core/CommandPool.hpp"
 
 namespace Lettuce::Core
 {

@@ -15,6 +15,7 @@
 #include <cstdint>
 #include <list>
 #include <volk.h>
+#include "Lettuce/Core/Instance.hpp"
 
 namespace Lettuce::Core
 {

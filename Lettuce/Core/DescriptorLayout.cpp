@@ -6,6 +6,7 @@
 #include <vector>
 #include <string>
 #include <set>
+#include "Lettuce/Core/DescriptorLayout.hpp"
 
 namespace Lettuce::Core
 {

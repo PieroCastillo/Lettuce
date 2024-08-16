@@ -9,6 +9,7 @@
 #define VMA_STATIC_VULKAN_FUNCTIONS 0
 #define VMA_DEBUG_INITIALIZE_ALLOCATIONS 1
 #include <vma/vk_mem_alloc.h>
+#include "Lettuce/Core/Device.hpp"
 
 namespace Lettuce::Core
 {
