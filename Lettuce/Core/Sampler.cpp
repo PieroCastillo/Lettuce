@@ -11,9 +11,9 @@
 using namespace Lettuce::Core;
 
 void Sampler::Build(Device &device,
-                    SamplerAddressMode addressModeU = SamplerAddressMode::Repeat,
-                    SamplerAddressMode addressModeV = SamplerAddressMode::Repeat,
-                    SamplerAddressMode addressModeW = SamplerAddressMode::Repeat)
+                    SamplerAddressMode addressModeU,
+                    SamplerAddressMode addressModeV,
+                    SamplerAddressMode addressModeW)
 {
     _device = device;
 

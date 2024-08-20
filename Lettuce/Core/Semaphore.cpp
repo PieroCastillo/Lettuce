@@ -5,9 +5,11 @@
 #include <vector>
 #include <string>
 #include <algorithm>
+#include <limits>
 #include <volk.h>
 #include "Lettuce/Core/Device.hpp"
 #include "Lettuce/Core/Semaphore.hpp"
+#include "Lettuce/Core/Utils.hpp"
 
 using namespace Lettuce::Core;
 
@@ -48,7 +50,7 @@ void TSemaphore::Wait(std::vector<TSemaphore> semaphores, std::vector<uint64_t> 
         .pSemaphores = vkSemaphores.data(),
         .pValues = values.data(),
     };
-    checkResult(vkWaitSemaphores(semaphores[0]._device._device, &semaphoreWaitInfo, std::numeric_limits<uint64_t>::max()));
+    checkResult(vkWaitSemaphores(semaphores[0]._device._device, &semaphoreWaitInfo, (std::numeric_limits<uint64_t>::max)()));
 }
 
 void TSemaphore::Signal(uint64_t signalValue)

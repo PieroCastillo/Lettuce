@@ -6,6 +6,8 @@
 #include <volk.h>
 #include <vector>
 #include <string>
+#include "Device.hpp"
+#include "Utils.hpp"
 
 namespace Lettuce::Core
 {

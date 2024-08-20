@@ -13,6 +13,10 @@
 #include "Lettuce/Core/Swapchain.hpp"
 #include "Lettuce/Core/Semaphore.hpp"
 #include "Lettuce/Core/CommandList.hpp"
+#include "Lettuce/Core/Descriptor.hpp"
+#include "Lettuce/Core/ComputePipeline.hpp"
+#include "Lettuce/Core/GraphicsPipeline.hpp"
+#include "Lettuce/Core/PipelineConnector.hpp"
 
 using namespace Lettuce::Core;
 
@@ -35,7 +39,7 @@ void CommandList::End()
     checkResult(vkEndCommandBuffer(_commandBuffer));
 }
 
-void CommandList::BeginRendering(Swapchain swapchain, float r = 1, float g = 1, float b = 1, float a = 1)
+void CommandList::BeginRendering(Swapchain swapchain, float r, float g, float b, float a)
 {
     std::array<VkClearValue, 2> clearValues{};
     clearValues[0].color = {{r, g, b, a}};
@@ -155,12 +159,12 @@ void CommandList::Draw(uint32_t vertexCount, uint32_t instanceCount, uint32_t fi
     vkCmdDraw(_commandBuffer, vertexCount, instanceCount, firstVertex, firstInstance);
 }
 
-void CommandList::DrawIndexed(uint32_t indexCount, uint32_t instanceCount = 1, uint32_t firstIndex = 0, int32_t vertexOffset = 0, uint32_t firstInstance = 0)
+void CommandList::DrawIndexed(uint32_t indexCount, uint32_t instanceCount, uint32_t firstIndex, int32_t vertexOffset, uint32_t firstInstance)
 {
     vkCmdDrawIndexed(_commandBuffer, indexCount, instanceCount, firstIndex, vertexOffset, firstInstance);
 }
 
-void CommandList::DrawIndirect(Buffer indirectBuffer, uint32_t drawCount, uint32_t stride, uint32_t offset = 0)
+void CommandList::DrawIndirect(Buffer indirectBuffer, uint32_t drawCount, uint32_t stride, uint32_t offset)
 {
     vkCmdDrawIndirect(_commandBuffer, indirectBuffer._buffer, offset, drawCount, stride);
 }
@@ -175,7 +179,7 @@ void CommandList::Dispatch(uint32_t groupCountX, uint32_t groupCountY, uint32_t 
     vkCmdDispatch(_commandBuffer, groupCountX, groupCountY, groupCountZ);
 }
 
-void CommandList::SetScissor(Swapchain swapchain, int32_t xOffset = 0, int32_t yOffset = 0)
+void CommandList::SetScissor(Swapchain swapchain, int32_t xOffset, int32_t yOffset)
 {
     VkRect2D scissor = {
         .offset = {xOffset, yOffset},
@@ -184,7 +188,7 @@ void CommandList::SetScissor(Swapchain swapchain, int32_t xOffset = 0, int32_t y
     vkCmdSetScissor(_commandBuffer, 0, 1, &scissor);
 }
 
-void CommandList::SetViewport(float width, float height, float minDepth = 0.0f, float maxDepth = 1.0f, float x = 0.0f, float y = 0.0f)
+void CommandList::SetViewport(float width, float height, float minDepth, float maxDepth, float x, float y)
 {
     VkViewport viewport = {
         .x = x,
@@ -209,7 +213,7 @@ void CommandList::SetTopology(Topology topology)
 }
 
 template <typename T>
-void CommandList::PushConstant(PipelineConnector &connector, PipelineStage stage, T &constant, uint32_t offset = 0)
+void CommandList::PushConstant(PipelineConnector &connector, PipelineStage stage, T &constant, uint32_t offset)
 {
     vkCmdPushConstants(_commandBuffer, connector._pipelineLayout, (VkShaderStageFlags)stage, offset, sizeof(T), &constant);
 }

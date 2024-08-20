@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <volk.h>
 #include "Lettuce/Core/Device.hpp"
+#include "Lettuce/Core/Utils.hpp"
 #include "Lettuce/Core/Swapchain.hpp"
 
 using namespace Lettuce::Core;
@@ -86,7 +87,7 @@ void Swapchain::Create(Device &device, uint32_t initialWidth, uint32_t initialHe
 
 void Swapchain::AcquireNextImage(BSemaphore acquireImageSemaphore)
 {
-    vkAcquireNextImageKHR(_device._device, _swapchain, std::numeric_limits<uint64_t>::max(), acquireImageSemaphore._semaphore, nullptr, &index);
+    vkAcquireNextImageKHR(_device._device, _swapchain, (std::numeric_limits<uint64_t>::max)(), acquireImageSemaphore._semaphore, nullptr, &index);
 }
 
 void Swapchain::Present(BSemaphore renderSemaphore)

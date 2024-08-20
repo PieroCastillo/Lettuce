@@ -24,7 +24,7 @@
 
 using namespace Lettuce::Core;
 
-void checkResult(const VkResult result, std::string onSucessMessage = "created successfully!")
+void Lettuce::Core::checkResult(const VkResult result, std::string onSucessMessage = "created successfully!")
 {
     if (result == VK_SUCCESS)
     {
@@ -36,7 +36,7 @@ void checkResult(const VkResult result, std::string onSucessMessage = "created s
     }
 }
 
-char *GetSurfaceExtensionNameByPlatform()
+char* Lettuce::Core::GetSurfaceExtensionNameByPlatform()
 {
     char *surfaceExtensionName;
 #if defined(_WIN32)
@@ -52,7 +52,7 @@ char *GetSurfaceExtensionNameByPlatform()
 }
 
 template <typename T1, typename T2>
-VkResult CreateVkSurface(VkInstance instance, T1 window, T2 process, VkSurfaceKHR &surface, const VkAllocationCallbacks *allocator)
+VkResult Lettuce::Core::CreateVkSurface(VkInstance instance, T1 window, T2 process, VkSurfaceKHR &surface, const VkAllocationCallbacks *allocator)
 {
 #if defined(_WIN32)
     VkWin32SurfaceCreateInfoKHR surfaceCI = {
@@ -69,7 +69,7 @@ VkResult CreateVkSurface(VkInstance instance, T1 window, T2 process, VkSurfaceKH
 #endif
 }
 
-VkResult CreateDebugUtilsMessengerEXT(VkInstance instance, const VkDebugUtilsMessengerCreateInfoEXT *pCreateInfo, const VkAllocationCallbacks *pAllocator, VkDebugUtilsMessengerEXT *pDebugMessenger)
+VkResult Lettuce::Core::CreateDebugUtilsMessengerEXT(VkInstance instance, const VkDebugUtilsMessengerCreateInfoEXT *pCreateInfo, const VkAllocationCallbacks *pAllocator, VkDebugUtilsMessengerEXT *pDebugMessenger)
 {
     auto func = (PFN_vkCreateDebugUtilsMessengerEXT)vkGetInstanceProcAddr(instance, "vkCreateDebugUtilsMessengerEXT");
     if (func != nullptr)
@@ -82,7 +82,7 @@ VkResult CreateDebugUtilsMessengerEXT(VkInstance instance, const VkDebugUtilsMes
     }
 }
 
-void DestroyDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMessengerEXT debugMessenger, const VkAllocationCallbacks *pAllocator)
+void Lettuce::Core::DestroyDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMessengerEXT debugMessenger, const VkAllocationCallbacks *pAllocator)
 {
     auto func = (PFN_vkDestroyDebugUtilsMessengerEXT)vkGetInstanceProcAddr(instance, "vkDestroyDebugUtilsMessengerEXT");
     if (func != nullptr)

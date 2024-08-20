@@ -4,16 +4,16 @@
 #include <iostream>
 #include <vector>
 #include <volk.h>
-#include <Device.hpp>
-#include <Utils.hpp>
 #include <vma/vk_mem_alloc.h>
+#include "Lettuce/Core/Device.hpp"
+#include "Lettuce/Core/Utils.hpp"
 #include "Lettuce/Core/Buffer.hpp"
 
 using namespace Lettuce::Core;
 
 void Buffer::Create(Device &device, uint32_t size, BufferUsage usage,
-                    VmaAllocationCreateFlags allocationFlags = VmaAllocationCreateFlagBits::VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT,
-                    VmaMemoryUsage memoryUsage = VmaMemoryUsage::VMA_MEMORY_USAGE_AUTO)
+                    VmaAllocationCreateFlags allocationFlags,
+                    VmaMemoryUsage memoryUsage)
 {
     _device = device;
     _size = size;
@@ -107,7 +107,7 @@ Buffer Buffer::CreateIndexBuffer(Device &device, std::vector<T> indices)
     return CreateBufferWithStaging(device, BufferUsage::IndexBuffer, sizeof(indices[0]) * indices.size(), indices.data());
 }
 
-Buffer Core::Buffer::CreateBufferWithStaging(Device &device, BufferUsage bufferDstUsage, uint32_t size, void *data)
+Buffer Buffer::CreateBufferWithStaging(Device &device, BufferUsage bufferDstUsage, uint32_t size, void *data)
 {
     Buffer stagingBuffer;
     Buffer buffer;

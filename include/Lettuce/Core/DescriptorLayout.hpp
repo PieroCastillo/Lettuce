@@ -7,6 +7,8 @@
 #include <vector>
 #include <string>
 #include <set>
+#include "Device.hpp"
+#include "Descriptor.hpp"
 
 namespace Lettuce::Core
 {

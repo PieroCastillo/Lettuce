@@ -8,6 +8,13 @@
 #include <algorithm>
 #include <cstdint>
 #include <volk.h>
+#include "GraphicsPipeline.hpp"
+#include "ComputePipeline.hpp"
+#include "PipelineConnector.hpp"
+#include "Buffer.hpp"
+#include "Swapchain.hpp"
+#include "Device.hpp"
+#include "Utils.hpp"
 
 namespace Lettuce::Core
 {

@@ -11,17 +11,9 @@
 #include <vma/vk_mem_alloc.h>
 #include "Lettuce/Core/Device.hpp"
 
-namespace Lettuce::Core
-{
-    class Device
-    {
-    private:
-        std::vector<char *> availableExtensionsNames;
-        std::vector<char *> availableLayersNames;
-        std::vector<const char *> requestedExtensionsNames;
-        std::vector<const char *> requestedLayersNames;
+using namespace Lettuce::Core;
 
-        void listExtensions()
+        void Device::listExtensions()
         {
             uint32_t availableExtensionCount = 0;
             // std::cout << *_pdevice << std::endl;
@@ -35,7 +27,7 @@ namespace Lettuce::Core
             }
         }
 
-        void listLayers()
+        void Device::listLayers()
         {
             uint32_t availableLayerCount = 0;
             vkEnumerateDeviceLayerProperties(_pdevice, &availableLayerCount, nullptr);
@@ -48,7 +40,7 @@ namespace Lettuce::Core
             }
         }
 
-        void loadExtensionsLayersAndFeatures()
+        void Device::loadExtensionsLayersAndFeatures()
         {
             if (_instance._debug)
             {
@@ -68,16 +60,7 @@ namespace Lettuce::Core
             }
         }
 
-    public:
-        Instance _instance;
-        VkPhysicalDevice _pdevice;
-        VkDevice _device;
-        VkQueue _graphicsQueue;
-        VkQueue _presentQueue;
-        VmaAllocator allocator;
-        GPU _gpu;
-
-        void Create(Instance &instance, GPU &gpu, std::vector<char *> requestedExtensions)
+        void Device::Create(Instance &instance, GPU &gpu, std::vector<char *> requestedExtensions)
         {
             _pdevice = gpu._pdevice;
             _instance = instance;
@@ -189,15 +172,13 @@ namespace Lettuce::Core
             vkGetDeviceQueue(_device, gpu.presentFamily.value(), 0, &_presentQueue);
         }
 
-        void Wait()
+        void Device::Wait()
         {
             vkDeviceWaitIdle(_device);
         }
 
-        void Destroy()
+        void Device::Destroy()
         {
             vmaDestroyAllocator(allocator);
             vkDestroyDevice(_device, nullptr);
         }
-    };
-}

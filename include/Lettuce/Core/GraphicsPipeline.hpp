@@ -5,6 +5,11 @@
 #include <iostream>
 #include <vector>
 #include <volk.h>
+#include "Device.hpp"
+#include "Shader.hpp"
+#include "Swapchain.hpp"
+#include "Utils.hpp"
+#include "PipelineConnector.hpp"
 
 namespace Lettuce::Core
 {

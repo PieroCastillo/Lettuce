@@ -8,11 +8,12 @@
 #include "Lettuce/Core/Device.hpp"
 #include "Lettuce/Core/Utils.hpp"
 #include "Lettuce/Core/Shader.hpp"
+#include "Lettuce/Core/Compilers/ICompiler.hpp"
 
 using namespace Lettuce::Core;
 
 template <class T = Compilers::Compiler>
-void Shader::Create(Device &device, T &compiler, std::string text, std::string mainMethod, std::string inputFile, PipelineStage stage, bool optimize = false)
+void Shader::Create(Device &device, T &compiler, std::string text, std::string mainMethod, std::string inputFile, PipelineStage stage, bool optimize)
 {
     _device = device;
     _stage = stage;

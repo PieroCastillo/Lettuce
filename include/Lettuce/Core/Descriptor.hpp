@@ -7,6 +7,11 @@
 #include <map>
 #include <string>
 #include <volk.h>
+#include "Device.hpp"
+#include "Buffer.hpp"
+#include "Sampler.hpp"
+#include "Utils.hpp"
+#include "TextureView.hpp"
 
 namespace Lettuce::Core
 {

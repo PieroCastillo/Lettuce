@@ -10,10 +10,10 @@
 
 using namespace Lettuce::Core;
 
-void Texture::Build(Device &device, uint32_t width, uint32_t height, uint32_t depth = 1,
-                    VkImageUsageFlagBits imageUsage = VK_IMAGE_USAGE_SAMPLED_BIT,
-                    uint32_t mipLevels = 1,
-                    uint32_t layerCount = 1)
+void Texture::Build(Device &device, uint32_t width, uint32_t height, uint32_t depth,
+                    VkImageUsageFlagBits imageUsage,
+                    uint32_t mipLevels,
+                    uint32_t layerCount)
 {
     _device = device;
     _width = width;

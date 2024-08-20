@@ -7,6 +7,9 @@
 #include <string>
 #include <optional>
 #include <volk.h>
+#include "Device.hpp"
+#include "Utils.hpp"
+#include "CommandList.hpp"
 
 namespace Lettuce::Core
 {
@@ -26,6 +29,6 @@ namespace Lettuce::Core
 
         void Reset();
 
-        void Destroy():
+        void Destroy();
     };
 }

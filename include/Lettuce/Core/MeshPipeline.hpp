@@ -10,6 +10,7 @@
 #include "Shader.hpp"
 #include "Swapchain.hpp"
 #include "Utils.hpp"
+#include "PipelineConnector.hpp"
 
 namespace Lettuce::Core
 {

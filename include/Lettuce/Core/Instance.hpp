@@ -15,6 +15,8 @@
 #include <cstdint>
 #include <list>
 #include <volk.h>
+#include "GPU.hpp"
+#include "Version.hpp"
 
 namespace Lettuce::Core
 {

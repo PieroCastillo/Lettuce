@@ -8,6 +8,7 @@
 #include <list>
 #include <functional>
 #include <type_traits>
+#include <volk.h>
 
 #if defined(_WIN32)
 #define VK_USE_PLATFORM_WIN32_KHR
@@ -22,7 +23,7 @@
 #define VK_USE_PLATFORM_MACOS_MVK
 // #include <vulkan/vulkan_macos.h>
 #endif
-#include <volk.h>
+
 //credits: https://stackoverflow.com/a/69183821/13766341
 #define MAKE_ENUM_FLAGS(TEnum)                                                      \
     inline TEnum operator~(TEnum a) {                                               \
