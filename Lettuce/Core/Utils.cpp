@@ -6,6 +6,8 @@
 #include <vector>
 #include <list>
 #include <functional>
+#include "Lettuce/Core/Utils.hpp"
+#include <volk.h>
 #if defined(_WIN32)
 #define VK_USE_PLATFORM_WIN32_KHR
 #include <ddkernel.h>
@@ -19,12 +21,10 @@
 #define VK_USE_PLATFORM_MACOS_MVK
 // #include <vulkan/vulkan_macos.h>
 #endif
-#include <volk.h>
-#include "Lettuce/Core/Utils.hpp"
 
 using namespace Lettuce::Core;
 
-void Lettuce::Core::checkResult(const VkResult result, std::string onSucessMessage = "created successfully!")
+void Lettuce::Core::checkResult(const VkResult result, std::string onSucessMessage)
 {
     if (result == VK_SUCCESS)
     {

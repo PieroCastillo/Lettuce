@@ -11,13 +11,14 @@
 #include "Lettuce/Core/Compilers/GLSLCompiler.hpp"
 
 using namespace Lettuce::Core;
+using namespace Lettuce::Core::Compilers;
 
-void Compilers::GLSLCompiler::Load()
+void GLSLCompiler::Load()
 {
     return;
 }
 
-std::vector<uint32_t> Compilers::GLSLCompiler::Compile(std::string text, std::string inputFile, PipelineStage stage, bool optimize = false) override
+std::vector<uint32_t> GLSLCompiler::Compile(std::string text, std::string inputFile, PipelineStage stage, bool optimize) 
 {
     shaderc_shader_kind kind;
 
@@ -76,7 +77,7 @@ std::vector<uint32_t> Compilers::GLSLCompiler::Compile(std::string text, std::st
     }
 }
 
-void Lettuce::Core::Compilers::GLSLCompiler::Destroy() override
+void GLSLCompiler::Destroy()
 {
     return;
 }

@@ -6,6 +6,7 @@
 #include <string>
 #include <algorithm>
 #include <volk.h>
+#include "Device.hpp"
 #include "Semaphore.hpp"
 
 namespace Lettuce::Core
