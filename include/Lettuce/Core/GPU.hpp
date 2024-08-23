@@ -36,6 +36,9 @@ namespace Lettuce::Core
         bool GraphicsCapable();
 
         uint32_t FindMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
+
+        VkFormat findSupportedFormat(const std::vector<VkFormat> &candidates, VkImageTiling tiling, VkFormatFeatureFlags features);
+
     private:
         void checkSurfaceCapabilities();
 

@@ -20,7 +20,7 @@ void TextureView::Build(Device &device, Texture &texture)
         .image = texture._image,
         .viewType = VK_IMAGE_VIEW_TYPE_2D,
         // and arrays
-        .format = VK_FORMAT_B8G8R8A8_SRGB,
+        .format = texture.GetFormat(),
         .components =
             {
                 .r = VK_COMPONENT_SWIZZLE_IDENTITY,

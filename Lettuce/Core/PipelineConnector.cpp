@@ -33,7 +33,8 @@ void PipelineConnector::Build(Device &device)
 
     VkPipelineLayoutCreateInfo pipelineLayoutCI = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
-        .flags = VkPipelineLayoutCreateFlagBits::VK_PIPELINE_LAYOUT_CREATE_INDEPENDENT_SETS_BIT_EXT};
+        .flags = VkPipelineLayoutCreateFlagBits::VK_PIPELINE_LAYOUT_CREATE_INDEPENDENT_SETS_BIT_EXT,
+    };
 
     if (pushConstants.size() > 0)
     {

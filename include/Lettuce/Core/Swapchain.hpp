@@ -8,6 +8,8 @@
 #include <volk.h>
 #include "Device.hpp"
 #include "Semaphore.hpp"
+#include "Texture.hpp"
+#include "TextureView.hpp"
 
 namespace Lettuce::Core
 {
@@ -22,16 +24,25 @@ namespace Lettuce::Core
 
         void loadImages();
         void createImageViews();
+        void createDepthImage();
+        void createRenderPass();
+        void createFramebuffers();
 
     public:
         Device _device;
         VkSwapchainKHR _swapchain = VK_NULL_HANDLE;
+        VkRenderPass _renderPass = VK_NULL_HANDLE;
+        Texture _depthImage;
+        TextureView _depthImageView;
         std::vector<VkImage> swapChainImages;
         std::vector<VkImageView> swapChainImageViews;
+        std::vector<VkAttachmentDescription> attachments;
+        std::vector<VkFramebuffer> framebuffers;
         uint32_t index;
         uint32_t width;
         uint32_t height;
         VkFormat imageFormat;
+        VkFormat depthFormat;
         VkExtent2D extent;
 
         void Create(Device &device, uint32_t initialWidth, uint32_t initialHeight);
@@ -39,6 +50,8 @@ namespace Lettuce::Core
         void AcquireNextImage(BSemaphore acquireImageSemaphore);
 
         void Present(BSemaphore renderSemaphore);
+
+        void Resize(uint32_t newWidth, uint32_t newHeight);
 
         void Destroy();
     };

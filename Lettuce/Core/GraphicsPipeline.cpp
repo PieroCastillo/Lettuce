@@ -5,6 +5,9 @@
 #include <vector>
 #include <volk.h>
 #include "Lettuce/Core/GraphicsPipeline.hpp"
+#include "Lettuce/Core/PipelineConnector.hpp"
+#include "Lettuce/Core/Swapchain.hpp"
+#include "Lettuce/Core/Shader.hpp"
 
 using namespace Lettuce::Core;
 
@@ -45,13 +48,6 @@ void GraphicsPipeline::Build(Device &device, PipelineConnector &connector, Swapc
 {
     _device = device;
     _pipelineLayout = connector._pipelineLayout;
-
-    // required for dynamic rendering
-    const VkPipelineRenderingCreateInfoKHR pipelineRenderingCI{
-        .sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO_KHR,
-        .colorAttachmentCount = 1,
-        .pColorAttachmentFormats = &swapchain.imageFormat,
-    };
 
     VkPipelineVertexInputStateCreateInfo vertexInputStateCI = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO,
@@ -131,8 +127,8 @@ void GraphicsPipeline::Build(Device &device, PipelineConnector &connector, Swapc
         .pColorBlendState = &colorBlendStateCI,
         .pDynamicState = &dynamicStateCI,
         .layout = _pipelineLayout,
-        .renderPass = nullptr,
-        // uint32_t                                         subpass;
+        .renderPass = swapchain._renderPass,
+        .subpass = 0,
         // VkPipeline                                       basePipelineHandle;
         // int32_t                                          basePipelineIndex;
     };

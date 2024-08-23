@@ -13,7 +13,9 @@ using namespace Lettuce::Core;
 void Texture::Build(Device &device, uint32_t width, uint32_t height, uint32_t depth,
                     VkImageUsageFlagBits imageUsage,
                     uint32_t mipLevels,
-                    uint32_t layerCount)
+                    uint32_t layerCount,
+                    VkFormat format,
+                    bool enableAsTransferDst)
 {
     _device = device;
     _width = width;
@@ -21,13 +23,14 @@ void Texture::Build(Device &device, uint32_t width, uint32_t height, uint32_t de
     _depth = depth;
     _mipLevels = mipLevels;
     _layerCount = layerCount;
+    _imageFormat = format;
 
     auto usage = imageUsage | VkImageUsageFlagBits::VK_IMAGE_USAGE_TRANSFER_DST_BIT;
 
     VkImageCreateInfo imageCI = {
         .sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
         .imageType = VkImageType::VK_IMAGE_TYPE_2D,
-        .format = VkFormat::VK_FORMAT_B8G8R8A8_SRGB,
+        .format = format,
         .extent = {width, height, depth},
         .mipLevels = mipLevels,
         .arrayLayers = layerCount,
@@ -45,6 +48,11 @@ void Texture::Build(Device &device, uint32_t width, uint32_t height, uint32_t de
     };
 
     checkResult(vmaCreateImage(_device.allocator, &imageCI, &allocationCI, &_image, &_allocation, nullptr), "image created successfully");
+}
+
+VkFormat GetFormat()
+{
+    return _imageFormat;
 }
 
 void Texture::Destroy()
