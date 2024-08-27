@@ -5,7 +5,7 @@
 #include <iostream>
 #include <vector>
 #include <volk.h>
-#include <vma/vk_mem_alloc.h>
+#include "VmaUsage.hpp"
 #include "Device.hpp"
 #include "Utils.hpp"
 

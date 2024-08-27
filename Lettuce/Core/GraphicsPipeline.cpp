@@ -113,7 +113,6 @@ void GraphicsPipeline::Build(Device &device, PipelineConnector &connector, Swapc
 
     VkGraphicsPipelineCreateInfo graphicsPipelineCI = {
         .sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
-        .pNext = &pipelineRenderingCI,
         //                 VkPipelineCreateFlags                            flags;
         .stageCount = (uint32_t)stages.size(),
         .pStages = stages.data(),

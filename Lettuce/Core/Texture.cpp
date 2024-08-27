@@ -4,9 +4,9 @@
 #include <iostream>
 #include <vector>
 #include <volk.h>
-#include <vma/vk_mem_alloc.h>
-#include "Lettuce/Core/Device.hpp"
+#include "Lettuce/Core/VmaUsage.hpp"
 #include "Lettuce/Core/Texture.hpp"
+#include "Lettuce/Core/Device.hpp"
 
 using namespace Lettuce::Core;
 
@@ -50,9 +50,9 @@ void Texture::Build(Device &device, uint32_t width, uint32_t height, uint32_t de
     checkResult(vmaCreateImage(_device.allocator, &imageCI, &allocationCI, &_image, &_allocation, nullptr), "image created successfully");
 }
 
-VkFormat GetFormat()
+VkFormat Texture::GetFormat()
 {
-    return _imageFormat;
+    return this->_imageFormat;
 }
 
 void Texture::Destroy()

@@ -4,10 +4,10 @@
 #include <iostream>
 #include <vector>
 #include <volk.h>
-#include <vma/vk_mem_alloc.h>
+#include "Lettuce/Core/VmaUsage.hpp"
+#include "Lettuce/Core/Buffer.hpp"
 #include "Lettuce/Core/Device.hpp"
 #include "Lettuce/Core/Utils.hpp"
-#include "Lettuce/Core/Buffer.hpp"
 
 using namespace Lettuce::Core;
 
@@ -88,9 +88,9 @@ void Buffer::CopyTo(Buffer buffer)
         .commandBufferCount = 1,
         .pCommandBuffers = &cmd,
     };
-    vkQueueSubmit(_device._graphicsQueue, 1, &submitI, nullptr);
+    vkQueueSubmit(_device._graphicsQueues[0], 1, &submitI, nullptr);
 
-    vkQueueWaitIdle(_device._graphicsQueue);
+    vkQueueWaitIdle(_device._graphicsQueues[0]);
 
     vkFreeCommandBuffers(_device._device, _pool, 1, &cmd);
 }

@@ -6,7 +6,6 @@
 #include <vector>
 #include <list>
 #include <functional>
-#include "Lettuce/Core/Utils.hpp"
 #include <volk.h>
 #if defined(_WIN32)
 #define VK_USE_PLATFORM_WIN32_KHR
@@ -21,6 +20,7 @@
 #define VK_USE_PLATFORM_MACOS_MVK
 // #include <vulkan/vulkan_macos.h>
 #endif
+#include "Lettuce/Core/Utils.hpp"
 
 using namespace Lettuce::Core;
 
@@ -36,7 +36,7 @@ void Lettuce::Core::checkResult(const VkResult result, std::string onSucessMessa
     }
 }
 
-char* Lettuce::Core::GetSurfaceExtensionNameByPlatform()
+char *Lettuce::Core::GetSurfaceExtensionNameByPlatform()
 {
     char *surfaceExtensionName;
 #if defined(_WIN32)
@@ -49,24 +49,6 @@ char* Lettuce::Core::GetSurfaceExtensionNameByPlatform()
     return (char *)VK_MVK_MACOS_SURFACE_EXTENSION_NAME;
 #endif
     return (char *)"";
-}
-
-template <typename T1, typename T2>
-VkResult Lettuce::Core::CreateVkSurface(VkInstance instance, T1 window, T2 process, VkSurfaceKHR &surface, const VkAllocationCallbacks *allocator)
-{
-#if defined(_WIN32)
-    VkWin32SurfaceCreateInfoKHR surfaceCI = {
-        .sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR,
-        .hinstance = (static_cast<HINSTANCE>(process)),
-        .hwnd = (static_cast<HWND>(window))};
-    return vkCreateWin32SurfaceKHR(instance, &surfaceCI, allocator, &surface);
-#endif
-#if defined(__linux__)
-    return VK_ERROR_INITIALIZATION_FAILED;
-#endif
-#if defined(__APPLE__)
-    return VK_ERROR_INITIALIZATION_FAILED;
-#endif
 }
 
 VkResult Lettuce::Core::CreateDebugUtilsMessengerEXT(VkInstance instance, const VkDebugUtilsMessengerCreateInfoEXT *pCreateInfo, const VkAllocationCallbacks *pAllocator, VkDebugUtilsMessengerEXT *pDebugMessenger)

@@ -131,7 +131,7 @@ VkFormat GPU::findSupportedFormat(const std::vector<VkFormat> &candidates, VkIma
     for (VkFormat format : candidates)
     {
         VkFormatProperties props;
-        vkGetPhysicalDeviceFormatProperties(physicalDevice, format, &props);
+        vkGetPhysicalDeviceFormatProperties(_pdevice, format, &props);
         if (tiling == VK_IMAGE_TILING_OPTIMAL && (props.optimalTilingFeatures & features) == features)
         {
             return format;

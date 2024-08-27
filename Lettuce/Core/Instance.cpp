@@ -14,8 +14,8 @@
 #include <cstdint>
 #include <list>
 #include <volk.h>
-#include "Lettuce/Core/Utils.hpp"
 #include "Lettuce/Core/Instance.hpp"
+#include "Lettuce/Core/Utils.hpp"
 
 using namespace Lettuce::Core;
 
@@ -96,7 +96,7 @@ void Instance::Create(std::string appName, Version appVersion, std::vector<char 
     //     std::cout << "cannot load vulkan library" << std::endl;
     //     return;
     // }
-    checkResult(volkInitialize(), "uwu");
+    checkResult(volkInitialize());
     VkDebugUtilsMessengerCreateInfoEXT debugUtilsCI =
         {
             .sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT,
@@ -112,7 +112,8 @@ void Instance::Create(std::string appName, Version appVersion, std::vector<char 
         .applicationVersion = VK_MAKE_API_VERSION(appVersion.variant, appVersion.major, appVersion.minor, appVersion.patch),
         .pEngineName = "Lettuce Rendering Engine",
         .engineVersion = VK_MAKE_API_VERSION(VARIANT_VERSION, MAJOR_VERSION, MINOR_VERSION, PATCH_VERSION),
-        .apiVersion = VK_MAKE_VERSION(1, 3, 0)};
+        .apiVersion = VK_MAKE_VERSION(1, 3, 0),
+    };
     listExtensions();
     loadPlatformAndFeatures();
     listLayers();
@@ -121,7 +122,8 @@ void Instance::Create(std::string appName, Version appVersion, std::vector<char 
         .sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO,
         .pApplicationInfo = &appI,
         .ppEnabledLayerNames = nullptr,
-        .ppEnabledExtensionNames = nullptr};
+        .ppEnabledExtensionNames = nullptr,
+    };
 
     if (requestedLayersNames.size() > 0)
     {
@@ -146,13 +148,6 @@ void Instance::Create(std::string appName, Version appVersion, std::vector<char 
     {
         checkResult(CreateDebugUtilsMessengerEXT(_instance, &debugUtilsCI, nullptr, &debugMessenger), "debug messenger created successfully");
     }
-}
-
-template <typename T1, typename T2>
-void Instance::CreateSurface(T1 window, T2 process)
-{
-    isSurfaceCreated = true;
-    checkResult(CreateVkSurface(_instance, window, process, _surface, nullptr), "surface created successfully");
 }
 
 std::list<GPU> Instance::getGPUs()

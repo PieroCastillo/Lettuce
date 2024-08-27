@@ -20,11 +20,6 @@
 
 using namespace Lettuce::Core;
 
-void CommandList::Create(Device &device)
-{
-    _device = device;
-}
-
 void CommandList::Begin()
 {
     VkCommandBufferBeginInfo cmdBeginCI = {
@@ -37,85 +32,6 @@ void CommandList::Begin()
 void CommandList::End()
 {
     checkResult(vkEndCommandBuffer(_commandBuffer));
-}
-
-void CommandList::BeginRendering(Swapchain swapchain, float r, float g, float b, float a)
-{
-    std::array<VkClearValue, 2> clearValues{};
-    clearValues[0].color = {{r, g, b, a}};
-    clearValues[1].depthStencil = {1.0f, 0};
-
-    const VkRenderingAttachmentInfo colorAttachmentI{
-        .sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
-        .imageView = swapchain.swapChainImageViews[swapchain.index],
-        .imageLayout = VK_IMAGE_LAYOUT_ATTACHMENT_OPTIMAL,
-        .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
-        .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
-        .clearValue = {{r, g, b, a}},
-    };
-
-    auto renderArea = VkRect2D{
-        .offset = {0, 0},
-        .extent = {swapchain.width, swapchain.height},
-    };
-
-    const VkRenderingInfo renderI{
-        .sType = VK_STRUCTURE_TYPE_RENDERING_INFO,
-        .renderArea = renderArea,
-        .layerCount = 1,
-        .colorAttachmentCount = 1,
-        .pColorAttachments = &colorAttachmentI,
-    };
-
-    vkCmdBeginRendering(_commandBuffer, &renderI);
-}
-
-void CommandList::EndRendering(Swapchain swapchain)
-{
-    vkCmdEndRendering(_commandBuffer);
-}
-
-/// @brief send CommandLists to the Queue, use VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT when the CommandLists are going to be presented
-/// @param cmds
-/// @param waitStages
-/// @param semaphores
-/// @param waitValues
-/// @param signalValues
-void CommandList::Send(Device device, std::vector<CommandList> cmds,
-                       AccessStage waitStage,
-                       std::vector<TSemaphore> semaphores,
-                       std::vector<uint64_t> waitValues,
-                       std::vector<uint64_t> signalValues)
-{
-    std::vector<VkCommandBuffer> vkCmds;
-    std::vector<VkSemaphore> vkSemaphores;
-
-    std::transform(cmds.begin(), cmds.end(), std::back_inserter(vkCmds), [](CommandList x)
-                   { return x._commandBuffer; });
-    std::transform(semaphores.begin(), semaphores.end(), std::back_inserter(vkSemaphores), [](TSemaphore x)
-                   { return x._semaphore; });
-
-    VkTimelineSemaphoreSubmitInfo timelineSemaphoreSubmitI = {
-        .sType = VK_STRUCTURE_TYPE_SEMAPHORE_SUBMIT_INFO,
-        .waitSemaphoreValueCount = (uint32_t)waitValues.size(),
-        .pWaitSemaphoreValues = waitValues.data(),
-        .signalSemaphoreValueCount = (uint32_t)signalValues.size(),
-        .pSignalSemaphoreValues = signalValues.data(),
-    };
-    auto w = (VkPipelineStageFlags)waitStage;
-    VkSubmitInfo submitI = {
-        .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
-        .pNext = &timelineSemaphoreSubmitI,
-        .waitSemaphoreCount = (uint32_t)semaphores.size(),
-        .pWaitSemaphores = vkSemaphores.data(),
-        .pWaitDstStageMask = &w,
-        .commandBufferCount = (uint32_t)cmds.size(),
-        .pCommandBuffers = vkCmds.data(),
-        .signalSemaphoreCount = (uint32_t)semaphores.size(),
-        .pSignalSemaphores = vkSemaphores.data(),
-    };
-
-    checkResult(vkQueueSubmit(device._graphicsQueue, 1, &submitI, VK_NULL_HANDLE));
 }
 
 void CommandList::BindGraphicsPipeline(GraphicsPipeline &pipeline)

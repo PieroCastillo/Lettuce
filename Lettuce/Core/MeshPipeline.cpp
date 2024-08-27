@@ -6,6 +6,9 @@
 #include <vector>
 #include <string>
 #include "Lettuce/Core/MeshPipeline.hpp"
+#include "Lettuce/Core/PipelineConnector.hpp"
+#include "Lettuce/Core/Swapchain.hpp"
+#include "Lettuce/Core/Shader.hpp"
 
 using namespace Lettuce::Core;
 
@@ -28,13 +31,6 @@ void MeshPipeline::Build(Device &device, PipelineConnector &connector, Swapchain
 {
     _device = device;
     _pipelineLayout = connector._pipelineLayout;
-
-    // required for dynamic rendering
-    const VkPipelineRenderingCreateInfoKHR pipelineRenderingCI{
-        .sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO_KHR,
-        .colorAttachmentCount = 1,
-        .pColorAttachmentFormats = &swapchain.imageFormat,
-    };
 
     VkPipelineViewportStateCreateInfo viewportStateCI = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO,
@@ -78,7 +74,6 @@ void MeshPipeline::Build(Device &device, PipelineConnector &connector, Swapchain
 
     VkGraphicsPipelineCreateInfo graphicsPipelineCI = {
         .sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
-        .pNext = &pipelineRenderingCI,
         //                 VkPipelineCreateFlags                            flags;
         .stageCount = (uint32_t)stages.size(),
         .pStages = stages.data(),
@@ -91,8 +86,8 @@ void MeshPipeline::Build(Device &device, PipelineConnector &connector, Swapchain
         .pColorBlendState = &colorBlendStateCI,
         .pDynamicState = &dynamicStateCI,
         .layout = _pipelineLayout,
-        .renderPass = nullptr,
-        // uint32_t                                         subpass;
+        .renderPass = swapchain._renderPass,
+        .subpass = 0,
         // VkPipeline                                       basePipelineHandle;
         // int32_t                                          basePipelineIndex;
     };

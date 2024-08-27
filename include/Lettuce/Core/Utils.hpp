@@ -8,7 +8,7 @@
 #include <list>
 #include <functional>
 #include <type_traits>
-#include <volk.h>
+#include <vulkan/vulkan_core.h>
 
 #if defined(_WIN32)
 #define VK_USE_PLATFORM_WIN32_KHR
@@ -24,35 +24,42 @@
 // #include <vulkan/vulkan_macos.h>
 #endif
 
-//credits: https://stackoverflow.com/a/69183821/13766341
+// credits: https://stackoverflow.com/a/69183821/13766341
 #define MAKE_ENUM_FLAGS(TEnum)                                                      \
-    inline TEnum operator~(TEnum a) {                                               \
+    inline TEnum operator~(TEnum a)                                                 \
+    {                                                                               \
         using TUnder = typename std::underlying_type_t<TEnum>;                      \
         return static_cast<TEnum>(~static_cast<TUnder>(a));                         \
     }                                                                               \
-    inline TEnum operator|(TEnum a, TEnum b) {                                      \
+    inline TEnum operator|(TEnum a, TEnum b)                                        \
+    {                                                                               \
         using TUnder = typename std::underlying_type_t<TEnum>;                      \
         return static_cast<TEnum>(static_cast<TUnder>(a) | static_cast<TUnder>(b)); \
     }                                                                               \
-    inline TEnum operator&(TEnum a, TEnum b) {                                      \
+    inline TEnum operator&(TEnum a, TEnum b)                                        \
+    {                                                                               \
         using TUnder = typename std::underlying_type_t<TEnum>;                      \
         return static_cast<TEnum>(static_cast<TUnder>(a) & static_cast<TUnder>(b)); \
     }                                                                               \
-    inline TEnum operator^(TEnum a, TEnum b) {                                      \
+    inline TEnum operator^(TEnum a, TEnum b)                                        \
+    {                                                                               \
         using TUnder = typename std::underlying_type_t<TEnum>;                      \
         return static_cast<TEnum>(static_cast<TUnder>(a) ^ static_cast<TUnder>(b)); \
     }                                                                               \
-    inline TEnum& operator|=(TEnum& a, TEnum b) {                                   \
+    inline TEnum &operator|=(TEnum &a, TEnum b)                                     \
+    {                                                                               \
         using TUnder = typename std::underlying_type_t<TEnum>;                      \
         a = static_cast<TEnum>(static_cast<TUnder>(a) | static_cast<TUnder>(b));    \
         return a;                                                                   \
     }                                                                               \
-    inline TEnum& operator&=(TEnum& a, TEnum b) {                                   \
+    inline TEnum &operator&=(TEnum &a, TEnum b)                                     \
+    {                                                                               \
         using TUnder = typename std::underlying_type_t<TEnum>;                      \
         a = static_cast<TEnum>(static_cast<TUnder>(a) & static_cast<TUnder>(b));    \
         return a;                                                                   \
     }                                                                               \
-    inline TEnum& operator^=(TEnum& a, TEnum b) {                                   \
+    inline TEnum &operator^=(TEnum &a, TEnum b)                                     \
+    {                                                                               \
         using TUnder = typename std::underlying_type_t<TEnum>;                      \
         a = static_cast<TEnum>(static_cast<TUnder>(a) ^ static_cast<TUnder>(b));    \
         return a;                                                                   \
@@ -179,7 +186,23 @@ namespace Lettuce::Core
     char *GetSurfaceExtensionNameByPlatform();
 
     template <typename T1, typename T2>
-    VkResult CreateVkSurface(VkInstance instance, T1 window, T2 process, VkSurfaceKHR &surface, const VkAllocationCallbacks *allocator);
+    VkResult CreateVkSurface(VkInstance instance, T1 window, T2 process, VkSurfaceKHR &surface, const VkAllocationCallbacks *allocator)
+    {
+#if defined(_WIN32)
+        VkWin32SurfaceCreateInfoKHR surfaceCI = {
+            .sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR,
+            .hinstance = (static_cast<HINSTANCE>(process)),
+            .hwnd = (static_cast<HWND>(window)),
+        };
+        return vkCreateWin32SurfaceKHR(instance, &surfaceCI, allocator, &surface);
+#endif
+#if defined(__linux__)
+        return VK_ERROR_INITIALIZATION_FAILED;
+#endif
+#if defined(__APPLE__)
+        return VK_ERROR_INITIALIZATION_FAILED;
+#endif
+    }
 
     VkResult CreateDebugUtilsMessengerEXT(VkInstance instance, const VkDebugUtilsMessengerCreateInfoEXT *pCreateInfo, const VkAllocationCallbacks *pAllocator, VkDebugUtilsMessengerEXT *pDebugMessenger);
 

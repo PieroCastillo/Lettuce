@@ -113,9 +113,9 @@ void Swapchain::createFramebuffers()
     };
     framebuffers.clear();
     framebuffers.resize(swapChainImageViews.size());
-    for (auto view : swapChainImageViews)
+    for (int i = 0; i < swapChainImageViews.size(); i++)
     {
-        views[0] = view;
+        views[0] = swapChainImageViews[i];
         checkResult(vkCreateFramebuffer(_device._device, &framebufferCI, nullptr, &framebuffers.at(i)));
     }
 }

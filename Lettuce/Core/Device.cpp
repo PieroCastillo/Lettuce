@@ -5,7 +5,7 @@
 #include <set>
 #include <vector>
 #include <volk.h>
-#include <vma/vk_mem_alloc.h>
+#include "Lettuce/Core/VmaUsage.hpp"
 #include "Lettuce/Core/Device.hpp"
 #include "Lettuce/Core/Utils.hpp"
 
@@ -58,7 +58,7 @@ void Device::loadExtensionsLayersAndFeatures()
     }
 }
 
-void Device::Create(Instance &instance, GPU &gpu, std::vector<char *> requestedExtensions)
+void Device::Create(Instance &instance, GPU &gpu, std::vector<char *> requestedExtensions, uint32_t graphicsQueuesCount)
 {
     _pdevice = gpu._pdevice;
     _instance = instance;
@@ -72,18 +72,26 @@ void Device::Create(Instance &instance, GPU &gpu, std::vector<char *> requestedE
         requestedExtensionsNames.emplace_back(ext);
     }
 
-    std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
-    std::set<uint32_t> uniqueQueueFamilies = {gpu.graphicsFamily.value(), gpu.presentFamily.value()};
+    std::vector<VkDeviceQueueCreateInfo> queueCreateInfos; // here we store all queues CI
+    std::vector<float> queuePriorities(graphicsQueuesCount, 1.0f);
     float queuePriority = 1.0f;
-    for (uint32_t queueFamily : uniqueQueueFamilies)
-    {
-        VkDeviceQueueCreateInfo queueCreateInfo = {
-            .sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
-            .queueFamilyIndex = queueFamily,
-            .queueCount = 1,
-            .pQueuePriorities = &queuePriority};
-        queueCreateInfos.push_back(queueCreateInfo);
-    }
+
+    // create  queues for graphics
+    VkDeviceQueueCreateInfo graphicsQueuesCI = {
+        .sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
+        .queueFamilyIndex = gpu.graphicsFamily.value(),
+        .queueCount = graphicsQueuesCount,
+        .pQueuePriorities = queuePriorities.data(),
+    };
+    // create queue for present
+    VkDeviceQueueCreateInfo presentQueueCI = {
+        .sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
+        .queueFamilyIndex = gpu.presentFamily.value(),
+        .queueCount = 1,
+        .pQueuePriorities = &queuePriority,
+    };
+    queueCreateInfos.push_back(graphicsQueuesCI);
+    queueCreateInfos.push_back(presentQueueCI);
 
     VkPhysicalDeviceFeatures features;
     vkGetPhysicalDeviceFeatures(_pdevice, &features);
@@ -129,16 +137,9 @@ void Device::Create(Instance &instance, GPU &gpu, std::vector<char *> requestedE
         .runtimeDescriptorArray = VK_TRUE,
     };
 
-    // enables dynamic rendering
-    VkPhysicalDeviceDynamicRenderingFeatures dynamicRenderingFeature = {
-        .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DYNAMIC_RENDERING_FEATURES,
-        .pNext = &deviceDescriptorIndexingFeature,
-        .dynamicRendering = VK_TRUE,
-    };
-
     VkDeviceCreateInfo deviceCI = {
         .sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
-        .pNext = &dynamicRenderingFeature,
+        .pNext = &deviceDescriptorIndexingFeature,
         .queueCreateInfoCount = (uint32_t)queueCreateInfos.size(),
         .pQueueCreateInfos = queueCreateInfos.data(),
         .enabledLayerCount = 0,
@@ -166,7 +167,12 @@ void Device::Create(Instance &instance, GPU &gpu, std::vector<char *> requestedE
     };
     checkResult(vmaCreateAllocator(&allocatorI, &allocator), "allocator created successfully");
 
-    vkGetDeviceQueue(_device, gpu.graphicsFamily.value(), 0, &_graphicsQueue);
+    // get all queues
+    _graphicsQueues.resize(graphicsQueuesCount);
+    for (int i = 0; i < graphicsQueuesCount; i++)
+    {
+        vkGetDeviceQueue(_device, gpu.graphicsFamily.value(), i, &(_graphicsQueues.at(i)));
+    }
     vkGetDeviceQueue(_device, gpu.presentFamily.value(), 0, &_presentQueue);
 }
 

@@ -16,6 +16,7 @@
 #include <list>
 #include <volk.h>
 #include "GPU.hpp"
+#include "Utils.hpp"
 #include "Version.hpp"
 
 namespace Lettuce::Core
@@ -48,7 +49,11 @@ namespace Lettuce::Core
 
         void Create(std::string appName, Version appVersion, std::vector<char *> requestedExtensions);
         template <typename T1, typename T2>
-        void CreateSurface(T1 window, T2 process);
+        void CreateSurface(T1 window, T2 process)
+        {
+            isSurfaceCreated = true;
+            checkResult(CreateVkSurface(_instance, window, process, _surface, nullptr), "surface created successfully");
+        }
         std::list<GPU> getGPUs();
 
         bool IsSurfaceCreated();

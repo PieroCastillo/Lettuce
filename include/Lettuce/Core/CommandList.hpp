@@ -45,29 +45,10 @@ namespace Lettuce::Core
     {
     public:
         VkCommandBuffer _commandBuffer;
-        Device _device;
-
-        void Create(Device &device);
 
         void Begin();
 
         void End();
-
-        void BeginRendering(Swapchain swapchain, float r = 1, float g = 1, float b = 1, float a = 1);
-
-        void EndRendering(Swapchain swapchain);
-
-        /// @brief send CommandLists to the Queue, use VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT when the CommandLists are going to be presented
-        /// @param cmds
-        /// @param waitStages
-        /// @param semaphores
-        /// @param waitValues
-        /// @param signalValues
-        static void Send(Device device, std::vector<CommandList> cmds,
-                         AccessStage waitStage,
-                         std::vector<TSemaphore> semaphores,
-                         std::vector<uint64_t> waitValues,
-                         std::vector<uint64_t> signalValues);
 
         void BindGraphicsPipeline(GraphicsPipeline &pipeline);
 
