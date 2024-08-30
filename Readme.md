@@ -7,18 +7,21 @@ Lettuce is a rendering Vulkan-based library
 ### Lettuce Core
 - [x] Instance
 - [x] GPU
+- [ ] Multi-GPU support
+- [ ] Headless 
 - [x] Swapchain (basic)
   - [ ] Resizable
 - [x] CommandList (partial)
-- [ ] GraphicsPipeline
-- [ ] ComputePipeline
+- [x] GraphicsPipeline
+- [x] ComputePipeline
+- [x] Mesh shading
 - [x] Buffer (partial)
   - [ ] All Buffer Types
-- [ ] Textures
+- [x] Textures
 - [x] Samplers
 - [x] Dynamic rendering (I'm going to remove this)
 - [x] Dynamic states
-- [ ] Timeline Semaphores
+- [x] Timeline Semaphores
 - [ ] Descriptor Indexing
 - [ ] Buffer Device Address
 - [ ] VK_EXT_memory_budget
@@ -27,6 +30,7 @@ Lettuce is a rendering Vulkan-based library
 - [ ] Multi-thread Rendering
 - [ ] Async compute
 - [ ] Indirect Drawing
+- [ ] Render Graph
 - [ ] Work Graphs (when it becomes available to Vulkan standard)
 ### Lettuce 2D
 ### Lettuce Compute
