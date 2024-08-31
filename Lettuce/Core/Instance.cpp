@@ -177,6 +177,6 @@ void Instance::Destroy()
     {
         DestroyDebugUtilsMessengerEXT(_instance, debugMessenger, nullptr);
     }
-    volkFinalize();
     vkDestroyInstance(_instance, nullptr);
+    volkFinalize();
 }

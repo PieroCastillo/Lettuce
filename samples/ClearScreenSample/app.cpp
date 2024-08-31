@@ -139,7 +139,6 @@ void draw()
     };
     checkResult(vkQueueSubmit(device._graphicsQueues[0], 1, &submitI, VK_NULL_HANDLE));
     swapchain.Present(render);
-    device.Wait();
 }
 
 void endLettuce()
@@ -160,6 +159,7 @@ void mainLoop()
         glfwPollEvents();
         draw();
     }
+    device.Wait();
 }
 
 void initWindow()

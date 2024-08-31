@@ -51,6 +51,7 @@ void Device::loadExtensionsLayersAndFeatures()
         requestedExtensionsNames.emplace_back(VK_KHR_TIMELINE_SEMAPHORE_EXTENSION_NAME);
         requestedExtensionsNames.emplace_back(VK_KHR_FRAGMENT_SHADING_RATE_EXTENSION_NAME);
         requestedExtensionsNames.emplace_back(VK_KHR_SPIRV_1_4_EXTENSION_NAME);
+        requestedExtensionsNames.emplace_back(VK_KHR_PRESENT_WAIT_EXTENSION_NAME);
         requestedExtensionsNames.emplace_back(VK_EXT_CONDITIONAL_RENDERING_EXTENSION_NAME);
         requestedExtensionsNames.emplace_back(VK_EXT_MEMORY_BUDGET_EXTENSION_NAME);
         // requestedExtensionsNames.emplace_back(VK_EXT_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME);
@@ -97,8 +98,15 @@ void Device::Create(Instance &instance, GPU &gpu, std::vector<char *> requestedE
     vkGetPhysicalDeviceFeatures(_pdevice, &features);
 
     // here we enable device features, like Buffer Device Address, Timeline Semaphores, etc
+
+    VkPhysicalDevicePresentWaitFeaturesKHR presentWaitFeature = {
+        .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PRESENT_WAIT_FEATURES_KHR,
+        .presentWait = VK_TRUE,
+    };
+
     VkPhysicalDeviceBufferDeviceAddressFeatures bufferDeviceAddressFeature = {
         .sType = VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO,
+        .pNext = &presentWaitFeature,
         .bufferDeviceAddress = VK_TRUE,
         .bufferDeviceAddressCaptureReplay = VK_TRUE,
     };

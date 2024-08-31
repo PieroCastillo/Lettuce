@@ -191,7 +191,16 @@ void Swapchain::Present(BSemaphore renderSemaphore)
     };
 
     checkResult(vkQueuePresentKHR(_device._presentQueue, &presentI));
-    checkResult(vkQueueWaitIdle(_device._presentQueue));
+    //checkResult(vkQueueWaitIdle(_device._presentQueue));
+}
+
+void Swapchain::Wait()
+{
+    // VkPresentIdKHR s = {
+
+    // };
+
+    // vkWaitForPresentKHR(_device._device, _swapchain, )
 }
 
 void Swapchain::Resize(uint32_t newWidth, uint32_t newHeight)

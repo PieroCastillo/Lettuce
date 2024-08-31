@@ -52,6 +52,8 @@ namespace Lettuce::Core
 
         void Resize(uint32_t newWidth, uint32_t newHeight);
 
+        void Wait();
+
         void Destroy();
     };
 }
