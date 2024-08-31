@@ -123,6 +123,9 @@ void recordCmds()
 void draw()
 {
     swapchain.AcquireNextImage(acquire);
+
+    recordCmds();
+
     VkPipelineStageFlags waitMask = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
     VkSubmitInfo submitI = {
         .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,

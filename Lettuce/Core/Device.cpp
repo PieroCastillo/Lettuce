@@ -178,7 +178,7 @@ void Device::Create(Instance &instance, GPU &gpu, std::vector<char *> requestedE
 
 void Device::Wait()
 {
-    vkDeviceWaitIdle(_device);
+    checkResult(vkDeviceWaitIdle(_device));
 }
 
 void Device::Destroy()

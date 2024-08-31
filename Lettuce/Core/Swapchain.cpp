@@ -191,7 +191,7 @@ void Swapchain::Present(BSemaphore renderSemaphore)
     };
 
     checkResult(vkQueuePresentKHR(_device._presentQueue, &presentI));
-    // vkQueueWaitIdle(_device._presentQueue);
+    checkResult(vkQueueWaitIdle(_device._presentQueue));
 }
 
 void Swapchain::Resize(uint32_t newWidth, uint32_t newHeight)
