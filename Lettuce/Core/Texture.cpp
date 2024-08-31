@@ -1,10 +1,9 @@
 //
 // Created by piero on 26/06/2024
 //
+#include "Lettuce/Core/common.hpp"
 #include <iostream>
 #include <vector>
-#include <volk.h>
-#include "Lettuce/Core/VmaUsage.hpp"
 #include "Lettuce/Core/Texture.hpp"
 #include "Lettuce/Core/Device.hpp"
 

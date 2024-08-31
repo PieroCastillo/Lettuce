@@ -1,6 +1,7 @@
 //
 // Created by piero on 11/02/2024.
 //
+#include "Lettuce/Core/common.hpp"
 #ifdef VK_USE_PLATFORM_WIN32_KHR 
 #include <ddkernel.h>
 #endif
@@ -8,7 +9,6 @@
 #include <vector>
 #include <cstdint>
 #include <list>
-#include <volk.h>
 #include "Lettuce/Core/Instance.hpp"
 #include "Lettuce/Core/Utils.hpp"
 

@@ -5,7 +5,6 @@
 #include <iostream>
 #include <string>
 #include <algorithm>
-#include <volk.h>
 #include "Device.hpp"
 #include "Semaphore.hpp"
 #include "Texture.hpp"

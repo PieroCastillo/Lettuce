@@ -6,7 +6,6 @@
 #include <iostream>
 #include <optional>
 #include <vector>
-#include <volk.h>
 
 namespace Lettuce::Core
 {

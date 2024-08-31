@@ -3,7 +3,6 @@
 //
 #pragma once
 #include <iostream>
-#include <volk.h>
 #include "Device.hpp"
 #include "PipelineConnector.hpp"
 #include "Swapchain.hpp"

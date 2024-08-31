@@ -9,7 +9,6 @@
 #include <vector>
 #include <cstdint>
 #include <list>
-#include <volk.h>
 #include "GPU.hpp"
 #include "Utils.hpp"
 #include "Version.hpp"

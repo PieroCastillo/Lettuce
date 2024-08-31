@@ -8,7 +8,6 @@
 #include <list>
 #include <functional>
 #include <type_traits>
-#include <vulkan/vulkan.h>
 
 // credits: https://stackoverflow.com/a/69183821/13766341
 #define MAKE_ENUM_FLAGS(TEnum)                                                      \
@@ -174,7 +173,7 @@ namespace Lettuce::Core
     template <typename T1, typename T2>
     VkResult CreateVkSurface(VkInstance instance, T1 window, T2 process, VkSurfaceKHR &surface, const VkAllocationCallbacks *allocator)
     {
-#ifdef VK_USE_PLATFORM_WIN32_KHR
+#ifdef _WIN32
         VkWin32SurfaceCreateInfoKHR surfaceCI = {
             .sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR,
             .hinstance = (static_cast<HINSTANCE>(process)),

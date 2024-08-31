@@ -6,8 +6,6 @@
 #include <iostream>
 #include <set>
 #include <vector>
-#include <volk.h>
-#include "VmaUsage.hpp"
 #include "Instance.hpp"
 #include "GPU.hpp"
 

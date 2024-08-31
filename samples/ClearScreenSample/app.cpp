@@ -9,6 +9,7 @@
 #define VK_USE_PLATFORM_WIN32_KHR
 #include <volk.h>
 
+#include "Lettuce/Core/common.hpp"
 #include "Lettuce/Core/Instance.hpp"
 #include "Lettuce/Core/Device.hpp"
 #include "Lettuce/Core/Swapchain.hpp"

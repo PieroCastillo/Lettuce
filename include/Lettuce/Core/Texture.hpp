@@ -4,8 +4,6 @@
 #pragma once
 #include <iostream>
 #include <vector>
-#include <volk.h>
-#include "VmaUsage.hpp"
 #include "Device.hpp"
 #include "Utils.hpp"
 

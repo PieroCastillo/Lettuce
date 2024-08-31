@@ -4,7 +4,6 @@
 #pragma once
 #include <iostream>
 #include <vector>
-#include <volk.h>
 #include "Lettuce/Core/Device.hpp"
 #include "Lettuce/Core/Texture.hpp"
 #include "Lettuce/Core/TextureView.hpp"

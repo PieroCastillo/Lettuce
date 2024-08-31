@@ -24,7 +24,6 @@ add_compile_definitions(MAJOR_VERSION=${MAJOR_VERSION})
 add_compile_definitions(MINOR_VERSION=${MINOR_VERSION})
 add_compile_definitions(PATCH_VERSION=${PATCH_VERSION})
 
-
 file(GLOB LETTUCE_SOURCES Lettuce/Core/*.cpp Lettuce/core/Compilers/*.cpp)
 
 add_library(Lettuce)
@@ -36,10 +35,13 @@ add_executable(ClearScreenSample
 #         samples/TriangleSample/app.cpp)
 # add_executable(VertexSquare
 #         samples/VertexSquare/app.cpp)
+
 if(WIN32)
         target_compile_definitions(Lettuce PRIVATE VK_USE_PLATFORM_WIN32_KHR)
-elseif(LINUX)
-        target_compile_definitions(Lettuce PRIVATE VK_USE_PLATFORM_WAYLAND_KHR VK_USE_PLATFORM_XCB_KHR VK_USE_PLATFORM_XLIB_KHR)
+        set(VOLK_STATIC_DEFINES "VK_USE_PLATFORM_WIN32_KHR")
+elseif()
+        target_compile_definitions(Lettuce PRIVATE VK_USE_PLATFORM_WAYLAND_KHR)
+        set(VOLK_STATIC_DEFINES "VK_USE_PLATFORM_WAYLAND_KHR")
 endif()
 
 target_link_libraries(Lettuce  PRIVATE volk::volk Vulkan::shaderc_combined GPUOpen::VulkanMemoryAllocator)

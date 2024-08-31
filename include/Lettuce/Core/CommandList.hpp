@@ -7,7 +7,6 @@
 #include <vector>
 #include <algorithm>
 #include <cstdint>
-#include <volk.h>
 #include "GraphicsPipeline.hpp"
 #include "ComputePipeline.hpp"
 #include "PipelineConnector.hpp"
