@@ -19,10 +19,11 @@ list(GET VERSION_LIST 2 MINOR_VERSION)
 list(GET VERSION_LIST 3 PATCH_VERSION)
 
 # Agregar definición de macros
-add_definitions(-DVARIANT_VERSION=${VARIANT_VERSION})
-add_definitions(-DMAJOR_VERSION=${MAJOR_VERSION})
-add_definitions(-DMINOR_VERSION=${MINOR_VERSION})
-add_definitions(-DPATCH_VERSION=${PATCH_VERSION})
+add_compile_definitions(VARIANT_VERSION=${VARIANT_VERSION})
+add_compile_definitions(MAJOR_VERSION=${MAJOR_VERSION})
+add_compile_definitions(MINOR_VERSION=${MINOR_VERSION})
+add_compile_definitions(PATCH_VERSION=${PATCH_VERSION})
+
 
 file(GLOB LETTUCE_SOURCES Lettuce/Core/*.cpp Lettuce/core/Compilers/*.cpp)
 
@@ -35,6 +36,12 @@ add_executable(ClearScreenSample
 #         samples/TriangleSample/app.cpp)
 # add_executable(VertexSquare
 #         samples/VertexSquare/app.cpp)
+if(WIN32)
+        target_compile_definitions(Lettuce PRIVATE VK_USE_PLATFORM_WIN32_KHR)
+elseif(LINUX)
+        target_compile_definitions(Lettuce PRIVATE VK_USE_PLATFORM_WAYLAND_KHR VK_USE_PLATFORM_XCB_KHR VK_USE_PLATFORM_XLIB_KHR)
+endif()
+
 target_link_libraries(Lettuce  PRIVATE volk::volk Vulkan::shaderc_combined GPUOpen::VulkanMemoryAllocator)
 target_link_libraries(ClearScreenSample PRIVATE Lettuce volk::volk glfw)
 # target_link_libraries(TriangleSample Lettuce glfw)

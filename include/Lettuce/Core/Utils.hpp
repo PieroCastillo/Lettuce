@@ -8,21 +8,7 @@
 #include <list>
 #include <functional>
 #include <type_traits>
-#include <vulkan/vulkan_core.h>
-
-#if defined(_WIN32)
-#define VK_USE_PLATFORM_WIN32_KHR
-#include <ddkernel.h>
-#include <vulkan/vulkan_win32.h>
-#endif
-#if defined(__linux__) || defined(__unix__)
-#define VK_USE_PLATFORM_XLIB_KHR
-// #include <vulkan/vulkan_wayland.h>
-#endif
-#if defined(__APPLE__)
-#define VK_USE_PLATFORM_MACOS_MVK
-// #include <vulkan/vulkan_macos.h>
-#endif
+#include <vulkan/vulkan.h>
 
 // credits: https://stackoverflow.com/a/69183821/13766341
 #define MAKE_ENUM_FLAGS(TEnum)                                                      \
@@ -188,18 +174,14 @@ namespace Lettuce::Core
     template <typename T1, typename T2>
     VkResult CreateVkSurface(VkInstance instance, T1 window, T2 process, VkSurfaceKHR &surface, const VkAllocationCallbacks *allocator)
     {
-#if defined(_WIN32)
+#ifdef VK_USE_PLATFORM_WIN32_KHR
         VkWin32SurfaceCreateInfoKHR surfaceCI = {
             .sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR,
             .hinstance = (static_cast<HINSTANCE>(process)),
             .hwnd = (static_cast<HWND>(window)),
         };
         return vkCreateWin32SurfaceKHR(instance, &surfaceCI, allocator, &surface);
-#endif
-#if defined(__linux__)
-        return VK_ERROR_INITIALIZATION_FAILED;
-#endif
-#if defined(__APPLE__)
+#else
         return VK_ERROR_INITIALIZATION_FAILED;
 #endif
     }

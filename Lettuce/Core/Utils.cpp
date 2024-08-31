@@ -7,19 +7,6 @@
 #include <list>
 #include <functional>
 #include <volk.h>
-#if defined(_WIN32)
-#define VK_USE_PLATFORM_WIN32_KHR
-#include <ddkernel.h>
-#include <vulkan/vulkan_win32.h>
-#endif
-#if defined(__linux__) || defined(__unix__)
-#define VK_USE_PLATFORM_XLIB_KHR
-// #include <vulkan/vulkan_wayland.h>
-#endif
-#if defined(__APPLE__)
-#define VK_USE_PLATFORM_MACOS_MVK
-// #include <vulkan/vulkan_macos.h>
-#endif
 #include "Lettuce/Core/Utils.hpp"
 
 using namespace Lettuce::Core;
