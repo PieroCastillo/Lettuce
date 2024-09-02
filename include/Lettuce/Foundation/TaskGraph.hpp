@@ -1,13 +1,20 @@
 //
 // Created by piero on 22/08/2024.
 //
-/*#include <vector>
+#include <vector>
 #include <functional>
-#include "CommandList.hpp"
+#include "Core/CommandList.hpp"
 
 #pragma once
-namespace Lettuce::Core
+/*namespace Lettuce::Foundation
 {
+    enum class ResourceUse
+    {
+        ReadOnly,
+        WriteOnly,
+        ReadWrite,
+    };
+
     class TaskGraphImpl
     {
     public:
@@ -33,8 +40,7 @@ namespace Lettuce::Core
         TaskGraph(uint32_t maxNodes = 32);
         void Open();
         void Close();
-        void AttachNode(TaskNode node);
-        void Optimize();
+        void AddRenderPass();
         void Run();
     };
 
