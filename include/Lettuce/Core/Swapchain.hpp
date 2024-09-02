@@ -43,10 +43,11 @@ namespace Lettuce::Core
         VkFormat imageFormat;
         VkFormat depthFormat;
         VkExtent2D extent;
+        VkFence _fence;
 
         void Create(Device &device, uint32_t initialWidth, uint32_t initialHeight);
 
-        void AcquireNextImage(BSemaphore acquireImageSemaphore);
+        void AcquireNextImage();
 
         void Present();
 

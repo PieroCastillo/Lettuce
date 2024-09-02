@@ -29,7 +29,6 @@ Lettuce::Core::Instance instance;
 Lettuce::Core::Device device;
 Lettuce::Core::Swapchain swapchain;
 Lettuce::Core::TSemaphore renderFinished;
-Lettuce::Core::BSemaphore acquire;
 
 VkCommandPool pool;
 VkCommandBuffer cmd;
@@ -59,7 +58,7 @@ void initLettuce()
     }
     device.Create(instance, gpus.front(), {});
     swapchain.Create(device, width, height);
-    renderFinished.Create(device, 1);
+    renderFinished.Create(device, 0);
     acquire.Create(device);
     buildCmds();
 }
@@ -119,7 +118,7 @@ void recordCmds()
 uint64_t renderFinishedValue = 0;
 void draw()
 {
-    swapchain.AcquireNextImage(acquire);
+    swapchain.AcquireNextImage();
 
     recordCmds();
 
@@ -177,7 +176,6 @@ void endLettuce()
     vkFreeCommandBuffers(device._device, pool, 1, &cmd);
     vkDestroyCommandPool(device._device, pool, nullptr);
     renderFinished.Destroy();
-    acquire.Destroy();
     swapchain.Destroy();
     device.Destroy();
     instance.Destroy();

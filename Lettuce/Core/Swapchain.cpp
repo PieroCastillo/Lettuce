@@ -167,6 +167,11 @@ void Swapchain::Create(Device &device, uint32_t initialWidth, uint32_t initialHe
 
     checkResult(vkCreateSwapchainKHR(_device._device, &swapchainCI, nullptr, &_swapchain), "swapchain created successfully");
 
+    VkFenceCreateInfo fenceCI = {
+        .sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO,
+    };
+    checkResult(vkCreateFence(_device._device, &fenceCI, nullptr, &_fence));
+
     loadImages();
     createImageViews();
     createDepthImage();
@@ -174,9 +179,11 @@ void Swapchain::Create(Device &device, uint32_t initialWidth, uint32_t initialHe
     createFramebuffers();
 }
 
-void Swapchain::AcquireNextImage(BSemaphore acquireImageSemaphore)
+void Swapchain::AcquireNextImage()
 {
-    vkAcquireNextImageKHR(_device._device, _swapchain, (std::numeric_limits<uint64_t>::max)(), acquireImageSemaphore._semaphore, nullptr, &index);
+    checkResult(vkResetFences(_device._device, 1, &_fence));
+    checkResult(vkAcquireNextImageKHR(_device._device, _swapchain, (std::numeric_limits<uint64_t>::max)(), VK_NULL_HANDLE, _fence, &index));
+    checkResult(vkWaitForFences(_device._device, 1, &_fence, VK_TRUE, (std::numeric_limits<uint64_t>::max)()));
 }
 
 void Swapchain::Present()
@@ -191,7 +198,7 @@ void Swapchain::Present()
     };
 
     checkResult(vkQueuePresentKHR(_device._presentQueue, &presentI));
-    //checkResult(vkQueueWaitIdle(_device._presentQueue));
+    // checkResult(vkQueueWaitIdle(_device._presentQueue));
 }
 
 void Swapchain::Wait()
@@ -207,7 +214,8 @@ void Swapchain::Resize(uint32_t newWidth, uint32_t newHeight)
 
 void Swapchain::Destroy()
 {
-    for(auto fb : framebuffers){
+    for (auto fb : framebuffers)
+    {
         vkDestroyFramebuffer(_device._device, fb, nullptr);
     }
     vkDestroyRenderPass(_device._device, _renderPass, nullptr);
@@ -218,5 +226,6 @@ void Swapchain::Destroy()
     {
         vkDestroyImageView(_device._device, imageView, nullptr);
     }
+    vkDestroyFence(_device._device, _fence, nullptr);
     vkDestroySwapchainKHR(_device._device, _swapchain, nullptr);
 }
