@@ -116,10 +116,9 @@ void recordCmds()
     checkResult(vkEndCommandBuffer(cmd));
 }
 
-int renderFinishedValue = 0;
+uint64_t renderFinishedValue = 0;
 void draw()
 {
-
     swapchain.AcquireNextImage(acquire);
 
     recordCmds();
@@ -169,7 +168,7 @@ void draw()
     checkResult(vkQueueSubmit2(device._graphicsQueues[0], 1, &submit2I, VK_NULL_HANDLE));
     // checkResult(vkQueueSubmit(device._graphicsQueues[0], 1, &submitI, VK_NULL_HANDLE));
     swapchain.Present();
-    TSemaphore::Wait({renderFinished}, {renderFinishedValue + 1});
+    renderFinished.Wait(renderFinishedValue+1);
     renderFinishedValue++;
 }
 
@@ -177,7 +176,7 @@ void endLettuce()
 {
     vkFreeCommandBuffers(device._device, pool, 1, &cmd);
     vkDestroyCommandPool(device._device, pool, nullptr);
-    render.Destroy();
+    renderFinished.Destroy();
     acquire.Destroy();
     swapchain.Destroy();
     device.Destroy();
@@ -188,6 +187,7 @@ void mainLoop()
 {
     while (!glfwWindowShouldClose(window))
     {
+        std::cout << "-------------- frame ---------------" << std::endl;
         glfwPollEvents();
         draw();
     }

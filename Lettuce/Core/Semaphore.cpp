@@ -13,7 +13,48 @@
 
 using namespace Lettuce::Core;
 
-std::vector<TSemaphore> TSemaphore::Create(Device &device, uint32_t semaphoresCount)
+void TSemaphore::Create(Device &device, uint64_t initialValue)
+{
+    _device = device;
+    VkSemaphoreTypeCreateInfo semaphoreTypeCI = {
+        .sType = VK_STRUCTURE_TYPE_SEMAPHORE_TYPE_CREATE_INFO,
+        .semaphoreType = VkSemaphoreType::VK_SEMAPHORE_TYPE_TIMELINE,
+        .initialValue = initialValue,
+    };
+    VkSemaphoreCreateInfo semaphoreCI = {
+        .sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO,
+        .pNext = &semaphoreTypeCI,
+    };
+    checkResult(vkCreateSemaphore(device._device, &semaphoreCI, nullptr, &_semaphore));
+    
+}
+void TSemaphore::Wait(uint64_t value)
+{
+    VkSemaphoreWaitInfo waitI = {
+        .sType = VK_STRUCTURE_TYPE_SEMAPHORE_WAIT_INFO,
+        .semaphoreCount = 1,
+        .pSemaphores = &_semaphore,
+        .pValues = &value,
+    };
+    checkResult(vkWaitSemaphores(_device._device, &waitI, (std::numeric_limits<uint64_t>::max)()));
+}
+
+void TSemaphore::Destroy()
+{
+    vkDestroySemaphore(_device._device, _semaphore, nullptr);
+}
+
+void TSemaphore::Signal(uint64_t signalValue)
+{
+    VkSemaphoreSignalInfo semaphoreSignalI = {
+        .sType = VK_STRUCTURE_TYPE_SEMAPHORE_SIGNAL_INFO,
+        .semaphore = _semaphore,
+        .value = signalValue,
+    };
+    checkResult(vkSignalSemaphore(_device._device, &semaphoreSignalI));
+}
+
+std::vector<TSemaphore> TSemaphore::CreateSemaphores(Device &device, uint32_t semaphoresCount)
 {
     std::vector<TSemaphore> semaphores;
     semaphores.resize(semaphoresCount);
@@ -35,7 +76,7 @@ std::vector<TSemaphore> TSemaphore::Create(Device &device, uint32_t semaphoresCo
     return semaphores;
 }
 
-void TSemaphore::Wait(std::vector<TSemaphore> semaphores, std::vector<uint64_t> values)
+void TSemaphore::WaitSemaphores(std::vector<TSemaphore> semaphores, std::vector<uint64_t> values)
 {
     if (semaphores.size() != values.size())
     {
@@ -53,17 +94,7 @@ void TSemaphore::Wait(std::vector<TSemaphore> semaphores, std::vector<uint64_t> 
     checkResult(vkWaitSemaphores(semaphores[0]._device._device, &semaphoreWaitInfo, (std::numeric_limits<uint64_t>::max)()));
 }
 
-void TSemaphore::Signal(uint64_t signalValue)
-{
-    VkSemaphoreSignalInfo semaphoreSignalI = {
-        .sType = VK_STRUCTURE_TYPE_SEMAPHORE_SIGNAL_INFO,
-        .semaphore = _semaphore,
-        .value = signalValue,
-    };
-    checkResult(vkSignalSemaphore(_device._device, &semaphoreSignalI));
-}
-
-void TSemaphore::Destroy(std::vector<TSemaphore> semaphores)
+void TSemaphore::DestroySemaphores(std::vector<TSemaphore> semaphores)
 {
     for (int i = 0; i < semaphores.size(); i++)
     {

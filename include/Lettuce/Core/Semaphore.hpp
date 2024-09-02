@@ -15,14 +15,15 @@ namespace Lettuce::Core
     public:
         Device _device;
         VkSemaphore _semaphore;
+        uint64_t currentValue;
 
-        static std::vector<TSemaphore> Create(Device &device, uint32_t semaphoresCount);
-
-        static void Wait(std::vector<TSemaphore> semaphores, std::vector<uint64_t> values);
-
+        void Create(Device &device, uint64_t initialValue);
+        void Wait(uint64_t value);
         void Signal(uint64_t signalValue);
-
-        static void Destroy(std::vector<TSemaphore> semaphores);
+        void Destroy();
+        static std::vector<TSemaphore> CreateSemaphores(Device &device, uint32_t semaphoresCount);
+        static void WaitSemaphores(std::vector<TSemaphore> semaphores, std::vector<uint64_t> values);
+        static void DestroySemaphores(std::vector<TSemaphore> semaphores);
     };
 
     class BSemaphore

@@ -6,6 +6,7 @@
 #include <iostream>
 #include <set>
 #include <vector>
+#include <algorithm>
 #include "Lettuce/Core/Device.hpp"
 #include "Lettuce/Core/Utils.hpp"
 
@@ -48,15 +49,13 @@ void Device::loadExtensionsLayersAndFeatures()
     if (_instance.IsSurfaceCreated())
     {
         requestedExtensionsNames.emplace_back(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
-        requestedExtensionsNames.emplace_back(VK_KHR_TIMELINE_SEMAPHORE_EXTENSION_NAME);
-        requestedExtensionsNames.emplace_back(VK_KHR_FRAGMENT_SHADING_RATE_EXTENSION_NAME);
-        requestedExtensionsNames.emplace_back(VK_KHR_SPIRV_1_4_EXTENSION_NAME);
-        requestedExtensionsNames.emplace_back(VK_KHR_PRESENT_WAIT_EXTENSION_NAME);
-        requestedExtensionsNames.emplace_back(VK_EXT_CONDITIONAL_RENDERING_EXTENSION_NAME);
-        requestedExtensionsNames.emplace_back(VK_EXT_MEMORY_BUDGET_EXTENSION_NAME);
-        // requestedExtensionsNames.emplace_back(VK_EXT_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME);
-        requestedExtensionsNames.emplace_back(VK_EXT_MESH_SHADER_EXTENSION_NAME);
     }
+    // requestedExtensionsNames.emplace_back(VK_KHR_FRAGMENT_SHADING_RATE_EXTENSION_NAME);
+    // requestedExtensionsNames.emplace_back(VK_KHR_PRESENT_WAIT_EXTENSION_NAME);
+    // requestedExtensionsNames.emplace_back(VK_EXT_CONDITIONAL_RENDERING_EXTENSION_NAME);
+    // requestedExtensionsNames.emplace_back(VK_EXT_MEMORY_BUDGET_EXTENSION_NAME);
+    //  requestedExtensionsNames.emplace_back(VK_EXT_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME);
+    // requestedExtensionsNames.emplace_back(VK_EXT_MESH_SHADER_EXTENSION_NAME);
 }
 
 void Device::Create(Instance &instance, GPU &gpu, std::vector<char *> requestedExtensions, uint32_t graphicsQueuesCount)
@@ -99,49 +98,38 @@ void Device::Create(Instance &instance, GPU &gpu, std::vector<char *> requestedE
 
     // here we enable device features, like Buffer Device Address, Timeline Semaphores, etc
 
-    VkPhysicalDeviceSynchronization2Features sync2Feature = {
-        .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SYNCHRONIZATION_2_FEATURES,
-        .synchronization2 = VK_TRUE,
-    };
+    // VkPhysicalDevicePresentWaitFeaturesKHR presentWaitFeature = {
+    //     .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PRESENT_WAIT_FEATURES_KHR,
+    //     .pNext = &sync2Feature,
+    //     .presentWait = VK_TRUE,
+    // };
 
-    VkPhysicalDevicePresentWaitFeaturesKHR presentWaitFeature = {
-        .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PRESENT_WAIT_FEATURES_KHR,
-        .pNext = &sync2Feature,
-        .presentWait = VK_TRUE,
-    };
-
-    VkPhysicalDeviceBufferDeviceAddressFeatures bufferDeviceAddressFeature = {
-        .sType = VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO,
-        .pNext = &presentWaitFeature,
-        .bufferDeviceAddress = VK_TRUE,
-        .bufferDeviceAddressCaptureReplay = VK_TRUE,
-    };
-
-    VkPhysicalDeviceFragmentShadingRateFeaturesKHR fragmentShadingRateFeature = {
-        .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADING_RATE_FEATURES_KHR,
-        .pNext = &bufferDeviceAddressFeature,
-        .pipelineFragmentShadingRate = VK_TRUE,
-        .primitiveFragmentShadingRate = VK_TRUE,
-        .attachmentFragmentShadingRate = VK_TRUE,
-    };
-
-    VkPhysicalDeviceTimelineSemaphoreFeatures timelineSemaphoreFeature = {
-
-        .sType = VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO,
-        .pNext = &fragmentShadingRateFeature,
-        .timelineSemaphore = VK_TRUE,
-    };
+    // VkPhysicalDeviceFragmentShadingRateFeaturesKHR fragmentShadingRateFeature = {
+    //     .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADING_RATE_FEATURES_KHR,
+    //     .pNext = &bufferDeviceAddressFeature,
+    //     .pipelineFragmentShadingRate = VK_TRUE,
+    //     .primitiveFragmentShadingRate = VK_TRUE,
+    //     .attachmentFragmentShadingRate = VK_TRUE,
+    // };
 
     VkPhysicalDeviceMeshShaderFeaturesEXT meshShaderFeature = {
         .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MESH_SHADER_FEATURES_EXT,
-        .pNext = &timelineSemaphoreFeature,
+        // .pNext = &timelineSemaphoreFeature,
         .taskShader = VK_TRUE,
         .meshShader = VK_TRUE,
     };
 
+    // always available in vulkan 1.2
+    VkPhysicalDeviceBufferDeviceAddressFeatures bufferDeviceAddressFeature = {
+        .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_FEATURES,
+        //.pNext = &meshShaderFeature,
+        .bufferDeviceAddress = VK_TRUE,
+        .bufferDeviceAddressCaptureReplay = VK_FALSE,
+    };
+
     VkPhysicalDeviceDescriptorIndexingFeatures deviceDescriptorIndexingFeature = {
         .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES,
-        .pNext = &meshShaderFeature,
+        .pNext = &bufferDeviceAddressFeature,
         .shaderSampledImageArrayNonUniformIndexing = VK_TRUE,
         .descriptorBindingUniformBufferUpdateAfterBind = VK_TRUE,
         .descriptorBindingSampledImageUpdateAfterBind = VK_TRUE,
@@ -151,9 +139,22 @@ void Device::Create(Instance &instance, GPU &gpu, std::vector<char *> requestedE
         .runtimeDescriptorArray = VK_TRUE,
     };
 
+    // always available in vulkan 1.3
+    VkPhysicalDeviceTimelineSemaphoreFeatures timelineSemaphoreFeature = {
+        .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TIMELINE_SEMAPHORE_FEATURES,
+        .pNext = &deviceDescriptorIndexingFeature,
+        .timelineSemaphore = VK_TRUE,
+    };
+
+    VkPhysicalDeviceSynchronization2Features sync2Feature = {
+        .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SYNCHRONIZATION_2_FEATURES,
+        .pNext = &timelineSemaphoreFeature,
+        .synchronization2 = VK_TRUE,
+    };
+
     VkDeviceCreateInfo deviceCI = {
         .sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
-        .pNext = &deviceDescriptorIndexingFeature,
+        .pNext = &sync2Feature,
         .queueCreateInfoCount = (uint32_t)queueCreateInfos.size(),
         .pQueueCreateInfos = queueCreateInfos.data(),
         .enabledLayerCount = 0,
