@@ -116,6 +116,7 @@ void recordCmds()
 }
 
 uint64_t renderFinishedValue = 0;
+// TODO: impl image transition to cmd
 void draw()
 {
     swapchain.AcquireNextImage();
