@@ -7,6 +7,7 @@
 #include <string>
 #include <exception>
 #include <shaderc/shaderc.hpp>
+#include "ICompiler.hpp"
 
 namespace Lettuce::Core::Compilers
 {

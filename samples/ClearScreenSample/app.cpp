@@ -9,12 +9,7 @@
 // #define VK_USE_PLATFORM_WIN32_KHR
 // #include <volk.h>
 
-#include "Lettuce/Core/common.hpp"
-#include "Lettuce/Core/Instance.hpp"
-#include "Lettuce/Core/Device.hpp"
-#include "Lettuce/Core/Swapchain.hpp"
-#include "Lettuce/Core/Semaphore.hpp"
-#include "Lettuce/Core/Utils.hpp"
+#include "Lettuce/Lettuce.Core.hpp"
 
 void initWindow();
 void endWindow();
@@ -71,10 +66,9 @@ void initLettuce()
 
 void buildCmds()
 {
-
     VkCommandPoolCreateInfo poolCI = {
         .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
-        .flags = VkCommandPoolCreateFlagBits::VK_COMMAND_POOL_CREATE_TRANSIENT_BIT,
+        .flags = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT | VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT,
         .queueFamilyIndex = device._gpu.graphicsFamily.value(),
     };
     checkResult(vkCreateCommandPool(device._device, &poolCI, nullptr, &pool));
@@ -115,18 +109,21 @@ void recordCmds()
         .clearValueCount = 2,
         .pClearValues = clearValues,
     };
+
     vkCmdBeginRenderPass(cmd, &renderPassBI, VkSubpassContents::VK_SUBPASS_CONTENTS_INLINE);
     vkCmdEndRenderPass(cmd);
+
     checkResult(vkEndCommandBuffer(cmd));
 }
 
 void draw()
 {
+
     swapchain.AcquireNextImage(acquire);
 
     recordCmds();
 
-    VkPipelineStageFlags waitMask = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+    VkPipelineStageFlags waitMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
     VkSubmitInfo submitI = {
         .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
         .waitSemaphoreCount = 1,

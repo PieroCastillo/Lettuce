@@ -22,6 +22,7 @@ Lettuce is a rendering Vulkan-based library
 - [x] Dynamic rendering (I'm going to remove this)
 - [x] Dynamic states
 - [x] Timeline Semaphores
+- [ ] Synchronization2
 - [ ] Descriptor Indexing
 - [ ] Buffer Device Address
 - [ ] VK_EXT_memory_budget

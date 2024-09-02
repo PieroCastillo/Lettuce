@@ -52,6 +52,140 @@
 
 namespace Lettuce::Core
 {
+    enum class BindPoint
+    {
+        Graphics = 0,
+        Compute = 1,
+        RayTracing = 1000165000,
+        // Provided by VK_AMDX_shader_enqueue
+        ExecutionGraph = 1000134000,
+    };
+
+    enum class AttachmentType
+    {
+        Color,
+        DepthStencil,
+        Input,
+        Preserve,
+        Resolve,
+    };
+
+    enum class ImageLayout
+    {
+        Undefined = 0,
+        General = 1,
+        ColorAttachmentOptimal = 2,
+        DepthStencilAttachmentOptimal = 3,
+        DepthStencilReadOnlyOptimal = 4,
+        ShaderReadOnlyOptimal = 5,
+        TransferSrcOptimal = 6,
+        TransferDstOptimal = 7,
+        Preinitialized = 8,
+        // Provided by VK_VERSION_1_1
+        DepthReadOnlyStencilAttachmentOptimal = 1000117000,
+        // Provided by VK_VERSION_1_1
+        DepthAttachmentStencilReadOnlyOptimal = 1000117001,
+        // Provided by VK_VERSION_1_2
+        DepthAttachmentOptimal = 1000241000,
+        // Provided by VK_VERSION_1_2
+        DepthReadOnlyOptimal = 1000241001,
+        // Provided by VK_VERSION_1_2
+        StencilAttachmentOptimal = 1000241002,
+        // Provided by VK_VERSION_1_2
+        StencilReadOnlyOptimal = 1000241003,
+        // Provided by VK_VERSION_1_3
+        ReadOnlyOptimal = 1000314000,
+        // Provided by VK_VERSION_1_3
+        AttachmentOptimal = 1000314001,
+        // Provided by VK_KHR_swapchain
+        PresentSrc = 1000001002,
+        // Provided by VK_KHR_video_decode_queue
+        VideoDecodeDst = 1000024000,
+        // Provided by VK_KHR_video_decode_queue
+        VideoDecodeSrc = 1000024001,
+        // Provided by VK_KHR_video_decode_queue
+        VideoDecodeDpb = 1000024002,
+        // Provided by VK_KHR_shared_presentable_image
+        SharedPresent = 1000111000,
+        // Provided by VK_EXT_fragment_density_map
+        FragmentDensityMapOptimal = 1000218000,
+        // Provided by VK_KHR_fragment_shading_rate
+        FragmentShadingRateAttachmentOptimal = 1000164003,
+        // Provided by VK_KHR_dynamic_rendering_local_read
+        RenderingLocalRead = 1000232000,
+        // Provided by VK_KHR_video_encode_queue
+        VideoEncodeDst = 1000299000,
+        // Provided by VK_KHR_video_encode_queue
+        VideoEncodeSrc = 1000299001,
+        // Provided by VK_KHR_video_encode_queue
+        VideoEncodeDpb = 1000299002,
+        // Provided by VK_EXT_attachment_feedback_loop_layout
+        AttachmentFeedbackLoopOptimal = 1000339000,
+    };
+
+    enum class LoadOp
+    {
+        Load = 0,
+        Clear = 1,
+        DontCare = 2,
+        // Provided by VK_KHR_load_store_op_none
+        None = 1000400000,
+    };
+
+    enum class StoreOp
+    {
+        Store = 0,
+        DontCare = 1,
+        // Provided by VK_VERSION_1_3
+        None = 1000301000,
+    };
+
+    enum class AccessBehavior
+    {
+        IndirectCommandRead = 0x00000001,
+        IndexRead = 0x00000002,
+        VertexAttributeRead = 0x00000004,
+        UniformRead = 0x00000008,
+        InputAttachmentRead = 0x00000010,
+        ShaderRead = 0x00000020,
+        ShaderWrite = 0x00000040,
+        ColorAttachmentRead = 0x00000080,
+        ColorAttachmentWrite = 0x00000100,
+        DepthStencilAttachmentRead = 0x00000200,
+        DepthStencilAttachmentWrite = 0x00000400,
+        TransferRead = 0x00000800,
+        TransferWrite = 0x00001000,
+        HostRead = 0x00002000,
+        HostWrite = 0x00004000,
+        MemoryRead = 0x00008000,
+        MemoryWrite = 0x00010000,
+        // Provided by VK_VERSION_1_3
+        None = 0,
+        // Provided by VK_EXT_transform_feedback
+        TransformFeedbackWrite = 0x02000000,
+        // Provided by VK_EXT_transform_feedback
+        TransformFeedbackCounterRead = 0x04000000,
+        // Provided by VK_EXT_transform_feedback
+        TransformFeedbackCounterWrite = 0x08000000,
+        // Provided by VK_EXT_conditional_rendering
+        ConditionalRenderingRead = 0x00100000,
+        // Provided by VK_EXT_blend_operation_advanced
+        ColorAttachmentReadNoncoherent = 0x00080000,
+        // Provided by VK_KHR_acceleration_structure
+        AccelerationStructureRead = 0x00200000,
+        // Provided by VK_KHR_acceleration_structure
+        AccelerationStructureWrite = 0x00400000,
+        // Provided by VK_EXT_fragment_density_map
+        FragmentDensityMapRead = 0x01000000,
+        // Provided by VK_KHR_fragment_shading_rate
+        FragmentShadingRateAttachmentRead = 0x00800000,
+        // Provided by VK_NV_device_generated_commands
+        CommandPreprocessRead = 0x00020000,
+        // Provided by VK_NV_device_generated_commands
+        CommandPreprocessWrite = 0x00040000,
+    };
+    MAKE_ENUM_FLAGS(AccessMask)
+
     enum class AccessStage
     {
         TopOfPipe = 0x00000001,

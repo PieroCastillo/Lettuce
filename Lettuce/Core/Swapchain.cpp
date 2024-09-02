@@ -47,9 +47,9 @@ void Swapchain::createDepthImage()
     _depthImage.Build(this->_device, width, height, 1, VkImageUsageFlagBits::VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, 1, 1, depthFormat);
     _depthImageView.Build(this->_device, _depthImage);
 }
+
 void Swapchain::createRenderPass()
 {
-
     // Color attachment
     attachments.push_back(VkAttachmentDescription{
         .format = imageFormat,
@@ -197,9 +197,7 @@ void Swapchain::Present(BSemaphore renderSemaphore)
 void Swapchain::Wait()
 {
     // VkPresentIdKHR s = {
-
     // };
-
     // vkWaitForPresentKHR(_device._device, _swapchain, )
 }
 

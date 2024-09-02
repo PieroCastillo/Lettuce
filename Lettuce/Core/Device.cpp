@@ -99,8 +99,14 @@ void Device::Create(Instance &instance, GPU &gpu, std::vector<char *> requestedE
 
     // here we enable device features, like Buffer Device Address, Timeline Semaphores, etc
 
+    VkPhysicalDeviceSynchronization2Features sync2Feature = {
+        .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SYNCHRONIZATION_2_FEATURES,
+        .synchronization2 = VK_TRUE,
+    };
+
     VkPhysicalDevicePresentWaitFeaturesKHR presentWaitFeature = {
         .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PRESENT_WAIT_FEATURES_KHR,
+        .pNext = &sync2Feature,
         .presentWait = VK_TRUE,
     };
 
