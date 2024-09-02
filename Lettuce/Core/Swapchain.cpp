@@ -179,12 +179,12 @@ void Swapchain::AcquireNextImage(BSemaphore acquireImageSemaphore)
     vkAcquireNextImageKHR(_device._device, _swapchain, (std::numeric_limits<uint64_t>::max)(), acquireImageSemaphore._semaphore, nullptr, &index);
 }
 
-void Swapchain::Present(BSemaphore renderSemaphore)
+void Swapchain::Present()
 {
     VkPresentInfoKHR presentI = {
         .sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
-        .waitSemaphoreCount = 1,
-        .pWaitSemaphores = &renderSemaphore._semaphore,
+        //.waitSemaphoreCount = 1,
+        //.pWaitSemaphores = &renderSemaphore._semaphore,
         .swapchainCount = 1,
         .pSwapchains = &_swapchain,
         .pImageIndices = &index,

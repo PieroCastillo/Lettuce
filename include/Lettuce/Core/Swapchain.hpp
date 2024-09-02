@@ -48,7 +48,7 @@ namespace Lettuce::Core
 
         void AcquireNextImage(BSemaphore acquireImageSemaphore);
 
-        void Present(BSemaphore renderSemaphore);
+        void Present();
 
         void Resize(uint32_t newWidth, uint32_t newHeight);
 

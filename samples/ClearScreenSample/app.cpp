@@ -28,7 +28,7 @@ const int height = 600;
 Lettuce::Core::Instance instance;
 Lettuce::Core::Device device;
 Lettuce::Core::Swapchain swapchain;
-Lettuce::Core::BSemaphore render;
+Lettuce::Core::TSemaphore renderFinished;
 Lettuce::Core::BSemaphore acquire;
 
 VkCommandPool pool;
@@ -59,7 +59,7 @@ void initLettuce()
     }
     device.Create(instance, gpus.front(), {});
     swapchain.Create(device, width, height);
-    render.Create(device);
+    renderFinished.Create(device, 1);
     acquire.Create(device);
     buildCmds();
 }
@@ -116,6 +116,7 @@ void recordCmds()
     checkResult(vkEndCommandBuffer(cmd));
 }
 
+int renderFinishedValue = 0;
 void draw()
 {
 
@@ -124,18 +125,52 @@ void draw()
     recordCmds();
 
     VkPipelineStageFlags waitMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-    VkSubmitInfo submitI = {
-        .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
-        .waitSemaphoreCount = 1,
-        .pWaitSemaphores = &acquire._semaphore,
-        .pWaitDstStageMask = &waitMask,
-        .commandBufferCount = 1,
-        .pCommandBuffers = &cmd,
-        .signalSemaphoreCount = 1,
-        .pSignalSemaphores = &render._semaphore,
+    // VkSubmitInfo submitI = {
+    //     .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
+    //     .waitSemaphoreCount = 1,
+    //     .pWaitSemaphores = &acquire._semaphore,
+    //     .pWaitDstStageMask = &waitMask,
+    //     .commandBufferCount = 1,
+    //     .pCommandBuffers = &cmd,
+    //     .signalSemaphoreCount = 1,
+    //     .pSignalSemaphores = &render._semaphore,
+    // };
+
+    VkCommandBufferSubmitInfo cmdSI = {
+        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_SUBMIT_INFO,
+        .commandBuffer = cmd,
+        .deviceMask = 0,
     };
-    checkResult(vkQueueSubmit(device._graphicsQueues[0], 1, &submitI, VK_NULL_HANDLE));
-    swapchain.Present(render);
+
+    // VkSemaphoreSubmitInfo waitSI = {
+    //     .sType = VK_STRUCTURE_TYPE_SEMAPHORE_SUBMIT_INFO,
+    //     .semaphore = renderFinished._semaphore,
+    //     .deviceIndex = 0,
+    // };
+
+    VkSemaphoreSubmitInfo signalSI = {
+        .sType = VK_STRUCTURE_TYPE_SEMAPHORE_SUBMIT_INFO,
+        .semaphore = renderFinished._semaphore,
+        .value = renderFinishedValue + 1,
+        .stageMask = VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT,
+        .deviceIndex = 0,
+    };
+
+    VkSubmitInfo2 submit2I = {
+        .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO_2,
+        //.waitSemaphoreInfoCount = 1,
+        // .pWaitSemaphoreInfos = &waitSI,
+        .commandBufferInfoCount = 1,
+        .pCommandBufferInfos = &cmdSI,
+        .signalSemaphoreInfoCount = 1,
+        .pSignalSemaphoreInfos = &signalSI,
+    };
+
+    checkResult(vkQueueSubmit2(device._graphicsQueues[0], 1, &submit2I, VK_NULL_HANDLE));
+    // checkResult(vkQueueSubmit(device._graphicsQueues[0], 1, &submitI, VK_NULL_HANDLE));
+    swapchain.Present();
+    TSemaphore::Wait({renderFinished}, {renderFinishedValue + 1});
+    renderFinishedValue++;
 }
 
 void endLettuce()
