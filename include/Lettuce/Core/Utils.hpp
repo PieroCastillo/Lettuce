@@ -66,7 +66,7 @@ namespace Lettuce::Core
         Color,
         DepthStencil,
         Input,
-        Preserve,
+        //Preserve,
         Resolve,
     };
 
@@ -184,7 +184,7 @@ namespace Lettuce::Core
         // Provided by VK_NV_device_generated_commands
         CommandPreprocessWrite = 0x00040000,
     };
-    MAKE_ENUM_FLAGS(AccessMask)
+    MAKE_ENUM_FLAGS(AccessBehavior)
 
     enum class AccessStage
     {

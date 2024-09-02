@@ -27,12 +27,12 @@ void RenderPass::AddAttachment(
     VkAttachmentDescription attachment = {
         .format = format,
         .samples = VK_SAMPLE_COUNT_1_BIT,
-        .loadOp = loadOp,
-        .storeOp = storeOp,
-        .stencilLoadOp = stencilLoadOp,
-        .stencilStoreOp = stencilStoreOp,
-        .initialLayout = initial,
-        .finalLayout = final,
+        .loadOp = (VkAttachmentLoadOp)loadOp,
+        .storeOp = (VkAttachmentStoreOp)storeOp,
+        .stencilLoadOp = (VkAttachmentLoadOp)stencilLoadOp,
+        .stencilStoreOp = (VkAttachmentStoreOp)stencilStoreOp,
+        .initialLayout = (VkImageLayout)initial,
+        .finalLayout = (VkImageLayout) final,
     };
     attachments[subpassIndex].push_back(std::make_tuple(type, attachment));
 }
@@ -44,42 +44,46 @@ void RenderPass::BindSubpassIndex(int index, BindPoint point)
 
 void RenderPass::buildSubpasses()
 {
+    int j = 0;
     for (auto element : attachments)
     {
         std::vector<VkAttachmentReference> colorRefs;
         std::vector<VkAttachmentReference> depthStencilRefs;
         std::vector<VkAttachmentReference> inputRefs;
         std::vector<VkAttachmentReference> resolveRefs;
-        std::vector<VkAttachmentReference> preserveRefs;
+        //std::vector<VkAttachmentReference> preserveRefs;
         for (int i = 0; i < element.second.size(); i++)
         {
             auto t = element.second[i];
             VkAttachmentDescription attachment;
             AttachmentType type;
             std::tie(type, attachment) = t;
+            VkAttachmentReference ref = {
+                .attachment = (uint32_t)i,
+            };
             switch (type)
             {
             case AttachmentType::Color:
-                colorRefs.push_back(attachment);
+                colorRefs.push_back(ref);
                 break;
             case AttachmentType::DepthStencil:
-                depthStencilRefs.push_back(attachment);
+                depthStencilRefs.push_back(ref);
                 break;
             case AttachmentType::Input:
-                inputRefs.push_back(attachment);
+                inputRefs.push_back(ref);
                 break;
-            case AttachmentType::Preserve:
-                preserveRefs.push_back(attachment);
-                break;
+            // case AttachmentType::Preserve:
+            //     preserveRefs.push_back(ref);
+            //     break;
             case AttachmentType::Resolve:
-                resolveRefs.push_back(attachment);
+                resolveRefs.push_back(ref);
                 break;
             }
         };
 
         VkSubpassDescription subpass;
 
-        subpass.pipelineBindPoint = bindPoints[i];
+        subpass.pipelineBindPoint = bindPoints[j];
 
         if (colorRefs.size() > 0)
         {
@@ -92,11 +96,11 @@ void RenderPass::buildSubpasses()
             subpass.pDepthStencilAttachment = depthStencilRefs.data();
         }
 
-        if (preserveRefs.size() > 0)
-        {
-            subpass.preserveAttachmentCount = (uint32_t)preserveRefs.size();
-            subpass.pPreserveAttachments = preserveRefs.data();
-        }
+        // if (preserveRefs.size() > 0)
+        // {
+        //     subpass.preserveAttachmentCount = (uint32_t)preserveRefs.size();
+        //     subpass.pPreserveAttachments = preserveRefs.data();
+        // }
 
         if (inputRefs.size() > 0)
         {
@@ -110,6 +114,7 @@ void RenderPass::buildSubpasses()
         }
 
         subpasses.push_back(subpass);
+        j++;
     }
 }
 
@@ -124,8 +129,8 @@ void RenderPass::AddDependency(int srcSubpassIndex,
         .srcSubpass = (uint32_t)srcSubpassIndex,
         .dstSubpass = (uint32_t)dstSubpassIndex,
         .srcStageMask = (VkPipelineStageFlags)srcStage,
-        .dstStageMask =(VkPipelineStageFlags)dstStage,
-        .srcAccessMask =(VkAccessFlags)srcBehavior,
+        .dstStageMask = (VkPipelineStageFlags)dstStage,
+        .srcAccessMask = (VkAccessFlags)srcBehavior,
         .dstAccessMask = (VkAccessFlags)dstBehavior,
         .dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT,
     };
@@ -137,10 +142,20 @@ void RenderPass::Build()
     VkRenderPassCreateInfo renderPassCI = {
         .sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO,
     };
+    std::vector<VkAttachmentDescription> attachmentsVec(attachments.size());
+
+    for (auto pair : attachments)
+    {
+        for (auto tuple : pair.second)
+        {
+            attachmentsVec.push_back(std::get<1>(tuple));
+        }
+    }
+
     if (attachments.size() > 0)
     {
-        renderPassCI.attachmentCount = (uint32_t)attachments.size();
-        renderPassCI.pAttachments = attachments.data();
+        renderPassCI.attachmentCount = (uint32_t)attachmentsVec.size();
+        renderPassCI.pAttachments = attachmentsVec.data();
     }
     if (subpasses.size() > 0)
     {
