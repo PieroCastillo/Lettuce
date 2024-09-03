@@ -58,8 +58,8 @@ void Swapchain::createRenderPass()
         .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
         .stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
         .stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
-        .initialLayout = VkImageLayout::VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-        .finalLayout = VkImageLayout::VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+        .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+        .finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
     });
     // Depth attachment
     attachments.push_back(VkAttachmentDescription{
@@ -75,7 +75,7 @@ void Swapchain::createRenderPass()
 
     VkAttachmentReference colorReference = {};
     colorReference.attachment = 0;
-    colorReference.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+    colorReference.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL ;
 
     VkAttachmentReference depthReference = {};
     depthReference.attachment = 1;
@@ -190,15 +190,13 @@ void Swapchain::Present()
 {
     VkPresentInfoKHR presentI = {
         .sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
-        //.waitSemaphoreCount = 1,
-        //.pWaitSemaphores = &renderSemaphore._semaphore,
         .swapchainCount = 1,
         .pSwapchains = &_swapchain,
         .pImageIndices = &index,
     };
 
     checkResult(vkQueuePresentKHR(_device._presentQueue, &presentI));
-    // checkResult(vkQueueWaitIdle(_device._presentQueue));
+    checkResult(vkQueueWaitIdle(_device._presentQueue));
 }
 
 void Swapchain::Wait()

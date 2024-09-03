@@ -59,7 +59,6 @@ void initLettuce()
     device.Create(instance, gpus.front(), {});
     swapchain.Create(device, width, height);
     renderFinished.Create(device, 0);
-    acquire.Create(device);
     buildCmds();
 }
 
@@ -83,8 +82,8 @@ void buildCmds()
 
 void recordCmds()
 {
+    checkResult(vkResetCommandBuffer(cmd, 0));
     VkClearValue clearValues[2];
-    VkClearValue color, depth;
     clearValues[0].color = {{0.5f, 0.5f, 0.5f, 1.0f}};
     clearValues[1].depthStencil = {1, 0};
 
@@ -124,28 +123,12 @@ void draw()
     recordCmds();
 
     VkPipelineStageFlags waitMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-    // VkSubmitInfo submitI = {
-    //     .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
-    //     .waitSemaphoreCount = 1,
-    //     .pWaitSemaphores = &acquire._semaphore,
-    //     .pWaitDstStageMask = &waitMask,
-    //     .commandBufferCount = 1,
-    //     .pCommandBuffers = &cmd,
-    //     .signalSemaphoreCount = 1,
-    //     .pSignalSemaphores = &render._semaphore,
-    // };
 
     VkCommandBufferSubmitInfo cmdSI = {
         .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_SUBMIT_INFO,
         .commandBuffer = cmd,
         .deviceMask = 0,
     };
-
-    // VkSemaphoreSubmitInfo waitSI = {
-    //     .sType = VK_STRUCTURE_TYPE_SEMAPHORE_SUBMIT_INFO,
-    //     .semaphore = renderFinished._semaphore,
-    //     .deviceIndex = 0,
-    // };
 
     VkSemaphoreSubmitInfo signalSI = {
         .sType = VK_STRUCTURE_TYPE_SEMAPHORE_SUBMIT_INFO,
