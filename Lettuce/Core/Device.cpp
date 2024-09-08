@@ -83,15 +83,7 @@ void Device::Create(Instance &instance, GPU &gpu, std::vector<char *> requestedE
         .queueCount = graphicsQueuesCount,
         .pQueuePriorities = queuePriorities.data(),
     };
-    // create queue for present
-    VkDeviceQueueCreateInfo presentQueueCI = {
-        .sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
-        .queueFamilyIndex = gpu.presentFamily.value(),
-        .queueCount = 1,
-        .pQueuePriorities = &queuePriority,
-    };
     queueCreateInfos.push_back(graphicsQueuesCI);
-    queueCreateInfos.push_back(presentQueueCI);
 
     VkPhysicalDeviceFeatures features;
     vkGetPhysicalDeviceFeatures(_pdevice, &features);

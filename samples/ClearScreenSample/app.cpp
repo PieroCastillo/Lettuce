@@ -64,6 +64,7 @@ void initLettuce()
 
 void buildCmds()
 {
+    // rendering
     VkCommandPoolCreateInfo poolCI = {
         .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
         .flags = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT | VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT,
@@ -82,13 +83,17 @@ void buildCmds()
 
 void recordCmds()
 {
+    // rendering cmd
+
+    VkImageSubresourceRange imgSubresourceRange = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1};
+
     checkResult(vkResetCommandBuffer(cmd, 0));
     //    VkClearValue clearValues[2];
     //    clearValues[0].color = {{0.5f, 0.5f, 0.5f, 1.0f}};
     //    clearValues[1].depthStencil = {1, 0};
     VkClearValue clearValue;
     clearValue.color = {{0.5f, 0.5f, 0.5f, 1.0f}};
-    
+
     VkCommandBufferBeginInfo cmdBI = {
         .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
         .flags = VK_COMMAND_BUFFER_USAGE_RENDER_PASS_CONTINUE_BIT,
@@ -117,13 +122,21 @@ void recordCmds()
 }
 
 uint64_t renderFinishedValue = 0;
+
+/*
+|               |        waits for nothing
+|               |        signals semaphore to r+1
+
+waits for r+1
+r ++
+*/
 void draw()
 {
     swapchain.AcquireNextImage();
 
     recordCmds();
 
-    VkPipelineStageFlags waitMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+    // sends rendering cmd
 
     VkCommandBufferSubmitInfo cmdSI = {
         .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_SUBMIT_INFO,
@@ -135,7 +148,7 @@ void draw()
         .sType = VK_STRUCTURE_TYPE_SEMAPHORE_SUBMIT_INFO,
         .semaphore = renderFinished._semaphore,
         .value = renderFinishedValue + 1,
-        .stageMask = VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT,
+        .stageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT,
         .deviceIndex = 0,
     };
 
@@ -150,9 +163,11 @@ void draw()
     };
 
     checkResult(vkQueueSubmit2(device._graphicsQueues[0], 1, &submit2I, VK_NULL_HANDLE));
+    renderFinished.Wait(renderFinishedValue+1);
+
     swapchain.Present();
-    renderFinished.Wait(renderFinishedValue + 1);
-    renderFinishedValue++;
+
+    renderFinishedValue ++;
 }
 
 void endLettuce()

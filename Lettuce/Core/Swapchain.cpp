@@ -88,14 +88,22 @@ void Swapchain::createRenderPass()
         //.pDepthStencilAttachment = &depthReference,
     };
 
+    VkRenderPassCreateInfo renderPassCI = {
+        .sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO,
+        .attachmentCount = (uint32_t)attachments.size(),
+        .pAttachments = attachments.data(),
+        .subpassCount = 1,
+        .pSubpasses = &subpassDescription,
+    };
+
     VkSubpassDependency subpassDependencies[2] = {
         {
             .srcSubpass = VK_SUBPASS_EXTERNAL,
             .dstSubpass = 0,
             .srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
             .dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-            .srcAccessMask = 0,
-            .dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_COLOR_ATTACHMENT_READ_BIT,
+            .srcAccessMask = VK_ACCESS_NONE_KHR,
+            .dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
             .dependencyFlags = 0,
         },
         {
@@ -103,21 +111,14 @@ void Swapchain::createRenderPass()
             .dstSubpass = VK_SUBPASS_EXTERNAL,
             .srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
             .dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-            .srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_COLOR_ATTACHMENT_READ_BIT,
-            .dstAccessMask = 0,
+            .srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+            .dstAccessMask = VK_ACCESS_NONE_KHR,
             .dependencyFlags = 0,
         },
     };
+    renderPassCI.dependencyCount = 2;
+    renderPassCI.pDependencies = subpassDependencies;
 
-    VkRenderPassCreateInfo renderPassCI = {
-        .sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO,
-        .attachmentCount = (uint32_t)attachments.size(),
-        .pAttachments = attachments.data(),
-        .subpassCount = 1,
-        .pSubpasses = &subpassDescription,
-        .dependencyCount = 2,
-        .pDependencies = subpassDependencies,
-    };
     checkResult(vkCreateRenderPass(_device._device, &renderPassCI, nullptr, &_renderPass));
 }
 void Swapchain::createFramebuffers()

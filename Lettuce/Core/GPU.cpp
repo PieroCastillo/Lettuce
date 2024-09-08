@@ -104,19 +104,10 @@ void GPU::loadQueuesFamilies()
     int i = 0;
     for (const auto &queueFamily : queueFamilies)
     {
-        if (queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT)
+        if (!graphicsFamily.has_value() && (queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT))
         {
             graphicsFamily = i;
-        }
-
-        if (_surface != VK_NULL_HANDLE)
-        {
-            VkBool32 presentSupport = false;
-            vkGetPhysicalDeviceSurfaceSupportKHR(_pdevice, i, _surface, &presentSupport);
-            if (presentSupport)
-            {
-                presentFamily = i;
-            }
+            presentFamily = i;
         }
 
         if (GraphicsCapable())
