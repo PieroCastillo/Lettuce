@@ -2,7 +2,7 @@
 // Created by piero on 11/02/2024.
 //
 #include "Lettuce/Core/common.hpp"
-#ifdef VK_USE_PLATFORM_WIN32_KHR 
+#ifdef VK_USE_PLATFORM_WIN32_KHR
 #include <ddkernel.h>
 #endif
 #include <iostream>
@@ -90,14 +90,13 @@ void Instance::Create(std::string appName, Version appVersion, std::vector<char 
     //     return;
     // }
     checkResult(volkInitialize());
-    VkDebugUtilsMessengerCreateInfoEXT debugUtilsCI =
-        {
-            .sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT,
-            .messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT | VkDebugUtilsMessageSeverityFlagBitsEXT::VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT,
-            .messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT | VkDebugUtilsMessageTypeFlagBitsEXT::VK_DEBUG_UTILS_MESSAGE_TYPE_DEVICE_ADDRESS_BINDING_BIT_EXT,
-            .pfnUserCallback = debugCallback,
-            .pUserData = nullptr, // Optional
-        };
+    VkDebugUtilsMessengerCreateInfoEXT debugUtilsCI = {
+        .sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT,
+        .messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT,
+        .messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT | VkDebugUtilsMessageTypeFlagBitsEXT::VK_DEBUG_UTILS_MESSAGE_TYPE_DEVICE_ADDRESS_BINDING_BIT_EXT,
+        .pfnUserCallback = debugCallback,
+        .pUserData = nullptr, // Optional
+    };
 
     VkApplicationInfo appI = {
         .sType = VK_STRUCTURE_TYPE_APPLICATION_INFO,

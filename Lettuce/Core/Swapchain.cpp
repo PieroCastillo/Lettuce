@@ -40,12 +40,12 @@ void Swapchain::createImageViews()
 
 void Swapchain::createDepthImage()
 {
-    depthFormat = _device._gpu.findSupportedFormat(
-        {VK_FORMAT_D16_UNORM, VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT},
-        VK_IMAGE_TILING_OPTIMAL,
-        VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT);
-    _depthImage.Build(this->_device, width, height, 1, VkImageUsageFlagBits::VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, 1, 1, depthFormat);
-    _depthImageView.Build(this->_device, _depthImage);
+    // depthFormat = _device._gpu.findSupportedFormat(
+    //     {VK_FORMAT_D16_UNORM, VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT},
+    //     VK_IMAGE_TILING_OPTIMAL,
+    //     VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT);
+    // _depthImage.Build(this->_device, width, height, 1, VkImageUsageFlagBits::VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, 1, 1, depthFormat);
+    // _depthImageView.Build(this->_device, _depthImage);
 }
 
 void Swapchain::createRenderPass()
@@ -62,30 +62,51 @@ void Swapchain::createRenderPass()
         .finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
     });
     // Depth attachment
-    attachments.push_back(VkAttachmentDescription{
-        .format = depthFormat,
-        .samples = VK_SAMPLE_COUNT_1_BIT,
-        .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
-        .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
-        .stencilLoadOp = VK_ATTACHMENT_LOAD_OP_LOAD,
-        .stencilStoreOp = VK_ATTACHMENT_STORE_OP_STORE,
-        .initialLayout = VkImageLayout::VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
-        .finalLayout = VkImageLayout::VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
-    });
+    // attachments.push_back(VkAttachmentDescription{
+    //     .format = depthFormat,
+    //     .samples = VK_SAMPLE_COUNT_1_BIT,
+    //     .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
+    //     .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
+    //     .stencilLoadOp = VK_ATTACHMENT_LOAD_OP_LOAD,
+    //     .stencilStoreOp = VK_ATTACHMENT_STORE_OP_STORE,
+    //     .initialLayout = VkImageLayout::VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
+    //     .finalLayout = VkImageLayout::VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
+    // });
 
     VkAttachmentReference colorReference = {};
     colorReference.attachment = 0;
-    colorReference.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL ;
+    colorReference.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
-    VkAttachmentReference depthReference = {};
-    depthReference.attachment = 1;
-    depthReference.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+    // VkAttachmentReference depthReference = {};
+    // depthReference.attachment = 1;
+    // depthReference.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 
     VkSubpassDescription subpassDescription = {
         .pipelineBindPoint = VkPipelineBindPoint::VK_PIPELINE_BIND_POINT_GRAPHICS,
         .colorAttachmentCount = 1,
         .pColorAttachments = &colorReference,
-        .pDepthStencilAttachment = &depthReference,
+        //.pDepthStencilAttachment = &depthReference,
+    };
+
+    VkSubpassDependency subpassDependencies[2] = {
+        {
+            .srcSubpass = VK_SUBPASS_EXTERNAL,
+            .dstSubpass = 0,
+            .srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+            .dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+            .srcAccessMask = 0,
+            .dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_COLOR_ATTACHMENT_READ_BIT,
+            .dependencyFlags = 0,
+        },
+        {
+            .srcSubpass = 0,
+            .dstSubpass = VK_SUBPASS_EXTERNAL,
+            .srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+            .dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+            .srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_COLOR_ATTACHMENT_READ_BIT,
+            .dstAccessMask = 0,
+            .dependencyFlags = 0,
+        },
     };
 
     VkRenderPassCreateInfo renderPassCI = {
@@ -94,19 +115,21 @@ void Swapchain::createRenderPass()
         .pAttachments = attachments.data(),
         .subpassCount = 1,
         .pSubpasses = &subpassDescription,
+        .dependencyCount = 2,
+        .pDependencies = subpassDependencies,
     };
     checkResult(vkCreateRenderPass(_device._device, &renderPassCI, nullptr, &_renderPass));
 }
 void Swapchain::createFramebuffers()
 {
-    VkImageView views[2];
-    views[1] = _depthImageView._imageView;
+    // VkImageView views[2];
+    // views[1] = _depthImageView._imageView;
 
     VkFramebufferCreateInfo framebufferCI = {
         .sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO,
         .renderPass = _renderPass,
-        .attachmentCount = 2,
-        .pAttachments = views,
+        .attachmentCount = 1, // 2,
+        // .pAttachments = views,
         .width = width,
         .height = height,
         .layers = 1,
@@ -115,7 +138,8 @@ void Swapchain::createFramebuffers()
     framebuffers.resize(swapChainImageViews.size());
     for (int i = 0; i < swapChainImageViews.size(); i++)
     {
-        views[0] = swapChainImageViews[i];
+        // views[0] = swapChainImageViews[i];
+        framebufferCI.pAttachments = &(swapChainImageViews[i]);
         checkResult(vkCreateFramebuffer(_device._device, &framebufferCI, nullptr, &framebuffers.at(i)));
     }
 }
@@ -152,13 +176,15 @@ void Swapchain::Create(Device &device, uint32_t initialWidth, uint32_t initialHe
         .oldSwapchain = VK_NULL_HANDLE,
     };
 
-    uint32_t queueFamilyIndices[] = {_device._gpu.graphicsFamily.value(), _device._gpu.presentFamily.value()};
+    std::vector<uint32_t> queueFamilyIndices;
+    queueFamilyIndices.push_back(_device._gpu.graphicsFamily.value());
+    queueFamilyIndices.push_back(_device._gpu.presentFamily.value());
 
     if (_device._gpu.graphicsFamily.value() != _device._gpu.presentFamily.value())
     {
         swapchainCI.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
-        swapchainCI.queueFamilyIndexCount = 2;
-        swapchainCI.pQueueFamilyIndices = queueFamilyIndices;
+        swapchainCI.queueFamilyIndexCount = (uint32_t)queueFamilyIndices.size();
+        swapchainCI.pQueueFamilyIndices = queueFamilyIndices.data();
     }
     else
     {
@@ -217,8 +243,8 @@ void Swapchain::Destroy()
         vkDestroyFramebuffer(_device._device, fb, nullptr);
     }
     vkDestroyRenderPass(_device._device, _renderPass, nullptr);
-    _depthImageView.Destroy();
-    _depthImage.Destroy();
+    //_depthImageView.Destroy();
+    //_depthImage.Destroy();
 
     for (auto imageView : swapChainImageViews)
     {

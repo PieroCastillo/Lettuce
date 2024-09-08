@@ -83,10 +83,12 @@ void buildCmds()
 void recordCmds()
 {
     checkResult(vkResetCommandBuffer(cmd, 0));
-    VkClearValue clearValues[2];
-    clearValues[0].color = {{0.5f, 0.5f, 0.5f, 1.0f}};
-    clearValues[1].depthStencil = {1, 0};
-
+    //    VkClearValue clearValues[2];
+    //    clearValues[0].color = {{0.5f, 0.5f, 0.5f, 1.0f}};
+    //    clearValues[1].depthStencil = {1, 0};
+    VkClearValue clearValue;
+    clearValue.color = {{0.5f, 0.5f, 0.5f, 1.0f}};
+    
     VkCommandBufferBeginInfo cmdBI = {
         .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
         .flags = VK_COMMAND_BUFFER_USAGE_RENDER_PASS_CONTINUE_BIT,
@@ -104,8 +106,8 @@ void recordCmds()
         .renderPass = swapchain._renderPass,
         .framebuffer = swapchain.framebuffers[swapchain.index],
         .renderArea = renderArea,
-        .clearValueCount = 2,
-        .pClearValues = clearValues,
+        .clearValueCount = 1,
+        .pClearValues = &clearValue,
     };
 
     vkCmdBeginRenderPass(cmd, &renderPassBI, VkSubpassContents::VK_SUBPASS_CONTENTS_INLINE);
@@ -115,7 +117,6 @@ void recordCmds()
 }
 
 uint64_t renderFinishedValue = 0;
-// TODO: impl image transition to cmd
 void draw()
 {
     swapchain.AcquireNextImage();
@@ -140,7 +141,7 @@ void draw()
 
     VkSubmitInfo2 submit2I = {
         .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO_2,
-        //.waitSemaphoreInfoCount = 1,
+        // .waitSemaphoreInfoCount = 1,
         // .pWaitSemaphoreInfos = &waitSI,
         .commandBufferInfoCount = 1,
         .pCommandBufferInfos = &cmdSI,
@@ -149,9 +150,8 @@ void draw()
     };
 
     checkResult(vkQueueSubmit2(device._graphicsQueues[0], 1, &submit2I, VK_NULL_HANDLE));
-    // checkResult(vkQueueSubmit(device._graphicsQueues[0], 1, &submitI, VK_NULL_HANDLE));
     swapchain.Present();
-    renderFinished.Wait(renderFinishedValue+1);
+    renderFinished.Wait(renderFinishedValue + 1);
     renderFinishedValue++;
 }
 
