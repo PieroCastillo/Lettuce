@@ -56,7 +56,11 @@ void initLettuce()
         std::cout << "    present family : " << gpu.presentFamily.value() << std::endl;
         std::cout << "    gpu ptr:         " << gpu._pdevice << std::endl;
     }
-    device.Create(instance, gpus.front(), {});
+    Features features;
+    features.MeshShading = true;
+    features.ConditionalRendering = true;
+    features.MemoryBudget = true;
+    device.Create(instance, gpus.front(), features);
     swapchain.Create(device, width, height);
     renderFinished.Create(device, 0);
     buildCmds();
@@ -163,11 +167,11 @@ void draw()
     };
 
     checkResult(vkQueueSubmit2(device._graphicsQueues[0], 1, &submit2I, VK_NULL_HANDLE));
-    renderFinished.Wait(renderFinishedValue+1);
+    renderFinished.Wait(renderFinishedValue + 1);
 
     swapchain.Present();
 
-    renderFinishedValue ++;
+    renderFinishedValue++;
 }
 
 void endLettuce()

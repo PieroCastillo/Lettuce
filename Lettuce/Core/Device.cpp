@@ -12,6 +12,99 @@
 
 using namespace Lettuce::Core;
 
+bool Device::tryAddFeatureAndExt(const char *extName)
+{
+    bool found = false;
+    for (auto ext : availableExtensionsNames)
+    {
+        if (ext == extName)
+        {
+            found = true;
+            break;
+        }
+    }
+    if (!found)
+    {
+        return false;
+    }
+    else
+    {
+        requestedExtensionsNames.emplace_back(extName);
+        return true;
+    }
+}
+
+void Device::createFeaturesChain()
+{
+    if (_features.FragmentShadingRate && tryAddFeatureAndExt(VK_KHR_FRAGMENT_SHADING_RATE_EXTENSION_NAME))
+    {
+        fragmentShadingRateFeature.pipelineFragmentShadingRate = VK_TRUE;
+        fragmentShadingRateFeature.primitiveFragmentShadingRate = VK_TRUE;
+        fragmentShadingRateFeature.attachmentFragmentShadingRate = VK_TRUE;
+        _enabledFeatures.FragmentShadingRate = true;
+    }
+
+    if (_features.PresentWait && tryAddFeatureAndExt(VK_KHR_PRESENT_WAIT_EXTENSION_NAME))
+    {
+        presentWaitFeature.presentWait = VK_TRUE;
+        _enabledFeatures.PresentWait = true;
+    }
+
+#ifdef LETTUCE_EXPERIMENTAL
+    if (_features.ExecutionGraphs)
+    {
+        // not yet
+    }
+#endif
+
+    if (_features.MeshShading && tryAddFeatureAndExt(VK_EXT_MESH_SHADER_EXTENSION_NAME))
+    {
+        meshShaderFeature.taskShader = VK_TRUE;
+        meshShaderFeature.meshShader = VK_TRUE;
+        _enabledFeatures.MeshShading = true;
+    }
+
+    if (_features.RayTracing)
+    {
+        // nop
+    }
+
+    if (_features.Video)
+    {
+        // nop too
+    }
+
+    if (_features.MemoryBudget && tryAddFeatureAndExt(VK_EXT_MEMORY_BUDGET_EXTENSION_NAME));
+    {
+        _enabledFeatures.MemoryBudget = true;
+    }
+
+    if (_features.ConditionalRendering && tryAddFeatureAndExt(VK_EXT_CONDITIONAL_RENDERING_EXTENSION_NAME))
+    {
+        conditionalRenderingFeature.conditionalRendering = VK_TRUE;
+        _enabledFeatures.ConditionalRendering = true;
+    }
+
+    if (_features.DescriptorBuffer && tryAddFeatureAndExt(VK_EXT_DESCRIPTOR_BUFFER_EXTENSION_NAME))
+    {
+        descriptorBufferFeature.descriptorBuffer = VK_TRUE;
+        descriptorBufferFeature.descriptorBufferPushDescriptors = VK_TRUE;
+        _enabledFeatures.DescriptorBuffer = true;
+    }
+    gpuFeatures12.bufferDeviceAddress = VK_TRUE;
+
+    gpuFeatures12.shaderSampledImageArrayNonUniformIndexing = VK_TRUE,
+    gpuFeatures12.descriptorBindingUniformBufferUpdateAfterBind = VK_TRUE,
+    gpuFeatures12.descriptorBindingSampledImageUpdateAfterBind = VK_TRUE,
+    gpuFeatures12.descriptorBindingUpdateUnusedWhilePending = VK_TRUE,
+    gpuFeatures12.descriptorBindingPartiallyBound = VK_TRUE,
+    gpuFeatures12.descriptorBindingVariableDescriptorCount = VK_TRUE,
+    gpuFeatures12.runtimeDescriptorArray = VK_TRUE,
+    gpuFeatures12.timelineSemaphore = VK_TRUE;
+
+    gpuFeatures13.synchronization2 = VK_TRUE;
+}
+
 void Device::listExtensions()
 {
     uint32_t availableExtensionCount = 0;
@@ -50,27 +143,17 @@ void Device::loadExtensionsLayersAndFeatures()
     {
         requestedExtensionsNames.emplace_back(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
     }
-    // requestedExtensionsNames.emplace_back(VK_KHR_FRAGMENT_SHADING_RATE_EXTENSION_NAME);
-    // requestedExtensionsNames.emplace_back(VK_KHR_PRESENT_WAIT_EXTENSION_NAME);
-    // requestedExtensionsNames.emplace_back(VK_EXT_CONDITIONAL_RENDERING_EXTENSION_NAME);
-    // requestedExtensionsNames.emplace_back(VK_EXT_MEMORY_BUDGET_EXTENSION_NAME);
-    //  requestedExtensionsNames.emplace_back(VK_EXT_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME);
-    // requestedExtensionsNames.emplace_back(VK_EXT_MESH_SHADER_EXTENSION_NAME);
 }
 
-void Device::Create(Instance &instance, GPU &gpu, std::vector<char *> requestedExtensions, uint32_t graphicsQueuesCount)
+void Device::Create(Instance &instance, GPU &gpu, Features gpuFeatures, uint32_t graphicsQueuesCount)
 {
     _pdevice = gpu._pdevice;
     _instance = instance;
     _gpu = gpu;
+    _features = gpuFeatures;
     listExtensions();
     listLayers();
     loadExtensionsLayersAndFeatures();
-
-    for (auto ext : requestedExtensions)
-    {
-        requestedExtensionsNames.emplace_back(ext);
-    }
 
     std::vector<VkDeviceQueueCreateInfo> queueCreateInfos; // here we store all queues CI
     std::vector<float> queuePriorities(graphicsQueuesCount, 1.0f);
@@ -89,64 +172,11 @@ void Device::Create(Instance &instance, GPU &gpu, std::vector<char *> requestedE
     vkGetPhysicalDeviceFeatures(_pdevice, &features);
 
     // here we enable device features, like Buffer Device Address, Timeline Semaphores, etc
-
-    // VkPhysicalDevicePresentWaitFeaturesKHR presentWaitFeature = {
-    //     .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PRESENT_WAIT_FEATURES_KHR,
-    //     .pNext = &sync2Feature,
-    //     .presentWait = VK_TRUE,
-    // };
-
-    // VkPhysicalDeviceFragmentShadingRateFeaturesKHR fragmentShadingRateFeature = {
-    //     .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADING_RATE_FEATURES_KHR,
-    //     .pNext = &bufferDeviceAddressFeature,
-    //     .pipelineFragmentShadingRate = VK_TRUE,
-    //     .primitiveFragmentShadingRate = VK_TRUE,
-    //     .attachmentFragmentShadingRate = VK_TRUE,
-    // };
-
-    VkPhysicalDeviceMeshShaderFeaturesEXT meshShaderFeature = {
-        .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MESH_SHADER_FEATURES_EXT,
-        // .pNext = &timelineSemaphoreFeature,
-        .taskShader = VK_TRUE,
-        .meshShader = VK_TRUE,
-    };
-
-    // always available in vulkan 1.2
-    VkPhysicalDeviceBufferDeviceAddressFeatures bufferDeviceAddressFeature = {
-        .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_FEATURES,
-        //.pNext = &meshShaderFeature,
-        .bufferDeviceAddress = VK_TRUE,
-        .bufferDeviceAddressCaptureReplay = VK_FALSE,
-    };
-
-    VkPhysicalDeviceDescriptorIndexingFeatures deviceDescriptorIndexingFeature = {
-        .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES,
-        .pNext = &bufferDeviceAddressFeature,
-        .shaderSampledImageArrayNonUniformIndexing = VK_TRUE,
-        .descriptorBindingUniformBufferUpdateAfterBind = VK_TRUE,
-        .descriptorBindingSampledImageUpdateAfterBind = VK_TRUE,
-        .descriptorBindingUpdateUnusedWhilePending = VK_TRUE,
-        .descriptorBindingPartiallyBound = VK_TRUE,
-        .descriptorBindingVariableDescriptorCount = VK_TRUE,
-        .runtimeDescriptorArray = VK_TRUE,
-    };
-
-    // always available in vulkan 1.3
-    VkPhysicalDeviceTimelineSemaphoreFeatures timelineSemaphoreFeature = {
-        .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TIMELINE_SEMAPHORE_FEATURES,
-        .pNext = &deviceDescriptorIndexingFeature,
-        .timelineSemaphore = VK_TRUE,
-    };
-
-    VkPhysicalDeviceSynchronization2Features sync2Feature = {
-        .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SYNCHRONIZATION_2_FEATURES,
-        .pNext = &timelineSemaphoreFeature,
-        .synchronization2 = VK_TRUE,
-    };
+    createFeaturesChain();
 
     VkDeviceCreateInfo deviceCI = {
         .sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
-        .pNext = &sync2Feature,
+        .pNext = &descriptorBufferFeature,
         .queueCreateInfoCount = (uint32_t)queueCreateInfos.size(),
         .pQueueCreateInfos = queueCreateInfos.data(),
         .enabledLayerCount = 0,
@@ -181,6 +211,10 @@ void Device::Create(Instance &instance, GPU &gpu, std::vector<char *> requestedE
         vkGetDeviceQueue(_device, gpu.graphicsFamily.value(), i, &(_graphicsQueues.at(i)));
     }
     vkGetDeviceQueue(_device, gpu.presentFamily.value(), 0, &_presentQueue);
+}
+
+Features Device::GetEnabledFeatures(){
+    return _enabledFeatures;
 }
 
 void Device::Wait()

@@ -1,11 +1,11 @@
 //
 // Created by piero on 22/08/2024.
 //
+#pragma once
 #include <vector>
 #include <functional>
 #include "Core/CommandList.hpp"
 
-#pragma once
 /*namespace Lettuce::Foundation
 {
     enum class ResourceUse

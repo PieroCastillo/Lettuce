@@ -78,7 +78,7 @@ void Swapchain::createRenderPass()
     colorReference.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
     // VkAttachmentReference depthReference = {};
-    // depthReference.attachment = 1;
+    // depthReference.attachment = 1;4 1
     // depthReference.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 
     VkSubpassDescription subpassDescription = {
