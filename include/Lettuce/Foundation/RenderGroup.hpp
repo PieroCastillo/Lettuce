@@ -5,7 +5,8 @@
 #include <vector>
 #include <functional>
 #include <string>
-#include "RenderGroup.hpp"
+#include "Attachment.hpp"
+#include "Resource.hpp"
 
 namespace Lettuce::Foundation
 {
@@ -26,7 +27,7 @@ namespace Lettuce::Foundation
         std::vector<ResourceUse> uses;
 
     public:
-        RenderGroup(std::string name);
+        RenderGroup(std::string name, BindPoint );
         void AddAttachment(Attachment attachment);
         void AddResource(Resource resource, ResourceUse use);
         void Release();

@@ -33,8 +33,8 @@ void RenderGroup::AddResource(Resource resource, ResourceUse use)
 }
 void RenderGroup::Release()
 {
-    released = true;
     attachments.clear();
     resources.clear();
     uses.clear();
+    released = true;
 }

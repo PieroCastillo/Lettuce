@@ -51,7 +51,7 @@ void RenderPass::buildSubpasses()
         std::vector<VkAttachmentReference> depthStencilRefs;
         std::vector<VkAttachmentReference> inputRefs;
         std::vector<VkAttachmentReference> resolveRefs;
-        //std::vector<VkAttachmentReference> preserveRefs;
+        // std::vector<VkAttachmentReference> preserveRefs;
         for (int i = 0; i < element.second.size(); i++)
         {
             auto t = element.second[i];
