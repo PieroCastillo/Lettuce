@@ -18,6 +18,13 @@ namespace Lettuce::Foundation
 
     class RenderGroup
     {
+    private:
+        std::string _name;
+        bool released = true;
+        std::vector<Attachment> attachments;
+        std::vector<Resource> resources;
+        std::vector<ResourceUse> uses;
+
     public:
         RenderGroup(std::string name);
         void AddAttachment(Attachment attachment);

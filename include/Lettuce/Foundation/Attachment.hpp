@@ -13,7 +13,7 @@ namespace Lettuce::Foundation
     private:
         std::string _name;
         bool released = true;
-        TextureView& _view;
+        TextureView &_view;
         AttachmentType _type;
         LoadOp _load;
         StoreOp _store;

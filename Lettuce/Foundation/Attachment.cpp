@@ -1,10 +1,10 @@
 //
 // Created by piero on 08/09/2024.
 //
+#include "Lettuce/Core/common.hpp"
 #include <vector>
 #include <functional>
 #include <string>
-#include "Lettuce/Core/common.hpp"
 #include "Lettuce/Core/Utils.hpp"
 #include "Lettuce/Core/TextureView.hpp"
 #include "Lettuce/Core/Sampler.hpp"

@@ -8,4 +8,3 @@
 #include "Lettuce/Foundation/RenderGraph.hpp"
 
 using namespace Lettuce::Foundation;
-

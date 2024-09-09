@@ -39,7 +39,7 @@ namespace Lettuce::Foundation
     public:
         RenderGraph(uint32_t maxNodes = 32);
         void Open();
-        
+
         void Close();
         void Run();
     };
