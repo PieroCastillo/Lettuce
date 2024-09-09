@@ -14,7 +14,7 @@ using namespace Lettuce::Foundation;
 
 Resource::Resource(std::string name, Sampler sampler, TextureView view)
 {
-    if (!released)
+    if (!released) 
     {
         throw std::runtime_error("resource with name: " + name + " didn't have been released!");
     }
