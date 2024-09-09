@@ -22,5 +22,6 @@ namespace Lettuce::Foundation
         RenderGroup(std::string name);
         void AddAttachment(Attachment attachment);
         void AddResource(Resource resource, ResourceUse use);
+        void Release();
     };
 }

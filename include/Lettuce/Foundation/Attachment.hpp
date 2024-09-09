@@ -15,5 +15,6 @@ namespace Lettuce::Foundation
 
     public:
         Attachment(std::string name, TextureView view, AttachmentType type);
+        void Release();
     };
 }
