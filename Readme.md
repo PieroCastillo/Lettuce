@@ -19,20 +19,19 @@ Lettuce is a rendering Vulkan-based library
   - [ ] All Buffer Types
 - [x] Textures
 - [x] Samplers
-- [x] Dynamic rendering (I'm going to remove this)
 - [x] Dynamic states
 - [x] Timeline Semaphores
-- [ ] Synchronization2
+- [x] Synchronization2
 - [ ] Descriptor Indexing
-- [ ] Buffer Device Address
-- [ ] VK_EXT_memory_budget
+- [x] Buffer Device Address
+- [x] VK_EXT_memory_budget
 - [ ] VK_EXT_conservative_rasterization
 - [ ] VK_KHR_fragment_shading_rate
 - [ ] Multi-thread Rendering
 - [ ] Async compute
 - [ ] Indirect Drawing
 - [ ] Render Graph
-- [ ] Work Graphs (when it becomes available to Vulkan standard)
+- [ ] Execution Graphs (when it becomes available to Vulkan standard)
 ### Lettuce 2D
 ### Lettuce Compute
 ### Lettuce 3D
