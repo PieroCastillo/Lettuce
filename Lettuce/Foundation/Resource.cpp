@@ -1,7 +1,6 @@
 //
 // Created by piero on 08/09/2024.
 //
-#pragma once
 #include <vector>
 #include <functional>
 #include <string>
@@ -15,22 +14,22 @@ using namespace Lettuce::Foundation;
 
 Resource::Resource(std::string name, Sampler sampler, TextureView view)
 {
-    _name = name;
     if (!released)
     {
         throw std::runtime_error("resource with name: " + name + " didn't have been released!");
     }
+    _name = name;
     isBuffer = false;
     _sampler = sampler;
     _view = view;
 }
 Resource::Resource(std::string name, Buffer buffer)
 {
-    _name = name;
     if (!released)
     {
         throw std::runtime_error("resource with name: " + name + " didn't have been released!");
     }
+    _name = name;
     isBuffer = true;
     _buffer = buffer;
 }

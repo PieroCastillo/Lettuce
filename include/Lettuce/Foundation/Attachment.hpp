@@ -12,9 +12,14 @@ namespace Lettuce::Foundation
     {
     private:
         std::string _name;
+        bool released = true;
+        TextureView& _view;
+        AttachmentType _type;
+        LoadOp _load;
+        StoreOp _store;
 
     public:
-        Attachment(std::string name, TextureView view, AttachmentType type);
+        Attachment(std::string name, TextureView view, AttachmentType type, LoadOp load = LoadOp::Clear, StoreOp store = StoreOp::Store);
         void Release();
     };
 }
