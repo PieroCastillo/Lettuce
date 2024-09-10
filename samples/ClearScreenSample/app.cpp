@@ -57,9 +57,9 @@ void initLettuce()
         std::cout << "    gpu ptr:         " << gpu._pdevice << std::endl;
     }
     Features features;
-    features.MeshShading = true;
-    features.ConditionalRendering = true;
-    features.MemoryBudget = true;
+    features.MeshShading = false;
+    features.ConditionalRendering = false;
+    features.MemoryBudget = false;
     device.Create(instance, gpus.front(), features);
     swapchain.Create(device, width, height);
     renderFinished.Create(device, 0);
@@ -96,7 +96,7 @@ void recordCmds()
     //    clearValues[0].color = {{0.5f, 0.5f, 0.5f, 1.0f}};
     //    clearValues[1].depthStencil = {1, 0};
     VkClearValue clearValue;
-    clearValue.color = {{0.5f, 0.5f, 0.5f, 1.0f}};
+    clearValue.color = {{0.1f, 0.7f, 0.2f, 1.0f}};
 
     VkCommandBufferBeginInfo cmdBI = {
         .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,

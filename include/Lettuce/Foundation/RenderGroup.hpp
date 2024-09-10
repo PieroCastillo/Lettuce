@@ -27,7 +27,7 @@ namespace Lettuce::Foundation
         std::vector<ResourceUse> uses;
 
     public:
-        RenderGroup(std::string name, BindPoint );
+        RenderGroup(std::string name);
         void AddAttachment(Attachment attachment);
         void AddResource(Resource resource, ResourceUse use);
         void Release();

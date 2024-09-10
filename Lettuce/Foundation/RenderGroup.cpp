@@ -10,6 +10,7 @@
 #include "Lettuce/Core/Sampler.hpp"
 #include "Lettuce/Core/RenderPass.hpp"
 #include "Lettuce/Foundation/Attachment.hpp"
+#include "Lettuce/Foundation/RenderGroup.hpp"
 
 using namespace Lettuce::Core;
 using namespace Lettuce::Foundation;
