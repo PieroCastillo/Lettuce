@@ -74,23 +74,42 @@ namespace Lettuce::Core
         /// @param src pinter to data to be mapped
         void SetData(void *src);
 
-        /// @brief Copy data from host visible Buffer to device prefered Buffer, 
+        /// @brief Copy data from host visible Buffer to device prefered Buffer,
         /// the usage of this function is for staging buffers creation only, another
         /// usage may have unexpected behaviors.
         /// @param buffer the dst buffer
         void CopyTo(Buffer buffer);
 
-        template <typename T>
-        static Buffer CreateVertexBuffer(Device &device, std::vector<T> vertices);
+        // template <typename T>
+        // static Buffer CreateVertexBuffer(Device &device, std::vector<T> vertices);
 
-        template <typename T, typename = std::enable_if_t<
-                                  std::is_integral<T>::value && std::is_unsigned<T>::value>>
-        static Buffer CreateIndexBuffer(Device &device, std::vector<T> indices);
+        // template <typename T, typename = std::enable_if_t<
+        //                           std::is_integral<T>::value && std::is_unsigned<T>::value>>
+        // static Buffer CreateIndexBuffer(Device &device, std::vector<T> indices);
+        // template <typename T>
+        // static Buffer CreateUniformBuffer(Device &device, T **data);
+
+        template <typename T>
+        static Buffer CreateVertexBuffer(Device &device, std::vector<T> vertices)
+        {
+            return CreateBufferWithStaging(device, BufferUsage::VertexBuffer, sizeof(vertices[0]) * vertices.size(), vertices.data());
+        }
+
+        template <typename T, typename = std::enable_if_t<std::is_integral<T>::value && std::is_unsigned<T>::value>>
+        static Buffer CreateIndexBuffer(Device &device, std::vector<T> indices)
+        {
+            return CreateBufferWithStaging(device, BufferUsage::IndexBuffer, sizeof(indices[0]) * indices.size(), indices.data());
+        }
+
+        template <typename T>
+        static Buffer CreateUniformBuffer(Device &device, T **data)
+        {
+            Buffer buffer;
+            buffer.Create(device, sizeof(T), BufferUsage::UniformBuffer, VMA_ALLOCATION_CREATE_HOST_ACCESS_RANDOM_BIT, VMA_MEMORY_USAGE_AUTO_PREFER_HOST);
+            return buffer;
+        }
 
         static Buffer CreateBufferWithStaging(Device &device, BufferUsage bufferDstUsage, uint32_t size, void *data);
-
-        template <typename T>
-        static Buffer CreateUniformBuffer(Device &device, T **data);
 
         void Destroy();
     };
