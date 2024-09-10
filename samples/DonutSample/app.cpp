@@ -33,6 +33,8 @@ Lettuce::Core::Swapchain swapchain;
 Lettuce::Core::TSemaphore renderFinished;
 Buffer vertexBuffer;
 Buffer indexBuffer;
+PipelineConnector connector;
+GraphicsPipeline pipeline;
 
 struct Vertex
 {
@@ -82,6 +84,12 @@ void initLettuce()
     genTorus();
     vertexBuffer = Buffer::CreateVertexBuffer(device, vertices);
     indexBuffer = Buffer::CreateIndexBuffer(device, indices);
+    
+    connector.Build(device);
+
+    // add pipeline stuff here
+    
+    pipeline.Build(device, connector, swapchain);
 
     buildCmds();
 }
