@@ -43,8 +43,6 @@ void Buffer::Create(Device &device, uint32_t size, BufferUsage usage,
     checkResult(vmaCreateBuffer(_device.allocator, &bufferCI, &allocationCI, &_buffer, &_allocation, nullptr), "buffer created sucessfully");
 }
 
-/// @brief Maps data from host memory to buffer
-/// @param src pinter to data to be mapped
 void Buffer::SetData(void *src)
 {
     void *data;
@@ -54,10 +52,6 @@ void Buffer::SetData(void *src)
     checkResult(vmaFlushAllocation(_device.allocator, _allocation, 0, _size), "flushed");
 }
 
-/// @brief Copy data from host visible Buffer to device prefered Buffer,
-/// the usage of this function is for staging buffers creation only, another
-/// usage may have unexpected behaviors.
-/// @param buffer the dst buffer
 void Buffer::CopyTo(Buffer buffer)
 {
     VkCommandBufferAllocateInfo commandBufferAI = {
@@ -94,18 +88,6 @@ void Buffer::CopyTo(Buffer buffer)
     vkFreeCommandBuffers(_device._device, _pool, 1, &cmd);
 }
 
-template <typename T>
-Buffer Buffer::CreateVertexBuffer(Device &device, std::vector<T> vertices)
-{
-    return CreateBufferWithStaging(device, BufferUsage::VertexBuffer, sizeof(vertices[0]) * vertices.size(), vertices.data());
-}
-
-template <typename T, typename = std::enable_if_t<std::is_integral<T>::value && std::is_unsigned<T>::value>>
-Buffer Buffer::CreateIndexBuffer(Device &device, std::vector<T> indices)
-{
-    return CreateBufferWithStaging(device, BufferUsage::IndexBuffer, sizeof(indices[0]) * indices.size(), indices.data());
-}
-
 Buffer Buffer::CreateBufferWithStaging(Device &device, BufferUsage bufferDstUsage, uint32_t size, void *data)
 {
     Buffer stagingBuffer;
@@ -116,17 +98,9 @@ Buffer Buffer::CreateBufferWithStaging(Device &device, BufferUsage bufferDstUsag
 
     auto usage = BufferUsage::TransferDst;
     usage |= bufferDstUsage;
-    buffer.Create(device, size, usage, VMA_ALLOCATION_CREATE_MAPPED_BIT, VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE);
+    buffer.Create(device, size, usage, VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT | VMA_ALLOCATION_CREATE_MAPPED_BIT, VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE);
     stagingBuffer.CopyTo(buffer);
     stagingBuffer.Destroy();
-    return buffer;
-}
-
-template <typename T>
-Buffer Buffer::CreateUniformBuffer(Device &device, T **data)
-{
-    Buffer buffer;
-    buffer.Create(device, sizeof(T), BufferUsage::UniformBuffer, VMA_ALLOCATION_CREATE_HOST_ACCESS_RANDOM_BIT, VMA_MEMORY_USAGE_AUTO_PREFER_HOST);
     return buffer;
 }
 
