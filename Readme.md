@@ -35,3 +35,7 @@ Lettuce is a rendering Vulkan-based library
 ### Lettuce 2D
 ### Lettuce Compute
 ### Lettuce 3D
+
+### hardware-vendors recommendations
+
+[nvidia](https://developer.nvidia.com/blog/vulkan-dos-donts/)

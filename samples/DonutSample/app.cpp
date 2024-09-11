@@ -27,21 +27,38 @@ using namespace Lettuce::Core;
 GLFWwindow *window;
 const int width = 800;
 const int height = 600;
-Lettuce::Core::Instance instance;
-Lettuce::Core::Device device;
-Lettuce::Core::Swapchain swapchain;
-Lettuce::Core::TSemaphore renderFinished;
+Instance instance;
+Device device;
+Swapchain swapchain;
+Semaphore renderFinished;
 Buffer vertexBuffer;
 Buffer indexBuffer;
+DescriptorLayout descriptorLayout;
 PipelineConnector connector;
 GraphicsPipeline pipeline;
+Compilers::GLSLCompiler compiler;
+Shader fragmentShader;
+Shader vertexShader;
 
 struct Vertex
 {
     glm::vec3 position;
 };
+struct DataUBO
+{
+    glm::mat4 proyection;
+    glm::mat4 model;
+    glm::mat4 view;
+} dataUBO;
+struct DataPush
+{
+    glm::vec3 color;
+} dataPush;
 std::vector<Vertex> vertices;
 std::vector<uint32_t> indices;
+
+const std::string fragmentShaderText = R" ";
+const std::string vertexShaderText = R" ";
 
 VkCommandPool pool;
 VkCommandBuffer cmd;
@@ -67,7 +84,6 @@ void initLettuce()
         std::cout << "available device: " << gpu.deviceName << std::endl;
         std::cout << "    graphics family: " << gpu.graphicsFamily.value() << std::endl;
         std::cout << "    present family : " << gpu.presentFamily.value() << std::endl;
-        std::cout << "    gpu ptr:         " << gpu._pdevice << std::endl;
     }
     // create device
     Features features;
@@ -77,19 +93,33 @@ void initLettuce()
     device.Create(instance, gpus.front(), features);
     swapchain.Create(device, width, height);
 
-    //create sync objects
+    // create sync objects
     renderFinished.Create(device, 0);
 
-    //create rendering resources
+    // create rendering resources
     genTorus();
     vertexBuffer = Buffer::CreateVertexBuffer(device, vertices);
     indexBuffer = Buffer::CreateIndexBuffer(device, indices);
-    
+
+    descriptorLayout.AddDescriptorBinding(0, DescriptorType::UniformBuffer, PipelineStage::Vertex);
+    descriptorLayout.Build(device, {1});
+
+    connector.AddDescriptor(descriptorLayout);
+    connector.AddPushConstant(0, PipelineStage::Fragment);
     connector.Build(device);
 
     // add pipeline stuff here
+    vertexShader.Create(device, compiler, vertexShaderText, "main", "vertex.glsl", PipelineStage::Vertex, true);
+    fragmentShader.Create(device, compiler, fragmentShaderText, "main", "fragment.glsl", PipelineStage::Fragment, true);
+
     
+
+    pipeline.AddShaderStage(vertexShader);
+    pipeline.AddShaderStage(fragmentShader);
     pipeline.Build(device, connector, swapchain);
+
+    vertexShader.Destroy();
+    fragmentShader.Destroy();
 
     buildCmds();
 }
@@ -148,6 +178,19 @@ void recordCmds()
     };
 
     vkCmdBeginRenderPass(cmd, &renderPassBI, VkSubpassContents::VK_SUBPASS_CONTENTS_INLINE);
+    // vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline._pipeline);
+    // VkDeviceSize size = 0;
+    // vkCmdBindVertexBuffers(cmd, 0, 1, vertexBuffer._buffer, &size);
+    // vkCmdBindIndexBuffer(cmd, indexBuffer._buffer, 0, VK_INDEX_TYPE_UINT32);
+    // vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, connector._pipelineLayout, 0, 1, descriptorLayout._descriptorSets.front(), 0, nullptr);
+    // vkCmdPushConstants(cmd, connector._pipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(DataPush), &dataPush);
+    // vkCmdSetLineWidth(cmd, 1.0f);
+    // VkViewport viewport = {0, 0, width, height, 0.0f, 1.0f};
+    // vkCmdSetViewport(cmd, 0, 1, &viewport);
+    // VkRect2D scissor = {{0, 0}, {width, height}};
+    // vkCmdSetScissor(cmd, 0, 1, &scissor);
+    // vkCmdSetPrimitiveTopology(cmd, VkPrimitiveTopology::VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
+    // vkCmdDrawIndexed(cmd, indices.size(), 1, 0, 0, 0);
     vkCmdEndRenderPass(cmd);
 
     checkResult(vkEndCommandBuffer(cmd));
