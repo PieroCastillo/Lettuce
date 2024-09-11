@@ -52,7 +52,7 @@ void DescriptorLayout::Build(Device &device, std::vector<uint32_t> descriptorCou
         .flags = VK_DESCRIPTOR_SET_LAYOUT_CREATE_UPDATE_AFTER_BIND_POOL_BIT,
     };
 
-    checkResult(vkCreateDescriptorSetLayout(_device._device, &descriptorSetLayoutCI, nullptr, &_setLayout), "Descriptor Set Layout created successfully");
+    checkResult(vkCreateDescriptorSetLayout(_device._device, &descriptorSetLayoutCI, nullptr, &_setLayout));
     BuildPool();
     BuildInternal(descriptorCounts);
 }
@@ -68,12 +68,12 @@ void DescriptorLayout::BuildPool()
 
     VkDescriptorPoolCreateInfo descriptorPoolCI = {
         .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
-        .flags = VkDescriptorPoolCreateFlagBits::VK_DESCRIPTOR_POOL_CREATE_UPDATE_AFTER_BIND_BIT,
+        .flags = VK_DESCRIPTOR_POOL_CREATE_UPDATE_AFTER_BIND_BIT,
         .maxSets = maxDescriptorSets,
         .poolSizeCount = (uint32_t)sizes.size(),
         .pPoolSizes = sizes.data(),
     };
-    checkResult(vkCreateDescriptorPool(_device._device, &descriptorPoolCI, nullptr, &_descriptorPool), "DescriptorPool created sucessfully");
+    checkResult(vkCreateDescriptorPool(_device._device, &descriptorPoolCI, nullptr, &_descriptorPool));
 }
 
 void DescriptorLayout::BuildInternal(std::vector<uint32_t> descriptorCounts)

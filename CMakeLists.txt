@@ -33,8 +33,8 @@ add_executable(ClearScreenSample
         samples/ClearScreenSample/app.cpp)
 add_executable(DonutSample
         samples/DonutSample/app.cpp)
-# add_executable(TriangleSample
-#         samples/TriangleSample/app.cpp)
+add_executable(TriangleSample
+        samples/TriangleSample/app.cpp)
 # add_executable(VertexSquare
 #         samples/VertexSquare/app.cpp)
 
@@ -42,16 +42,19 @@ if(WIN32)
         target_compile_definitions(Lettuce PRIVATE VK_USE_PLATFORM_WIN32_KHR)
         target_compile_definitions(ClearScreenSample PRIVATE VK_USE_PLATFORM_WIN32_KHR)
         target_compile_definitions(DonutSample PRIVATE VK_USE_PLATFORM_WIN32_KHR)
+        target_compile_definitions(TriangleSample PRIVATE VK_USE_PLATFORM_WIN32_KHR)
         set(VOLK_STATIC_DEFINES "VK_USE_PLATFORM_WIN32_KHR")
 elseif()
         target_compile_definitions(Lettuce PRIVATE VK_USE_PLATFORM_WAYLAND_KHR)
         target_compile_definitions(ClearScreenSample PRIVATE VK_USE_PLATFORM_WAYLAND_KHR)
         target_compile_definitions(DonutSample PRIVATE VK_USE_PLATFORM_WAYLAND_KHR)
+        target_compile_definitions(TriangleSample PRIVATE VK_USE_PLATFORM_WAYLAND_KHR)
         set(VOLK_STATIC_DEFINES "VK_USE_PLATFORM_WAYLAND_KHR")
 endif()
 
 target_link_libraries(Lettuce  PRIVATE volk::volk_headers Vulkan::shaderc_combined GPUOpen::VulkanMemoryAllocator)
 target_link_libraries(ClearScreenSample PRIVATE Lettuce volk::volk_headers glfw)
 target_link_libraries(DonutSample PRIVATE Lettuce volk::volk_headers glfw)
+target_link_libraries(TriangleSample PRIVATE Lettuce volk::volk_headers glfw)
 # target_link_libraries(TriangleSample Lettuce glfw)
 # target_link_libraries(VertexSquare Lettuce glfw)

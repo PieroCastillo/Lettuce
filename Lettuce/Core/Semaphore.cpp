@@ -13,7 +13,7 @@
 
 using namespace Lettuce::Core;
 
-void TSemaphore::Create(Device &device, uint64_t initialValue)
+void Semaphore::Create(Device &device, uint64_t initialValue)
 {
     _device = device;
     VkSemaphoreTypeCreateInfo semaphoreTypeCI = {
@@ -28,7 +28,7 @@ void TSemaphore::Create(Device &device, uint64_t initialValue)
     checkResult(vkCreateSemaphore(device._device, &semaphoreCI, nullptr, &_semaphore));
     
 }
-void TSemaphore::Wait(uint64_t value)
+void Semaphore::Wait(uint64_t value)
 {
     VkSemaphoreWaitInfo waitI = {
         .sType = VK_STRUCTURE_TYPE_SEMAPHORE_WAIT_INFO,
@@ -39,12 +39,12 @@ void TSemaphore::Wait(uint64_t value)
     checkResult(vkWaitSemaphores(_device._device, &waitI, (std::numeric_limits<uint64_t>::max)()));
 }
 
-void TSemaphore::Destroy()
+void Semaphore::Destroy()
 {
     vkDestroySemaphore(_device._device, _semaphore, nullptr);
 }
 
-void TSemaphore::Signal(uint64_t signalValue)
+void Semaphore::Signal(uint64_t signalValue)
 {
     VkSemaphoreSignalInfo semaphoreSignalI = {
         .sType = VK_STRUCTURE_TYPE_SEMAPHORE_SIGNAL_INFO,
@@ -54,9 +54,9 @@ void TSemaphore::Signal(uint64_t signalValue)
     checkResult(vkSignalSemaphore(_device._device, &semaphoreSignalI));
 }
 
-std::vector<TSemaphore> TSemaphore::CreateSemaphores(Device &device, uint32_t semaphoresCount)
+std::vector<Semaphore> Semaphore::CreateSemaphores(Device &device, uint32_t semaphoresCount)
 {
-    std::vector<TSemaphore> semaphores;
+    std::vector<Semaphore> semaphores;
     semaphores.resize(semaphoresCount);
 
     // uses timeline semaphores
@@ -76,14 +76,14 @@ std::vector<TSemaphore> TSemaphore::CreateSemaphores(Device &device, uint32_t se
     return semaphores;
 }
 
-void TSemaphore::WaitSemaphores(std::vector<TSemaphore> semaphores, std::vector<uint64_t> values)
+void Semaphore::WaitSemaphores(std::vector<Semaphore> semaphores, std::vector<uint64_t> values)
 {
     if (semaphores.size() != values.size())
     {
         throw std::exception("semaphores and values must have the same size");
     }
     std::vector<VkSemaphore> vkSemaphores;
-    std::transform(semaphores.begin(), semaphores.end(), std::back_inserter(vkSemaphores), [](TSemaphore x)
+    std::transform(semaphores.begin(), semaphores.end(), std::back_inserter(vkSemaphores), [](Semaphore x)
                    { return x._semaphore; });
     VkSemaphoreWaitInfo semaphoreWaitInfo = {
         .sType = VK_STRUCTURE_TYPE_SEMAPHORE_WAIT_INFO,
@@ -94,30 +94,10 @@ void TSemaphore::WaitSemaphores(std::vector<TSemaphore> semaphores, std::vector<
     checkResult(vkWaitSemaphores(semaphores[0]._device._device, &semaphoreWaitInfo, (std::numeric_limits<uint64_t>::max)()));
 }
 
-void TSemaphore::DestroySemaphores(std::vector<TSemaphore> semaphores)
+void Semaphore::DestroySemaphores(std::vector<Semaphore> semaphores)
 {
     for (int i = 0; i < semaphores.size(); i++)
     {
         vkDestroySemaphore(semaphores[i]._device._device, semaphores[i]._semaphore, nullptr);
     }
-}
-
-void BSemaphore::Create(Device &device)
-{
-    _device = device;
-
-    VkSemaphoreTypeCreateInfo semaphoreTypeCI = {
-        .sType = VK_STRUCTURE_TYPE_SEMAPHORE_TYPE_CREATE_INFO,
-        .semaphoreType = VkSemaphoreType::VK_SEMAPHORE_TYPE_BINARY,
-    };
-    VkSemaphoreCreateInfo semaphoreCI = {
-        .sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO,
-        .pNext = &semaphoreTypeCI,
-    };
-    checkResult(vkCreateSemaphore(_device._device, &semaphoreCI, nullptr, &_semaphore));
-}
-
-void BSemaphore::Destroy()
-{
-    vkDestroySemaphore(_device._device, _semaphore, nullptr);
 }

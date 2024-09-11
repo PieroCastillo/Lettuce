@@ -25,10 +25,10 @@ using namespace Lettuce::Core;
 GLFWwindow *window;
 const int width = 800;
 const int height = 600;
-Lettuce::Core::Instance instance;
-Lettuce::Core::Device device;
-Lettuce::Core::Swapchain swapchain;
-Lettuce::Core::TSemaphore renderFinished;
+Instance instance;
+Device device;
+Swapchain swapchain;
+Semaphore renderFinished;
 
 VkCommandPool pool;
 VkCommandBuffer cmd;

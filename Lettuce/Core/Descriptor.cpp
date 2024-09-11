@@ -58,4 +58,5 @@ void Descriptor::AddUpdateInfo(uint32_t binding, Buffer &buffer)
 void Descriptor::Update()
 {
     vkUpdateDescriptorSets(_device._device, (uint32_t)writes.size(), writes.data(), 0, nullptr);
+    writes.clear();
 }
