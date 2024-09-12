@@ -11,17 +11,6 @@
 
 using namespace Lettuce::Core;
 
-template <typename T>
-void GraphicsPipeline::AddVertexBindingDescription(uint32_t binding)
-{
-    VkVertexInputBindingDescription bindingDescription = {
-        .binding = binding,
-        .stride = sizeof(T),
-        .inputRate = VK_VERTEX_INPUT_RATE_VERTEX,
-    };
-    vertexInputBindings.emplace_back(bindingDescription);
-}
-
 void GraphicsPipeline::AddVertexAttribute(uint32_t binding, uint32_t location, uint32_t offset, int format)
 {
     VkVertexInputAttributeDescription attributeDescription = {

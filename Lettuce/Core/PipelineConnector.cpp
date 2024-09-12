@@ -16,17 +16,6 @@ void PipelineConnector::AddDescriptor(DescriptorLayout &descriptor)
     descriptorSetLayouts.emplace_back(descriptor._setLayout);
 }
 
-template <typename T1>
-void PipelineConnector::AddPushConstant(uint32_t offset, PipelineStage stage)
-{
-    VkPushConstantRange pushConstantRange = {
-        .stageFlags = (VkShaderStageFlags)stage,
-        .offset = offset,
-        .size = sizeof(T1),
-    };
-    pushConstants.emplace_back(pushConstantRange);
-}
-
 void PipelineConnector::Build(Device &device)
 {
     _device = device;

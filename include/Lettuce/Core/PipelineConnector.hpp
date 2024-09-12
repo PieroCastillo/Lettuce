@@ -20,7 +20,15 @@ namespace Lettuce::Core
         void AddDescriptor(DescriptorLayout &descriptor);
 
         template <typename T1>
-        void AddPushConstant(uint32_t offset, PipelineStage stage);
+        void AddPushConstant(uint32_t offset, PipelineStage stage)
+        {
+            VkPushConstantRange pushConstantRange = {
+                .stageFlags = (VkShaderStageFlags)stage,
+                .offset = offset,
+                .size = sizeof(T1),
+            };
+            pushConstants.emplace_back(pushConstantRange);
+        }
 
         void Build(Device &device);
 

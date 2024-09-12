@@ -24,7 +24,15 @@ namespace Lettuce::Core
         std::vector<VkVertexInputAttributeDescription> vertexInputAttributes;
 
         template <typename T>
-        void AddVertexBindingDescription(uint32_t binding);
+        void AddVertexBindingDescription(uint32_t binding)
+        {
+            VkVertexInputBindingDescription bindingDescription = {
+                .binding = binding,
+                .stride = sizeof(T),
+                .inputRate = VK_VERTEX_INPUT_RATE_VERTEX,
+            };
+            vertexInputBindings.emplace_back(bindingDescription);
+        }
 
         void AddVertexAttribute(uint32_t binding, uint32_t location, uint32_t offset, int format);
 

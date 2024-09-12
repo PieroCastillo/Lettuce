@@ -11,6 +11,7 @@
 #include <numbers>
 
 #include "Lettuce/Lettuce.Core.hpp"
+#include <glm/ext/matrix_clip_space.hpp>
 
 void initWindow();
 void endWindow();
@@ -21,6 +22,7 @@ void draw();
 void buildCmds();
 void recordCmds();
 void genTorus();
+void updateData();
 
 using namespace Lettuce::Core;
 
@@ -34,6 +36,7 @@ Semaphore renderFinished;
 Buffer vertexBuffer;
 Buffer indexBuffer;
 DescriptorLayout descriptorLayout;
+Descriptor descriptor;
 PipelineConnector connector;
 GraphicsPipeline pipeline;
 Compilers::GLSLCompiler compiler;
@@ -46,7 +49,7 @@ struct Vertex
 };
 struct DataUBO
 {
-    glm::mat4 proyection;
+    glm::mat4 projection;
     glm::mat4 model;
     glm::mat4 view;
 } dataUBO;
@@ -57,8 +60,26 @@ struct DataPush
 std::vector<Vertex> vertices;
 std::vector<uint32_t> indices;
 
-const std::string fragmentShaderText = R" ";
-const std::string vertexShaderText = R" ";
+const std::string fragmentShaderText = R"(layout (push_constant, std430) uniform pushData {
+    vec3 color;
+};
+layout(location = 0) out vec4 outColor;
+
+void main()
+{
+    outColor = vec4(color, 1.0);
+})";
+const std::string vertexShaderText = R"(layout (binding = 0, location = 0) in vec3 pos;
+layout (binding = 0, location = 0) uniform DataUBO {
+    mat4 projection;
+    mat4 model;
+    mat4 view;
+} ubo;
+
+void main()
+{
+    gl_Position = ubo.projection * ubo.view * ubo.model * vec4(pos,1.0); 
+})";
 
 VkCommandPool pool;
 VkCommandBuffer cmd;
@@ -103,17 +124,20 @@ void initLettuce()
 
     descriptorLayout.AddDescriptorBinding(0, DescriptorType::UniformBuffer, PipelineStage::Vertex);
     descriptorLayout.Build(device, {1});
+    descriptor = descriptorLayout.GetDescriptors().front();
+    descriptor.AddUpdateInfo<DataUBO>(0, vertexBuffer);
+    descriptor.Update();
 
     connector.AddDescriptor(descriptorLayout);
-    connector.AddPushConstant(0, PipelineStage::Fragment);
+    connector.AddPushConstant<DataPush>(0, PipelineStage::Fragment);
     connector.Build(device);
 
     // add pipeline stuff here
     vertexShader.Create(device, compiler, vertexShaderText, "main", "vertex.glsl", PipelineStage::Vertex, true);
     fragmentShader.Create(device, compiler, fragmentShaderText, "main", "fragment.glsl", PipelineStage::Fragment, true);
 
-    
-
+    pipeline.AddVertexBindingDescription<Vertex>(0);                     // binding = 0
+    pipeline.AddVertexAttribute(0, 0, 0, VK_FORMAT_R32G32B32A32_SFLOAT); // layout(location = 0) in vec3 pos;
     pipeline.AddShaderStage(vertexShader);
     pipeline.AddShaderStage(fragmentShader);
     pipeline.Build(device, connector, swapchain);
@@ -141,6 +165,15 @@ void buildCmds()
         .commandBufferCount = 1,
     };
     checkResult(vkAllocateCommandBuffers(device._device, &cmdAI, &cmd));
+}
+
+void updateData()
+{
+    dataPush.color = {0.5f, 0.4f, 0.3f};
+    dataUBO.projection = glm::perspective(glm::radians(45.0f), (float)width/(float)height, 0.1f, 100.0f);
+    dataUBO.model = glm::mat4();
+    dataUBO.view = glm::mat4(1.0f);
+    
 }
 
 void recordCmds()
@@ -178,19 +211,20 @@ void recordCmds()
     };
 
     vkCmdBeginRenderPass(cmd, &renderPassBI, VkSubpassContents::VK_SUBPASS_CONTENTS_INLINE);
-    // vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline._pipeline);
-    // VkDeviceSize size = 0;
-    // vkCmdBindVertexBuffers(cmd, 0, 1, vertexBuffer._buffer, &size);
-    // vkCmdBindIndexBuffer(cmd, indexBuffer._buffer, 0, VK_INDEX_TYPE_UINT32);
-    // vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, connector._pipelineLayout, 0, 1, descriptorLayout._descriptorSets.front(), 0, nullptr);
-    // vkCmdPushConstants(cmd, connector._pipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(DataPush), &dataPush);
-    // vkCmdSetLineWidth(cmd, 1.0f);
-    // VkViewport viewport = {0, 0, width, height, 0.0f, 1.0f};
-    // vkCmdSetViewport(cmd, 0, 1, &viewport);
-    // VkRect2D scissor = {{0, 0}, {width, height}};
-    // vkCmdSetScissor(cmd, 0, 1, &scissor);
-    // vkCmdSetPrimitiveTopology(cmd, VkPrimitiveTopology::VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
-    // vkCmdDrawIndexed(cmd, indices.size(), 1, 0, 0, 0);
+    vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline._pipeline);
+    VkDeviceSize size = 0;
+    vkCmdBindVertexBuffers(cmd, 0, 1, &(vertexBuffer._buffer), &size);
+    vkCmdBindIndexBuffer(cmd, indexBuffer._buffer, 0, VK_INDEX_TYPE_UINT32);
+    vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, connector._pipelineLayout, 0, 1, &(descriptor._descriptorSet), 0, nullptr);
+
+    vkCmdPushConstants(cmd, connector._pipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(DataPush), &dataPush);
+    vkCmdSetLineWidth(cmd, 1.0f);
+    VkViewport viewport = {0, 0, width, height, 0.0f, 1.0f};
+    vkCmdSetViewport(cmd, 0, 1, &viewport);
+    VkRect2D scissor = {{0, 0}, {width, height}};
+    vkCmdSetScissor(cmd, 0, 1, &scissor);
+    vkCmdSetPrimitiveTopology(cmd, VkPrimitiveTopology::VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
+    vkCmdDrawIndexed(cmd, indices.size(), 1, 0, 0, 0);
     vkCmdEndRenderPass(cmd);
 
     checkResult(vkEndCommandBuffer(cmd));
@@ -249,6 +283,9 @@ void endLettuce()
 {
     vkFreeCommandBuffers(device._device, pool, 1, &cmd);
     vkDestroyCommandPool(device._device, pool, nullptr);
+    pipeline.Destroy();
+    connector.Destroy();
+    descriptorLayout.Destroy();
     vertexBuffer.Destroy();
     indexBuffer.Destroy();
     renderFinished.Destroy();

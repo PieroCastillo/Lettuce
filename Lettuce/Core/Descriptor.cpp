@@ -34,27 +34,6 @@ void Descriptor::AddUpdateInfo(uint32_t binding, DescriptorType type, Sampler sa
     writes.push_back(write);
 }
 
-template <typename TBufferDataType>
-void Descriptor::AddUpdateInfo(uint32_t binding, Buffer &buffer)
-{
-    VkDescriptorBufferInfo descriptorBufferI = {
-        .buffer = buffer._buffer,
-        .offset = 0,
-        .range = sizeof(TBufferDataType),
-    };
-
-    VkWriteDescriptorSet write = {
-        .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-        .dstSet = _descriptorSet,
-        .dstBinding = binding,
-        .dstArrayElement = 0,
-        .descriptorCount = 1,
-        .descriptorType = (VkDescriptorType)bindings[binding].descriptorType,
-        .pBufferInfo = &descriptorBufferI,
-    };
-    writes.push_back(write);
-}
-
 void Descriptor::Update()
 {
     vkUpdateDescriptorSets(_device._device, (uint32_t)writes.size(), writes.data(), 0, nullptr);

@@ -25,8 +25,26 @@ namespace Lettuce::Core
         void AddUpdateInfo(uint32_t binding, DescriptorType type, Sampler sampler, TextureView view);
 
         template <typename TBufferDataType>
-        void AddUpdateInfo(uint32_t binding, Buffer &buffer);
-        
+        void AddUpdateInfo(uint32_t binding, Buffer &buffer)
+        {
+            VkDescriptorBufferInfo descriptorBufferI = {
+                .buffer = buffer._buffer,
+                .offset = 0,
+                .range = sizeof(TBufferDataType),
+            };
+
+            VkWriteDescriptorSet write = {
+                .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+                .dstSet = _descriptorSet,
+                .dstBinding = binding,
+                .dstArrayElement = 0,
+                .descriptorCount = 1,
+                .descriptorType = (VkDescriptorType)bindings[binding].descriptorType,
+                .pBufferInfo = &descriptorBufferI,
+            };
+            writes.push_back(write);
+        }
+
         void Update();
     };
 }
