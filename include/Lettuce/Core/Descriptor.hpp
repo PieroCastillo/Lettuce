@@ -32,27 +32,15 @@ namespace Lettuce::Core
 
         void AddBinding(uint32_t set, uint32_t binding, DescriptorType type, PipelineStage stage, uint32_t maxBindings);
 
-        void AddUpdateInfo(uint32_t binding, DescriptorType type, Sampler sampler, TextureView view);
+        void AddUpdateInfo(uint32_t binding, uint32_t size, std::vector<Buffer> buffers);
+        void AddUpdateInfo(uint32_t binding, std::vector<TextureView> views);
+        void AddUpdateInfo(uint32_t binding, std::vector<Sampler> samplers);
+        void AddUpdateInfo(uint32_t binding, std::vector<Sampler> samplers, std::vector<TextureView> views);
 
         template <typename TBufferDataType>
         void AddUpdateInfo(uint32_t binding, Buffer &buffer)
         {
-            VkDescriptorBufferInfo descriptorBufferI = {
-                .buffer = buffer._buffer,
-                .offset = 0,
-                .range = sizeof(TBufferDataType),
-            };
-
-            VkWriteDescriptorSet write = {
-                .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-                .dstSet = _descriptorSet,
-                .dstBinding = binding,
-                .dstArrayElement = 0,
-                .descriptorCount = 1,
-                .descriptorType = (VkDescriptorType)bindings[binding].descriptorType,
-                .pBufferInfo = &descriptorBufferI,
-            };
-            writes.push_back(write);
+            AddUpdateInfo(binding, sizeof(TBufferDataType), buffer);
         }
 
         void Update();
