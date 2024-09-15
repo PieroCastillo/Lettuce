@@ -27,6 +27,7 @@ Swapchain swapchain;
 // Lettuce::Core::CommandList commandList;
 PipelineConnector connector;
 GraphicsPipeline graphicsPipeline;
+Descriptor descriptor;
 Semaphore semaphore;
 Shader fragmentShader;
 Shader vertexShader;
@@ -104,7 +105,7 @@ void initLettuce()
     swapchain.Create(device, width, height);
     semaphore.Create(device, 0);
 
-    connector.Build(device);
+    connector.Build(device, descriptor);
     Compilers::GLSLCompiler compiler;
 
     fragmentShader.Create(device, compiler, fragmentShaderText, "main", "fragment.glsl", Lettuce::Core::PipelineStage::Fragment, true);

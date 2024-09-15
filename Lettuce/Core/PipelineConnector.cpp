@@ -4,19 +4,15 @@
 #include "Lettuce/Core/common.hpp"
 #include <iostream>
 #include <vector>
+#include <optional>
 #include "Lettuce/Core/Device.hpp"
-#include "Lettuce/Core/DescriptorLayout.hpp"
+#include "Lettuce/Core/Descriptor.hpp"
 #include "Lettuce/Core/Utils.hpp"
 #include "Lettuce/Core/PipelineConnector.hpp"
 
 using namespace Lettuce::Core;
 
-void PipelineConnector::AddDescriptor(DescriptorLayout &descriptor)
-{
-    descriptorSetLayouts.emplace_back(descriptor._setLayout);
-}
-
-void PipelineConnector::Build(Device &device)
+void PipelineConnector::Build(Device &device, Descriptor &descriptor)
 {
     _device = device;
 
@@ -31,10 +27,10 @@ void PipelineConnector::Build(Device &device)
         pipelineLayoutCI.pushConstantRangeCount = (uint32_t)pushConstants.size();
     }
 
-    if (descriptorSetLayouts.size() > 0)
+    if (descriptor._pool != VK_NULL_HANDLE && descriptor._layouts.size() > 0)
     {
-        pipelineLayoutCI.pSetLayouts = descriptorSetLayouts.data();
-        pipelineLayoutCI.setLayoutCount = (uint32_t)descriptorSetLayouts.size();
+        pipelineLayoutCI.pSetLayouts = descriptor._layouts.data();
+        pipelineLayoutCI.setLayoutCount = (uint32_t)descriptor._layouts.size();
     }
 
     checkResult(vkCreatePipelineLayout(_device._device, &pipelineLayoutCI, nullptr, &_pipelineLayout), "PipelineLayout created sucessfully");

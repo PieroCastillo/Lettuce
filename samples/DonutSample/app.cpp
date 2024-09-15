@@ -35,7 +35,7 @@ Swapchain swapchain;
 Semaphore renderFinished;
 Buffer vertexBuffer;
 Buffer indexBuffer;
-DescriptorLayout descriptorLayout;
+Buffer uniformBuffer;
 Descriptor descriptor;
 PipelineConnector connector;
 GraphicsPipeline pipeline;
@@ -119,18 +119,25 @@ void initLettuce()
 
     // create rendering resources
     genTorus();
+    std::cout << "-------- torus created ----------" << std::endl;
     vertexBuffer = Buffer::CreateVertexBuffer(device, vertices);
+    std::cout << "-------- vertex buffer created ----------" << std::endl;
     indexBuffer = Buffer::CreateIndexBuffer(device, indices);
+    std::cout << "-------- index buffer created ----------" << std::endl;
+    auto data = &dataUBO;
+    uniformBuffer = Buffer::CreateUniformBuffer<DataUBO>(device, &data);
+    std::cout << "-------- uniform buffer created ----------" << std::endl;
 
-    descriptorLayout.AddDescriptorBinding(0, DescriptorType::UniformBuffer, PipelineStage::Vertex);
-    descriptorLayout.Build(device, {1});
-    descriptor = descriptorLayout.GetDescriptors().front();
-    descriptor.AddUpdateInfo<DataUBO>(0, vertexBuffer);
+    descriptor.AddBinding(0, 0, DescriptorType::UniformBuffer, PipelineStage::Vertex);
+    descriptor.Build(device);
+    std::cout << "-------- descriptor created ----------" << std::endl;
+    descriptor.AddUpdateInfo<DataUBO>(0,0, {uniformBuffer});
     descriptor.Update();
+    std::cout << "-------- descriptor updated ----------" << std::endl;
 
-    connector.AddDescriptor(descriptorLayout);
+
     connector.AddPushConstant<DataPush>(0, PipelineStage::Fragment);
-    connector.Build(device);
+    connector.Build(device, descriptor);
 
     // add pipeline stuff here
     vertexShader.Create(device, compiler, vertexShaderText, "main", "vertex.glsl", PipelineStage::Vertex, true);
@@ -141,6 +148,7 @@ void initLettuce()
     pipeline.AddShaderStage(vertexShader);
     pipeline.AddShaderStage(fragmentShader);
     pipeline.Build(device, connector, swapchain);
+    std::cout << "-------- pipeline created ----------" << std::endl;
 
     vertexShader.Destroy();
     fragmentShader.Destroy();
@@ -215,7 +223,7 @@ void recordCmds()
     VkDeviceSize size = 0;
     vkCmdBindVertexBuffers(cmd, 0, 1, &(vertexBuffer._buffer), &size);
     vkCmdBindIndexBuffer(cmd, indexBuffer._buffer, 0, VK_INDEX_TYPE_UINT32);
-    vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, connector._pipelineLayout, 0, 1, &(descriptor._descriptorSet), 0, nullptr);
+    vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, connector._pipelineLayout, 0, 1, descriptor._descriptorSets.data(), 0, nullptr);
 
     vkCmdPushConstants(cmd, connector._pipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(DataPush), &dataPush);
     vkCmdSetLineWidth(cmd, 1.0f);
@@ -285,7 +293,8 @@ void endLettuce()
     vkDestroyCommandPool(device._device, pool, nullptr);
     pipeline.Destroy();
     connector.Destroy();
-    descriptorLayout.Destroy();
+    descriptor.Destroy();
+    uniformBuffer.Destroy();
     vertexBuffer.Destroy();
     indexBuffer.Destroy();
     renderFinished.Destroy();

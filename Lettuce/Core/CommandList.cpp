@@ -41,12 +41,12 @@ void CommandList::BindGraphicsPipeline(GraphicsPipeline &pipeline)
 
 void CommandList::BindDescriptorSetToGraphics(PipelineConnector &connector, Descriptor &descriptor)
 {
-    vkCmdBindDescriptorSets(_commandBuffer, VkPipelineBindPoint::VK_PIPELINE_BIND_POINT_GRAPHICS, connector._pipelineLayout, 0, 1, &descriptor._descriptorSet, 0, nullptr);
+    vkCmdBindDescriptorSets(_commandBuffer, VkPipelineBindPoint::VK_PIPELINE_BIND_POINT_GRAPHICS, connector._pipelineLayout, 0, 1, descriptor._descriptorSets.data(), 0, nullptr);
 }
 
 void CommandList::BindDescriptorSetToCompute(PipelineConnector &connector, Descriptor &descriptor)
 {
-    vkCmdBindDescriptorSets(_commandBuffer, VkPipelineBindPoint::VK_PIPELINE_BIND_POINT_COMPUTE, connector._pipelineLayout, 0, 1, &descriptor._descriptorSet, 0, nullptr);
+    vkCmdBindDescriptorSets(_commandBuffer, VkPipelineBindPoint::VK_PIPELINE_BIND_POINT_COMPUTE, connector._pipelineLayout, 0, 1, descriptor._descriptorSets.data(), 0, nullptr);
 }
 
 void CommandList::BindVertexBuffers(uint32_t firstBinding, uint32_t bindingCount, std::vector<Buffer> &buffers, std::vector<uint32_t> &offsets)

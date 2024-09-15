@@ -5,7 +5,7 @@
 #include <iostream>
 #include <vector>
 #include "Device.hpp"
-#include "DescriptorLayout.hpp"
+#include "Descriptor.hpp"
 
 namespace Lettuce::Core
 {
@@ -15,9 +15,6 @@ namespace Lettuce::Core
         Device _device;
         VkPipelineLayout _pipelineLayout;
         std::vector<VkPushConstantRange> pushConstants;
-        std::vector<VkDescriptorSetLayout> descriptorSetLayouts;
-
-        void AddDescriptor(DescriptorLayout &descriptor);
 
         template <typename T1>
         void AddPushConstant(uint32_t offset, PipelineStage stage)
@@ -30,7 +27,7 @@ namespace Lettuce::Core
             pushConstants.emplace_back(pushConstantRange);
         }
 
-        void Build(Device &device);
+        void Build(Device &device, Descriptor &descriptor);
 
         void Destroy();
     };

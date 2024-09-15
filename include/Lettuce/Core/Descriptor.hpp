@@ -24,23 +24,24 @@ namespace Lettuce::Core
 
     public:
         Device _device;
-        VkDescriptorSet _descriptorSet;
-        VkDescriptorPool _pool;
+        std::vector<VkDescriptorSet> _descriptorSets;
+        VkDescriptorPool _pool = VK_NULL_HANDLE;
         std::vector<VkDescriptorSetLayout> _layouts;
+
         void Build(Device &device, uint32_t maxSets = 16);
         void Destroy();
 
-        void AddBinding(uint32_t set, uint32_t binding, DescriptorType type, PipelineStage stage, uint32_t maxBindings);
+        void AddBinding(uint32_t set, uint32_t binding, DescriptorType type, PipelineStage stage, uint32_t maxBindings = 16);
 
-        void AddUpdateInfo(uint32_t binding, uint32_t size, std::vector<Buffer> buffers);
-        void AddUpdateInfo(uint32_t binding, std::vector<TextureView> views);
-        void AddUpdateInfo(uint32_t binding, std::vector<Sampler> samplers);
-        void AddUpdateInfo(uint32_t binding, std::vector<Sampler> samplers, std::vector<TextureView> views);
+        void AddUpdateInfo(uint32_t set, uint32_t binding, uint32_t size, std::vector<Buffer> buffers);
+        void AddUpdateInfo(uint32_t set, uint32_t binding, std::vector<TextureView> views);
+        void AddUpdateInfo(uint32_t set, uint32_t binding, std::vector<Sampler> samplers);
+        void AddUpdateInfo(uint32_t set, uint32_t binding, std::vector<Sampler> samplers, std::vector<TextureView> views);
 
         template <typename TBufferDataType>
-        void AddUpdateInfo(uint32_t binding, Buffer &buffer)
+        void AddUpdateInfo(uint32_t set, uint32_t binding, std::vector<Buffer> buffers)
         {
-            AddUpdateInfo(binding, sizeof(TBufferDataType), buffer);
+            AddUpdateInfo(set, binding, (uint32_t)sizeof(TBufferDataType), buffers);
         }
 
         void Update();
