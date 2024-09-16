@@ -20,6 +20,7 @@ void Descriptor::Build(Device &device, uint32_t maxSets)
     _device = device;
     // create descriptor set layouts
     int index = 0;
+    _layouts.resize(bindingsMap.size());
     for (std::pair<uint32_t, std::vector<VkDescriptorSetLayoutBinding>> bindings : bindingsMap)
     {
         // for each binding increments +1 per type
@@ -35,14 +36,21 @@ void Descriptor::Build(Device &device, uint32_t maxSets)
             VK_DESCRIPTOR_BINDING_UPDATE_UNUSED_WHILE_PENDING_BIT;
 
         std::vector<VkDescriptorBindingFlags> flags(bindings.second.size(), flag);
+        VkDescriptorSetLayoutBindingFlagsCreateInfo layoutBindingFlagsCI = {
+            .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_BINDING_FLAGS_CREATE_INFO,
+            .bindingCount = (uint32_t)flags.size(),
+            .pBindingFlags = flags.data(),
+        };
         VkDescriptorSetLayoutCreateInfo layoutCI = {
             .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
-            .pNext = &flags,
+            .pNext = &layoutBindingFlagsCI,
             .flags = VK_DESCRIPTOR_SET_LAYOUT_CREATE_UPDATE_AFTER_BIND_POOL_BIT,
             .bindingCount = (uint32_t)bindings.second.size(),
             .pBindings = bindings.second.data(),
         };
-        checkResult(vkCreateDescriptorSetLayout(device._device, &layoutCI, nullptr, &(_layouts[index])));
+        VkDescriptorSetLayout layout;
+        checkResult(vkCreateDescriptorSetLayout(device._device, &layoutCI, nullptr, &layout));
+        _layouts[index] = layout;
         index++;
     }
 
@@ -59,6 +67,7 @@ void Descriptor::Build(Device &device, uint32_t maxSets)
     VkDescriptorPoolCreateInfo poolCI = {
         .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
         .flags = VK_DESCRIPTOR_POOL_CREATE_UPDATE_AFTER_BIND_BIT,
+        .maxSets = maxSets,
         .poolSizeCount = (uint32_t)sizes.size(),
         .pPoolSizes = sizes.data(),
     };
@@ -89,14 +98,16 @@ void Descriptor::Destroy()
     sizes.clear();
 }
 
-void Descriptor::AddBinding(uint32_t set, uint32_t binding, DescriptorType type, PipelineStage stage, uint32_t maxBindings)
+void Descriptor::AddBinding(uint32_t set, uint32_t binding, DescriptorType type, PipelineStage stage, uint32_t descriptorCount)
 {
-    bindingsMap[set].push_back(VkDescriptorSetLayoutBinding{
+    VkDescriptorSetLayoutBinding layoutBinding = {
         .binding = binding,
         .descriptorType = (VkDescriptorType)type,
-        .descriptorCount = maxBindings,
+        .descriptorCount = descriptorCount,
         .stageFlags = (VkShaderStageFlags)stage,
-    });
+    };
+    bindingsMap[set].push_back(layoutBinding);
+    bindingsTypes[{set, binding}] = (VkDescriptorType)type;
 }
 
 void Descriptor::AddUpdateInfo(uint32_t set, uint32_t binding, uint32_t size, std::vector<Buffer> buffers)
@@ -104,30 +115,25 @@ void Descriptor::AddUpdateInfo(uint32_t set, uint32_t binding, uint32_t size, st
     std::vector<VkDescriptorBufferInfo> bufferInfos(buffers.size());
     for (int i = 0; i < buffers.size(); i++)
     {
-        bufferInfos.push_back(VkDescriptorBufferInfo{
+        VkDescriptorBufferInfo bufferI = {
             .buffer = buffers[i]._buffer,
             .offset = 0,
             .range = size,
-        });
+        };
+        bufferInfos[i] = bufferI;
     }
-    VkDescriptorType type;
-    for (VkDescriptorSetLayoutBinding bindingElement : bindingsMap[set])
-    {
-        if (bindingElement.binding == binding)
-        {
-            type = bindingElement.descriptorType;
-            break;
-        }
-    }
+    writesFieldsMap[{set, binding}].bufferInfos = bufferInfos;
+
     VkWriteDescriptorSet write = {
         .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
         .dstSet = _descriptorSets[(int)set],
         .dstBinding = binding,
         .dstArrayElement = 0,
-        .descriptorCount = 1,
-        .descriptorType = type,
-        .pBufferInfo = bufferInfos.data(),
+        .descriptorCount = (uint32_t)buffers.size(),
+        .descriptorType = bindingsTypes[{set, binding}],
+        .pBufferInfo = writesFieldsMap[{set, binding}].bufferInfos.data(),
     };
+    std::cout << "buffers.size() : " << buffers.size() << std::endl;
     writes.push_back(write);
 }
 
@@ -136,27 +142,19 @@ void Descriptor::AddUpdateInfo(uint32_t set, uint32_t binding, std::vector<Textu
     std::vector<VkDescriptorImageInfo> imageInfos(views.size());
     for (int i = 0; i < views.size(); i++)
     {
-        imageInfos.push_back(VkDescriptorImageInfo{
+        imageInfos[i] = VkDescriptorImageInfo{
             .imageView = views[i]._imageView,
             .imageLayout = views[i]._texture.imageLayout,
-        });
+        };
     }
-    VkDescriptorType type;
-    for (VkDescriptorSetLayoutBinding bindingElement : bindingsMap[set])
-    {
-        if (bindingElement.binding == binding)
-        {
-            type = bindingElement.descriptorType;
-            break;
-        }
-    }
+    writesFieldsMap[{set, binding}].imageInfos = imageInfos;
     VkWriteDescriptorSet write = {
         .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
         .dstSet = _descriptorSets[(int)set],
         .dstBinding = binding,
         .dstArrayElement = 0,
-        .descriptorCount = 1,
-        .descriptorType = type,
+        .descriptorCount = (uint32_t)views.size(),
+        .descriptorType = bindingsTypes[{set, binding}],
         .pImageInfo = imageInfos.data(),
     };
     writes.push_back(write);
@@ -167,16 +165,17 @@ void Descriptor::AddUpdateInfo(uint32_t set, uint32_t binding, std::vector<Sampl
     std::vector<VkDescriptorImageInfo> imageInfos(samplers.size());
     for (int i = 0; i < samplers.size(); i++)
     {
-        imageInfos.push_back(VkDescriptorImageInfo{
+        imageInfos[i] = VkDescriptorImageInfo{
             .sampler = samplers[i]._sampler,
-        });
+        };
     }
+    writesFieldsMap[{set, binding}].imageInfos = imageInfos;
     VkWriteDescriptorSet write = {
         .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
         .dstSet = _descriptorSets[(int)set],
         .dstBinding = binding,
         .dstArrayElement = 0,
-        .descriptorCount = 1,
+        .descriptorCount = (uint32_t)samplers.size(),
         .descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER,
         .pImageInfo = imageInfos.data(),
     };
@@ -192,12 +191,13 @@ void Descriptor::AddUpdateInfo(uint32_t set, uint32_t binding, std::vector<Sampl
     std::vector<VkDescriptorImageInfo> imageInfos(samplers.size());
     for (int i = 0; i < samplers.size(); i++)
     {
-        imageInfos.push_back(VkDescriptorImageInfo{
+        imageInfos[i] = VkDescriptorImageInfo{
             .sampler = samplers[i]._sampler,
             .imageView = views[i]._imageView,
             .imageLayout = views[i]._texture.imageLayout,
-        });
+        };
     }
+    writesFieldsMap[{set, binding}].imageInfos = imageInfos;
     VkWriteDescriptorSet write = {
         .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
         .dstSet = _descriptorSets[(int)set],
@@ -212,6 +212,9 @@ void Descriptor::AddUpdateInfo(uint32_t set, uint32_t binding, std::vector<Sampl
 
 void Descriptor::Update()
 {
+    std::cout << "lay count:" << _layouts.size() << std::endl;
+    std::cout << "b count:" << bindingsMap[0][0].descriptorCount << std::endl;
     vkUpdateDescriptorSets(_device._device, (uint32_t)writes.size(), writes.data(), 0, nullptr);
     writes.clear();
+    writesFieldsMap.clear();
 }

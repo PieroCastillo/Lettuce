@@ -128,7 +128,7 @@ void initLettuce()
     uniformBuffer = Buffer::CreateUniformBuffer<DataUBO>(device, &data);
     std::cout << "-------- uniform buffer created ----------" << std::endl;
 
-    descriptor.AddBinding(0, 0, DescriptorType::UniformBuffer, PipelineStage::Vertex);
+    descriptor.AddBinding(0, 0, DescriptorType::UniformBuffer, PipelineStage::Vertex, 1);
     descriptor.Build(device);
     std::cout << "-------- descriptor created ----------" << std::endl;
     descriptor.AddUpdateInfo<DataUBO>(0,0, {uniformBuffer});
