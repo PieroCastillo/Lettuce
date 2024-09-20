@@ -21,21 +21,22 @@ void Descriptor::Build(Device &device, uint32_t maxSets)
     // create descriptor set layouts
     int index = 0;
     _layouts.resize(bindingsMap.size());
-    for (std::pair<uint32_t, std::vector<VkDescriptorSetLayoutBinding>> bindings : bindingsMap)
+    for (auto &[_, bindings] : bindingsMap)
     {
         // for each binding increments +1 per type
-        for (auto binding : bindings.second)
+        int j = 0;
+        for (auto binding : bindings)
         {
             typesMap[binding.descriptorType] += 1;
+            j++;
         }
 
         const VkDescriptorBindingFlags flag =
-            VK_DESCRIPTOR_BINDING_VARIABLE_DESCRIPTOR_COUNT_BIT |
             VK_DESCRIPTOR_BINDING_PARTIALLY_BOUND_BIT |
             VK_DESCRIPTOR_BINDING_UPDATE_AFTER_BIND_BIT |
             VK_DESCRIPTOR_BINDING_UPDATE_UNUSED_WHILE_PENDING_BIT;
 
-        std::vector<VkDescriptorBindingFlags> flags(bindings.second.size(), flag);
+        std::vector<VkDescriptorBindingFlags> flags(bindings.size(), flag);
         VkDescriptorSetLayoutBindingFlagsCreateInfo layoutBindingFlagsCI = {
             .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_BINDING_FLAGS_CREATE_INFO,
             .bindingCount = (uint32_t)flags.size(),
@@ -45,8 +46,8 @@ void Descriptor::Build(Device &device, uint32_t maxSets)
             .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
             .pNext = &layoutBindingFlagsCI,
             .flags = VK_DESCRIPTOR_SET_LAYOUT_CREATE_UPDATE_AFTER_BIND_POOL_BIT,
-            .bindingCount = (uint32_t)bindings.second.size(),
-            .pBindings = bindings.second.data(),
+            .bindingCount = (uint32_t)bindings.size(),
+            .pBindings = bindings.data(),
         };
         VkDescriptorSetLayout layout;
         checkResult(vkCreateDescriptorSetLayout(device._device, &layoutCI, nullptr, &layout));
@@ -55,11 +56,11 @@ void Descriptor::Build(Device &device, uint32_t maxSets)
     }
 
     // creates the sizes required for the Descriptor Pool
-    for (auto typePair : typesMap)
+    for (auto &[type, count] : typesMap)
     {
         sizes.push_back(VkDescriptorPoolSize{
-            .type = typePair.first,
-            .descriptorCount = typePair.second,
+            .type = type,
+            .descriptorCount = count,
         });
     }
 
@@ -74,7 +75,7 @@ void Descriptor::Build(Device &device, uint32_t maxSets)
     checkResult(vkCreateDescriptorPool(device._device, &poolCI, nullptr, &_pool));
 
     // creates descriptor set
-    _descriptorSets.resize(_layouts.size());
+    _descriptorSets.resize(_layouts.size(), VK_NULL_HANDLE);
     VkDescriptorSetAllocateInfo descriptorSetAI = {
         .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
         .descriptorPool = _pool,
@@ -122,6 +123,7 @@ void Descriptor::AddUpdateInfo(uint32_t set, uint32_t binding, uint32_t size, st
         };
         bufferInfos[i] = bufferI;
     }
+    // this is needed for disabling the auto-deleting of the bufferInfos vector
     writesFieldsMap[{set, binding}].bufferInfos = bufferInfos;
 
     VkWriteDescriptorSet write = {
@@ -133,7 +135,6 @@ void Descriptor::AddUpdateInfo(uint32_t set, uint32_t binding, uint32_t size, st
         .descriptorType = bindingsTypes[{set, binding}],
         .pBufferInfo = writesFieldsMap[{set, binding}].bufferInfos.data(),
     };
-    std::cout << "buffers.size() : " << buffers.size() << std::endl;
     writes.push_back(write);
 }
 
@@ -212,8 +213,6 @@ void Descriptor::AddUpdateInfo(uint32_t set, uint32_t binding, std::vector<Sampl
 
 void Descriptor::Update()
 {
-    std::cout << "lay count:" << _layouts.size() << std::endl;
-    std::cout << "b count:" << bindingsMap[0][0].descriptorCount << std::endl;
     vkUpdateDescriptorSets(_device._device, (uint32_t)writes.size(), writes.data(), 0, nullptr);
     writes.clear();
     writesFieldsMap.clear();

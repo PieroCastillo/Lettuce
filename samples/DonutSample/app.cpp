@@ -108,9 +108,9 @@ void initLettuce()
     }
     // create device
     Features features;
-    features.MeshShading = true;
-    features.ConditionalRendering = true;
-    features.MemoryBudget = true;
+    features.MeshShading = false;
+    features.ConditionalRendering = false;
+    features.MemoryBudget = false;
     device.Create(instance, gpus.front(), features);
     swapchain.Create(device, width, height);
 

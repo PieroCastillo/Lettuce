@@ -93,13 +93,13 @@ void Device::createFeaturesChain()
     }
     gpuFeatures12.bufferDeviceAddress = VK_TRUE;
 
-    gpuFeatures12.shaderSampledImageArrayNonUniformIndexing = VK_TRUE,
-    gpuFeatures12.descriptorBindingUniformBufferUpdateAfterBind = VK_TRUE,
-    gpuFeatures12.descriptorBindingSampledImageUpdateAfterBind = VK_TRUE,
-    gpuFeatures12.descriptorBindingUpdateUnusedWhilePending = VK_TRUE,
-    gpuFeatures12.descriptorBindingPartiallyBound = VK_TRUE,
-    gpuFeatures12.descriptorBindingVariableDescriptorCount = VK_TRUE,
-    gpuFeatures12.runtimeDescriptorArray = VK_TRUE,
+    gpuFeatures12.shaderSampledImageArrayNonUniformIndexing = VK_TRUE;
+    gpuFeatures12.descriptorBindingUniformBufferUpdateAfterBind = VK_TRUE;
+    gpuFeatures12.descriptorBindingSampledImageUpdateAfterBind = VK_TRUE;
+    gpuFeatures12.descriptorBindingUpdateUnusedWhilePending = VK_TRUE;
+    gpuFeatures12.descriptorBindingPartiallyBound = VK_TRUE;
+    // gpuFeatures12.descriptorBindingVariableDescriptorCount = VK_TRUE;
+    gpuFeatures12.runtimeDescriptorArray = VK_TRUE;
     gpuFeatures12.timelineSemaphore = VK_TRUE;
 
     gpuFeatures13.synchronization2 = VK_TRUE;
