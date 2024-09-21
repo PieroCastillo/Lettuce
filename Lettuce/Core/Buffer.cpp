@@ -25,7 +25,7 @@ void Buffer::Create(Device &device, uint32_t size, BufferUsage usage,
             .flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT,
             .queueFamilyIndex = _device._gpu.graphicsFamily.value(),
         };
-        checkResult(vkCreateCommandPool(_device._device, &poolCI, nullptr, &_pool), "CommandPool of Buffer created sucessfully");
+        checkResult(vkCreateCommandPool(_device._device, &poolCI, nullptr, &_pool));
     }
 
     VkBufferCreateInfo bufferCI = {
@@ -40,16 +40,23 @@ void Buffer::Create(Device &device, uint32_t size, BufferUsage usage,
         .usage = memoryUsage,
     };
 
-    checkResult(vmaCreateBuffer(_device.allocator, &bufferCI, &allocationCI, &_buffer, &_allocation, nullptr), "buffer created sucessfully");
+    checkResult(vmaCreateBuffer(_device.allocator, &bufferCI, &allocationCI, &_buffer, &_allocation, nullptr));
+}
+
+void Buffer::Map()
+{
+    checkResult(vmaMapMemory(_device.allocator, _allocation, &data));
 }
 
 void Buffer::SetData(void *src)
 {
-    void *data;
-    checkResult(vmaMapMemory(_device.allocator, _allocation, &data), "mapped sucessfully");
     memcpy(data, src, _size);
+}
+
+void Buffer::Unmap()
+{
     vmaUnmapMemory(_device.allocator, _allocation);
-    checkResult(vmaFlushAllocation(_device.allocator, _allocation, 0, _size), "flushed");
+    checkResult(vmaFlushAllocation(_device.allocator, _allocation, 0, _size));
 }
 
 void Buffer::CopyTo(Buffer buffer)
@@ -94,7 +101,9 @@ Buffer Buffer::CreateBufferWithStaging(Device &device, BufferUsage bufferDstUsag
     Buffer buffer;
     stagingBuffer.Create(device, size, BufferUsage::TransferSrc,
                          VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT | VMA_ALLOCATION_CREATE_MAPPED_BIT);
+    stagingBuffer.Map();
     stagingBuffer.SetData(data);
+    stagingBuffer.Unmap();
 
     auto usage = BufferUsage::TransferDst;
     usage |= bufferDstUsage;

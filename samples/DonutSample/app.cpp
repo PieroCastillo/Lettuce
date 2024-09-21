@@ -7,6 +7,7 @@
 #define GLFW_EXPOSE_NATIVE_WIN32
 #include <GLFW/glfw3native.h>
 #include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
 #include <cmath>
 #include <numbers>
 
@@ -50,8 +51,8 @@ struct Vertex
 struct DataUBO
 {
     glm::mat4 projection;
-    glm::mat4 model;
     glm::mat4 view;
+    glm::mat4 model;
 } dataUBO;
 struct DataPush
 {
@@ -70,17 +71,18 @@ void main()
 {
     outColor = vec4(color, 1.0);
 })";
+
 const std::string vertexShaderText = R"(#version 420
 layout (location = 0) in vec3 pos;
 layout (set = 0, binding = 0) uniform DataUBO {
     mat4 projection;
-    mat4 model;
     mat4 view;
+    mat4 model;
 } ubo;
 
 void main()
 {
-    gl_Position = ubo.projection * ubo.view * ubo.model * vec4(pos,1.0); 
+    gl_Position = ubo.projection * ubo.view * ubo.model * vec4(pos,1.0);
 })";
 
 VkCommandPool pool;
@@ -105,8 +107,6 @@ void initLettuce()
     for (auto gpu : gpus)
     {
         std::cout << "available device: " << gpu.deviceName << std::endl;
-        std::cout << "    graphics family: " << gpu.graphicsFamily.value() << std::endl;
-        std::cout << "    present family : " << gpu.presentFamily.value() << std::endl;
     }
     // create device
     Features features;
@@ -115,6 +115,11 @@ void initLettuce()
     features.MemoryBudget = false;
     device.Create(instance, gpus.front(), features);
     swapchain.Create(device, width, height);
+    swapchain.SetResizeFunc([]() {
+        int w,h;
+        glfwGetWindowSize(window, &w, &h);
+        return std::make_tuple((uint32_t)w, (uint32_t)h);
+    });
 
     // create sync objects
     renderFinished.Create(device, 0);
@@ -126,17 +131,18 @@ void initLettuce()
     std::cout << "-------- vertex buffer created ----------" << std::endl;
     indexBuffer = Buffer::CreateIndexBuffer(device, indices);
     std::cout << "-------- index buffer created ----------" << std::endl;
-    auto data = &dataUBO;
-    uniformBuffer = Buffer::CreateUniformBuffer<DataUBO>(device, &data);
+
+    uniformBuffer = Buffer::CreateUniformBuffer<DataUBO>(device);
+    uniformBuffer.Map();
+    uniformBuffer.SetData(&dataUBO);
     std::cout << "-------- uniform buffer created ----------" << std::endl;
 
     descriptor.AddBinding(0, 0, DescriptorType::UniformBuffer, PipelineStage::Vertex, 1);
     descriptor.Build(device);
     std::cout << "-------- descriptor created ----------" << std::endl;
-    descriptor.AddUpdateInfo<DataUBO>(0,0, {uniformBuffer});
+    descriptor.AddUpdateInfo<DataUBO>(0, 0, {uniformBuffer});
     descriptor.Update();
     std::cout << "-------- descriptor updated ----------" << std::endl;
-
 
     connector.AddPushConstant<DataPush>(0, PipelineStage::Fragment);
     connector.Build(device, descriptor);
@@ -180,10 +186,12 @@ void buildCmds()
 void updateData()
 {
     dataPush.color = {0.5f, 0.4f, 0.3f};
-    dataUBO.projection = glm::perspective(glm::radians(45.0f), (float)width/(float)height, 0.1f, 100.0f);
-    dataUBO.model = glm::mat4();
-    dataUBO.view = glm::mat4(1.0f);
-    
+    dataUBO.projection = glm::perspective(glm::radians(45.0f), (float)width / (float)height, 0.1f, 100.0f);
+    dataUBO.view = glm::lookAt(glm::vec3(20.0f, 20.0f, 30.0f), // Posición de la cámara
+                               glm::vec3(0.0f, 0.0f, 0.0f),  // A dónde mira
+                               glm::vec3(1.0f, 1.0f, 1.0f));
+    dataUBO.model = glm::mat4(1.0f);
+    uniformBuffer.SetData(&dataUBO);
 }
 
 void recordCmds()
@@ -204,7 +212,7 @@ void recordCmds()
         .flags = VK_COMMAND_BUFFER_USAGE_RENDER_PASS_CONTINUE_BIT,
     };
     checkResult(vkBeginCommandBuffer(cmd, &cmdBI));
-    
+
     VkImageMemoryBarrier2 imageBarrier2 = {
         .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2,
         .srcStageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT,
@@ -317,6 +325,7 @@ void endLettuce()
     pipeline.Destroy();
     connector.Destroy();
     descriptor.Destroy();
+    uniformBuffer.Unmap();
     uniformBuffer.Destroy();
     vertexBuffer.Destroy();
     indexBuffer.Destroy();
@@ -332,6 +341,7 @@ void mainLoop()
     {
         std::cout << "-------------- frame ---------------" << std::endl;
         glfwPollEvents();
+        updateData();
         draw();
     }
     device.Wait();
@@ -341,7 +351,7 @@ void initWindow()
 {
     glfwInit();
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-    glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
+    glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
     window = glfwCreateWindow(width, height, "Lettuce DonutSample", nullptr, nullptr);
 }
 
@@ -356,7 +366,7 @@ void genTorus()
     float radiusMajor = 10;
     float radiusMinor = 5;
     // float sectorStep = 10;
-    float sectorCount = 10;
+    float sectorCount = 20;
     // float sideStep;
     float sideCount = 10;
 

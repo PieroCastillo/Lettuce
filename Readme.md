@@ -10,7 +10,7 @@ Lettuce is a rendering Vulkan-based library
 - [ ] Multi-GPU support
 - [ ] Headless 
 - [x] Swapchain (basic)
-  - [ ] Resizable
+  - [x] Resizable
 - [x] CommandList (partial)
 - [x] GraphicsPipeline
 - [x] ComputePipeline
@@ -22,9 +22,9 @@ Lettuce is a rendering Vulkan-based library
 - [x] Dynamic states
 - [x] Timeline Semaphores
 - [x] Synchronization2
-- [ ] Descriptor Indexing
-- [x] Buffer Device Address
-- [x] VK_EXT_memory_budget
+- [x] Descriptor Indexing
+- [ ] Buffer Device Address
+- [ ] VK_EXT_memory_budget
 - [ ] VK_EXT_conservative_rasterization
 - [ ] VK_KHR_fragment_shading_rate
 - [ ] Multi-thread Rendering

@@ -52,6 +52,9 @@ namespace Lettuce::Core
 
     class Buffer
     {
+    private:
+        void *data;
+
     public:
         Device _device;
         VkBuffer _buffer;
@@ -69,6 +72,10 @@ namespace Lettuce::Core
         void Create(Device &device, uint32_t size, BufferUsage usage,
                     VmaAllocationCreateFlags allocationFlags = VmaAllocationCreateFlagBits::VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT,
                     VmaMemoryUsage memoryUsage = VmaMemoryUsage::VMA_MEMORY_USAGE_AUTO);
+
+        void Map();
+
+        void Unmap();
 
         /// @brief Maps data from host memory to buffer
         /// @param src pinter to data to be mapped
@@ -102,10 +109,12 @@ namespace Lettuce::Core
         }
 
         template <typename T>
-        static Buffer CreateUniformBuffer(Device &device, T **data)
+        static Buffer CreateUniformBuffer(Device &device)
         {
             Buffer buffer;
-            buffer.Create(device, sizeof(T), BufferUsage::UniformBuffer, VMA_ALLOCATION_CREATE_HOST_ACCESS_RANDOM_BIT, VMA_MEMORY_USAGE_AUTO_PREFER_HOST);
+            buffer.Create(device, sizeof(T), BufferUsage::UniformBuffer,
+                          VMA_ALLOCATION_CREATE_MAPPED_BIT | VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT,
+                          VMA_MEMORY_USAGE_AUTO_PREFER_HOST);
             return buffer;
         }
 
