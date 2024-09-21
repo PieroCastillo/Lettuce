@@ -60,7 +60,8 @@ struct DataPush
 std::vector<Vertex> vertices;
 std::vector<uint32_t> indices;
 
-const std::string fragmentShaderText = R"(layout (push_constant, std430) uniform pushData {
+const std::string fragmentShaderText = R"(#version 420
+layout (push_constant) uniform pushData {
     vec3 color;
 };
 layout(location = 0) out vec4 outColor;
@@ -69,8 +70,9 @@ void main()
 {
     outColor = vec4(color, 1.0);
 })";
-const std::string vertexShaderText = R"(layout (binding = 0, location = 0) in vec3 pos;
-layout (binding = 0, location = 0) uniform DataUBO {
+const std::string vertexShaderText = R"(#version 420
+layout (location = 0) in vec3 pos;
+layout (set = 0, binding = 0) uniform DataUBO {
     mat4 projection;
     mat4 model;
     mat4 view;
@@ -202,6 +204,27 @@ void recordCmds()
         .flags = VK_COMMAND_BUFFER_USAGE_RENDER_PASS_CONTINUE_BIT,
     };
     checkResult(vkBeginCommandBuffer(cmd, &cmdBI));
+    
+    VkImageMemoryBarrier2 imageBarrier2 = {
+        .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2,
+        .srcStageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT,
+        .dstStageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT,
+        .dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+        .oldLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+        .newLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+        .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+        .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+        .image = swapchain.swapChainImages[(int)swapchain.index],
+        .subresourceRange = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1},
+    };
+
+    VkDependencyInfo dependencyI = {
+        .sType = VK_STRUCTURE_TYPE_DEPENDENCY_INFO,
+        .imageMemoryBarrierCount = 1,
+        .pImageMemoryBarriers = &imageBarrier2,
+    };
+
+    vkCmdPipelineBarrier2(cmd, &dependencyI);
 
     VkRect2D renderArea;
     renderArea.extent.height = swapchain.height;

@@ -87,7 +87,7 @@ void Descriptor::Build(Device &device, uint32_t maxSets)
 
 void Descriptor::Destroy()
 {
-    vkFreeDescriptorSets(_device._device, _pool, 1, _descriptorSets.data());
+    checkResult(vkResetDescriptorPool(_device._device, _pool, 0));
     vkDestroyDescriptorPool(_device._device, _pool, nullptr);
     for (auto layout : _layouts)
     {
