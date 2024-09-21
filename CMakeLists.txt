@@ -24,7 +24,7 @@ add_compile_definitions(MAJOR_VERSION=${MAJOR_VERSION})
 add_compile_definitions(MINOR_VERSION=${MINOR_VERSION})
 add_compile_definitions(PATCH_VERSION=${PATCH_VERSION})
 
-file(GLOB LETTUCE_SOURCES Lettuce/Core/*.cpp Lettuce/core/Compilers/*.cpp)
+file(GLOB LETTUCE_SOURCES Lettuce/Core/*.cpp Lettuce/Core/Compilers/*.cpp Lettuce/X3D/*.cpp Lettuce/X3D/Materials/*.cpp)
 
 add_library(Lettuce)
 target_sources(Lettuce PRIVATE ${LETTUCE_SOURCES})

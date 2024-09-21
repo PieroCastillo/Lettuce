@@ -8,16 +8,22 @@
 
 namespace Lettuce::X3D
 {
-    /// a 3D Camera 
-    /// theta: 
-    // class Camera3D
-    // {
-    // private:
-    //     glm::mat4 projection;
-    //     glm::mat4 view;
-    // public:
-    //     Camera3D();
-    //     void MoveToXYZ(glm::vec3 position);
-    //     void LookAt(glm::vec3 eye);
-    // };
+    /// a 3D Camera
+    /// theta:
+    class Camera3D
+    {
+    private:
+        glm::mat4 projection;
+        glm::mat4 view;
+        glm::vec3 eye, center;
+        glm::vec3 up = glm::vec3(1.0f, 1.0f, 1.0f);
+
+    public:
+        Camera3D() {}
+        Camera3D(int width, int height, float angleDegrees = 45.0f, float zNear = 0.1f, float zFar = 100.0f);
+        glm::mat4 GetProjectionView();
+        void SetPosition(glm::vec3 position);
+        void SetCenter(glm::vec3 center);
+        void Update();
+    };
 }

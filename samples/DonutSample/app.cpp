@@ -10,8 +10,10 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <cmath>
 #include <numbers>
+#include <tuple>
 
 #include "Lettuce/Lettuce.Core.hpp"
+#include "Lettuce/Lettuce.X3D.hpp"
 #include <glm/ext/matrix_clip_space.hpp>
 
 void initWindow();
@@ -24,12 +26,14 @@ void buildCmds();
 void recordCmds();
 void genTorus();
 void updateData();
+std::tuple<uint32_t, uint32_t> resizeCall();
 
 using namespace Lettuce::Core;
+using namespace Lettuce::X3D;
 
 GLFWwindow *window;
-const int width = 800;
-const int height = 600;
+int width = 800;
+int height = 600;
 Instance instance;
 Device device;
 Swapchain swapchain;
@@ -44,14 +48,15 @@ Compilers::GLSLCompiler compiler;
 Shader fragmentShader;
 Shader vertexShader;
 
+Camera3D camera;
+
 struct Vertex
 {
     glm::vec3 position;
 };
 struct DataUBO
 {
-    glm::mat4 projection;
-    glm::mat4 view;
+    glm::mat4 projectionView;
     glm::mat4 model;
 } dataUBO;
 struct DataPush
@@ -75,14 +80,13 @@ void main()
 const std::string vertexShaderText = R"(#version 420
 layout (location = 0) in vec3 pos;
 layout (set = 0, binding = 0) uniform DataUBO {
-    mat4 projection;
-    mat4 view;
+    mat4 projectionView;
     mat4 model;
 } ubo;
 
 void main()
 {
-    gl_Position = ubo.projection * ubo.view * ubo.model * vec4(pos,1.0);
+    gl_Position = ubo.projectionView * ubo.model * vec4(pos,1.0);
 })";
 
 VkCommandPool pool;
@@ -96,6 +100,17 @@ int main()
     endLettuce();
     endWindow();
     return 0;
+}
+
+std::tuple<uint32_t, uint32_t> resizeCall()
+{
+    int w, h;
+    glfwGetWindowSize(window, &w, &h);
+    width = w;
+    height = h;
+    camera = Camera3D(width, height);
+
+    return std::make_tuple((uint32_t)w, (uint32_t)h);
 }
 
 void initLettuce()
@@ -115,11 +130,7 @@ void initLettuce()
     features.MemoryBudget = false;
     device.Create(instance, gpus.front(), features);
     swapchain.Create(device, width, height);
-    swapchain.SetResizeFunc([]() {
-        int w,h;
-        glfwGetWindowSize(window, &w, &h);
-        return std::make_tuple((uint32_t)w, (uint32_t)h);
-    });
+    swapchain.SetResizeFunc(resizeCall);
 
     // create sync objects
     renderFinished.Create(device, 0);
@@ -162,6 +173,8 @@ void initLettuce()
     fragmentShader.Destroy();
 
     buildCmds();
+
+    camera = Camera3D(width, height);
 }
 
 void buildCmds()
@@ -186,11 +199,12 @@ void buildCmds()
 void updateData()
 {
     dataPush.color = {0.5f, 0.4f, 0.3f};
-    dataUBO.projection = glm::perspective(glm::radians(45.0f), (float)width / (float)height, 0.1f, 100.0f);
-    dataUBO.view = glm::lookAt(glm::vec3(20.0f, 20.0f, 30.0f), // Posición de la cámara
-                               glm::vec3(0.0f, 0.0f, 0.0f),  // A dónde mira
-                               glm::vec3(1.0f, 1.0f, 1.0f));
+    camera.SetPosition(glm::vec3(20.0f, 20.0f, 30.0f));
+    camera.SetCenter(glm::vec3(0.0f, 0.0f, 0.0f));
+    camera.Update();
+    dataUBO.projectionView = camera.GetProjectionView();
     dataUBO.model = glm::mat4(1.0f);
+
     uniformBuffer.SetData(&dataUBO);
 }
 
@@ -258,9 +272,9 @@ void recordCmds()
 
     vkCmdPushConstants(cmd, connector._pipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(DataPush), &dataPush);
     vkCmdSetLineWidth(cmd, 1.0f);
-    VkViewport viewport = {0, 0, width, height, 0.0f, 1.0f};
+    VkViewport viewport = {0, 0, (float)width, (float)height, 0.0f, 1.0f};
     vkCmdSetViewport(cmd, 0, 1, &viewport);
-    VkRect2D scissor = {{0, 0}, {width, height}};
+    VkRect2D scissor = {{0, 0}, {(float)width, (float)height}};
     vkCmdSetScissor(cmd, 0, 1, &scissor);
     vkCmdSetPrimitiveTopology(cmd, VkPrimitiveTopology::VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
     vkCmdDrawIndexed(cmd, indices.size(), 1, 0, 0, 0);
