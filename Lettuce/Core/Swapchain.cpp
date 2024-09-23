@@ -147,6 +147,11 @@ void Swapchain::createFramebuffers()
     }
 }
 
+std::vector<TextureView> Swapchain::GetTextureViews()
+{
+
+}
+
 void Swapchain::Create(Device &device, uint32_t initialWidth, uint32_t initialHeight)
 {
     _device = device;

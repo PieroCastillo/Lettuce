@@ -6,7 +6,7 @@
 #include <vector>
 #include "Device.hpp"
 #include "Shader.hpp"
-#include "Swapchain.hpp"
+#include "RenderPass.hpp"
 #include "Utils.hpp"
 #include "PipelineConnector.hpp"
 
@@ -19,6 +19,8 @@ namespace Lettuce::Core
         Device _device;
         VkPipelineLayout _pipelineLayout;
         VkPipeline _pipeline;
+        RenderPass _renderpass;
+        uint32_t _subpassIndex;
         std::vector<VkPipelineShaderStageCreateInfo> stages;
         std::vector<VkVertexInputBindingDescription> vertexInputBindings;
         std::vector<VkVertexInputAttributeDescription> vertexInputAttributes;
@@ -38,7 +40,7 @@ namespace Lettuce::Core
 
         void AddShaderStage(Shader &shader);
 
-        void Build(Device &device, PipelineConnector &connector, Swapchain &swapchain, FrontFace frontFace = FrontFace::Clockwise);
+        void Build(Device &device, PipelineConnector &connector, RenderPass &renderpass, uint32_t subpassIndex, FrontFace frontFace = FrontFace::Clockwise);
 
         void Destroy();
     };

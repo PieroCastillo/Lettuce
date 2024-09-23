@@ -17,7 +17,7 @@ namespace Lettuce::Core
         VkPipelineLayout _pipelineLayout;
         VkPipeline _pipeline;
 
-        void Build(Device &device, PipelineConnector &connector, Swapchain &swapchain, Shader &shader);
+        void Build(Device &device, PipelineConnector &connector, Shader &shader);
 
         void Destroy();
     };

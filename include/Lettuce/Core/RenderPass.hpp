@@ -7,26 +7,32 @@
 #include <map>
 #include <tuple>
 #include "Device.hpp"
+#include "TextureView.hpp"
 
 namespace Lettuce::Core
 {
     class RenderPass
     {
     private:
-        std::map<int, std::vector<std::tuple<AttachmentType, VkAttachmentDescription>>> attachments;
-        std::map<int, VkPipelineBindPoint> bindPoints;
+        std::map<uint32_t, std::tuple<AttachmentType, VkAttachmentDescription>> attachments;
         std::vector<VkSubpassDescription> subpasses;
+        std::map<uint32_t, std::tuple<BindPoint, std::vector<uint32_t>>> subpassesMap;
         std::vector<VkSubpassDependency> dependencies;
+        std::vector<VkFramebufferCreateInfo> framebuffersCI;
+        std::vector<std::vector<VkImageView>> fbviews; //to keep the vector<imageView> alive
         void buildSubpasses();
 
     public:
         Device _device;
         VkRenderPass _renderPass;
-        VkFramebuffer _fb;
+        std::vector<VkFramebuffer> _framebuffers;
 
         void Build();
+        void Destroy();
+        void BuildFramebuffers();
+        void DestroyFramebuffers();
         void AddAttachment(
-            int subpassIndex,
+            uint32_t index,
             AttachmentType type,
             VkFormat format,
             LoadOp loadOp = LoadOp::Clear,
@@ -35,12 +41,13 @@ namespace Lettuce::Core
             StoreOp stencilStoreOp = StoreOp::DontCare,
             ImageLayout initial = ImageLayout::ColorAttachmentOptimal,
             ImageLayout final = ImageLayout::ColorAttachmentOptimal);
-        void BindSubpassIndex(int index, BindPoint point);
-        void AddDependency(int srcSubpassIndex,
-                           int dstSubpassIndex,
+        void AddSubpass(uint32_t index, BindPoint bindpoint, std::vector<uint32_t> attachments);
+        void AddDependency(uint32_t srcSubpassIndex,
+                           uint32_t dstSubpassIndex,
                            AccessStage srcStage,
                            AccessStage dstStage,
                            AccessBehavior srcBehavior,
                            AccessBehavior dstBehavior);
+        void AddFramebuffer(uint32_t width, uint32_t height, std::vector<TextureView> attachments);
     };
 }

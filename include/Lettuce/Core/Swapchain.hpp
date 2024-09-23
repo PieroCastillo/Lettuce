@@ -52,6 +52,8 @@ namespace Lettuce::Core
 
         void SetResizeFunc(std::function<std::tuple<uint32_t, uint32_t>(void)> call);
 
+        std::vector<TextureView> GetTextureViews();
+
         void AcquireNextImage();
 
         void Present();

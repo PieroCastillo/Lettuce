@@ -33,10 +33,12 @@ void GraphicsPipeline::AddShaderStage(Shader &shader)
     stages.emplace_back(pipelineShaderStageCI);
 }
 
-void GraphicsPipeline::Build(Device &device, PipelineConnector &connector, Swapchain &swapchain, FrontFace frontFace)
+void GraphicsPipeline::Build(Device &device, PipelineConnector &connector, RenderPass &renderpass, uint32_t subpassIndex,  FrontFace frontFace)
 {
     _device = device;
     _pipelineLayout = connector._pipelineLayout;
+    _renderpass = renderpass;
+    _subpassIndex = subpassIndex;
 
     VkPipelineVertexInputStateCreateInfo vertexInputStateCI = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO,
@@ -115,8 +117,8 @@ void GraphicsPipeline::Build(Device &device, PipelineConnector &connector, Swapc
         .pColorBlendState = &colorBlendStateCI,
         .pDynamicState = &dynamicStateCI,
         .layout = _pipelineLayout,
-        .renderPass = swapchain._renderPass,
-        .subpass = 0,
+        .renderPass = _renderpass._renderPass,
+        .subpass = _subpassIndex,
         // VkPipeline                                       basePipelineHandle;
         // int32_t                                          basePipelineIndex;
     };

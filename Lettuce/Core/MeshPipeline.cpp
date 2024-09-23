@@ -27,10 +27,12 @@ void MeshPipeline::AddShaderStage(Shader &shader)
     stages.emplace_back(pipelineShaderStageCI);
 }
 
-void MeshPipeline::Build(Device &device, PipelineConnector &connector, Swapchain &swapchain, FrontFace frontFace)
+void MeshPipeline::Build(Device &device, PipelineConnector &connector, RenderPass &renderpass, uint32_t subpassIndex, FrontFace frontFace)
 {
     _device = device;
     _pipelineLayout = connector._pipelineLayout;
+    _renderpass = renderpass;
+    _subpassIndex = subpassIndex;
 
     VkPipelineViewportStateCreateInfo viewportStateCI = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO,
@@ -86,8 +88,8 @@ void MeshPipeline::Build(Device &device, PipelineConnector &connector, Swapchain
         .pColorBlendState = &colorBlendStateCI,
         .pDynamicState = &dynamicStateCI,
         .layout = _pipelineLayout,
-        .renderPass = swapchain._renderPass,
-        .subpass = 0,
+        .renderPass = _renderpass._renderPass,
+        .subpass = _subpassIndex,
         // VkPipeline                                       basePipelineHandle;
         // int32_t                                          basePipelineIndex;
     };

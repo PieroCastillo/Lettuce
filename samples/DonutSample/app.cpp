@@ -37,6 +37,8 @@ int height = 600;
 Instance instance;
 Device device;
 Swapchain swapchain;
+// std::vector<TextureView>
+RenderPass renderpass;
 Semaphore renderFinished;
 Buffer vertexBuffer;
 Buffer indexBuffer;
@@ -130,6 +132,29 @@ void initLettuce()
     features.MemoryBudget = false;
     device.Create(instance, gpus.front(), features);
     swapchain.Create(device, width, height);
+
+    renderpass.AddAttachment(0, AttachmentType::Color,
+                             swapchain.imageFormat,
+                             LoadOp::Clear,
+                             StoreOp::Store,
+                             LoadOp::DontCare,
+                             StoreOp::DontCare,
+                             ImageLayout::Undefined,
+                             ImageLayout::PresentSrc);
+    renderpass.AddSubpass(0, BindPoint::Graphics, {0});
+    renderpass.AddDependency(VK_SUBPASS_EXTERNAL, 0,
+                             AccessStage::ColorAttachmentOutput,
+                             AccessStage::ColorAttachmentOutput,
+                             AccessBehavior::None,
+                             AccessBehavior::ColorAttachmentWrite);
+                             
+    renderpass.AddDependency(0, VK_SUBPASS_EXTERNAL, 
+                             AccessStage::ColorAttachmentOutput,
+                             AccessStage::ColorAttachmentOutput,
+                             AccessBehavior::ColorAttachmentWrite,
+                             AccessBehavior::None);
+    renderpass.Build();
+
     swapchain.SetResizeFunc(resizeCall);
 
     // create sync objects
@@ -198,7 +223,7 @@ void buildCmds()
 
 void updateData()
 {
-    dataPush.color = {0.5f, 0.4f, 0.3f};
+    dataPush.color = {0.5f, 0.65f, 0.3f};
     camera.SetPosition(glm::vec3(20.0f, 20.0f, 30.0f));
     camera.SetCenter(glm::vec3(0.0f, 0.0f, 0.0f));
     camera.Update();

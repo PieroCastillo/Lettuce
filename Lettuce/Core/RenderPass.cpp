@@ -14,7 +14,7 @@
 using namespace Lettuce::Core;
 
 void RenderPass::AddAttachment(
-    int subpassIndex,
+    uint32_t subpassIndex,
     AttachmentType type,
     VkFormat format,
     LoadOp loadOp,
@@ -34,33 +34,25 @@ void RenderPass::AddAttachment(
         .initialLayout = (VkImageLayout)initial,
         .finalLayout = (VkImageLayout) final,
     };
-    attachments[subpassIndex].push_back(std::make_tuple(type, attachment));
-}
-
-void RenderPass::BindSubpassIndex(int index, BindPoint point)
-{
-    bindPoints[index] = (VkPipelineBindPoint)point;
+    attachments[subpassIndex] = std::make_tuple(type, attachment);
 }
 
 void RenderPass::buildSubpasses()
 {
-    int j = 0;
-    for (auto element : attachments)
+    for (auto [index, att] : subpassesMap)
     {
         std::vector<VkAttachmentReference> colorRefs;
         std::vector<VkAttachmentReference> depthStencilRefs;
         std::vector<VkAttachmentReference> inputRefs;
         std::vector<VkAttachmentReference> resolveRefs;
+        auto [bindPoint, attIndices] = att;
         // std::vector<VkAttachmentReference> preserveRefs;
-        for (int i = 0; i < element.second.size(); i++)
+        for (auto attIndex : attIndices)
         {
-            auto t = element.second[i];
-            VkAttachmentDescription attachment;
-            AttachmentType type;
-            std::tie(type, attachment) = t;
-            VkAttachmentReference ref = {
-                .attachment = (uint32_t)i,
-            };
+            auto [type, attachmentDesc] = attachments[attIndex];
+            VkAttachmentReference ref;
+            ref.attachment = attIndex;
+            ref.layout = attachmentDesc.finalLayout;
             switch (type)
             {
             case AttachmentType::Color:
@@ -72,9 +64,6 @@ void RenderPass::buildSubpasses()
             case AttachmentType::Input:
                 inputRefs.push_back(ref);
                 break;
-            // case AttachmentType::Preserve:
-            //     preserveRefs.push_back(ref);
-            //     break;
             case AttachmentType::Resolve:
                 resolveRefs.push_back(ref);
                 break;
@@ -83,7 +72,7 @@ void RenderPass::buildSubpasses()
 
         VkSubpassDescription subpass;
 
-        subpass.pipelineBindPoint = bindPoints[j];
+        subpass.pipelineBindPoint = (VkPipelineBindPoint)bindPoint;
 
         if (colorRefs.size() > 0)
         {
@@ -114,12 +103,11 @@ void RenderPass::buildSubpasses()
         }
 
         subpasses.push_back(subpass);
-        j++;
     }
 }
 
-void RenderPass::AddDependency(int srcSubpassIndex,
-                               int dstSubpassIndex,
+void RenderPass::AddDependency(uint32_t srcSubpassIndex,
+                               uint32_t dstSubpassIndex,
                                AccessStage srcStage,
                                AccessStage dstStage,
                                AccessBehavior srcBehavior,
@@ -137,6 +125,31 @@ void RenderPass::AddDependency(int srcSubpassIndex,
     dependencies.push_back(dependency);
 }
 
+void RenderPass::AddSubpass(uint32_t index, BindPoint bindpoint, std::vector<uint32_t> attachments)
+{
+    subpassesMap[index] = std::make_tuple(bindpoint, attachments);
+}
+
+void RenderPass::AddFramebuffer(uint32_t width, uint32_t height, std::vector<TextureView> attachments)
+{
+    std::vector<VkImageView> views;
+    for (auto view : attachments)
+    {
+        views.push_back(view._imageView);
+    }
+    fbviews.push_back(views);
+    VkFramebufferCreateInfo framebufferCI = {
+        .sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO,
+        .renderPass = _renderPass,
+        .attachmentCount = (uint32_t)views.size(),
+        .pAttachments = views.data(),
+        .width = width,
+        .height = height,
+        .layers = 1,
+    };
+    framebuffersCI.push_back(framebufferCI);
+}
+
 void RenderPass::Build()
 {
     VkRenderPassCreateInfo renderPassCI = {
@@ -144,12 +157,10 @@ void RenderPass::Build()
     };
     std::vector<VkAttachmentDescription> attachmentsVec(attachments.size());
 
-    for (auto pair : attachments)
+    for (auto [index, att] : attachments)
     {
-        for (auto tuple : pair.second)
-        {
-            attachmentsVec.push_back(std::get<1>(tuple));
-        }
+        auto [type, desc] = att;
+        attachmentsVec.push_back(desc);
     }
 
     if (attachments.size() > 0)
@@ -169,4 +180,28 @@ void RenderPass::Build()
     }
 
     checkResult(vkCreateRenderPass(_device._device, &renderPassCI, nullptr, &_renderPass));
+}
+
+void RenderPass::BuildFramebuffers()
+{
+    _framebuffers.clear();
+    _framebuffers.resize(framebuffersCI.size());
+    int i = 0;
+    for (auto framebufferCI : framebuffersCI)
+    {
+        VkFramebuffer fb;
+        checkResult(vkCreateFramebuffer(_device._device, &framebufferCI, nullptr, &fb));
+        _framebuffers[i] = fb;
+        i++;
+    }
+    framebuffersCI.clear();
+}
+void RenderPass::DestroyFramebuffers()
+{
+    for (auto fb : _framebuffers)
+    {
+        vkDestroyFramebuffer(_device._device, fb, nullptr);
+    }
+    _framebuffers.clear();
+    fbviews.clear();
 }
