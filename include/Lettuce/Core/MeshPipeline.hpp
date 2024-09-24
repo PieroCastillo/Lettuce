@@ -7,7 +7,7 @@
 #include <string>
 #include "Device.hpp"
 #include "Shader.hpp"
-#include "Swapchain.hpp"
+#include "RenderPass.hpp"
 #include "Utils.hpp"
 #include "PipelineConnector.hpp"
 
@@ -21,6 +21,8 @@ namespace Lettuce::Core
         VkPipelineLayout _pipelineLayout;
         VkPipeline _pipeline;
         std::vector<VkPipelineShaderStageCreateInfo> stages;
+        RenderPass _renderpass;
+        uint32_t _subpassIndex;
 
         void AddShaderStage(Shader &shader);
 

@@ -26,6 +26,7 @@ void Swapchain::loadImages()
 void Swapchain::createImageViews()
 {
     swapChainImageViews.resize(swapChainImages.size());
+    swapchainTextureViews.resize(swapChainImageViews.size());
     for (size_t i = 0; i < swapChainImages.size(); i++)
     {
         VkImageViewCreateInfo imageViewCI = {
@@ -36,7 +37,12 @@ void Swapchain::createImageViews()
             .components = {VK_COMPONENT_SWIZZLE_IDENTITY, VK_COMPONENT_SWIZZLE_IDENTITY, VK_COMPONENT_SWIZZLE_IDENTITY, VK_COMPONENT_SWIZZLE_IDENTITY},
             .subresourceRange = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1},
         };
-        checkResult(vkCreateImageView(_device._device, &imageViewCI, nullptr, &swapChainImageViews[i]), "imageView " + std::to_string(i));
+        checkResult(vkCreateImageView(_device._device, &imageViewCI, nullptr, &swapChainImageViews[i]));
+
+        TextureView tvw;
+        tvw._device = _device;
+        tvw._imageView = swapChainImageViews[i];
+        swapchainTextureViews[i] = tvw;
     }
 }
 
@@ -147,11 +153,6 @@ void Swapchain::createFramebuffers()
     }
 }
 
-std::vector<TextureView> Swapchain::GetTextureViews()
-{
-
-}
-
 void Swapchain::Create(Device &device, uint32_t initialWidth, uint32_t initialHeight)
 {
     _device = device;
@@ -239,6 +240,7 @@ void Swapchain::Present()
     {
         auto [w, h] = _func();
         Resize(w, h);
+        _postFunc();
         break;
     }
     default:
@@ -256,9 +258,10 @@ void Swapchain::Wait()
     // vkWaitForPresentKHR(_device._device, _swapchain, )
 }
 
-void Swapchain::SetResizeFunc(std::function<std::tuple<uint32_t, uint32_t>(void)> call)
+void Swapchain::SetResizeFunc(std::function<std::tuple<uint32_t, uint32_t>(void)> call, std::function<void(void)> postFunc)
 {
     _func = call;
+    _postFunc = postFunc;
 }
 
 void Swapchain::Resize(uint32_t newWidth, uint32_t newHeight)
@@ -335,7 +338,7 @@ void Swapchain::Destroy()
         vkDestroyImageView(_device._device, imageView, nullptr);
     }
     swapChainImageViews.clear();
-    this->swapChainImages.clear();
+    swapChainImages.clear();
     vkDestroyRenderPass(_device._device, _renderPass, nullptr);
     vkDestroyFence(_device._device, _fence, nullptr);
     vkDestroySwapchainKHR(_device._device, _swapchain, nullptr);

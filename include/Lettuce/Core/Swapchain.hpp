@@ -18,6 +18,7 @@ namespace Lettuce::Core
     {
     private:
         std::function<std::tuple<uint32_t, uint32_t>(void)> _func;
+        std::function<void(void)> _postFunc;
         VkSurfaceCapabilitiesKHR capabilities;
         std::vector<VkSurfaceFormatKHR> formats;
         std::vector<VkPresentModeKHR> presentModes;
@@ -38,6 +39,7 @@ namespace Lettuce::Core
         // TextureView _depthImageView;
         std::vector<VkImage> swapChainImages;
         std::vector<VkImageView> swapChainImageViews;
+        std::vector<TextureView> swapchainTextureViews;
         std::vector<VkAttachmentDescription> attachments;
         std::vector<VkFramebuffer> framebuffers;
         uint32_t index;
@@ -50,9 +52,7 @@ namespace Lettuce::Core
 
         void Create(Device &device, uint32_t initialWidth, uint32_t initialHeight);
 
-        void SetResizeFunc(std::function<std::tuple<uint32_t, uint32_t>(void)> call);
-
-        std::vector<TextureView> GetTextureViews();
+        void SetResizeFunc(std::function<std::tuple<uint32_t, uint32_t>(void)> call, std::function<void(void)> postFunc);
 
         void AcquireNextImage();
 

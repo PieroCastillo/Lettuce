@@ -115,6 +115,13 @@ std::tuple<uint32_t, uint32_t> resizeCall()
     return std::make_tuple((uint32_t)w, (uint32_t)h);
 }
 
+void onResize()
+{
+    renderpass.DestroyFramebuffers();
+    renderpass.AddFramebuffer(width, height, swapchain.swapchainTextureViews);
+    renderpass.BuildFramebuffers();
+}
+
 void initLettuce()
 {
     instance._debug = true;
@@ -140,7 +147,8 @@ void initLettuce()
                              LoadOp::DontCare,
                              StoreOp::DontCare,
                              ImageLayout::Undefined,
-                             ImageLayout::PresentSrc);
+                             ImageLayout::PresentSrc,
+                             ImageLayout::ColorAttachmentOptimal);
     renderpass.AddSubpass(0, BindPoint::Graphics, {0});
     renderpass.AddDependency(VK_SUBPASS_EXTERNAL, 0,
                              AccessStage::ColorAttachmentOutput,
@@ -153,9 +161,13 @@ void initLettuce()
                              AccessStage::ColorAttachmentOutput,
                              AccessBehavior::ColorAttachmentWrite,
                              AccessBehavior::None);
-    renderpass.Build();
+    renderpass.Build(device);
+    std::cout << "-------- renderpass created ----------" << std::endl;
+    renderpass.AddFramebuffer(width, height, swapchain.swapchainTextureViews);
+    renderpass.BuildFramebuffers();
+    std::cout << "-------- framebuffers created ----------" << std::endl;
 
-    swapchain.SetResizeFunc(resizeCall);
+    swapchain.SetResizeFunc(resizeCall, onResize);
 
     // create sync objects
     renderFinished.Create(device, 0);
@@ -191,7 +203,7 @@ void initLettuce()
     pipeline.AddVertexAttribute(0, 0, 0, VK_FORMAT_R32G32B32A32_SFLOAT); // layout(location = 0) in vec3 pos;
     pipeline.AddShaderStage(vertexShader);
     pipeline.AddShaderStage(fragmentShader);
-    pipeline.Build(device, connector, swapchain);
+    pipeline.Build(device, connector, renderpass, 0);
     std::cout << "-------- pipeline created ----------" << std::endl;
 
     vertexShader.Destroy();
@@ -281,8 +293,8 @@ void recordCmds()
 
     VkRenderPassBeginInfo renderPassBI = {
         .sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
-        .renderPass = swapchain._renderPass,
-        .framebuffer = swapchain.framebuffers[swapchain.index],
+        .renderPass = renderpass._renderPass,
+        .framebuffer = renderpass._framebuffers[(int)swapchain.index],
         .renderArea = renderArea,
         .clearValueCount = 1,
         .pClearValues = &clearValue,
@@ -369,6 +381,8 @@ void endLettuce()
     vertexBuffer.Destroy();
     indexBuffer.Destroy();
     renderFinished.Destroy();
+    renderpass.DestroyFramebuffers();
+    renderpass.Destroy();
     swapchain.Destroy();
     device.Destroy();
     instance.Destroy();

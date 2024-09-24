@@ -14,7 +14,7 @@
 using namespace Lettuce::Core;
 
 void RenderPass::AddAttachment(
-    uint32_t subpassIndex,
+    uint32_t index,
     AttachmentType type,
     VkFormat format,
     LoadOp loadOp,
@@ -22,7 +22,8 @@ void RenderPass::AddAttachment(
     LoadOp stencilLoadOp,
     StoreOp stencilStoreOp,
     ImageLayout initial,
-    ImageLayout final)
+    ImageLayout final,
+    ImageLayout reference)
 {
     VkAttachmentDescription attachment = {
         .format = format,
@@ -34,7 +35,7 @@ void RenderPass::AddAttachment(
         .initialLayout = (VkImageLayout)initial,
         .finalLayout = (VkImageLayout) final,
     };
-    attachments[subpassIndex] = std::make_tuple(type, attachment);
+    attachments[index] = std::make_tuple(type, attachment, (VkImageLayout)reference);
 }
 
 void RenderPass::buildSubpasses()
@@ -49,10 +50,10 @@ void RenderPass::buildSubpasses()
         // std::vector<VkAttachmentReference> preserveRefs;
         for (auto attIndex : attIndices)
         {
-            auto [type, attachmentDesc] = attachments[attIndex];
+            auto [type, attachmentDesc, refLayout] = attachments[attIndex];
             VkAttachmentReference ref;
             ref.attachment = attIndex;
-            ref.layout = attachmentDesc.finalLayout;
+            ref.layout = refLayout;
             switch (type)
             {
             case AttachmentType::Color:
@@ -71,18 +72,20 @@ void RenderPass::buildSubpasses()
         };
 
         VkSubpassDescription subpass;
-
+        // subpass.flags = 
         subpass.pipelineBindPoint = (VkPipelineBindPoint)bindPoint;
 
         if (colorRefs.size() > 0)
         {
             subpass.colorAttachmentCount = (uint32_t)colorRefs.size();
             subpass.pColorAttachments = colorRefs.data();
+            attachmentsReferences.push_back(colorRefs);
         }
 
         if (depthStencilRefs.size() > 0)
         {
             subpass.pDepthStencilAttachment = depthStencilRefs.data();
+            attachmentsReferences.push_back(depthStencilRefs);
         }
 
         // if (preserveRefs.size() > 0)
@@ -95,11 +98,13 @@ void RenderPass::buildSubpasses()
         {
             subpass.inputAttachmentCount = (uint32_t)inputRefs.size();
             subpass.pInputAttachments = inputRefs.data();
+            attachmentsReferences.push_back(inputRefs);
         }
 
         if (resolveRefs.size() > 0)
         {
             subpass.pResolveAttachments = resolveRefs.data();
+            attachmentsReferences.push_back(resolveRefs);
         }
 
         subpasses.push_back(subpass);
@@ -150,16 +155,18 @@ void RenderPass::AddFramebuffer(uint32_t width, uint32_t height, std::vector<Tex
     framebuffersCI.push_back(framebufferCI);
 }
 
-void RenderPass::Build()
+void RenderPass::Build(Device& device)
 {
+    _device = device;
     VkRenderPassCreateInfo renderPassCI = {
         .sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO,
     };
-    std::vector<VkAttachmentDescription> attachmentsVec(attachments.size());
+    buildSubpasses();
+    std::vector<VkAttachmentDescription> attachmentsVec;
 
     for (auto [index, att] : attachments)
     {
-        auto [type, desc] = att;
+        auto [type, desc, refLayout] = att;
         attachmentsVec.push_back(desc);
     }
 
@@ -180,6 +187,17 @@ void RenderPass::Build()
     }
 
     checkResult(vkCreateRenderPass(_device._device, &renderPassCI, nullptr, &_renderPass));
+}
+
+void RenderPass::Destroy()
+{
+    vkDestroyRenderPass(_device._device, _renderPass, nullptr);
+    attachments.clear();
+    attachmentsReferences.clear();
+    subpasses.clear();
+    subpassesMap.clear();
+    dependencies.clear();
+    framebuffersCI.clear();
 }
 
 void RenderPass::BuildFramebuffers()
