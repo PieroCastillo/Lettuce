@@ -72,7 +72,7 @@ void RenderPass::buildSubpasses()
         };
 
         VkSubpassDescription subpass;
-        // subpass.flags = 
+        subpass.flags = 0; 
         subpass.pipelineBindPoint = (VkPipelineBindPoint)bindPoint;
 
         if (colorRefs.size() > 0)
@@ -108,6 +108,7 @@ void RenderPass::buildSubpasses()
         }
 
         subpasses.push_back(subpass);
+        std::cout << "permutación" << std::endl;
     }
 }
 
@@ -155,11 +156,11 @@ void RenderPass::AddFramebuffer(uint32_t width, uint32_t height, std::vector<Tex
     framebuffersCI.push_back(framebufferCI);
 }
 
-void RenderPass::Build(Device& device)
+void RenderPass::Build(Device &device)
 {
     _device = device;
     VkRenderPassCreateInfo renderPassCI = {
-        .sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO,
+        .sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO, 
     };
     buildSubpasses();
     std::vector<VkAttachmentDescription> attachmentsVec;
@@ -174,11 +175,18 @@ void RenderPass::Build(Device& device)
     {
         renderPassCI.attachmentCount = (uint32_t)attachmentsVec.size();
         renderPassCI.pAttachments = attachmentsVec.data();
+        std::cout << "att size: "<< attachmentsVec.size() << std::endl;
     }
     if (subpasses.size() > 0)
     {
         renderPassCI.subpassCount = (uint32_t)subpasses.size();
         renderPassCI.pSubpasses = subpasses.data();
+        std::cout << "isomorfismo" <<std::endl;
+        std::cout << "subpasses size: " << subpasses.size() << std::endl;
+        for(auto sp : subpasses)
+        {
+            std::cout << sp.colorAttachmentCount << std::endl;
+        }
     }
     if (dependencies.size() > 0)
     {
