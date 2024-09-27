@@ -118,7 +118,10 @@ std::tuple<uint32_t, uint32_t> resizeCall()
 void onResize()
 {
     renderpass.DestroyFramebuffers();
-    renderpass.AddFramebuffer(width, height, swapchain.swapchainTextureViews);
+    for (auto &view : swapchain.swapchainTextureViews)
+    {
+        renderpass.AddFramebuffer(width, height, {view});
+    }
     renderpass.BuildFramebuffers();
 }
 
@@ -155,15 +158,18 @@ void initLettuce()
                              AccessStage::ColorAttachmentOutput,
                              AccessBehavior::None,
                              AccessBehavior::ColorAttachmentWrite);
-                             
-    renderpass.AddDependency(0, VK_SUBPASS_EXTERNAL, 
+
+    renderpass.AddDependency(0, VK_SUBPASS_EXTERNAL,
                              AccessStage::ColorAttachmentOutput,
                              AccessStage::ColorAttachmentOutput,
                              AccessBehavior::ColorAttachmentWrite,
                              AccessBehavior::None);
     renderpass.Build(device);
     std::cout << "-------- renderpass created ----------" << std::endl;
-    renderpass.AddFramebuffer(width, height, swapchain.swapchainTextureViews);
+    for (auto &view : swapchain.swapchainTextureViews)
+    {
+        renderpass.AddFramebuffer(width, height, {view});
+    }
     renderpass.BuildFramebuffers();
     std::cout << "-------- framebuffers created ----------" << std::endl;
 

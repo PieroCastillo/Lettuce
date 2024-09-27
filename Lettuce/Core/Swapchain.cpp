@@ -209,9 +209,9 @@ void Swapchain::Create(Device &device, uint32_t initialWidth, uint32_t initialHe
 
     loadImages();
     createImageViews();
-    createDepthImage();
-    createRenderPass();
-    createFramebuffers();
+    //createDepthImage();
+    //createRenderPass();
+    //createFramebuffers();
 }
 
 void Swapchain::AcquireNextImage()

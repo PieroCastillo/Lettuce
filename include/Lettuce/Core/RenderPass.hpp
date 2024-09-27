@@ -16,16 +16,16 @@ namespace Lettuce::Core
     private:
         std::map<uint32_t, std::tuple<AttachmentType, VkAttachmentDescription, VkImageLayout>> attachments;
         std::vector<VkSubpassDescription> subpasses;
-        std::map<uint32_t, std::tuple<BindPoint, std::vector<uint32_t>>> subpassesMap;
         std::vector<VkSubpassDependency> dependencies;
+        std::map<uint32_t, std::tuple<BindPoint, std::vector<uint32_t>>> subpassesMap;
         std::vector<VkFramebufferCreateInfo> framebuffersCI;
-        std::vector<std::vector<VkAttachmentReference>> attachmentsReferences; //to keep references alive
+        std::vector<std::vector<VkAttachmentReference>> attachmentReferencesStorage; //to keep references alive
         std::vector<std::vector<VkImageView>> fbviews; //to keep the vector<imageView> alive
         void buildSubpasses();
 
     public:
         Device _device;
-        VkRenderPass _renderPass;
+        VkRenderPass _renderPass = VK_NULL_HANDLE;
         std::vector<VkFramebuffer> _framebuffers;
 
         void Build(Device& device);

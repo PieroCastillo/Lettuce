@@ -40,24 +40,24 @@ void RenderPass::AddAttachment(
 
 void RenderPass::buildSubpasses()
 {
-    for (auto [index, att] : subpassesMap)
+    for (auto &[index, att] : subpassesMap)
     {
+        // Vectores de referencias de attachments
         std::vector<VkAttachmentReference> colorRefs;
         std::vector<VkAttachmentReference> depthStencilRefs;
         std::vector<VkAttachmentReference> inputRefs;
         std::vector<VkAttachmentReference> resolveRefs;
+
         auto [bindPoint, attIndices] = att;
-        // std::vector<VkAttachmentReference> preserveRefs;
-        for (auto attIndex : attIndices)
+
+        for (auto &attIndex : attIndices)
         {
             auto [type, attachmentDesc, refLayout] = attachments[attIndex];
-            VkAttachmentReference ref;
-            ref.attachment = attIndex;
-            ref.layout = refLayout;
+            VkAttachmentReference ref(attIndex, refLayout);
             switch (type)
             {
             case AttachmentType::Color:
-                colorRefs.push_back(ref);
+                colorRefs.emplace_back(ref);
                 break;
             case AttachmentType::DepthStencil:
                 depthStencilRefs.push_back(ref);
@@ -69,46 +69,52 @@ void RenderPass::buildSubpasses()
                 resolveRefs.push_back(ref);
                 break;
             }
-        };
+        }
 
-        VkSubpassDescription subpass;
-        subpass.flags = 0; 
-        subpass.pipelineBindPoint = (VkPipelineBindPoint)bindPoint;
+        VkSubpassDescription subpass = {
+            .flags = 0,
+            .pipelineBindPoint = (VkPipelineBindPoint)bindPoint,
+            .inputAttachmentCount = 0,
+            .pInputAttachments = nullptr,
+            .colorAttachmentCount = 0,
+            .pColorAttachments = nullptr,
+            .pResolveAttachments = nullptr,
+            .pDepthStencilAttachment = nullptr,
+            .preserveAttachmentCount = 0,
+            .pPreserveAttachments = nullptr,
+        };
 
         if (colorRefs.size() > 0)
         {
+            // Guardar colorRefs en un lugar persistente
+            attachmentReferencesStorage.push_back(colorRefs);
             subpass.colorAttachmentCount = (uint32_t)colorRefs.size();
-            subpass.pColorAttachments = colorRefs.data();
-            attachmentsReferences.push_back(colorRefs);
+            subpass.pColorAttachments = attachmentReferencesStorage.back().data();
         }
 
         if (depthStencilRefs.size() > 0)
         {
-            subpass.pDepthStencilAttachment = depthStencilRefs.data();
-            attachmentsReferences.push_back(depthStencilRefs);
+            // Guardar depthStencilRefs en un lugar persistente
+            attachmentReferencesStorage.push_back(depthStencilRefs);
+            subpass.pDepthStencilAttachment = attachmentReferencesStorage.back().data();
         }
-
-        // if (preserveRefs.size() > 0)
-        // {
-        //     subpass.preserveAttachmentCount = (uint32_t)preserveRefs.size();
-        //     subpass.pPreserveAttachments = preserveRefs.data();
-        // }
 
         if (inputRefs.size() > 0)
         {
+            // Guardar inputRefs en un lugar persistente
+            attachmentReferencesStorage.push_back(inputRefs);
             subpass.inputAttachmentCount = (uint32_t)inputRefs.size();
-            subpass.pInputAttachments = inputRefs.data();
-            attachmentsReferences.push_back(inputRefs);
+            subpass.pInputAttachments = attachmentReferencesStorage.back().data();
         }
 
         if (resolveRefs.size() > 0)
         {
-            subpass.pResolveAttachments = resolveRefs.data();
-            attachmentsReferences.push_back(resolveRefs);
+            // Guardar resolveRefs en un lugar persistente
+            attachmentReferencesStorage.push_back(resolveRefs);
+            subpass.pResolveAttachments = attachmentReferencesStorage.back().data();
         }
 
-        subpasses.push_back(subpass);
-        std::cout << "permutación" << std::endl;
+        subpasses.emplace_back(subpass);
     }
 }
 
@@ -120,13 +126,13 @@ void RenderPass::AddDependency(uint32_t srcSubpassIndex,
                                AccessBehavior dstBehavior)
 {
     VkSubpassDependency dependency = {
-        .srcSubpass = (uint32_t)srcSubpassIndex,
-        .dstSubpass = (uint32_t)dstSubpassIndex,
+        .srcSubpass = srcSubpassIndex,
+        .dstSubpass = dstSubpassIndex,
         .srcStageMask = (VkPipelineStageFlags)srcStage,
         .dstStageMask = (VkPipelineStageFlags)dstStage,
         .srcAccessMask = (VkAccessFlags)srcBehavior,
         .dstAccessMask = (VkAccessFlags)dstBehavior,
-        .dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT,
+        .dependencyFlags = 0,
     };
     dependencies.push_back(dependency);
 }
@@ -147,8 +153,8 @@ void RenderPass::AddFramebuffer(uint32_t width, uint32_t height, std::vector<Tex
     VkFramebufferCreateInfo framebufferCI = {
         .sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO,
         .renderPass = _renderPass,
-        .attachmentCount = (uint32_t)views.size(),
-        .pAttachments = views.data(),
+        .attachmentCount = (uint32_t)fbviews.back().size(),
+        .pAttachments = fbviews.back().data(),
         .width = width,
         .height = height,
         .layers = 1,
@@ -160,7 +166,7 @@ void RenderPass::Build(Device &device)
 {
     _device = device;
     VkRenderPassCreateInfo renderPassCI = {
-        .sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO, 
+        .sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO,
     };
     buildSubpasses();
     std::vector<VkAttachmentDescription> attachmentsVec;
@@ -175,18 +181,11 @@ void RenderPass::Build(Device &device)
     {
         renderPassCI.attachmentCount = (uint32_t)attachmentsVec.size();
         renderPassCI.pAttachments = attachmentsVec.data();
-        std::cout << "att size: "<< attachmentsVec.size() << std::endl;
     }
     if (subpasses.size() > 0)
     {
         renderPassCI.subpassCount = (uint32_t)subpasses.size();
         renderPassCI.pSubpasses = subpasses.data();
-        std::cout << "isomorfismo" <<std::endl;
-        std::cout << "subpasses size: " << subpasses.size() << std::endl;
-        for(auto sp : subpasses)
-        {
-            std::cout << sp.colorAttachmentCount << std::endl;
-        }
     }
     if (dependencies.size() > 0)
     {
@@ -201,7 +200,7 @@ void RenderPass::Destroy()
 {
     vkDestroyRenderPass(_device._device, _renderPass, nullptr);
     attachments.clear();
-    attachmentsReferences.clear();
+    attachmentReferencesStorage.clear();
     subpasses.clear();
     subpassesMap.clear();
     dependencies.clear();
