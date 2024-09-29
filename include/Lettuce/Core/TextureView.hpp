@@ -16,8 +16,9 @@ namespace Lettuce::Core
         Device _device;
         Texture _texture;
         VkImageView _imageView;
+        VkImageViewType _viewType;
 
-        void Build(Device &device, Texture &texture);
+        void Build(Device &device, Texture &texture, VkImageViewType viewType = VK_IMAGE_VIEW_TYPE_2D);
         
         void Destroy();
     };

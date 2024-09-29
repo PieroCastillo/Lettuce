@@ -11,6 +11,21 @@
 
 namespace Lettuce::Core
 {
+    /** 
+     * @brief RenderPass is an abstraction of VkRenderPass and VkFramebuffer[], also  
+     * automatizate the generation of AttachmentRefences.
+     * Lifecycle:
+     * renderPass.AddAttachments()
+     * renderPass.AddSubpass()
+     * renderPass.AddDependency()
+     * no matter the order of submission before Build()
+     * renderPass.Build() // here build the internal objects
+     * renderPass.AddFramebuffer()
+     * renderPass.BuildFramebuffers()
+     * here finalize the setup
+     * renderPass.DestroyFrambuffers()
+     * renderPass.Destroy() //destroy and clear internal objects 
+     */
     class RenderPass
     {
     private:

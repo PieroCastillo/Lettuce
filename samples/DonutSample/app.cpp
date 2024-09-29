@@ -34,12 +34,14 @@ using namespace Lettuce::X3D;
 GLFWwindow *window;
 int width = 800;
 int height = 600;
+/*Basic stuff for Lettuce usage*/
 Instance instance;
 Device device;
 Swapchain swapchain;
-// std::vector<TextureView>
 RenderPass renderpass;
+/* sync objects*/
 Semaphore renderFinished;
+/* rendering object */
 Buffer vertexBuffer;
 Buffer indexBuffer;
 Buffer uniformBuffer;
@@ -49,6 +51,14 @@ GraphicsPipeline pipeline;
 Compilers::GLSLCompiler compiler;
 Shader fragmentShader;
 Shader vertexShader;
+/* objects for the creation of the normal map */
+Texture normalTexture;
+TextureView normalTextureView;
+Sampler sampler;
+Descriptor computeDescriptor;
+PipelineConnector computeConnector;
+ComputePipeline computePipeline;
+Shader computeShader;
 
 Camera3D camera;
 
@@ -68,7 +78,7 @@ struct DataPush
 std::vector<Vertex> vertices;
 std::vector<uint32_t> indices;
 
-const std::string fragmentShaderText = R"(#version 420
+const std::string fragmentShaderText = R"(#version 450
 layout (push_constant) uniform pushData {
     vec3 color;
 };
@@ -79,7 +89,7 @@ void main()
     outColor = vec4(color, 1.0);
 })";
 
-const std::string vertexShaderText = R"(#version 420
+const std::string vertexShaderText = R"(#version 450
 layout (location = 0) in vec3 pos;
 layout (set = 0, binding = 0) uniform DataUBO {
     mat4 projectionView;
@@ -89,6 +99,23 @@ layout (set = 0, binding = 0) uniform DataUBO {
 void main()
 {
     gl_Position = ubo.projectionView * ubo.model * vec4(pos,1.0);
+})";
+
+const std::string computeShaderText = R"(#version 450
+layout (local_size_x = 8, local_size_y = 8, local_size_z = 1) in;
+layout (set = 0, binding = 0, rgba16f) uniform image2D imgOutput;
+
+void main()
+{
+    float x = gl_GlobalInvocationID.x;
+    float y = gl_GlobalInvocationID.y;
+    float length = sqrt(x*x + y*y);
+    vec4 data = vec4(0.0);
+    if(length >= radiousMinor & radiousMajor >= length)
+    {
+
+    }
+    imageStore(imgOutput, ivec2(gl_GlobalInvocationID.x,gl_GlobalInvocationID.y), data);
 })";
 
 VkCommandPool pool;
@@ -177,6 +204,23 @@ void initLettuce()
 
     // create sync objects
     renderFinished.Create(device, 0);
+
+    // create normal map objects
+    normalTexture.Build(device, 256, 256, 1, VK_IMAGE_TYPE_2D, VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_STORAGE_BIT, 1, 1, VK_FORMAT_R8G8B8A8_SNORM);
+    normalTextureView.Build(device, normalTexture);
+    sampler.Build(device);
+
+    // computeDescriptor.AddBinding(0, 0, DescriptorType::StorageImage, PipelineStage::Compute, 1);
+    // computeDescriptor.Build(device);
+
+    // computeDescriptor.AddUpdateInfo(0, 0, {normalTextureView});
+    // computeDescriptor.Update();
+
+    // computeConnector.Build(device, computeDescriptor);
+
+    // computeShader.Create(device, compiler, computeShaderText, "main", "compute.glsl", PipelineStage::Compute, true);
+    // computePipeline.Build(device, computeConnector, computeShader);
+
 
     // create rendering resources
     genTorus();
@@ -382,6 +426,11 @@ void endLettuce()
     pipeline.Destroy();
     connector.Destroy();
     descriptor.Destroy();
+
+    sampler.Destroy();
+    normalTextureView.Destroy();
+    normalTexture.Destroy();
+
     uniformBuffer.Unmap();
     uniformBuffer.Destroy();
     vertexBuffer.Destroy();

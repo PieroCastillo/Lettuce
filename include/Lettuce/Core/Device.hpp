@@ -83,6 +83,7 @@ namespace Lettuce::Core
         VkDevice _device;
         std::vector<VkQueue> _graphicsQueues;
         VkQueue _presentQueue;
+        VkQueue _computeQueue;
         VmaAllocator allocator;
         GPU _gpu;
 

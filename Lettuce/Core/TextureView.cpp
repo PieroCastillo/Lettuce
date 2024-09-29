@@ -10,15 +10,16 @@
 
 using namespace Lettuce::Core;
 
-void TextureView::Build(Device &device, Texture &texture)
+void TextureView::Build(Device &device, Texture &texture, VkImageViewType viewType)
 {
     _device = device;
     _texture = texture;
+    _viewType = viewType;
 
     VkImageViewCreateInfo imageViewCI = {
         .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
         .image = texture._image,
-        .viewType = VK_IMAGE_VIEW_TYPE_2D,
+        .viewType = viewType,
         // and arrays
         .format = texture.GetFormat(),
         .components =

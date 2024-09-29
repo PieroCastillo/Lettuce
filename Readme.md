@@ -2,6 +2,11 @@
 
 Lettuce is a rendering Vulkan-based library
 
+### Docs
+ Tools:
+  -  Doxygen + Doxygen Awesome, for API reference
+  -  Docsify for Documentation
+
 ## Components 
 
 ### Lettuce Core
@@ -31,7 +36,8 @@ Lettuce is a rendering Vulkan-based library
 - [ ] Render Graph
 - [ ] Multi-thread Rendering
 - [ ] Async compute
-- [ ] Frustrum culling
+- [ ] Frustrum culling _per object_
+- [ ] Frustrum culling _per region of object_
 ### Lettuce X2D
 - [ ] Lights & Shadows
 - [ ] Fonts

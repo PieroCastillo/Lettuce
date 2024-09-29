@@ -13,7 +13,9 @@
 
 void initWindow();
 void endWindow();
+std::tuple<uint32_t, uint32_t> resizeCall();
 void initLettuce();
+void onResize();
 void endLettuce();
 void mainLoop();
 void draw();
@@ -23,11 +25,12 @@ void recordCmds();
 using namespace Lettuce::Core;
 
 GLFWwindow *window;
-const int width = 800;
-const int height = 600;
+int width = 800;
+int height = 600;
 Instance instance;
 Device device;
 Swapchain swapchain;
+RenderPass renderpass;
 Semaphore renderFinished;
 
 VkCommandPool pool;
@@ -41,6 +44,25 @@ int main()
     endLettuce();
     endWindow();
     return 0;
+}
+
+std::tuple<uint32_t, uint32_t> resizeCall()
+{
+    int w, h;
+    glfwGetWindowSize(window, &w, &h);
+    width = w;
+    height = h;
+    return std::make_tuple((uint32_t)w, (uint32_t)h);
+}
+
+void onResize()
+{
+    renderpass.DestroyFramebuffers();
+    for (auto &view : swapchain.swapchainTextureViews)
+    {
+        renderpass.AddFramebuffer(width, height, {view});
+    }
+    renderpass.BuildFramebuffers();
 }
 
 void initLettuce()
@@ -62,6 +84,35 @@ void initLettuce()
     features.MemoryBudget = false;
     device.Create(instance, gpus.front(), features);
     swapchain.Create(device, width, height);
+    renderpass.AddAttachment(0, AttachmentType::Color,
+                             swapchain.imageFormat,
+                             LoadOp::Clear,
+                             StoreOp::Store,
+                             LoadOp::DontCare,
+                             StoreOp::DontCare,
+                             ImageLayout::Undefined,
+                             ImageLayout::PresentSrc,
+                             ImageLayout::ColorAttachmentOptimal);
+    renderpass.AddSubpass(0, BindPoint::Graphics, {0});
+    renderpass.AddDependency(VK_SUBPASS_EXTERNAL, 0,
+                             AccessStage::ColorAttachmentOutput,
+                             AccessStage::ColorAttachmentOutput,
+                             AccessBehavior::None,
+                             AccessBehavior::ColorAttachmentWrite);
+
+    renderpass.AddDependency(0, VK_SUBPASS_EXTERNAL,
+                             AccessStage::ColorAttachmentOutput,
+                             AccessStage::ColorAttachmentOutput,
+                             AccessBehavior::ColorAttachmentWrite,
+                             AccessBehavior::None);
+    renderpass.Build(device);
+    for (auto &view : swapchain.swapchainTextureViews)
+    {
+        renderpass.AddFramebuffer(width, height, {view});
+    }
+    renderpass.BuildFramebuffers();
+
+    swapchain.SetResizeFunc(resizeCall, onResize);
     renderFinished.Create(device, 0);
     buildCmds();
 }
@@ -112,8 +163,8 @@ void recordCmds()
 
     VkRenderPassBeginInfo renderPassBI = {
         .sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
-        .renderPass = swapchain._renderPass,
-        .framebuffer = swapchain.framebuffers[swapchain.index],
+        .renderPass = renderpass._renderPass,
+        .framebuffer = renderpass._framebuffers[(int)swapchain.index],
         .renderArea = renderArea,
         .clearValueCount = 1,
         .pClearValues = &clearValue,
@@ -179,6 +230,8 @@ void endLettuce()
     vkFreeCommandBuffers(device._device, pool, 1, &cmd);
     vkDestroyCommandPool(device._device, pool, nullptr);
     renderFinished.Destroy();
+    renderpass.DestroyFramebuffers();
+    renderpass.Destroy();
     swapchain.Destroy();
     device.Destroy();
     instance.Destroy();
@@ -199,7 +252,7 @@ void initWindow()
 {
     glfwInit();
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-    glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
+    //glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
     window = glfwCreateWindow(width, height, "Lettuce ClearScreenSample", nullptr, nullptr);
 }
 

@@ -110,6 +110,11 @@ void GPU::loadQueuesFamilies()
             presentFamily = i;
         }
 
+        if(!computeFamily.has_value() && (queueFamily.queueFlags & VK_QUEUE_COMPUTE_BIT))
+        {
+            computeFamily = i;
+        }
+
         if (GraphicsCapable())
             break;
 

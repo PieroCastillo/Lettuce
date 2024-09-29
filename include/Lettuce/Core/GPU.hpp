@@ -28,6 +28,7 @@ namespace Lettuce::Core
         bool geometryShaderPresent = false;
         std::optional<uint32_t> graphicsFamily;
         std::optional<uint32_t> presentFamily;
+        std::optional<uint32_t> computeFamily;
         std::vector<char *> availableExtensionsNames;
 
         void Create(VkSurfaceKHR &surface, VkPhysicalDevice &device);

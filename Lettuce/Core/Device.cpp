@@ -74,7 +74,8 @@ void Device::createFeaturesChain()
         // nop too
     }
 
-    if (_features.MemoryBudget && tryAddFeatureAndExt(VK_EXT_MEMORY_BUDGET_EXTENSION_NAME));
+    if (_features.MemoryBudget && tryAddFeatureAndExt(VK_EXT_MEMORY_BUDGET_EXTENSION_NAME))
+        ;
     {
         _enabledFeatures.MemoryBudget = true;
     }
@@ -168,6 +169,17 @@ void Device::Create(Instance &instance, GPU &gpu, Features gpuFeatures, uint32_t
     };
     queueCreateInfos.push_back(graphicsQueuesCI);
 
+    if (gpu.computeFamily.value() != gpu.graphicsFamily.value())
+    {
+        VkDeviceQueueCreateInfo computeQueueCI = {
+            .sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
+            .queueFamilyIndex = gpu.computeFamily.value(),
+            .queueCount = 1,
+            .pQueuePriorities = &queuePriority,
+        };
+        queueCreateInfos.push_back(computeQueueCI);
+    }
+
     VkPhysicalDeviceFeatures features;
     vkGetPhysicalDeviceFeatures(_pdevice, &features);
 
@@ -211,9 +223,11 @@ void Device::Create(Instance &instance, GPU &gpu, Features gpuFeatures, uint32_t
         vkGetDeviceQueue(_device, gpu.graphicsFamily.value(), i, &(_graphicsQueues.at(i)));
     }
     vkGetDeviceQueue(_device, gpu.presentFamily.value(), 0, &_presentQueue);
+    vkGetDeviceQueue(_device, gpu.computeFamily.value(), 0, &_computeQueue);
 }
 
-Features Device::GetEnabledFeatures(){
+Features Device::GetEnabledFeatures()
+{
     return _enabledFeatures;
 }
 
