@@ -21,7 +21,7 @@ namespace Lettuce::Core
         VmaAllocation _allocation;
         uint32_t _width, _height, _depth, _mipLevels, _layerCount;
         VkImageType _type;
-        VkImageLayout imageLayout = VkImageLayout::VK_IMAGE_LAYOUT_PREINITIALIZED;
+        VkImageLayout _imageLayout;
 
         void Build(Device &device, uint32_t width, uint32_t height, uint32_t depth = 1,
                    VkImageType type = VK_IMAGE_TYPE_2D,
@@ -29,7 +29,8 @@ namespace Lettuce::Core
                    uint32_t mipLevels = 1,
                    uint32_t layerCount = 1,
                    VkFormat format = VkFormat::VK_FORMAT_B8G8R8A8_SRGB,
-                   VmaMemoryUsage memoryUsage = VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE);
+                   VmaMemoryUsage memoryUsage = VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE,
+                   VkImageLayout initialLayout = VK_IMAGE_LAYOUT_PREINITIALIZED);
 
         VkFormat GetFormat();
 

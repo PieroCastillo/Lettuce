@@ -10,18 +10,25 @@
 
 using namespace Lettuce::Core;
 
-void TextureView::Build(Device &device, Texture &texture, VkImageViewType viewType)
+void TextureView::Build(Device &device, std::shared_ptr<Texture> texture, VkImageViewType viewType)
 {
     _device = device;
     _texture = texture;
     _viewType = viewType;
+    _subresourceRange = {
+        .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+        .baseMipLevel = 0,
+        .levelCount = texture->_mipLevels,
+        .baseArrayLayer = 0,
+        .layerCount = texture->_layerCount,
+    };
 
     VkImageViewCreateInfo imageViewCI = {
         .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
-        .image = texture._image,
+        .image = texture->_image,
         .viewType = viewType,
         // and arrays
-        .format = texture.GetFormat(),
+        .format = texture->GetFormat(),
         .components =
             {
                 .r = VK_COMPONENT_SWIZZLE_IDENTITY,
@@ -29,13 +36,7 @@ void TextureView::Build(Device &device, Texture &texture, VkImageViewType viewTy
                 .b = VK_COMPONENT_SWIZZLE_IDENTITY,
                 .a = VK_COMPONENT_SWIZZLE_IDENTITY,
             },
-        .subresourceRange = {
-            .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
-            .baseMipLevel = 0,
-            .levelCount = texture._mipLevels,
-            .baseArrayLayer = 0,
-            .layerCount = texture._layerCount,
-        },
+        .subresourceRange = _subresourceRange,
     };
     checkResult(vkCreateImageView(_device._device, &imageViewCI, nullptr, &_imageView), "image view created sucessfully");
 }

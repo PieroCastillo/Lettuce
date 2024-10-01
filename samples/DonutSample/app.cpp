@@ -11,6 +11,7 @@
 #include <cmath>
 #include <numbers>
 #include <tuple>
+#include <memory>
 
 #include "Lettuce/Lettuce.Core.hpp"
 #include "Lettuce/Lettuce.X3D.hpp"
@@ -26,6 +27,7 @@ void buildCmds();
 void recordCmds();
 void genTorus();
 void updateData();
+void generateImageResources();
 std::tuple<uint32_t, uint32_t> resizeCall();
 
 using namespace Lettuce::Core;
@@ -83,6 +85,8 @@ layout (push_constant) uniform pushData {
     vec3 color;
 };
 layout(location = 0) out vec4 outColor;
+layout(binding = 1) uniform sampler _sampler;
+layout(binding = 2) uniform texture2D _texture;
 
 void main()
 {
@@ -204,11 +208,11 @@ void initLettuce()
 
     // create sync objects
     renderFinished.Create(device, 0);
+    // build command buffers
+    buildCmds();
 
     // create normal map objects
-    normalTexture.Build(device, 256, 256, 1, VK_IMAGE_TYPE_2D, VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_STORAGE_BIT, 1, 1, VK_FORMAT_R8G8B8A8_SNORM);
-    normalTextureView.Build(device, normalTexture);
-    sampler.Build(device);
+    generateImageResources();
 
     // computeDescriptor.AddBinding(0, 0, DescriptorType::StorageImage, PipelineStage::Compute, 1);
     // computeDescriptor.Build(device);
@@ -220,7 +224,6 @@ void initLettuce()
 
     // computeShader.Create(device, compiler, computeShaderText, "main", "compute.glsl", PipelineStage::Compute, true);
     // computePipeline.Build(device, computeConnector, computeShader);
-
 
     // create rendering resources
     genTorus();
@@ -236,9 +239,13 @@ void initLettuce()
     std::cout << "-------- uniform buffer created ----------" << std::endl;
 
     descriptor.AddBinding(0, 0, DescriptorType::UniformBuffer, PipelineStage::Vertex, 1);
+    descriptor.AddBinding(0, 1, DescriptorType::Sampler, PipelineStage::Fragment, 1);
+    descriptor.AddBinding(0, 2, DescriptorType::SampledImage, PipelineStage::Fragment, 1);
     descriptor.Build(device);
     std::cout << "-------- descriptor created ----------" << std::endl;
     descriptor.AddUpdateInfo<DataUBO>(0, 0, {uniformBuffer});
+    descriptor.AddUpdateInfo(0, 1, {sampler});
+    descriptor.AddUpdateInfo(0, 2, {normalTextureView});
     descriptor.Update();
     std::cout << "-------- descriptor updated ----------" << std::endl;
 
@@ -259,9 +266,63 @@ void initLettuce()
     vertexShader.Destroy();
     fragmentShader.Destroy();
 
-    buildCmds();
-
     camera = Camera3D(width, height);
+}
+
+void generateImageResources()
+{
+    normalTexture.Build(device, 256, 256, 1,
+                        VK_IMAGE_TYPE_2D, VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_STORAGE_BIT, 1, 1,
+                        VK_FORMAT_R8G8B8A8_SNORM, VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE, VK_IMAGE_LAYOUT_PREINITIALIZED);
+    std::shared_ptr<Texture> pNormalTexture = std::make_shared<Texture>(normalTexture);
+    normalTextureView.Build(device, pNormalTexture);
+    sampler.Build(device);
+    //create a fence for wait for the queue
+    VkFence fence;
+    VkFenceCreateInfo fenceCI = {
+        .sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO,
+    };
+    checkResult(vkCreateFence(device._device, &fenceCI, nullptr, &fence));
+    vkResetFences(device._device, 1, &fence);
+    // records cmd to do the transition layout
+    VkCommandBufferBeginInfo beginI = {
+        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
+        .flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT,
+    };
+    checkResult(vkBeginCommandBuffer(cmd, &beginI));
+    VkImageMemoryBarrier2 barrier = {
+        .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2,
+        .srcStageMask = VK_PIPELINE_STAGE_2_NONE,
+        .srcAccessMask = VK_ACCESS_2_NONE,
+        .dstStageMask = VK_PIPELINE_STAGE_2_FRAGMENT_SHADER_BIT | VK_PIPELINE_STAGE_2_COMPUTE_SHADER_BIT,
+        .dstAccessMask = VK_ACCESS_2_SHADER_READ_BIT | VK_ACCESS_2_SHADER_STORAGE_WRITE_BIT,
+        .oldLayout = VK_IMAGE_LAYOUT_PREINITIALIZED,
+        .newLayout = VK_IMAGE_LAYOUT_GENERAL,
+        .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+        .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+        .image = normalTexture._image,
+        .subresourceRange = normalTextureView._subresourceRange,
+    };
+    VkDependencyInfo dependencyI = {
+        .sType = VK_STRUCTURE_TYPE_DEPENDENCY_INFO,
+        .imageMemoryBarrierCount = 1,
+        .pImageMemoryBarriers = &barrier,
+    };
+    vkCmdPipelineBarrier2(cmd, &dependencyI);
+    checkResult(vkEndCommandBuffer(cmd));
+    VkCommandBufferSubmitInfo cmdSI = {
+        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_SUBMIT_INFO,
+        .commandBuffer = cmd,
+        .deviceMask = 0,
+    };
+    VkSubmitInfo2 submitI = {
+        .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO_2,t
+        .pCommandBufferInfos = &cmdSI,
+    };
+    checkResult(vkQueueSubmit2(device._graphicsQueues[0], 1, &submitI, fence));
+    checkResult(vkWaitForFences(device._device, 1, &fence, true, (std::numeric_limits<uint64_t>::max)()));
+    normalTexture._imageLayout = VK_IMAGE_LAYOUT_GENERAL;
+    vkDestroyFence(device._device, fence, nullptr);
 }
 
 void buildCmds()
@@ -474,9 +535,9 @@ void genTorus()
     float radiusMajor = 10;
     float radiusMinor = 5;
     // float sectorStep = 10;
-    float sectorCount = 20;
+    float sectorCount = 30;
     // float sideStep;
-    float sideCount = 10;
+    float sideCount = 15;
 
     float theta;
     float phi;

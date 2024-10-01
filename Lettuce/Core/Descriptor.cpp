@@ -143,10 +143,11 @@ void Descriptor::AddUpdateInfo(uint32_t set, uint32_t binding, std::vector<Textu
     std::vector<VkDescriptorImageInfo> imageInfos(views.size());
     for (int i = 0; i < views.size(); i++)
     {
-        imageInfos[i] = VkDescriptorImageInfo{
+        VkDescriptorImageInfo imageI = {
             .imageView = views[i]._imageView,
-            .imageLayout = views[i]._texture.imageLayout,
+            .imageLayout = views[i]._texture->_imageLayout,
         };
+        imageInfos[i] = imageI;
     }
     writesFieldsMap[{set, binding}].imageInfos = imageInfos;
     VkWriteDescriptorSet write = {
@@ -156,7 +157,7 @@ void Descriptor::AddUpdateInfo(uint32_t set, uint32_t binding, std::vector<Textu
         .dstArrayElement = 0,
         .descriptorCount = (uint32_t)views.size(),
         .descriptorType = bindingsTypes[{set, binding}],
-        .pImageInfo = imageInfos.data(),
+        .pImageInfo =  writesFieldsMap[{set, binding}].imageInfos.data(),
     };
     writes.push_back(write);
 }
@@ -178,7 +179,7 @@ void Descriptor::AddUpdateInfo(uint32_t set, uint32_t binding, std::vector<Sampl
         .dstArrayElement = 0,
         .descriptorCount = (uint32_t)samplers.size(),
         .descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER,
-        .pImageInfo = imageInfos.data(),
+        .pImageInfo = writesFieldsMap[{set, binding}].imageInfos.data(),
     };
     writes.push_back(write);
 }
@@ -195,7 +196,7 @@ void Descriptor::AddUpdateInfo(uint32_t set, uint32_t binding, std::vector<Sampl
         imageInfos[i] = VkDescriptorImageInfo{
             .sampler = samplers[i]._sampler,
             .imageView = views[i]._imageView,
-            .imageLayout = views[i]._texture.imageLayout,
+            .imageLayout = views[i]._texture->_imageLayout,
         };
     }
     writesFieldsMap[{set, binding}].imageInfos = imageInfos;

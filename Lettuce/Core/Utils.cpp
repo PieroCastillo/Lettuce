@@ -13,7 +13,7 @@ using namespace Lettuce::Core;
 
 void Lettuce::Core::checkResult(const VkResult result, std::string onSucessMessage)
 {
-    if (result == VK_SUCCESS)
+    if (result == VK_SUCCESS || result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR)
     {
         // std::cout << onSucessMessage << std::endl;
     }

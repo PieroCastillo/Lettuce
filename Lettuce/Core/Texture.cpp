@@ -15,7 +15,8 @@ void Texture::Build(Device &device, uint32_t width, uint32_t height, uint32_t de
                     uint32_t mipLevels,
                     uint32_t layerCount,
                     VkFormat format,
-                    VmaMemoryUsage memoryUsage)
+                    VmaMemoryUsage memoryUsage,
+                    VkImageLayout initialLayout)
 {
     _device = device;
     _width = width;
@@ -25,6 +26,7 @@ void Texture::Build(Device &device, uint32_t width, uint32_t height, uint32_t de
     _layerCount = layerCount;
     _type = type;
     _imageFormat = format;
+    _imageLayout = initialLayout;
 
     VkImageCreateInfo imageCI = {
         .sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
@@ -37,7 +39,7 @@ void Texture::Build(Device &device, uint32_t width, uint32_t height, uint32_t de
         .tiling = VkImageTiling::VK_IMAGE_TILING_OPTIMAL,
         .usage = (VkImageUsageFlags)imageUsage,
         .sharingMode = VkSharingMode::VK_SHARING_MODE_EXCLUSIVE,
-        .initialLayout = VkImageLayout::VK_IMAGE_LAYOUT_PREINITIALIZED,
+        .initialLayout = initialLayout,
     };
 
     VmaAllocationCreateInfo allocationCI = {
