@@ -316,7 +316,8 @@ void generateImageResources()
         .deviceMask = 0,
     };
     VkSubmitInfo2 submitI = {
-        .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO_2,t
+        .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO_2,
+        .commandBufferInfoCount = 1,
         .pCommandBufferInfos = &cmdSI,
     };
     checkResult(vkQueueSubmit2(device._graphicsQueues[0], 1, &submitI, fence));
