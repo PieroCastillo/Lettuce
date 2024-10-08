@@ -75,7 +75,6 @@ void Device::createFeaturesChain()
     }
 
     if (_features.MemoryBudget && tryAddFeatureAndExt(VK_EXT_MEMORY_BUDGET_EXTENSION_NAME))
-        ;
     {
         _enabledFeatures.MemoryBudget = true;
     }
@@ -99,6 +98,9 @@ void Device::createFeaturesChain()
     gpuFeatures12.descriptorBindingSampledImageUpdateAfterBind = VK_TRUE;
     gpuFeatures12.descriptorBindingUpdateUnusedWhilePending = VK_TRUE;
     gpuFeatures12.descriptorBindingPartiallyBound = VK_TRUE;
+    gpuFeatures12.descriptorBindingStorageBufferUpdateAfterBind = VK_TRUE;
+    gpuFeatures12.descriptorBindingStorageImageUpdateAfterBind = VK_TRUE;
+    gpuFeatures12.descriptorIndexing = VK_TRUE;
     // gpuFeatures12.descriptorBindingVariableDescriptorCount = VK_TRUE;
     gpuFeatures12.runtimeDescriptorArray = VK_TRUE;
     gpuFeatures12.timelineSemaphore = VK_TRUE;

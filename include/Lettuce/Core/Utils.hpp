@@ -267,6 +267,7 @@ namespace Lettuce::Core
         Task = 0x00000040,
         Mesh = 0x00000080,
     };
+    MAKE_ENUM_FLAGS(PipelineStage)
 
     enum class Format32
     {

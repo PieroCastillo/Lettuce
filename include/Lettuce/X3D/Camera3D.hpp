@@ -16,7 +16,7 @@ namespace Lettuce::X3D
         glm::mat4 projection;
         glm::mat4 view;
         glm::vec3 eye, center;
-        glm::vec3 up = glm::vec3(1.0f, 1.0f, 1.0f);
+        glm::vec3 up = glm::vec3(1.0f, 1.0f, 0.0f);
 
     public:
         Camera3D() {}

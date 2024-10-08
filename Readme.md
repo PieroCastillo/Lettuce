@@ -43,6 +43,7 @@ Lettuce is a rendering Vulkan-based library
 - [ ] Fonts
 - [ ] Materials
   - [ ] Glass
+  - [ ] Acrylic
 - [ ] Reflections 
 - [ ] Radiosity
 ### Lettuce X3D

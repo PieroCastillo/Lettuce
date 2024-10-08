@@ -25,6 +25,8 @@ void mainLoop();
 void draw();
 void buildCmds();
 void recordCmds();
+void recordCompute();
+void sendCompute();
 void genTorus();
 void updateData();
 void generateImageResources();
@@ -47,6 +49,7 @@ Semaphore renderFinished;
 Buffer vertexBuffer;
 Buffer indexBuffer;
 Buffer uniformBuffer;
+Buffer lightBuffer;
 Descriptor descriptor;
 PipelineConnector connector;
 GraphicsPipeline pipeline;
@@ -72,7 +75,16 @@ struct DataUBO
 {
     glm::mat4 projectionView;
     glm::mat4 model;
+    glm::vec3 cameraPos;
 } dataUBO;
+struct LightUBO
+{
+    float ambient;  // Ka*Ia
+    float diffuse;  // Kd*Id
+    float specular; // Ks*Is
+    glm::vec3 lightColor;
+    glm::vec3 lightPosition;
+} lightUBO;
 struct DataPush
 {
     glm::vec3 color;
@@ -84,24 +96,55 @@ const std::string fragmentShaderText = R"(#version 450
 layout (push_constant) uniform pushData {
     vec3 color;
 };
-layout(location = 0) out vec4 outColor;
-layout(binding = 1) uniform sampler _sampler;
-layout(binding = 2) uniform texture2D _texture;
+layout (location = 0) out vec4 outColor;
+layout (location = 1) in vec2 xy_pos;
+layout (location = 2) in vec3 xyz_pos;
+layout (binding = 0) uniform DataUBO {
+    mat4 projectionView;
+    mat4 model;
+    vec3 cameraPos;
+} ubo;
+layout (binding = 1) uniform sampler _sampler;
+layout (binding = 2) uniform texture2D _texture;
+layout (binding = 4) uniform LightUBO
+{
+    float ambient;
+    float diffuse;
+    float specular;
+    vec3 lightColor;
+    vec3 lightPosition;
+} light;
 
 void main()
 {
-    outColor = vec4(color, 1.0);
+    vec3 materialColor = color;
+    vec3 tex_normal = (transpose(inverse(ubo.projectionView*ubo.model))*texture(sampler2D(_texture,_sampler), xy_pos)).xyz;
+    //vec3 tex_normal = texture(sampler2D(_texture,_sampler), xy_pos).xyz;
+    vec3 lightDir = normalize(light.lightPosition - xyz_pos);
+    vec3 viewerDir = normalize(ubo.cameraPos - xyz_pos);
+    float diffuseComp = 0.0;
+    float specularComp = 0.0;
+    diffuseComp = light.diffuse * max(0,dot(lightDir, tex_normal))* dot(light.lightColor, materialColor);
+    specularComp = light.specular * pow(max(0,dot(lightDir, viewerDir)),256)* dot(light.lightColor, materialColor);
+    vec3 result = (light.ambient + diffuseComp + specularComp)*materialColor;
+    //outColor = vec4(tex_normal,1.0);//debug
+    outColor = vec4(result,0);
 })";
 
 const std::string vertexShaderText = R"(#version 450
 layout (location = 0) in vec3 pos;
+layout (location = 1) out vec2 xy_pos;
+layout (location = 2) out vec3 xyz_pos;
 layout (set = 0, binding = 0) uniform DataUBO {
     mat4 projectionView;
     mat4 model;
+    vec3 cameraPos;
 } ubo;
 
 void main()
-{
+{   
+    xy_pos = (pos.xy+vec2(15,15))/30;
+    xyz_pos = (pos.xyz);
     gl_Position = ubo.projectionView * ubo.model * vec4(pos,1.0);
 })";
 
@@ -111,15 +154,28 @@ layout (set = 0, binding = 0, rgba16f) uniform image2D imgOutput;
 
 void main()
 {
-    float x = gl_GlobalInvocationID.x;
-    float y = gl_GlobalInvocationID.y;
-    float length = sqrt(x*x + y*y);
-    vec4 data = vec4(0.0);
-    if(length >= radiousMinor & radiousMajor >= length)
+    float r_p = 10-5;
+    float R_p = 10+5;
+    float x =  (float(gl_GlobalInvocationID.x) - 128)*(2*R_p)/256;
+    float y =  (float(gl_GlobalInvocationID.y) - 128)*(2*R_p)/256; 
+    float length = sqrt((x*x) + (y*y));
+    vec4 data = vec4(1.0);
+    if(length >= (r_p-1) && R_p > length)
     {
+        vec4 d_vec;
+        float r = 10;
+        float R = 5;
+        float alpha_val = r*r - ((R - sqrt(x*x+y*y))*(R - sqrt(x*x+y*y)));
 
+        float n_comp = (-1)*(1/sqrt(alpha_val))*(R-sqrt(x*x+y*y))*(1/sqrt(x*x+y*y));
+
+        float n_x = n_comp * x;
+        float n_y = n_comp * y;
+        float n_z = 1;
+        d_vec = vec4(n_x, n_y, n_z, 0);
+        data = normalize(d_vec);
     }
-    imageStore(imgOutput, ivec2(gl_GlobalInvocationID.x,gl_GlobalInvocationID.y), data);
+    imageStore(imgOutput, ivec2(gl_GlobalInvocationID.xy), data);
 })";
 
 VkCommandPool pool;
@@ -214,16 +270,20 @@ void initLettuce()
     // create normal map objects
     generateImageResources();
 
-    // computeDescriptor.AddBinding(0, 0, DescriptorType::StorageImage, PipelineStage::Compute, 1);
-    // computeDescriptor.Build(device);
+    computeDescriptor.AddBinding(0, 0, DescriptorType::StorageImage, PipelineStage::Compute, 1);
+    computeDescriptor.Build(device);
 
-    // computeDescriptor.AddUpdateInfo(0, 0, {normalTextureView});
-    // computeDescriptor.Update();
+    computeDescriptor.AddUpdateInfo(0, 0, {normalTextureView});
+    computeDescriptor.Update();
 
-    // computeConnector.Build(device, computeDescriptor);
+    computeConnector.Build(device, computeDescriptor);
 
-    // computeShader.Create(device, compiler, computeShaderText, "main", "compute.glsl", PipelineStage::Compute, true);
-    // computePipeline.Build(device, computeConnector, computeShader);
+    computeShader.Create(device, compiler, computeShaderText, "main", "compute.glsl", PipelineStage::Compute, true);
+    computePipeline.Build(device, computeConnector, computeShader);
+    computeShader.Destroy();
+
+    recordCompute();
+    sendCompute();
 
     // create rendering resources
     genTorus();
@@ -238,14 +298,20 @@ void initLettuce()
     uniformBuffer.SetData(&dataUBO);
     std::cout << "-------- uniform buffer created ----------" << std::endl;
 
-    descriptor.AddBinding(0, 0, DescriptorType::UniformBuffer, PipelineStage::Vertex, 1);
+    lightBuffer = Buffer::CreateUniformBuffer<LightUBO>(device);
+    lightBuffer.Map();
+    lightBuffer.SetData(&lightUBO);
+
+    descriptor.AddBinding(0, 0, DescriptorType::UniformBuffer, PipelineStage::Vertex | PipelineStage::Fragment, 1);
     descriptor.AddBinding(0, 1, DescriptorType::Sampler, PipelineStage::Fragment, 1);
     descriptor.AddBinding(0, 2, DescriptorType::SampledImage, PipelineStage::Fragment, 1);
+    descriptor.AddBinding(0, 4, DescriptorType::UniformBuffer, PipelineStage::Fragment, 1);
     descriptor.Build(device);
     std::cout << "-------- descriptor created ----------" << std::endl;
     descriptor.AddUpdateInfo<DataUBO>(0, 0, {uniformBuffer});
     descriptor.AddUpdateInfo(0, 1, {sampler});
     descriptor.AddUpdateInfo(0, 2, {normalTextureView});
+    descriptor.AddUpdateInfo<LightUBO>(0, 4, {lightBuffer});
     descriptor.Update();
     std::cout << "-------- descriptor updated ----------" << std::endl;
 
@@ -260,7 +326,7 @@ void initLettuce()
     pipeline.AddVertexAttribute(0, 0, 0, VK_FORMAT_R32G32B32A32_SFLOAT); // layout(location = 0) in vec3 pos;
     pipeline.AddShaderStage(vertexShader);
     pipeline.AddShaderStage(fragmentShader);
-    pipeline.Build(device, connector, renderpass, 0);
+    pipeline.Build(device, connector, renderpass, 0, FrontFace::Clockwise);
     std::cout << "-------- pipeline created ----------" << std::endl;
 
     vertexShader.Destroy();
@@ -277,7 +343,7 @@ void generateImageResources()
     std::shared_ptr<Texture> pNormalTexture = std::make_shared<Texture>(normalTexture);
     normalTextureView.Build(device, pNormalTexture);
     sampler.Build(device);
-    //create a fence for wait for the queue
+    // create a fence for wait for the queue
     VkFence fence;
     VkFenceCreateInfo fenceCI = {
         .sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO,
@@ -347,14 +413,64 @@ void buildCmds()
 
 void updateData()
 {
-    dataPush.color = {0.5f, 0.65f, 0.3f};
-    camera.SetPosition(glm::vec3(20.0f, 20.0f, 30.0f));
+    dataPush.color = glm::vec3(99.0f / 255.0f, 229.0f / 255.0f, 15.0f / 255.0f);
+    camera.SetPosition(glm::vec3(20,20,30));
+    //camera.SetPosition(glm::vec3(30));
     camera.SetCenter(glm::vec3(0.0f, 0.0f, 0.0f));
     camera.Update();
     dataUBO.projectionView = camera.GetProjectionView();
     dataUBO.model = glm::mat4(1.0f);
+    dataUBO.cameraPos = glm::vec3(20,20,30);
+    //dataUBO.cameraPos = glm::vec3(30);
 
     uniformBuffer.SetData(&dataUBO);
+
+    lightUBO.ambient = 0.3f;
+    lightUBO.diffuse = 0.01f;
+    lightUBO.specular = 10.5f;
+    lightUBO.lightColor = glm::vec3(1.0f);
+    lightUBO.lightPosition = glm::vec3(0,0,30);
+
+    lightBuffer.SetData(&lightUBO);
+}
+
+void recordCompute()
+{
+    vkResetCommandBuffer(cmd, 0);
+    VkCommandBufferBeginInfo beginI = {
+        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
+        .flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT,
+    };
+    checkResult(vkBeginCommandBuffer(cmd, &beginI));
+
+    vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_COMPUTE, computePipeline._pipeline);
+    vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_COMPUTE, computeConnector._pipelineLayout, 0, 1, computeDescriptor._descriptorSets.data(), 0, nullptr);
+    vkCmdDispatch(cmd, 256 / 8, 256 / 8, 1);
+
+    checkResult(vkEndCommandBuffer(cmd));
+}
+
+void sendCompute()
+{
+    VkFence fence;
+    VkFenceCreateInfo fenceCI = {
+        .sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO,
+    };
+    checkResult(vkCreateFence(device._device, &fenceCI, nullptr, &fence));
+    vkResetFences(device._device, 1, &fence);
+    VkCommandBufferSubmitInfo cmdSI = {
+        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_SUBMIT_INFO,
+        .commandBuffer = cmd,
+        .deviceMask = 0,
+    };
+    VkSubmitInfo2 submitI = {
+        .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO_2,
+        .commandBufferInfoCount = 1,
+        .pCommandBufferInfos = &cmdSI,
+    };
+    checkResult(vkQueueSubmit2(device._computeQueue, 1, &submitI, fence));
+    checkResult(vkWaitForFences(device._device, 1, &fence, true, (std::numeric_limits<uint64_t>::max)()));
+    vkDestroyFence(device._device, fence, nullptr);
 }
 
 void recordCmds()
@@ -493,6 +609,8 @@ void endLettuce()
     normalTextureView.Destroy();
     normalTexture.Destroy();
 
+    lightBuffer.Unmap();
+    lightBuffer.Destroy();
     uniformBuffer.Unmap();
     uniformBuffer.Destroy();
     vertexBuffer.Destroy();

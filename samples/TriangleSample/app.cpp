@@ -113,7 +113,7 @@ void initLettuce()
 
     graphicsPipeline.AddShaderStage(fragmentShader);
     graphicsPipeline.AddShaderStage(vertexShader);
-    graphicsPipeline.Build(device, connector, swapchain);
+    graphicsPipeline.Build(device, connector, swapchain, 0);
 
     fragmentShader.Destroy();
     vertexShader.Destroy();

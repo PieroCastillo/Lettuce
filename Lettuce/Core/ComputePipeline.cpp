@@ -9,6 +9,7 @@ using namespace Lettuce::Core;
 
 void ComputePipeline::Build(Device &device, PipelineConnector &connector, Shader &shader)
 {
+    _device = device;
     _pipelineLayout = connector._pipelineLayout;
 
     VkPipelineShaderStageCreateInfo pipelineShaderStageCI = {
@@ -20,15 +21,13 @@ void ComputePipeline::Build(Device &device, PipelineConnector &connector, Shader
 
     VkComputePipelineCreateInfo computePipelineCI = {
         .sType = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO,
-        // const void*                        pNext;
-        // VkPipelineCreateFlags              flags;
         .stage = pipelineShaderStageCI,
         .layout = _pipelineLayout,
         // VkPipeline                         basePipelineHandle;
         // int32_t                            basePipelineIndex;
     };
 
-    checkResult(vkCreateComputePipelines(_device._device, VK_NULL_HANDLE, 1, &computePipelineCI, nullptr, &_pipeline), "graphics pipeline created sucessfully");
+    checkResult(vkCreateComputePipelines(_device._device, VK_NULL_HANDLE, 1, &computePipelineCI, nullptr, &_pipeline));
 }
 
 void ComputePipeline::Destroy()
