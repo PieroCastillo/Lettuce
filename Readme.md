@@ -48,6 +48,8 @@ Lettuce is a rendering Vulkan-based library
 - [ ] Radiosity
 ### Lettuce X3D
 - [ ] PBR
+- [ ] Lighting System
+- [ ] Imports glft2 files
 ### Lettuce Compute
 
 ### hardware-vendors recommendations

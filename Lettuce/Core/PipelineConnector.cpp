@@ -33,7 +33,7 @@ void PipelineConnector::Build(Device &device, Descriptor &descriptor)
         pipelineLayoutCI.setLayoutCount = (uint32_t)descriptor._layouts.size();
     }
 
-    checkResult(vkCreatePipelineLayout(_device._device, &pipelineLayoutCI, nullptr, &_pipelineLayout), "PipelineLayout created sucessfully");
+    checkResult(vkCreatePipelineLayout(_device._device, &pipelineLayoutCI, nullptr, &_pipelineLayout));
 }
 
 void PipelineConnector::Destroy()
