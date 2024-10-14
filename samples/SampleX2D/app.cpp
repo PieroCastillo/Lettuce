@@ -1,37 +1,49 @@
 //
-// Created by piero on 10/02/2024.
+// Created by piero on 08/02/2024.
 //
 #include <iostream>
 #include <vector>
 #include <GLFW/glfw3.h>
 #define GLFW_EXPOSE_NATIVE_WIN32
 #include <GLFW/glfw3native.h>
-// #define VK_USE_PLATFORM_WIN32_KHR
-// #include <volk.h>
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <cmath>
+#include <numbers>
+#include <tuple>
+#include <memory>
 
 #include "Lettuce/Lettuce.Core.hpp"
+#include "Lettuce/Lettuce.X2D.hpp"
+#include <glm/ext/matrix_clip_space.hpp>
 
 void initWindow();
 void endWindow();
-std::tuple<uint32_t, uint32_t> resizeCall();
 void initLettuce();
-void onResize();
 void endLettuce();
 void mainLoop();
 void draw();
 void buildCmds();
 void recordCmds();
+void updateData();
+std::tuple<uint32_t, uint32_t> resizeCall();
 
 using namespace Lettuce::Core;
+using namespace Lettuce::X2D;
 
 GLFWwindow *window;
 int width = 800;
 int height = 600;
+/*Basic stuff for Lettuce usage*/
 Instance instance;
 Device device;
 Swapchain swapchain;
 RenderPass renderpass;
+/* sync objects*/
 Semaphore renderFinished;
+
+//Camera2D camera;
+
 
 VkCommandPool pool;
 VkCommandBuffer cmd;
@@ -52,6 +64,8 @@ std::tuple<uint32_t, uint32_t> resizeCall()
     glfwGetWindowSize(window, &w, &h);
     width = w;
     height = h;
+    //camera = Camera2D(width, height);
+
     return std::make_tuple((uint32_t)w, (uint32_t)h);
 }
 
@@ -68,22 +82,21 @@ void onResize()
 void initLettuce()
 {
     instance._debug = true;
-    instance.Create("ClearScreenSample", Lettuce::Core::Version{0, 1, 0, 0}, {});
+    instance.Create("Sample X2D", Lettuce::Core::Version{0, 1, 0, 0}, {});
     instance.CreateSurface(glfwGetWin32Window(window), GetModuleHandle(nullptr));
     auto gpus = instance.getGPUs();
     for (auto gpu : gpus)
     {
         std::cout << "available device: " << gpu.deviceName << std::endl;
-        std::cout << "    graphics family: " << gpu.graphicsFamily.value() << std::endl;
-        std::cout << "    present family : " << gpu.presentFamily.value() << std::endl;
-        std::cout << "    gpu ptr:         " << gpu._pdevice << std::endl;
     }
+    // create device
     Features features;
     features.MeshShading = false;
     features.ConditionalRendering = false;
     features.MemoryBudget = false;
     device.Create(instance, gpus.front(), features);
     swapchain.Create(device, width, height);
+
     renderpass.AddAttachment(0, AttachmentType::Color,
                              swapchain.imageFormat,
                              LoadOp::Clear,
@@ -106,15 +119,22 @@ void initLettuce()
                              AccessBehavior::ColorAttachmentWrite,
                              AccessBehavior::None);
     renderpass.Build(device);
+    std::cout << "-------- renderpass created ----------" << std::endl;
     for (auto &view : swapchain.swapchainTextureViews)
     {
         renderpass.AddFramebuffer(width, height, {view});
     }
     renderpass.BuildFramebuffers();
+    std::cout << "-------- framebuffers created ----------" << std::endl;
 
     swapchain.SetResizeFunc(resizeCall, onResize);
+
+    // create sync objects
     renderFinished.Create(device, 0);
+    // build command buffers
     buildCmds();
+
+    //camera = Camera3D(width, height);
 }
 
 void buildCmds()
@@ -136,6 +156,11 @@ void buildCmds()
     checkResult(vkAllocateCommandBuffers(device._device, &cmdAI, &cmd));
 }
 
+void updateData()
+{
+    
+}
+
 void recordCmds()
 {
     // rendering cmd
@@ -147,13 +172,34 @@ void recordCmds()
     //    clearValues[0].color = {{0.5f, 0.5f, 0.5f, 1.0f}};
     //    clearValues[1].depthStencil = {1, 0};
     VkClearValue clearValue;
-    clearValue.color = {{0.1f, 0.7f, 0.2f, 1.0f}};
+    clearValue.color = {{0.5f, 0.5f, 0.5f, 1.0f}};
 
     VkCommandBufferBeginInfo cmdBI = {
         .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
         .flags = VK_COMMAND_BUFFER_USAGE_RENDER_PASS_CONTINUE_BIT,
     };
     checkResult(vkBeginCommandBuffer(cmd, &cmdBI));
+
+    VkImageMemoryBarrier2 imageBarrier2 = {
+        .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2,
+        .srcStageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT,
+        .dstStageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT,
+        .dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+        .oldLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+        .newLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+        .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+        .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+        .image = swapchain.swapChainImages[(int)swapchain.index],
+        .subresourceRange = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1},
+    };
+
+    VkDependencyInfo dependencyI = {
+        .sType = VK_STRUCTURE_TYPE_DEPENDENCY_INFO,
+        .imageMemoryBarrierCount = 1,
+        .pImageMemoryBarriers = &imageBarrier2,
+    };
+
+    vkCmdPipelineBarrier2(cmd, &dependencyI);
 
     VkRect2D renderArea;
     renderArea.extent.height = swapchain.height;
@@ -171,6 +217,7 @@ void recordCmds()
     };
 
     vkCmdBeginRenderPass(cmd, &renderPassBI, VkSubpassContents::VK_SUBPASS_CONTENTS_INLINE);
+    
     vkCmdEndRenderPass(cmd);
 
     checkResult(vkEndCommandBuffer(cmd));
@@ -229,6 +276,7 @@ void endLettuce()
 {
     vkFreeCommandBuffers(device._device, pool, 1, &cmd);
     vkDestroyCommandPool(device._device, pool, nullptr);
+
     renderFinished.Destroy();
     renderpass.DestroyFramebuffers();
     renderpass.Destroy();
@@ -243,6 +291,7 @@ void mainLoop()
     {
         std::cout << "-------------- frame ---------------" << std::endl;
         glfwPollEvents();
+        updateData();
         draw();
     }
     device.Wait();
@@ -252,8 +301,8 @@ void initWindow()
 {
     glfwInit();
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-    //glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
-    window = glfwCreateWindow(width, height, "Lettuce ClearScreenSample", nullptr, nullptr);
+    glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
+    window = glfwCreateWindow(width, height, "Lettuce X2D Sample", nullptr, nullptr);
 }
 
 void endWindow()

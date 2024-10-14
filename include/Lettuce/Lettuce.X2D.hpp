@@ -1,0 +1,6 @@
+#include "X2D/Camera2D.hpp"
+#include "X2D/RenderContext.hpp"
+#include "X2D/Geometries/GeometryBase.hpp"
+#include "X2D/Geometries/Rectangle.hpp"
+#include "X2D/Materials/MaterialBase.hpp"
+#include "X2D/Materials/ColorMaterial.hpp"
