@@ -10,6 +10,7 @@ namespace Lettuce::X2D
     class Camera2D
     {
     public:
+        Camera2D() {}
         Camera2D(float left, float right, float bottom, float top, float near, float far);
         void SetPosition(glm::vec3 &position);
         glm::mat4 GetViewProjectionMatrix();
