@@ -1,6 +1,7 @@
 //
 // Created by piero on 30/09/2024.
 //
+#pragma once
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include "Lettuce/Core/RenderPass.hpp"

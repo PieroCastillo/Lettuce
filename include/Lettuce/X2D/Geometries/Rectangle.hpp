@@ -1,6 +1,7 @@
 //
 // Created by piero on 30/09/2024.
 //
+#pragma once
 #include "glm/glm.hpp"
 #include "GeometryBase.hpp"
 #include "Lettuce/Core/Buffer.hpp"
@@ -9,7 +10,7 @@ using namespace Lettuce::Core;
 
 namespace Lettuce::X2D::Geometries
 {
-    class Rectangle : public Geometry
+    class Rectangle : public GeometryBase
     {
     public:
         glm::mat4 transform;
