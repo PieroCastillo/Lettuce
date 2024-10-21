@@ -46,6 +46,8 @@ Lettuce is a rendering Vulkan-based library
   - [ ] Acrylic
 - [ ] Reflections 
 - [ ] Radiosity
+- [ ] Particles system
+- [ ] Lottie Animations
 ### Lettuce X3D
 - [ ] PBR
 - [ ] Lighting System

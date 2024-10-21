@@ -7,11 +7,10 @@
 ## Prepare the poject to build
 
 ### Step 1
-Install SDL2 package (use x64 triplet).
-For example, if you are using windows run the follow command:
+Install vcpkg packages with the follow command:
 
 ```cmd
-vcpkg install glfw3 
+vcpkg install glfw3 glm volk vulkan vulkan-memory-allocator vulkan-sdk-components tinygltf 
 ```
 ### Step 2 
 
