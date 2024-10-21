@@ -8,3 +8,11 @@
 
 using namespace Lettuce::X2D::Geometries;
 
+Rectangle::Rectangle()
+{
+    
+}
+void Rectangle::SetSizeAndPosition(uint32_t x, uint32_t y, uint32_t width, uint32_t height)
+{
+
+}

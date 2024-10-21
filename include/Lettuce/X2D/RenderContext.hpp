@@ -3,11 +3,15 @@
 //
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#include "LettucE/Core/RenderPass.hpp"
 
 namespace Lettuce::X2D
 {
     class RenderContext
     {
+    private:
+        RenderPass renderPass;
+        void recontruct();
     public:
         glm::mat4 globalTransform = glm::mat4(1);
         RenderContext();
