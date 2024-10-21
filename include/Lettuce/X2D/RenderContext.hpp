@@ -3,7 +3,9 @@
 //
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
-#include "LettucE/Core/RenderPass.hpp"
+#include "Lettuce/Core/RenderPass.hpp"
+
+using namespace Lettuce::Core;
 
 namespace Lettuce::X2D
 {

@@ -11,11 +11,11 @@
 #include "Lettuce/Core/Utils.hpp"
 #include "Lettuce/Core/Sampler.hpp"
 #include "Lettuce/Core/TextureView.hpp"
-#include "Lettuce/Core/Descriptor.hpp"
+#include "Lettuce/Core/Descriptors.hpp"
 
 using namespace Lettuce::Core;
 
-void Descriptor::Build(Device &device, uint32_t maxSets)
+void Descriptors::Build(Device &device, uint32_t maxSets)
 {
     _device = device;
     // create descriptor set layouts
@@ -55,7 +55,7 @@ void Descriptor::Build(Device &device, uint32_t maxSets)
         index++;
     }
 
-    // creates the sizes required for the Descriptor Pool
+    // creates the sizes required for the Descriptors Pool
     for (auto &[type, count] : typesMap)
     {
         sizes.push_back(VkDescriptorPoolSize{
@@ -85,7 +85,7 @@ void Descriptor::Build(Device &device, uint32_t maxSets)
     checkResult(vkAllocateDescriptorSets(device._device, &descriptorSetAI, _descriptorSets.data()));
 }
 
-void Descriptor::Destroy()
+void Descriptors::Destroy()
 {
     checkResult(vkResetDescriptorPool(_device._device, _pool, 0));
     vkDestroyDescriptorPool(_device._device, _pool, nullptr);
@@ -99,7 +99,7 @@ void Descriptor::Destroy()
     sizes.clear();
 }
 
-void Descriptor::AddBinding(uint32_t set, uint32_t binding, DescriptorType type, PipelineStage stage, uint32_t descriptorCount)
+void Descriptors::AddBinding(uint32_t set, uint32_t binding, DescriptorType type, PipelineStage stage, uint32_t descriptorCount)
 {
     VkDescriptorSetLayoutBinding layoutBinding = {
         .binding = binding,
@@ -111,7 +111,7 @@ void Descriptor::AddBinding(uint32_t set, uint32_t binding, DescriptorType type,
     bindingsTypes[{set, binding}] = (VkDescriptorType)type;
 }
 
-void Descriptor::AddUpdateInfo(uint32_t set, uint32_t binding, uint32_t size, std::vector<Buffer> buffers)
+void Descriptors::AddUpdateInfo(uint32_t set, uint32_t binding, uint32_t size, std::vector<Buffer> buffers)
 {
     std::vector<VkDescriptorBufferInfo> bufferInfos(buffers.size());
     for (int i = 0; i < buffers.size(); i++)
@@ -138,7 +138,7 @@ void Descriptor::AddUpdateInfo(uint32_t set, uint32_t binding, uint32_t size, st
     writes.push_back(write);
 }
 
-void Descriptor::AddUpdateInfo(uint32_t set, uint32_t binding, std::vector<TextureView> views)
+void Descriptors::AddUpdateInfo(uint32_t set, uint32_t binding, std::vector<TextureView> views)
 {
     std::vector<VkDescriptorImageInfo> imageInfos(views.size());
     for (int i = 0; i < views.size(); i++)
@@ -162,7 +162,7 @@ void Descriptor::AddUpdateInfo(uint32_t set, uint32_t binding, std::vector<Textu
     writes.push_back(write);
 }
 
-void Descriptor::AddUpdateInfo(uint32_t set, uint32_t binding, std::vector<Sampler> samplers)
+void Descriptors::AddUpdateInfo(uint32_t set, uint32_t binding, std::vector<Sampler> samplers)
 {
     std::vector<VkDescriptorImageInfo> imageInfos(samplers.size());
     for (int i = 0; i < samplers.size(); i++)
@@ -184,7 +184,7 @@ void Descriptor::AddUpdateInfo(uint32_t set, uint32_t binding, std::vector<Sampl
     writes.push_back(write);
 }
 
-void Descriptor::AddUpdateInfo(uint32_t set, uint32_t binding, std::vector<Sampler> samplers, std::vector<TextureView> views)
+void Descriptors::AddUpdateInfo(uint32_t set, uint32_t binding, std::vector<Sampler> samplers, std::vector<TextureView> views)
 {
     if (samplers.size() != views.size())
     {
@@ -212,7 +212,7 @@ void Descriptor::AddUpdateInfo(uint32_t set, uint32_t binding, std::vector<Sampl
     writes.push_back(write);
 }
 
-void Descriptor::Update()
+void Descriptors::Update()
 {
     vkUpdateDescriptorSets(_device._device, (uint32_t)writes.size(), writes.data(), 0, nullptr);
     writes.clear();

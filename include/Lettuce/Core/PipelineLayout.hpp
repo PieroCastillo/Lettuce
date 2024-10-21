@@ -5,11 +5,11 @@
 #include <iostream>
 #include <vector>
 #include "Device.hpp"
-#include "Descriptor.hpp"
+#include "Descriptors.hpp"
 
 namespace Lettuce::Core
 {
-    class PipelineConnector
+    class PipelineLayout
     {
     public:
         Device _device;
@@ -27,7 +27,7 @@ namespace Lettuce::Core
             pushConstants.emplace_back(pushConstantRange);
         }
 
-        void Build(Device &device, Descriptor &descriptor);
+        void Build(Device &device, Descriptors &descriptor);
 
         void Destroy();
     };

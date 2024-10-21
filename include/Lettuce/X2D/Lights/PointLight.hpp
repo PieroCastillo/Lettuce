@@ -10,5 +10,5 @@ namespace Lettuce::X2D::Lights
         float angleRadians;
         float intensity;
         glm::vec2 direction;
-    }
+    };
 }

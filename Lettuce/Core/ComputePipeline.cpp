@@ -7,7 +7,7 @@
 
 using namespace Lettuce::Core;
 
-void ComputePipeline::Build(Device &device, PipelineConnector &connector, Shader &shader)
+void ComputePipeline::Build(Device &device, PipelineLayout &connector, Shader &shader)
 {
     _device = device;
     _pipelineLayout = connector._pipelineLayout;

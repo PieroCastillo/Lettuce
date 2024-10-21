@@ -2,6 +2,7 @@
 // Created by piero on 30/09/2024.
 //
 #include "glm/glm.hpp"
+#include "GeometryBase.hpp"
 #include "Lettuce/Core/Buffer.hpp"
 
 using namespace Lettuce::Core;

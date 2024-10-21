@@ -6,13 +6,13 @@
 #include <vector>
 #include <optional>
 #include "Lettuce/Core/Device.hpp"
-#include "Lettuce/Core/Descriptor.hpp"
+#include "Lettuce/Core/Descriptors.hpp"
 #include "Lettuce/Core/Utils.hpp"
-#include "Lettuce/Core/PipelineConnector.hpp"
+#include "Lettuce/Core/PipelineLayout.hpp"
 
 using namespace Lettuce::Core;
 
-void PipelineConnector::Build(Device &device, Descriptor &descriptor)
+void PipelineLayout::Build(Device &device, Descriptors &descriptor)
 {
     _device = device;
 
@@ -36,7 +36,7 @@ void PipelineConnector::Build(Device &device, Descriptor &descriptor)
     checkResult(vkCreatePipelineLayout(_device._device, &pipelineLayoutCI, nullptr, &_pipelineLayout));
 }
 
-void PipelineConnector::Destroy()
+void PipelineLayout::Destroy()
 {
     vkDestroyPipelineLayout(_device._device, _pipelineLayout, nullptr);
 }

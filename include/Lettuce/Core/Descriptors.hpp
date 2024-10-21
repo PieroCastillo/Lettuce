@@ -15,7 +15,7 @@
 
 namespace Lettuce::Core
 {
-    class Descriptor
+    class Descriptors
     {
     private:
         struct WriteFieldsInfo{

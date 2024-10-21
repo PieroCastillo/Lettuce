@@ -13,10 +13,10 @@
 #include "Lettuce/Core/Swapchain.hpp"
 #include "Lettuce/Core/Semaphore.hpp"
 #include "Lettuce/Core/CommandList.hpp"
-#include "Lettuce/Core/Descriptor.hpp"
+#include "Lettuce/Core/Descriptors.hpp"
 #include "Lettuce/Core/ComputePipeline.hpp"
 #include "Lettuce/Core/GraphicsPipeline.hpp"
-#include "Lettuce/Core/PipelineConnector.hpp"
+#include "Lettuce/Core/PipelineLayout.hpp"
 
 using namespace Lettuce::Core;
 
@@ -39,12 +39,12 @@ void CommandList::BindGraphicsPipeline(GraphicsPipeline &pipeline)
     vkCmdBindPipeline(_commandBuffer, VkPipelineBindPoint::VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline._pipeline);
 }
 
-void CommandList::BindDescriptorSetToGraphics(PipelineConnector &connector, Descriptor &descriptor)
+void CommandList::BindDescriptorSetToGraphics(PipelineLayout &connector, Descriptors &descriptor)
 {
     vkCmdBindDescriptorSets(_commandBuffer, VkPipelineBindPoint::VK_PIPELINE_BIND_POINT_GRAPHICS, connector._pipelineLayout, 0, 1, descriptor._descriptorSets.data(), 0, nullptr);
 }
 
-void CommandList::BindDescriptorSetToCompute(PipelineConnector &connector, Descriptor &descriptor)
+void CommandList::BindDescriptorSetToCompute(PipelineLayout &connector, Descriptors &descriptor)
 {
     vkCmdBindDescriptorSets(_commandBuffer, VkPipelineBindPoint::VK_PIPELINE_BIND_POINT_COMPUTE, connector._pipelineLayout, 0, 1, descriptor._descriptorSets.data(), 0, nullptr);
 }
@@ -129,7 +129,7 @@ void CommandList::SetTopology(Topology topology)
 }
 
 template <typename T>
-void CommandList::PushConstant(PipelineConnector &connector, PipelineStage stage, T &constant, uint32_t offset)
+void CommandList::PushConstant(PipelineLayout &connector, PipelineStage stage, T &constant, uint32_t offset)
 {
     vkCmdPushConstants(_commandBuffer, connector._pipelineLayout, (VkShaderStageFlags)stage, offset, sizeof(T), &constant);
 }

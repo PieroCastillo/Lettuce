@@ -9,7 +9,7 @@
 #include <cstdint>
 #include "GraphicsPipeline.hpp"
 #include "ComputePipeline.hpp"
-#include "PipelineConnector.hpp"
+#include "PipelineLayout.hpp"
 #include "Buffer.hpp"
 #include "Swapchain.hpp"
 #include "Device.hpp"
@@ -51,9 +51,9 @@ namespace Lettuce::Core
 
         void BindGraphicsPipeline(GraphicsPipeline &pipeline);
 
-        void BindDescriptorSetToGraphics(PipelineConnector &connector, Descriptor &descriptor);
+        void BindDescriptorSetToGraphics(PipelineLayout &connector, Descriptors &descriptor);
 
-        void BindDescriptorSetToCompute(PipelineConnector &connector, Descriptor &descriptor);
+        void BindDescriptorSetToCompute(PipelineLayout &connector, Descriptors &descriptor);
 
         void BindVertexBuffers(uint32_t firstBinding, uint32_t bindingCount, std::vector<Buffer> &buffers, std::vector<uint32_t> &offsets);
 
@@ -80,7 +80,7 @@ namespace Lettuce::Core
         void SetTopology(Topology topology);
 
         template <typename T>
-        void PushConstant(PipelineConnector &connector, PipelineStage stage, T &constant, uint32_t offset = 0);
+        void PushConstant(PipelineLayout &connector, PipelineStage stage, T &constant, uint32_t offset = 0);
 
         void Reset();
     };

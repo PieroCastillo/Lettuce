@@ -8,7 +8,7 @@
 #include "Shader.hpp"
 #include "RenderPass.hpp"
 #include "Utils.hpp"
-#include "PipelineConnector.hpp"
+#include "PipelineLayout.hpp"
 
 namespace Lettuce::Core
 {
@@ -40,7 +40,7 @@ namespace Lettuce::Core
 
         void AddShaderStage(Shader &shader);
 
-        void Build(Device &device, PipelineConnector &connector, RenderPass &renderpass, uint32_t subpassIndex, FrontFace frontFace = FrontFace::Clockwise);
+        void Build(Device &device, PipelineLayout &connector, RenderPass &renderpass, uint32_t subpassIndex, FrontFace frontFace = FrontFace::Clockwise);
 
         void Destroy();
     };

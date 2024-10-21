@@ -6,7 +6,7 @@
 #include <vector>
 #include <string>
 #include "Lettuce/Core/MeshPipeline.hpp"
-#include "Lettuce/Core/PipelineConnector.hpp"
+#include "Lettuce/Core/PipelineLayout.hpp"
 #include "Lettuce/Core/Swapchain.hpp"
 #include "Lettuce/Core/Shader.hpp"
 
@@ -27,7 +27,7 @@ void MeshPipeline::AddShaderStage(Shader &shader)
     stages.emplace_back(pipelineShaderStageCI);
 }
 
-void MeshPipeline::Build(Device &device, PipelineConnector &connector, RenderPass &renderpass, uint32_t subpassIndex, FrontFace frontFace)
+void MeshPipeline::Build(Device &device, PipelineLayout &connector, RenderPass &renderpass, uint32_t subpassIndex, FrontFace frontFace)
 {
     _device = device;
     _pipelineLayout = connector._pipelineLayout;

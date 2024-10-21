@@ -4,7 +4,7 @@
 #pragma once
 #include <iostream>
 #include "Device.hpp"
-#include "PipelineConnector.hpp"
+#include "PipelineLayout.hpp"
 #include "Swapchain.hpp"
 #include "Shader.hpp"
 
@@ -17,7 +17,7 @@ namespace Lettuce::Core
         VkPipelineLayout _pipelineLayout;
         VkPipeline _pipeline;
 
-        void Build(Device &device, PipelineConnector &connector, Shader &shader);
+        void Build(Device &device, PipelineLayout &connector, Shader &shader);
 
         void Destroy();
     };

@@ -13,11 +13,11 @@
 #include "Core/ComputePipeline.hpp"
 #include "Core/MeshPipeline.hpp"
 #include "Core/GraphicsPipeline.hpp"
-#include "Core/PipelineConnector.hpp"
+#include "Core/PipelineLayout.hpp"
 
 // other Lettuce objects
 #include "Core/CommandList.hpp"
-#include "Core/Descriptor.hpp"
+#include "Core/Descriptors.hpp"
 #include "Core/Device.hpp"
 #include "Core/GPU.hpp"
 #include "Core/Instance.hpp"
