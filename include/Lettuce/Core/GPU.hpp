@@ -35,6 +35,13 @@ namespace Lettuce::Core
 
         bool GraphicsCapable();
 
+        /// @brief Gets the supported Depth-Stencil Format
+        /// Always return one value
+        /// The value can be VK_FORMAT_D32_SFLOAT_S8_UINT or VK_FORMAT_D24_UNORM_S8_UINT
+        /// vulkan docs: https://docs.vulkan.org/guide/latest/depth.html#depth-formats
+        /// @return The supported format
+        VkFormat GetDepthFormat();
+
         uint32_t FindMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
 
         VkFormat findSupportedFormat(const std::vector<VkFormat> &candidates, VkImageTiling tiling, VkFormatFeatureFlags features);

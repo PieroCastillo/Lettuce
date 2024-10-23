@@ -10,14 +10,15 @@ using namespace Lettuce::Core;
 
 namespace Lettuce::X2D
 {
-    class RenderContext
+    class RenderContext2D
     {
     private:
         RenderPass renderPass;
         void recontruct();
     public:
         glm::mat4 globalTransform = glm::mat4(1);
-        RenderContext();
+        RenderContext2D();
+        RenderContext2D(Device device, VkFormat swapchainImageFormat);
         void Record(VkCommandBuffer cmd);
     };
 }

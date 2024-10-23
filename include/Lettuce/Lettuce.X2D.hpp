@@ -1,6 +1,6 @@
 // Lettuce X2D Objects
 #include "X2D/Camera2D.hpp"
-#include "X2D/RenderContext.hpp"
+#include "X2D/RenderContext2D.hpp"
 // Geometries
 #include "X2D/Geometries/GeometryBase.hpp"
 #include "X2D/Geometries/Rectangle.hpp"

@@ -30,6 +30,19 @@ bool GPU::GraphicsCapable()
     return graphicsFamily.has_value() && presentFamily.has_value() && !formats.empty() && !presentModes.empty();
 }
 
+VkFormat GPU::GetDepthFormat()
+{
+    VkFormatProperties properties;
+    vkGetPhysicalDeviceFormatProperties(_pdevice, VK_FORMAT_D24_UNORM_S8_UINT, &properties);
+    bool d24s8_support = (properties.optimalTilingFeatures & VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT);
+
+    if (d24s8_support)
+    {
+        return VK_FORMAT_D24_UNORM_S8_UINT;
+    }
+    return VK_FORMAT_D32_SFLOAT_S8_UINT;
+}
+
 uint32_t GPU::FindMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties)
 {
     VkPhysicalDeviceMemoryProperties memProperties;
@@ -110,7 +123,7 @@ void GPU::loadQueuesFamilies()
             presentFamily = i;
         }
 
-        if(!computeFamily.has_value() && (queueFamily.queueFlags & VK_QUEUE_COMPUTE_BIT))
+        if (!computeFamily.has_value() && (queueFamily.queueFlags & VK_QUEUE_COMPUTE_BIT))
         {
             computeFamily = i;
         }
