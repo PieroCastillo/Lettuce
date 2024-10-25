@@ -5,5 +5,8 @@
 
 namespace Lettuce::X2D::Effects
 {
-    
+    class EffectBase
+    {
+
+    };
 }

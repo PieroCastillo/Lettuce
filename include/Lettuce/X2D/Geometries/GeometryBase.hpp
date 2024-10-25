@@ -11,6 +11,7 @@ namespace Lettuce::X2D::Geometries
     class GeometryBase
     {
     public:
+        uint32_t indicesSize;
         Buffer indexBuffer;
         Buffer vertexBuffer;
     };

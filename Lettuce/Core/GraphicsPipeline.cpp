@@ -33,7 +33,7 @@ void GraphicsPipeline::AddShaderStage(Shader &shader)
     stages.emplace_back(pipelineShaderStageCI);
 }
 
-void GraphicsPipeline::Build(Device &device, PipelineLayout &connector, RenderPass &renderpass, uint32_t subpassIndex,  FrontFace frontFace)
+void GraphicsPipeline::Build(Device &device, PipelineLayout &connector, RenderPass &renderpass, uint32_t subpassIndex, FrontFace frontFace)
 {
     _device = device;
     _pipelineLayout = connector._pipelineLayout;
@@ -95,6 +95,8 @@ void GraphicsPipeline::Build(Device &device, PipelineLayout &connector, RenderPa
         VK_DYNAMIC_STATE_SCISSOR,
         VK_DYNAMIC_STATE_PRIMITIVE_TOPOLOGY,
         VK_DYNAMIC_STATE_LINE_WIDTH,
+        // VK_DYNAMIC_STATE_BLEND_CONSTANTS,
+        // VK_DYNAMIC_STATE_CULL_MODE,
     };
     VkPipelineDynamicStateCreateInfo dynamicStateCI = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO,

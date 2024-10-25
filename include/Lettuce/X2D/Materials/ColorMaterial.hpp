@@ -5,5 +5,8 @@
 
 namespace Lettuce::X2D::Materials
 {
+    class ColorMaterial
+    {
 
+    };
 }

@@ -4,6 +4,7 @@
 #pragma once
 #include <iostream>
 #include <vector>
+#include <vector>
 #include "Device.hpp"
 #include "Shader.hpp"
 #include "RenderPass.hpp"
@@ -16,6 +17,72 @@ namespace Lettuce::Core
     class GraphicsPipeline
     {
     public:
+        struct PipelineBuildData
+        {
+            struct ViewportState
+            {
+                std::vector<VkViewport> viewports;
+                std::vector<VkRect2D> scissors;
+            } viewport;
+            struct RasterizationState
+            {
+                VkBool32 depthClampEnable;
+                VkBool32 rasterizerDiscardEnable;
+                VkPolygonMode polygonMode;
+                VkCullModeFlags cullMode;
+                VkFrontFace frontFace;
+                VkBool32 depthBiasEnable;
+                float depthBiasConstantFactor;
+                float depthBiasClamp;
+                float depthBiasSlopeFactor;
+                float lineWidth;
+            } rasterization;
+            struct MultisampleState
+            {
+                VkSampleCountFlagBits rasterizationSamples;
+                VkBool32 sampleShadingEnable;
+                float minSampleShading;
+                VkSampleMask *pSampleMask;
+                VkBool32 alphaToCoverageEnable;
+                VkBool32 alphaToOneEnable;
+            } multisample;
+            struct DepthStencilState
+            {
+                VkBool32 depthTestEnable;
+                VkBool32 depthWriteEnable;
+                VkCompareOp depthCompareOp;
+                VkBool32 depthBoundsTestEnable;
+                VkBool32 stencilTestEnable;
+                VkStencilOpState front;
+                VkStencilOpState back;
+                float minDepthBounds;
+                float maxDepthBounds;
+            } depthStencil;
+            struct ColorBlendAttachmentState
+            {
+                VkBool32 blendEnable;
+                VkBlendFactor srcColorBlendFactor;
+                VkBlendFactor dstColorBlendFactor;
+                VkBlendOp colorBlendOp;
+                VkBlendFactor srcAlphaBlendFactor;
+                VkBlendFactor dstAlphaBlendFactor;
+                VkBlendOp alphaBlendOp;
+                VkColorComponentFlags colorWriteMask;
+            } colorBlendAttachment;
+            struct ColorBlendState
+            {
+                VkBool32 logicOpEnable;
+                VkLogicOp logicOp;
+                uint32_t attachmentCount;
+                VkPipelineColorBlendAttachmentState *pAttachments;
+                float blendConstants[4];
+            } colorBlend;
+            struct DynamicState
+            {
+                std::vector<VkDynamicState> dynamicStates;
+            } dynamic;
+        };
+
         Device _device;
         VkPipelineLayout _pipelineLayout;
         VkPipeline _pipeline;
