@@ -120,7 +120,7 @@ void RenderContext2D::renderMaterialPair(VkCommandBuffer cmd, std::shared_ptr<Ge
     VkDeviceSize size = 0;
     vkCmdBindVertexBuffers(cmd, 0, 1, &(geometryPtr->vertexBuffer)._buffer, &size);
     //vkCmdBindDescriptorSets()
-    vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, &(materialPtr->pipeline)._pipeline);
+    vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, (materialPtr->pipeline)._pipeline);
 
     // set custom props
     //vkCmdSetViewport();

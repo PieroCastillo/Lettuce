@@ -32,7 +32,7 @@ namespace Lettuce::X2D
         void RenderMaterial(Geometries::GeometryBase geometry, Materials::MaterialBase material);
         // void AddLight(Geometries::GeometryBase lightArea, Lights::LightBase light);
         // void AddEffect(Geometries::GeometryBase effectArea, Effects::EffectBase effect);
-        void Record(VkCommandBuffer cmd, VkImageView swapchainImage);
+        void Record(VkCommandBuffer cmd, VkImage swapchainImage, uint32_t swapchainImageIndex, VkClearColorValue color);
         void Release();
     };
 }

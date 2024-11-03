@@ -205,7 +205,6 @@ void initLettuce()
     uniformBuffer.SetData(&dataUBO);
     std::cout << "-------- uniform buffer created ----------" << std::endl;
 
-
     descriptor.AddBinding(0, 0, DescriptorType::UniformBuffer, PipelineStage::Vertex, 1);
     descriptor.Build(device);
     std::cout << "-------- descriptor created ----------" << std::endl;
@@ -225,7 +224,17 @@ void initLettuce()
     pipeline.AddVertexAttribute(0, 1, sizeof(glm::vec3), VK_FORMAT_R32G32B32_SFLOAT); // layout(location = 1) in vec3 normal;
     pipeline.AddShaderStage(vertexShader);
     pipeline.AddShaderStage(fragmentShader);
-    pipeline.Build(device, connector, renderpass, 0, FrontFace::Clockwise);
+    pipeline.Build(device, connector, renderpass, 0,
+                   {.rasterization = {
+                        .frontFace = VK_FRONT_FACE_CLOCKWISE,
+                    },
+                    .colorBlend = {
+                        .attachments = {
+                            {
+                                .colorWriteMask = VK_COMPONENT_SWIZZLE_R | VK_COMPONENT_SWIZZLE_G | VK_COMPONENT_SWIZZLE_B | VK_COMPONENT_SWIZZLE_A,
+                            },
+                        },
+                    }});
     std::cout << "-------- pipeline created ----------" << std::endl;
 
     vertexShader.Destroy();

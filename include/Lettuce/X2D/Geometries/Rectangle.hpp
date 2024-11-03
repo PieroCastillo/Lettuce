@@ -16,6 +16,6 @@ namespace Lettuce::X2D::Geometries
         glm::mat4 transform;
         Rectangle();
         Rectangle(Device &device);
-        void SetSizeAndPosition(uint32_t x, uint32_t y, uint32_t width, uint32_t height);
+        void SetSizeAndCenter(uint32_t x, uint32_t y, uint32_t width, uint32_t height);
     };
 }

@@ -13,13 +13,13 @@ Rectangle::Rectangle(Device &device)
 {
     indexBuffer = Buffer::CreateIndexBuffer<uint32_t>(device, {0,1,3,1,2,3});
     vertexBuffer = Buffer::CreateVertexBuffer<Vertex>(device, {
-        {  },
-        { },
-        {},
-        {},
+        {{},{}},
+        {{},{}},
+        {{},{}},
+        {{},{}},
     });
 }
-void Rectangle::SetSizeAndPosition(uint32_t x, uint32_t y, uint32_t width, uint32_t height)
+void Rectangle::SetSizeAndCenter(uint32_t x, uint32_t y, uint32_t width, uint32_t height)
 {
 
 }

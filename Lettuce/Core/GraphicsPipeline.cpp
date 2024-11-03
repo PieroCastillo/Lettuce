@@ -33,7 +33,7 @@ void GraphicsPipeline::AddShaderStage(Shader &shader)
     stages.emplace_back(pipelineShaderStageCI);
 }
 
-void GraphicsPipeline::Build(Device &device, PipelineLayout &connector, RenderPass &renderpass, uint32_t subpassIndex, FrontFace frontFace)
+void GraphicsPipeline::Build(Device &device, PipelineLayout &connector, RenderPass &renderpass, uint32_t subpassIndex, PipelineBuildData pipelineData)
 {
     _device = device;
     _pipelineLayout = connector._pipelineLayout;
@@ -60,48 +60,69 @@ void GraphicsPipeline::Build(Device &device, PipelineLayout &connector, RenderPa
 
     VkPipelineInputAssemblyStateCreateInfo inputAssemblyStateCI = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO,
-        .topology = VkPrimitiveTopology::VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
+        .topology = pipelineData.inputAssembly.topology,
+        .primitiveRestartEnable = pipelineData.inputAssembly.primitiveRestartEnable,
     };
     VkPipelineViewportStateCreateInfo viewportStateCI = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO,
-        .viewportCount = 1,
-        .scissorCount = 1,
+        .viewportCount = (uint32_t)pipelineData.viewport.viewports.size(),
+        .pViewports = pipelineData.viewport.viewports.data(),
+        .scissorCount = (uint32_t)pipelineData.viewport.scissors.size(),
+        .pScissors = pipelineData.viewport.scissors.data(),
     };
     VkPipelineRasterizationStateCreateInfo rasterizationStateCI = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO,
-        .cullMode = VK_CULL_MODE_BACK_BIT,
-        .frontFace = (VkFrontFace)frontFace,
+        .depthClampEnable = pipelineData.rasterization.depthBiasEnable,
+        .rasterizerDiscardEnable = pipelineData.rasterization.rasterizerDiscardEnable,
+        .polygonMode = pipelineData.rasterization.polygonMode,
+        .cullMode = pipelineData.rasterization.cullMode,
+        .frontFace = pipelineData.rasterization.frontFace,
+        .depthBiasEnable = pipelineData.rasterization.depthBiasEnable,
+        .depthBiasConstantFactor = pipelineData.rasterization.depthBiasConstantFactor,
+        .depthBiasClamp = pipelineData.rasterization.depthBiasClamp,
+        .depthBiasSlopeFactor = pipelineData.rasterization.depthBiasSlopeFactor,
+        .lineWidth = pipelineData.rasterization.lineWidth,
     };
     VkPipelineMultisampleStateCreateInfo multisampleStateCI = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO,
-        .rasterizationSamples = VK_SAMPLE_COUNT_1_BIT,
+        .rasterizationSamples = pipelineData.multisample.rasterizationSamples,
+        .sampleShadingEnable = pipelineData.multisample.sampleShadingEnable,
+        .minSampleShading = pipelineData.multisample.minSampleShading,
+        .pSampleMask = pipelineData.multisample.pSampleMask,
+        .alphaToCoverageEnable = pipelineData.multisample.alphaToCoverageEnable,
+        .alphaToOneEnable = pipelineData.multisample.alphaToOneEnable,
     };
     VkPipelineDepthStencilStateCreateInfo depthStencilStateCI = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO,
-    };
-
-    VkPipelineColorBlendAttachmentState attachment = {
-        .colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT,
+        .depthTestEnable = pipelineData.depthStencil.depthTestEnable,
+        .depthWriteEnable = pipelineData.depthStencil.depthWriteEnable,
+        .depthCompareOp = pipelineData.depthStencil.depthCompareOp,
+        .depthBoundsTestEnable = pipelineData.depthStencil.depthBoundsTestEnable,
+        .stencilTestEnable = pipelineData.depthStencil.stencilTestEnable,
+        .front = pipelineData.depthStencil.front,
+        .back = pipelineData.depthStencil.back,
+        .minDepthBounds = pipelineData.depthStencil.minDepthBounds,
+        .maxDepthBounds = pipelineData.depthStencil.maxDepthBounds,
     };
 
     VkPipelineColorBlendStateCreateInfo colorBlendStateCI = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO,
-        .attachmentCount = 1,
-        .pAttachments = &attachment,
+        .logicOpEnable = pipelineData.colorBlend.logicOpEnable,
+        .logicOp = pipelineData.colorBlend.logicOp,
+        .attachmentCount = (uint32_t)pipelineData.colorBlend.attachments.size(),
+        .pAttachments = pipelineData.colorBlend.attachments.data(),
+        .blendConstants = {
+            pipelineData.colorBlend.blendConstants[0],
+            pipelineData.colorBlend.blendConstants[1],
+            pipelineData.colorBlend.blendConstants[2],
+            pipelineData.colorBlend.blendConstants[3],
+        },
     };
 
-    std::vector<VkDynamicState> dynamicStates = {
-        VK_DYNAMIC_STATE_VIEWPORT,
-        VK_DYNAMIC_STATE_SCISSOR,
-        VK_DYNAMIC_STATE_PRIMITIVE_TOPOLOGY,
-        VK_DYNAMIC_STATE_LINE_WIDTH,
-        // VK_DYNAMIC_STATE_BLEND_CONSTANTS,
-        // VK_DYNAMIC_STATE_CULL_MODE,
-    };
     VkPipelineDynamicStateCreateInfo dynamicStateCI = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO,
-        .dynamicStateCount = (uint32_t)dynamicStates.size(),
-        .pDynamicStates = dynamicStates.data(),
+        .dynamicStateCount = (uint32_t)pipelineData.dynamic.dynamicStates.size(),
+        .pDynamicStates = pipelineData.dynamic.dynamicStates.data(),
     };
 
     VkGraphicsPipelineCreateInfo graphicsPipelineCI = {
@@ -125,7 +146,7 @@ void GraphicsPipeline::Build(Device &device, PipelineLayout &connector, RenderPa
         // int32_t                                          basePipelineIndex;
     };
 
-    checkResult(vkCreateGraphicsPipelines(_device._device, VK_NULL_HANDLE, 1, &graphicsPipelineCI, nullptr, &_pipeline), "graphics pipeline created sucessfully");
+    checkResult(vkCreateGraphicsPipelines(_device._device, VK_NULL_HANDLE, 1, &graphicsPipelineCI, nullptr, &_pipeline));
 }
 
 void GraphicsPipeline::Destroy()

@@ -19,6 +19,11 @@ namespace Lettuce::Core
     public:
         struct PipelineBuildData
         {
+            struct InputAssemblyState
+            {
+                VkPrimitiveTopology topology;
+                VkBool32 primitiveRestartEnable;
+            } inputAssembly;
             struct ViewportState
             {
                 std::vector<VkViewport> viewports;
@@ -29,8 +34,8 @@ namespace Lettuce::Core
                 VkBool32 depthClampEnable;
                 VkBool32 rasterizerDiscardEnable;
                 VkPolygonMode polygonMode;
-                VkCullModeFlags cullMode;
-                VkFrontFace frontFace;
+                VkCullModeFlags cullMode = VK_CULL_MODE_BACK_BIT;
+                VkFrontFace frontFace = VkFrontFace::VK_FRONT_FACE_CLOCKWISE;
                 VkBool32 depthBiasEnable;
                 float depthBiasConstantFactor;
                 float depthBiasClamp;
@@ -39,7 +44,7 @@ namespace Lettuce::Core
             } rasterization;
             struct MultisampleState
             {
-                VkSampleCountFlagBits rasterizationSamples;
+                VkSampleCountFlagBits rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
                 VkBool32 sampleShadingEnable;
                 float minSampleShading;
                 VkSampleMask *pSampleMask;
@@ -58,28 +63,21 @@ namespace Lettuce::Core
                 float minDepthBounds;
                 float maxDepthBounds;
             } depthStencil;
-            struct ColorBlendAttachmentState
-            {
-                VkBool32 blendEnable;
-                VkBlendFactor srcColorBlendFactor;
-                VkBlendFactor dstColorBlendFactor;
-                VkBlendOp colorBlendOp;
-                VkBlendFactor srcAlphaBlendFactor;
-                VkBlendFactor dstAlphaBlendFactor;
-                VkBlendOp alphaBlendOp;
-                VkColorComponentFlags colorWriteMask;
-            } colorBlendAttachment;
             struct ColorBlendState
             {
                 VkBool32 logicOpEnable;
                 VkLogicOp logicOp;
-                uint32_t attachmentCount;
-                VkPipelineColorBlendAttachmentState *pAttachments;
+                std::vector<VkPipelineColorBlendAttachmentState> attachments;
                 float blendConstants[4];
             } colorBlend;
             struct DynamicState
             {
-                std::vector<VkDynamicState> dynamicStates;
+                std::vector<VkDynamicState> dynamicStates = {
+                    VK_DYNAMIC_STATE_VIEWPORT,
+                    VK_DYNAMIC_STATE_SCISSOR,
+                    VK_DYNAMIC_STATE_PRIMITIVE_TOPOLOGY,
+                    VK_DYNAMIC_STATE_LINE_WIDTH,
+                };
             } dynamic;
         };
 
@@ -107,7 +105,7 @@ namespace Lettuce::Core
 
         void AddShaderStage(Shader &shader);
 
-        void Build(Device &device, PipelineLayout &connector, RenderPass &renderpass, uint32_t subpassIndex, FrontFace frontFace = FrontFace::Clockwise);
+        void Build(Device &device, PipelineLayout &connector, RenderPass &renderpass, uint32_t subpassIndex, PipelineBuildData pipelineData);
 
         void Destroy();
     };
