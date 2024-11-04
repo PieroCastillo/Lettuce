@@ -7,14 +7,17 @@
 #include "Lettuce/Core/Utils.hpp"
 #include "Lettuce/Core/Device.hpp"
 #include "Lettuce/X2D/RenderContext2D.hpp"
+#include "Lettuce/X2D/Materials/IMaterial.hpp"
+#include "Lettuce/X2D/Materials/MaterialBase.hpp"
 
 using namespace Lettuce::X2D;
 
 // use subpasses
 //  use secondary command buffers and record with multi threading
 
-RenderContext2D::RenderContext2D(Device device, VkFormat swapchainImageFormat)
+RenderContext2D::RenderContext2D(Device &device, VkFormat swapchainImageFormat)
 {
+    this->device = device;
     // swapchain color attachment
     renderPass.AddAttachment(0, AttachmentType::Color,
                              swapchainImageFormat,
@@ -91,7 +94,7 @@ void RenderContext2D::Record(VkCommandBuffer cmd, VkImage swapchainImage, uint32
     VkRenderPassBeginInfo renderPassBI = {
         .sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
         .renderPass = renderPass._renderPass,
-        .framebuffer = renderPass._framebuffers[(int)swapchainImageIndex], //be careful! this index can change in the future
+        .framebuffer = renderPass._framebuffers[(int)swapchainImageIndex], // be careful! this index can change in the future
         .renderArea = renderArea,
         .clearValueCount = 1,
         .pClearValues = &clearValue,
@@ -99,36 +102,45 @@ void RenderContext2D::Record(VkCommandBuffer cmd, VkImage swapchainImage, uint32
 
     vkCmdBeginRenderPass(cmd, &renderPassBI, VkSubpassContents::VK_SUBPASS_CONTENTS_INLINE);
 
-    for(auto [geometryPtr, materialPtr] : materialsPairs)
+    for (auto &[geometry, material, data] : materialsPairs)
     {
-        renderMaterialPair(cmd, geometryPtr, materialPtr);
+        renderMaterialPair(cmd, geometry, material, data);
     }
-    //next subpass
-    //render lights
-    //next subpass
-    //render effects
+    // next subpass
+    // render lights
+    // next subpass
+    // render effects
 
     vkCmdEndRenderPass(cmd);
 
     checkResult(vkEndCommandBuffer(cmd));
 }
 
-void RenderContext2D::renderMaterialPair(VkCommandBuffer cmd, std::shared_ptr<Geometries::GeometryBase> geometryPtr, std::shared_ptr<Materials::MaterialBase> materialPtr)
+void renderMaterialPair(VkCommandBuffer cmd, Geometries::GeometryBase &geometry, Materials::IMaterial &material, std::any &data)
 {
     // link buffers, descriptors & pipelines
-    vkCmdBindIndexBuffer(cmd, (geometryPtr->indexBuffer)._buffer, 0, VK_INDEX_TYPE_UINT32);
+    vkCmdBindIndexBuffer(cmd, (geometry.indexBuffer)._buffer, 0, VK_INDEX_TYPE_UINT32);
     VkDeviceSize size = 0;
-    vkCmdBindVertexBuffers(cmd, 0, 1, &(geometryPtr->vertexBuffer)._buffer, &size);
-    //vkCmdBindDescriptorSets()
-    vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, (materialPtr->pipeline)._pipeline);
+    vkCmdBindVertexBuffers(cmd, 0, 1, &geometry.vertexBuffer._buffer, &size);
+    vkCmdBindDescriptorSets(cmd,
+                            VK_PIPELINE_BIND_POINT_GRAPHICS,
+                            (material.layout)._pipelineLayout, 0,
+                            (uint32_t)(material.descriptorsPtr)->_descriptorSets.size(),
+                            ((material.descriptorsPtr)->_descriptorSets).data(), 0, nullptr);
+    vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, (material.pipeline)._pipeline);
 
+    material.UpdateDescriptors();
+    if (material.pushDataSize > 0)
+    {
+        vkCmdPushConstants(cmd, material.layout._pipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, material.pushDataSize, &data);
+    }
     // set custom props
-    //vkCmdSetViewport();
-    //vkCmdSetLineWidth();
-    //vkCmdSetScissor();
-    //vkCmdSetPrimitiveTopology();
+    // vkCmdSetViewport();
+    vkCmdSetLineWidth(cmd, material.lineWidth);
+    // vkCmdSetScissor();
+    vkCmdSetPrimitiveTopology(cmd, material.topology);
     // draw
-    vkCmdDrawIndexed(cmd, geometryPtr->indicesSize, 1, 0, 0, 0);
+    vkCmdDrawIndexed(cmd, geometry.indicesSize, 1, 0, 0, 0);
 }
 
 void RenderContext2D::recontruct()

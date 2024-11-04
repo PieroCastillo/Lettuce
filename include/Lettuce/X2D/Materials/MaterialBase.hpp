@@ -3,21 +3,33 @@
 //
 #pragma once
 #include <memory>
-#include "Lettuce/Core/Descriptors.hpp"
-#include "Lettuce/Core/PipelineLayout.hpp"
+#include "IMaterial.hpp"
 #include "Lettuce/Core/GraphicsPipeline.hpp"
 #include "Lettuce/Core/PipelineLayout.hpp"
 #include "Lettuce/Core/Descriptors.hpp"
+#include "Lettuce/Core/RenderPass.hpp"
+#include "Lettuce/Core/Compilers/ICompiler.hpp"
 
 using namespace Lettuce::Core;
 
 namespace Lettuce::X2D::Materials
 {
-    class MaterialBase
+    /// @brief MaterialBase represents a Material,
+    /// this class follows the CRTP pattern
+    /// @tparam T Derivated of MaterialBase
+    /// @tparam TPushData
+    template <typename T, typename TPushData>
+    class MaterialBase : public IMaterial
     {
-        public:
-        std::shared_ptr<Descriptors> descriptorsPtr;
-        PipelineLayout layout;
-        GraphicsPipeline pipeline;
+    public:
+        MaterialBase(T *material)
+        {
+            // Implementación
+        }
+        virtual std::string GetFragmentShaderText();
+        virtual std::string GetVertexShaderText();
+        // virtual void PushData(TPushData data);
+        void Load(Device &device, RenderPass &renderpass, Compilers::ICompiler &compiler);
+        void Release();
     };
 }

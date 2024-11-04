@@ -5,6 +5,7 @@
 #include "X2D/Geometries/GeometryBase.hpp"
 #include "X2D/Geometries/Rectangle.hpp"
 // Materials
+#include "X2D/Materials/IMaterial.hpp"
 #include "X2D/Materials/MaterialBase.hpp"
 #include "X2D/Materials/ColorMaterial.hpp"
 // Lights

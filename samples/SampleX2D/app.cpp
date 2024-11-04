@@ -17,6 +17,9 @@
 #include "Lettuce/Lettuce.X2D.hpp"
 #include <glm/ext/matrix_clip_space.hpp>
 
+using namespace Lettuce::Core;
+using namespace Lettuce::X2D;
+
 void initWindow();
 void endWindow();
 void initLettuce();
@@ -28,8 +31,6 @@ void recordCmds();
 void updateData();
 std::tuple<uint32_t, uint32_t> resizeCall();
 
-using namespace Lettuce::Core;
-using namespace Lettuce::X2D;
 
 GLFWwindow *window;
 int width = 800;
@@ -38,13 +39,13 @@ int height = 600;
 Instance instance;
 Device device;
 Swapchain swapchain;
-RenderPass renderpass;
+/*Lettuce 2D objects*/
+RenderContext2D context;
+Geometries::Rectangle rect;
+Materials::ColorMaterial colorMat;
 /* sync objects*/
 Semaphore renderFinished;
-
 //Camera2D camera;
-
-
 VkCommandPool pool;
 VkCommandBuffer cmd;
 
@@ -71,12 +72,12 @@ std::tuple<uint32_t, uint32_t> resizeCall()
 
 void onResize()
 {
-    renderpass.DestroyFramebuffers();
-    for (auto &view : swapchain.swapchainTextureViews)
-    {
-        renderpass.AddFramebuffer(width, height, {view});
-    }
-    renderpass.BuildFramebuffers();
+    // renderpass.DestroyFramebuffers();
+    // for (auto &view : swapchain.swapchainTextureViews)
+    // {
+    //     renderpass.AddFramebuffer(width, height, {view});
+    // }
+    // renderpass.BuildFramebuffers();
 }
 
 void initLettuce()
@@ -97,43 +98,40 @@ void initLettuce()
     device.Create(instance, gpus.front(), features);
     swapchain.Create(device, width, height);
 
-    renderpass.AddAttachment(0, AttachmentType::Color,
-                             swapchain.imageFormat,
-                             LoadOp::Clear,
-                             StoreOp::Store,
-                             LoadOp::DontCare,
-                             StoreOp::DontCare,
-                             ImageLayout::Undefined,
-                             ImageLayout::PresentSrc,
-                             ImageLayout::ColorAttachmentOptimal);
-    renderpass.AddSubpass(0, BindPoint::Graphics, {0});
-    renderpass.AddDependency(VK_SUBPASS_EXTERNAL, 0,
-                             AccessStage::ColorAttachmentOutput,
-                             AccessStage::ColorAttachmentOutput,
-                             AccessBehavior::None,
-                             AccessBehavior::ColorAttachmentWrite);
+    // renderpass.AddAttachment(0, AttachmentType::Color,
+    //                          swapchain.imageFormat,
+    //                          LoadOp::Clear,
+    //                          StoreOp::Store,
+    //                          LoadOp::DontCare,
+    //                          StoreOp::DontCare,
+    //                          ImageLayout::Undefined,
+    //                          ImageLayout::PresentSrc,
+    //                          ImageLayout::ColorAttachmentOptimal);
+    // renderpass.AddSubpass(0, BindPoint::Graphics, {0});
+    // renderpass.AddDependency(VK_SUBPASS_EXTERNAL, 0,
+    //                          AccessStage::ColorAttachmentOutput,
+    //                          AccessStage::ColorAttachmentOutput,
+    //                          AccessBehavior::None,
+    //                          AccessBehavior::ColorAttachmentWrite);
 
-    renderpass.AddDependency(0, VK_SUBPASS_EXTERNAL,
-                             AccessStage::ColorAttachmentOutput,
-                             AccessStage::ColorAttachmentOutput,
-                             AccessBehavior::ColorAttachmentWrite,
-                             AccessBehavior::None);
-    renderpass.Build(device);
-    std::cout << "-------- renderpass created ----------" << std::endl;
-    for (auto &view : swapchain.swapchainTextureViews)
-    {
-        renderpass.AddFramebuffer(width, height, {view});
-    }
-    renderpass.BuildFramebuffers();
+    // renderpass.AddDependency(0, VK_SUBPASS_EXTERNAL,
+    //                          AccessStage::ColorAttachmentOutput,
+    //                          AccessStage::ColorAttachmentOutput,
+    //                          AccessBehavior::ColorAttachmentWrite,
+    //                          AccessBehavior::None);
+    // renderpass.Build(device);
+    // std::cout << "-------- renderpass created ----------" << std::endl;
+    // for (auto &view : swapchain.swapchainTextureViews)
+    // {
+    //     renderpass.AddFramebuffer(width, height, {view});
+    // }
+    // renderpass.BuildFramebuffers();
     std::cout << "-------- framebuffers created ----------" << std::endl;
-
     swapchain.SetResizeFunc(resizeCall, onResize);
-
     // create sync objects
     renderFinished.Create(device, 0);
     // build command buffers
     buildCmds();
-
     //camera = Camera3D(width, height);
 }
 
@@ -158,21 +156,16 @@ void buildCmds()
 
 void updateData()
 {
-    
+    //add draw instructions
+
+    //record
 }
 
 void recordCmds()
 {
-    // rendering cmd
-
     VkImageSubresourceRange imgSubresourceRange = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1};
 
     checkResult(vkResetCommandBuffer(cmd, 0));
-    //    VkClearValue clearValues[2];
-    //    clearValues[0].color = {{0.5f, 0.5f, 0.5f, 1.0f}};
-    //    clearValues[1].depthStencil = {1, 0};
-    VkClearValue clearValue;
-    clearValue.color = {{0.5f, 0.5f, 0.5f, 1.0f}};
 
     VkCommandBufferBeginInfo cmdBI = {
         .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
@@ -180,58 +173,15 @@ void recordCmds()
     };
     checkResult(vkBeginCommandBuffer(cmd, &cmdBI));
 
-    VkImageMemoryBarrier2 imageBarrier2 = {
-        .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2,
-        .srcStageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT,
-        .dstStageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT,
-        .dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
-        .oldLayout = VK_IMAGE_LAYOUT_UNDEFINED,
-        .newLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-        .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
-        .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
-        .image = swapchain.swapChainImages[(int)swapchain.index],
-        .subresourceRange = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1},
-    };
-
-    VkDependencyInfo dependencyI = {
-        .sType = VK_STRUCTURE_TYPE_DEPENDENCY_INFO,
-        .imageMemoryBarrierCount = 1,
-        .pImageMemoryBarriers = &imageBarrier2,
-    };
-
-    vkCmdPipelineBarrier2(cmd, &dependencyI);
-
-    VkRect2D renderArea;
-    renderArea.extent.height = swapchain.height;
-    renderArea.extent.width = swapchain.width;
-    renderArea.offset.x = 0;
-    renderArea.offset.y = 0;
-
-    VkRenderPassBeginInfo renderPassBI = {
-        .sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
-        .renderPass = renderpass._renderPass,
-        .framebuffer = renderpass._framebuffers[(int)swapchain.index],
-        .renderArea = renderArea,
-        .clearValueCount = 1,
-        .pClearValues = &clearValue,
-    };
-
-    vkCmdBeginRenderPass(cmd, &renderPassBI, VkSubpassContents::VK_SUBPASS_CONTENTS_INLINE);
-    
-    vkCmdEndRenderPass(cmd);
-
+    //add draw instructions
+    context.RenderMaterial(rect, colorMat, Materials::ColorPushData{ .color = glm::vec4(0.6f) });
+    //record
+    context.Record(cmd, swapchain.swapChainImages[(int)swapchain.index], swapchain.index, {0.5,0.5,0.5,0.5});
     checkResult(vkEndCommandBuffer(cmd));
 }
 
 uint64_t renderFinishedValue = 0;
 
-/*
-|               |        waits for nothing
-|               |        signals semaphore to r+1
-
-waits for r+1
-r ++
-*/
 void draw()
 {
     swapchain.AcquireNextImage();
@@ -278,8 +228,8 @@ void endLettuce()
     vkDestroyCommandPool(device._device, pool, nullptr);
 
     renderFinished.Destroy();
-    renderpass.DestroyFramebuffers();
-    renderpass.Destroy();
+    // renderpass.DestroyFramebuffers();
+    // renderpass.Destroy();
     swapchain.Destroy();
     device.Destroy();
     instance.Destroy();
