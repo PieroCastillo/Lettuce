@@ -25,7 +25,7 @@ void mainLoop();
 void draw();
 void buildCmds();
 void recordCmds();
-void genTorus();
+void genRect();
 void updateData();
 std::tuple<uint32_t, uint32_t> resizeCall();
 
@@ -153,7 +153,9 @@ void initLettuce()
     features.ConditionalRendering = false;
     features.MemoryBudget = false;
     device.Create(instance, gpus.front(), features);
+    std::cout << "-------- device created ----------" << std::endl;
     swapchain.Create(device, width, height);
+    std::cout << "-------- swapchain created ----------" << std::endl;
 
     renderpass.AddAttachment(0, AttachmentType::Color,
                              swapchain.imageFormat,
@@ -193,7 +195,7 @@ void initLettuce()
     buildCmds();
 
     // create rendering resources
-    genTorus();
+    genRect();
     std::cout << "-------- torus created ----------" << std::endl;
     vertexBuffer = Buffer::CreateVertexBuffer(device, vertices);
     std::cout << "-------- vertex buffer created ----------" << std::endl;
@@ -449,61 +451,18 @@ void endWindow()
     glfwTerminate();
 }
 
-void genTorus()
+void genRect()
 {
-    float radiusMajor = 10;
-    float radiusMinor = 5;
-    // float sectorStep = 10;
-    float sectorCount = 30;
-    // float sideStep;
-    float sideCount = 15;
-
-    float theta;
-    float phi;
-
-    const float pi = std::numbers::pi_v<float>;
-
-    // add vertices
-    for (int i = 0; i <= sideCount; i++)
+    for(auto vec : std::vector<glm::vec2>{{-0.5,0.5},{0.5,0.5},{0.5,-0.5},{-0.5,-0.5} })//v0,v1,v2,v3
     {
-        phi = pi - (2 * pi * (i / sideCount));
-        for (int j = 0; j <= sectorCount; j++)
-        {
-            theta = (2 * pi * (j / sectorCount));
-            float x = (radiusMajor + (radiusMinor * std::cos(phi))) * (std::cos(theta));
-            float y = (radiusMajor + (radiusMinor * std::cos(phi))) * (std::sin(theta));
-            float z = (radiusMinor * std::sin(phi));
-
-            float nx = std::cosf(phi) * std::cosf(theta);
-            float ny = std::cosf(phi) * std::sinf(theta);
-            float nz = std::sinf(phi);
-
-            vertices.push_back({{x, y, z}, {nx, ny, nz}});
-        }
+        vec = glm::mat2(20,0,30,0)*vec;
+        auto norm = glm::normalize(vec);
+        vertices.push_back({{vec.x, vec.y, 0.5f},{norm.x, norm.y, 0}});
     }
-
-    // add indices
-
-    // indices
-    //  k1--k1+1
-    //  |  / |
-    //  | /  |
-    //  k2--k2+1
-    unsigned int k1, k2;
-    for (int i = 0; i < sideCount; ++i)
-    {
-        k1 = i * (sectorCount + 1); // beginning of current side
-        k2 = k1 + sectorCount + 1;  // beginning of next side
-
-        for (int j = 0; j < sectorCount; ++j, ++k1, ++k2)
-        {
-            // 2 triangles per sector
-            indices.push_back(k1);
-            indices.push_back(k2);
-            indices.push_back(k1 + 1); // k1---k2---k1+1
-            indices.push_back(k1 + 1);
-            indices.push_back(k2);
-            indices.push_back(k2 + 1); // k1+1---k2---k2+1
-        }
-    }
+    indices.push_back(0);
+    indices.push_back(1);
+    indices.push_back(2);
+    indices.push_back(2);
+    indices.push_back(3);
+    indices.push_back(0);
 }
