@@ -21,7 +21,7 @@ namespace Lettuce::Core
         {
             struct InputAssemblyState
             {
-                VkPrimitiveTopology topology;
+                VkPrimitiveTopology topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
                 VkBool32 primitiveRestartEnable;
             } inputAssembly;
             struct ViewportState
@@ -73,8 +73,8 @@ namespace Lettuce::Core
             struct DynamicState
             {
                 std::vector<VkDynamicState> dynamicStates = {
-                    VK_DYNAMIC_STATE_VIEWPORT,
-                    VK_DYNAMIC_STATE_SCISSOR,
+                    VK_DYNAMIC_STATE_VIEWPORT_WITH_COUNT,
+                    VK_DYNAMIC_STATE_SCISSOR_WITH_COUNT,
                     VK_DYNAMIC_STATE_PRIMITIVE_TOPOLOGY,
                     VK_DYNAMIC_STATE_LINE_WIDTH,
                 };

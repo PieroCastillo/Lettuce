@@ -200,7 +200,7 @@ void Device::Create(Instance &instance, GPU &gpu, Features gpuFeatures, uint32_t
         .pEnabledFeatures = &features,
     };
 
-    checkResult(vkCreateDevice(_pdevice, &deviceCI, nullptr, &_device), "device created successfully");
+    checkResult(vkCreateDevice(_pdevice, &deviceCI, nullptr, &_device));
 
     VmaVulkanFunctions vulkanFunctions = {
         .vkGetInstanceProcAddr = vkGetInstanceProcAddr,
@@ -216,7 +216,7 @@ void Device::Create(Instance &instance, GPU &gpu, Features gpuFeatures, uint32_t
         .instance = _instance._instance,
         .vulkanApiVersion = VK_API_VERSION_1_3,
     };
-    checkResult(vmaCreateAllocator(&allocatorI, &allocator), "allocator created successfully");
+    checkResult(vmaCreateAllocator(&allocatorI, &allocator));
 
     // get all queues
     _graphicsQueues.resize(graphicsQueuesCount);

@@ -65,11 +65,21 @@ void GraphicsPipeline::Build(Device &device, PipelineLayout &connector, RenderPa
     };
     VkPipelineViewportStateCreateInfo viewportStateCI = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO,
-        .viewportCount = (uint32_t)pipelineData.viewport.viewports.size(),
-        .pViewports = pipelineData.viewport.viewports.data(),
-        .scissorCount = (uint32_t)pipelineData.viewport.scissors.size(),
-        .pScissors = pipelineData.viewport.scissors.data(),
+        // .viewportCount = (uint32_t)pipelineData.viewport.viewports.size(),
+        // .pViewports = pipelineData.viewport.viewports.data(),
+        // .scissorCount = (uint32_t)pipelineData.viewport.scissors.size(),
+        // .pScissors = pipelineData.viewport.scissors.data(),
     };
+    if (pipelineData.viewport.viewports.size() > 0)
+    {
+        viewportStateCI.viewportCount = (uint32_t)pipelineData.viewport.viewports.size();
+        viewportStateCI.pViewports = pipelineData.viewport.viewports.data();
+    }
+    if (pipelineData.viewport.scissors.size() > 0)
+    {
+        viewportStateCI.scissorCount = (uint32_t)pipelineData.viewport.scissors.size();
+        viewportStateCI.pScissors = pipelineData.viewport.scissors.data();
+    }
     VkPipelineRasterizationStateCreateInfo rasterizationStateCI = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO,
         .depthClampEnable = pipelineData.rasterization.depthBiasEnable,
