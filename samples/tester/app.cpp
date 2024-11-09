@@ -83,7 +83,7 @@ layout (location = 0) in vec3 norm;
 layout (location = 0) out vec4 outColor;
 void main()
 {
-    outColor = vec4(normalize(norm),1.0);
+    outColor = vec4(0.3,0.5,0.2,1.0);//normalize(norm),1.0);
 })";
 
 const std::string vertexShaderText = R"(#version 450
@@ -100,7 +100,7 @@ layout (set = 0, binding = 0) uniform DataUBO {
 void main()
 {   
     norm = mat3(transpose(inverse(ubo.model))) * normal;
-    gl_Position = ubo.projectionView * ubo.model * vec4(pos,1.0);
+    gl_Position = vec4(pos,1.0);//ubo.projectionView * ubo.model * vec4(pos,1.0);
 })";
 
 VkCommandPool pool;
@@ -453,9 +453,9 @@ void endWindow()
 
 void genRect()
 {
-    for(auto vec : std::vector<glm::vec2>{{-0.5,0.5},{0.5,0.5},{0.5,-0.5},{-0.5,-0.5} })//v0,v1,v2,v3
+    for(auto vec : std::vector<glm::vec2>{{-0.5,-0.5},{0.5,-0.5},{0.5,0.5},{-0.5,0.5} })//v0,v1,v2,v3
     {
-        vec = glm::mat2(20,0,30,0)*vec;
+        //vec = glm::mat2(20,0,30,0)*vec;
         auto norm = glm::normalize(vec);
         vertices.push_back({{vec.x, vec.y, 0.5f},{norm.x, norm.y, 0}});
     }
