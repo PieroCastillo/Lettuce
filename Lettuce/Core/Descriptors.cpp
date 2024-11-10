@@ -111,17 +111,20 @@ void Descriptors::AddBinding(uint32_t set, uint32_t binding, DescriptorType type
     bindingsTypes[{set, binding}] = (VkDescriptorType)type;
 }
 
-void Descriptors::AddUpdateInfo(uint32_t set, uint32_t binding, uint32_t size, std::vector<Buffer> buffers)
+void Descriptors::AddUpdateInfo(uint32_t set, uint32_t binding, std::vector<std::pair<uint32_t, Buffer>> sizeBuffersPairs)
 {
-    std::vector<VkDescriptorBufferInfo> bufferInfos(buffers.size());
-    for (int i = 0; i < buffers.size(); i++)
+    std::vector<VkDescriptorBufferInfo> bufferInfos(sizeBuffersPairs.size());
+
+    int index = 0;
+    for (auto &[size, buffer] : sizeBuffersPairs)
     {
         VkDescriptorBufferInfo bufferI = {
-            .buffer = buffers[i]._buffer,
+            .buffer = buffer._buffer,
             .offset = 0,
             .range = size,
         };
-        bufferInfos[i] = bufferI;
+        bufferInfos[index] = bufferI;
+        index++;
     }
     // this is needed for disabling the auto-deleting of the bufferInfos vector
     writesFieldsMap[{set, binding}].bufferInfos = bufferInfos;
@@ -131,7 +134,7 @@ void Descriptors::AddUpdateInfo(uint32_t set, uint32_t binding, uint32_t size, s
         .dstSet = _descriptorSets[(int)set],
         .dstBinding = binding,
         .dstArrayElement = 0,
-        .descriptorCount = (uint32_t)buffers.size(),
+        .descriptorCount = (uint32_t)sizeBuffersPairs.size(),
         .descriptorType = bindingsTypes[{set, binding}],
         .pBufferInfo = writesFieldsMap[{set, binding}].bufferInfos.data(),
     };
@@ -157,7 +160,7 @@ void Descriptors::AddUpdateInfo(uint32_t set, uint32_t binding, std::vector<Text
         .dstArrayElement = 0,
         .descriptorCount = (uint32_t)views.size(),
         .descriptorType = bindingsTypes[{set, binding}],
-        .pImageInfo =  writesFieldsMap[{set, binding}].imageInfos.data(),
+        .pImageInfo = writesFieldsMap[{set, binding}].imageInfos.data(),
     };
     writes.push_back(write);
 }

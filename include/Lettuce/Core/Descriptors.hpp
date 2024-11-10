@@ -18,16 +18,17 @@ namespace Lettuce::Core
     class Descriptors
     {
     private:
-        struct WriteFieldsInfo{
+        struct WriteFieldsInfo
+        {
             std::vector<VkDescriptorImageInfo> imageInfos;
             std::vector<VkDescriptorBufferInfo> bufferInfos;
         };
-        std::map<uint32_t, std::vector<VkDescriptorSetLayoutBinding>> bindingsMap; //stores raw info about descriptors per set
-        std::map<VkDescriptorType, uint32_t> typesMap; //stores how much descriptors are per descriptor type
-        std::map<std::pair<uint32_t,uint32_t>, VkDescriptorType> bindingsTypes; // access by set and binding what is the descriptorType
+        std::map<uint32_t, std::vector<VkDescriptorSetLayoutBinding>> bindingsMap; // stores raw info about descriptors per set
+        std::map<VkDescriptorType, uint32_t> typesMap;                             // stores how much descriptors are per descriptor type
+        std::map<std::pair<uint32_t, uint32_t>, VkDescriptorType> bindingsTypes;   // access by set and binding what is the descriptorType
         std::vector<VkDescriptorPoolSize> sizes;
         std::vector<VkWriteDescriptorSet> writes;
-        std::map<std::pair<uint32_t,uint32_t>, WriteFieldsInfo> writesFieldsMap; //stores image and buffer infos to update
+        std::map<std::pair<uint32_t, uint32_t>, WriteFieldsInfo> writesFieldsMap; // stores image and buffer infos to update
 
     public:
         Device _device;
@@ -40,15 +41,15 @@ namespace Lettuce::Core
 
         void AddBinding(uint32_t set, uint32_t binding, DescriptorType type, PipelineStage stage, uint32_t descriptorCount = 1);
 
-        void AddUpdateInfo(uint32_t set, uint32_t binding, uint32_t size, std::vector<Buffer> buffers);
+        void AddUpdateInfo(uint32_t set, uint32_t binding, std::vector<std::pair<uint32_t, Buffer>> sizeBuffersPairs);
         void AddUpdateInfo(uint32_t set, uint32_t binding, std::vector<TextureView> views);
         void AddUpdateInfo(uint32_t set, uint32_t binding, std::vector<Sampler> samplers);
         void AddUpdateInfo(uint32_t set, uint32_t binding, std::vector<Sampler> samplers, std::vector<TextureView> views);
 
         template <typename TBufferDataType>
-        void AddUpdateInfo(uint32_t set, uint32_t binding, std::vector<Buffer> buffers)
+        void AddUpdateInfo(uint32_t set, uint32_t binding, Buffer buffer)
         {
-            AddUpdateInfo(set, binding, (uint32_t)sizeof(TBufferDataType), buffers);
+            AddUpdateInfo(set, binding, {{(uint32_t)sizeof(TBufferDataType), buffer}});
         }
 
         void Update();

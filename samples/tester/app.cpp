@@ -45,8 +45,7 @@ Semaphore renderFinished;
 /* rendering object */
 Buffer vertexBuffer;
 Buffer indexBuffer;
-Buffer uniformBuffer;
-Buffer lightBuffer;
+Buffer vertexInfoBuffer;
 Descriptors descriptor;
 PipelineLayout connector;
 GraphicsPipeline pipeline;
@@ -54,19 +53,15 @@ Compilers::GLSLCompiler compiler;
 Shader fragmentShader;
 Shader vertexShader;
 
-Camera3D camera;
-
 struct Vertex
 {
     glm::vec3 position;
     glm::vec3 normal;
 };
-struct DataUBO
+struct LettuceVertexInfo
 {
-    glm::mat4 projectionView;
-    glm::mat4 model;
-    glm::vec3 cameraPos;
-} dataUBO;
+    glm::mat3 LVk;
+} vertexInfo;
 struct DataPush
 {
     glm::vec3 color;
@@ -83,7 +78,7 @@ layout (location = 0) in vec3 norm;
 layout (location = 0) out vec4 outColor;
 void main()
 {
-    outColor = vec4(0.3,0.5,0.2,1.0);//normalize(norm),1.0);
+    outColor = vec4(0.3,0.5,0.2,1.0);
 })";
 
 const std::string vertexShaderText = R"(#version 450
@@ -91,16 +86,14 @@ layout (location = 0) in vec3 pos;
 layout (location = 1) in vec3 normal;
 layout (location = 0) out vec3 norm;
 
-layout (set = 0, binding = 0) uniform DataUBO {
-    mat4 projectionView;
-    mat4 model;
-    vec3 cameraPos;
+layout (set = 0, binding = 0) uniform VertexInfo {
+    mat3 LVk;
 } ubo;
 
 void main()
 {   
-    norm = mat3(transpose(inverse(ubo.model))) * normal;
-    gl_Position = vec4(pos,1.0);//ubo.projectionView * ubo.model * vec4(pos,1.0);
+    norm = normal;
+    gl_Position = vec4(ubo.LVk * pos,1.0);
 })";
 
 VkCommandPool pool;
@@ -122,7 +115,6 @@ std::tuple<uint32_t, uint32_t> resizeCall()
     glfwGetWindowSize(window, &w, &h);
     width = w;
     height = h;
-    camera = Camera3D(width, height);
 
     return std::make_tuple((uint32_t)w, (uint32_t)h);
 }
@@ -196,21 +188,19 @@ void initLettuce()
 
     // create rendering resources
     genRect();
-    std::cout << "-------- torus created ----------" << std::endl;
+    std::cout << "-------- rect created ----------" << std::endl;
     vertexBuffer = Buffer::CreateVertexBuffer(device, vertices);
-    std::cout << "-------- vertex buffer created ----------" << std::endl;
     indexBuffer = Buffer::CreateIndexBuffer(device, indices);
-    std::cout << "-------- index buffer created ----------" << std::endl;
 
-    uniformBuffer = Buffer::CreateUniformBuffer<DataUBO>(device);
-    uniformBuffer.Map();
-    uniformBuffer.SetData(&dataUBO);
+    vertexInfoBuffer = Buffer::CreateUniformBuffer<LettuceVertexInfo>(device);
+    vertexInfoBuffer.Map();
+    vertexInfoBuffer.SetData(&vertexInfo);
     std::cout << "-------- uniform buffer created ----------" << std::endl;
 
     descriptor.AddBinding(0, 0, DescriptorType::UniformBuffer, PipelineStage::Vertex, 1);
     descriptor.Build(device);
     std::cout << "-------- descriptor created ----------" << std::endl;
-    descriptor.AddUpdateInfo<DataUBO>(0, 0, {uniformBuffer});
+    descriptor.AddUpdateInfo(0, 0, {{sizeof(LettuceVertexInfo),vertexInfoBuffer}});
     descriptor.Update();
     std::cout << "-------- descriptor updated ----------" << std::endl;
 
@@ -241,8 +231,6 @@ void initLettuce()
 
     vertexShader.Destroy();
     fragmentShader.Destroy();
-
-    camera = Camera3D(width, height);
 }
 
 void buildCmds()
@@ -267,16 +255,9 @@ void buildCmds()
 void updateData()
 {
     dataPush.color = glm::vec3(1.0f, 0.5f, 0.31f);
-    camera.SetPosition(glm::vec3(20, 20, 30));
-    // camera.SetPosition(glm::vec3(30));
-    camera.SetCenter(glm::vec3(0.0f, 0.0f, 0.0f));
-    camera.Update();
-    dataUBO.projectionView = camera.GetProjectionView();
-    dataUBO.model = glm::mat4(1.0f);
-    dataUBO.cameraPos = glm::vec3(20, 20, 30);
-    // dataUBO.cameraPos = glm::vec3(30);
+    vertexInfo.LVk = glm::mat3(2 / (float)width, 0.0f, 0.0f, 0.0f, -2 / (float)height, 0.0f, 0.0f, 0.0f, 1.0f);
 
-    uniformBuffer.SetData(&dataUBO);
+    vertexInfoBuffer.SetData(&vertexInfo);
 }
 
 void recordCmds()
@@ -413,8 +394,8 @@ void endLettuce()
     connector.Destroy();
     descriptor.Destroy();
 
-    uniformBuffer.Unmap();
-    uniformBuffer.Destroy();
+    vertexInfoBuffer.Unmap();
+    vertexInfoBuffer.Destroy();
     vertexBuffer.Destroy();
     indexBuffer.Destroy();
     renderFinished.Destroy();
@@ -453,11 +434,11 @@ void endWindow()
 
 void genRect()
 {
-    for(auto vec : std::vector<glm::vec2>{{-0.5,-0.5},{0.5,-0.5},{0.5,0.5},{-0.5,0.5} })//v0,v1,v2,v3
+    for (auto vec : std::vector<glm::vec2>{{-300, 200}, {300, 200}, {300, - 200}, {-300, -200}}) // v0,v1,v2,v3 {{-0.5,-0.5},{0.5,-0.5},{0.5,0.5},{-0.5,0.5} }
     {
-        //vec = glm::mat2(20,0,30,0)*vec;
+        // vec = glm::mat2(20,0,30,0)*vec;
         auto norm = glm::normalize(vec);
-        vertices.push_back({{vec.x, vec.y, 0.5f},{norm.x, norm.y, 0}});
+        vertices.push_back({{vec.x, vec.y, 1}, {norm.x, norm.y, 0}});
     }
     indices.push_back(0);
     indices.push_back(1);
