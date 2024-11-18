@@ -45,6 +45,9 @@ add_executable(SampleX2D
         samples/SampleX2D/app.cpp)
 add_executable(tester
                 samples/tester/app.cpp)
+add_executable(loadModel
+                samples/LoadModel/app.cpp)
+target_include_directories(loadModel PUBLIC samples/SampleFramework)
 # add_executable(TriangleSample
 #         samples/TriangleSample/app.cpp)
 # add_executable(VertexSquare
@@ -55,12 +58,14 @@ if(WIN32)
         target_compile_definitions(DonutSample PRIVATE VK_USE_PLATFORM_WIN32_KHR)
         target_compile_definitions(SampleX2D PRIVATE VK_USE_PLATFORM_WIN32_KHR)
         target_compile_definitions(tester PRIVATE VK_USE_PLATFORM_WIN32_KHR)
+        target_compile_definitions(loadModel PRIVATE VK_USE_PLATFORM_WIN32_KHR)
         set(VOLK_STATIC_DEFINES "VK_USE_PLATFORM_WIN32_KHR")
 elseif()
         target_compile_definitions(Lettuce PRIVATE VK_USE_PLATFORM_WAYLAND_KHR)
         target_compile_definitions(DonutSample PRIVATE VK_USE_PLATFORM_WAYLAND_KHR)
         target_compile_definitions(SampleX2D PRIVATE VK_USE_PLATFORM_WAYLAND_KHR)
         target_compile_definitions(tester PRIVATE VK_USE_PLATFORM_WAYLAND_KHR)
+        target_compile_definitions(loadModel PRIVATE VK_USE_PLATFORM_WAYLAND_KHR)
         set(VOLK_STATIC_DEFINES "VK_USE_PLATFORM_WAYLAND_KHR")
 endif()
 target_include_directories(Lettuce PRIVATE ${TINYGLTF_INCLUDE_DIRS})
@@ -69,6 +74,7 @@ target_link_libraries(Lettuce  PRIVATE volk::volk_headers Vulkan::shaderc_combin
 target_link_libraries(DonutSample PRIVATE Lettuce volk::volk_headers glfw)
 target_link_libraries(SampleX2D PRIVATE Lettuce volk::volk_headers glfw)
 target_link_libraries(tester PRIVATE Lettuce volk::volk_headers glfw)
+target_link_libraries(loadModel PRIVATE Lettuce volk::volk_headers glfw)
 # target_link_libraries(TriangleSample PRIVATE Lettuce volk::volk_headers glfw)
 # target_link_libraries(TriangleSample Lettuce glfw)
 # target_link_libraries(VertexSquare Lettuce glfw)

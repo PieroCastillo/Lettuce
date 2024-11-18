@@ -1,13 +1,14 @@
 //
 // Created by piero on 08/02/2024.
 //
-#include <iostream>
-#include <vector>
 #include <GLFW/glfw3.h>
 #define GLFW_EXPOSE_NATIVE_WIN32
 #include <GLFW/glfw3native.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#include <glm/ext/matrix_clip_space.hpp>
+#include <iostream>
+#include <vector>
 #include <cmath>
 #include <numbers>
 #include <tuple>
@@ -15,7 +16,6 @@
 
 #include "Lettuce/Lettuce.Core.hpp"
 #include "Lettuce/Lettuce.X3D.hpp"
-#include <glm/ext/matrix_clip_space.hpp>
 
 void initWindow();
 void endWindow();
