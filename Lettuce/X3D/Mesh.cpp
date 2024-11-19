@@ -7,6 +7,7 @@
 void Lettuce::X3D::Mesh::setup()
 {
     check();
+    
 }
 
 void Lettuce::X3D::Mesh::check()
