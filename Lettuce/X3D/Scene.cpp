@@ -7,7 +7,15 @@
 void Lettuce::X3D::Scene::setup()
 {
     check();
-    
+    buffers.resize(model.buffers.size()); //reserve space to access to this memory more faster
+    int bufferIndex = 0;
+    for(auto bufferGltf : model.buffers)
+    {
+        //bufferGltf.
+        // buffers[bufferIndex]. 
+        //bufferIndex++;
+    }
+    // model.meshes[0].primitives[0].attributes
 }
 
 void Lettuce::X3D::Scene::check()
