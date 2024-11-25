@@ -32,6 +32,9 @@ Lettuce is a rendering Vulkan-based library
 - [ ] VK_KHR_fragment_shading_rate
 - [ ] Indirect Drawing
 - [ ] Execution Graphs (when it becomes available to Vulkan standard)
+- [ ] Video
+- [ ] HLSL
+- [ ] SLang
 ### Lettuce Foundation
 - [ ] Render Graph
 - [ ] Multi-thread Rendering
@@ -51,7 +54,8 @@ Lettuce is a rendering Vulkan-based library
 ### Lettuce X3D
 - [ ] PBR
 - [ ] Lighting System
-- [ ] Imports glft2 files
+- [ ] Imports glft2 files (priority)
+- [ ] GPU Driving rendering
 ### Lettuce Compute
 
 ### hardware-vendors recommendations
