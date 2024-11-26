@@ -193,8 +193,8 @@ void main()
     void updateData()
     {
         dataPush.color = glm::vec3(1.0f, 0.5f, 0.31f);
-        camera.SetPosition(glm::vec3(20, 20, 30));
-        // camera.SetPosition(glm::vec3(30));
+        //camera.SetPosition(glm::vec3(20, 20, 30));
+        camera.SetPosition(cameraPosition);
         camera.SetCenter(glm::vec3(0.0f, 0.0f, 0.0f));
         camera.Update();
         dataUBO.projectionView = camera.GetProjectionView();

@@ -6,6 +6,8 @@
 #include <GLFW/glfw3.h>
 #define GLFW_EXPOSE_NATIVE_WIN32
 #include <GLFW/glfw3native.h>
+#include <glm/glm.hpp>
+#include <iomanip>
 #include "Lettuce/Lettuce.Core.hpp"
 
 /// @brief this is a simple class to implement Lettuce samples quickly
@@ -18,6 +20,11 @@ protected:
         glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
         glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
         window = glfwCreateWindow(width, height, title.c_str(), nullptr, nullptr);
+        glfwSetWindowUserPointer(window, this);
+        glfwSetKeyCallback(window, keyCallback);
+        //if (glfwRawMouseMotionSupported())
+        //    glfwSetInputMode(window, GLFW_RAW_MOUSE_MOTION, GLFW_TRUE);
+        glfwSetMouseButtonCallback(window, mouseButtonCallback);
     }
     void endWindow()
     {
@@ -39,7 +46,7 @@ protected:
         swapchain.Create(device, width, height);
         createRenderPass();
         swapchain.SetResizeFunc([this]()
-                                { return resizeCall();}, [this]()
+                                { return resizeCall(); }, [this]()
                                 { onResize(); });
     }
 
@@ -69,7 +76,6 @@ protected:
 
     virtual void beforeResize()
     {
-
     }
 
     void mainLoop()
@@ -101,6 +107,69 @@ protected:
         return std::make_tuple((uint32_t)w, (uint32_t)h);
     }
 
+    static void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods)
+    {
+        LettuceSampleApp *app = static_cast<LettuceSampleApp *>(glfwGetWindowUserPointer(window));
+        if (app)
+        {
+            app->onKeyPress(key, action, mods);
+        }
+    }
+
+    // modifies position on XY of camera
+    // <- -x
+    // -> +x
+    // up +y
+    // down -y
+    void onKeyPress(int key, int action, int mods)
+    {
+        double dx, dy;
+        dx = 0.1;
+        dy = 0.1;
+        std::cout << std::fixed << std::setprecision(6);
+        if (key == GLFW_KEY_UP && action == GLFW_REPEAT)
+        {
+            cameraPosition.y += dy;
+            std::cout << "camera pos: " << cameraPosition.x << cameraPosition.y << cameraPosition.z  << std::endl;
+        }
+        else if (key == GLFW_KEY_DOWN && action == GLFW_REPEAT)
+        {
+            cameraPosition.y -= dy;
+        }
+        else if (key == GLFW_KEY_LEFT && action == GLFW_REPEAT)
+        {
+            cameraPosition.x -= dx;
+        }
+        else if (key == GLFW_KEY_RIGHT && action == GLFW_REPEAT)
+        {
+            cameraPosition.x += dx;
+        }
+
+        if(action == GLFW_REPEAT)
+            std::cout << "camera pos: x : " << cameraPosition.x << " y : " <<  cameraPosition.y << " z : " << cameraPosition.z  << std::endl;
+    }
+
+    // up -> +z
+    // down -> -z
+    static void mouseButtonCallback(GLFWwindow *window, int button, int action, int mods)
+    {
+        LettuceSampleApp *app = static_cast<LettuceSampleApp *>(glfwGetWindowUserPointer(window));
+        if (app)
+        {
+            app->onMouseButton(button, action, mods);
+        }
+    }
+
+    // modifies direction of camera
+    void onMouseButton(int button, int action, int mods)
+    {
+        if (button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_PRESS)
+        {
+            double xpos, ypos;
+            glfwGetCursorPos(window, &xpos, &ypos);
+        }
+    }
+
 public:
     GLFWwindow *window;
     int width = 800;
@@ -112,6 +181,9 @@ public:
     Lettuce::Core::Instance instance;
     Lettuce::Core::Device device;
     Lettuce::Core::Swapchain swapchain;
+    /*Variable to travel around the space*/
+    glm::vec3 cameraPosition = {20, 20, 30};
+    glm::vec3 cameraDirection = {0, 0, 0};
     void run()
     {
         initWindow();
