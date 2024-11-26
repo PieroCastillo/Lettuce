@@ -1,5 +1,5 @@
 //
-// created by piero on 25/06/2024
+// created by piero on 25/11/2024
 //
 #include "Lettuce/Core/common.hpp"
 #include <vector>
@@ -9,17 +9,17 @@
 #include <shaderc/shaderc.hpp>
 #include "Lettuce/Core/Utils.hpp"
 #include "Lettuce/Core/Compilers/ICompiler.hpp"
-#include "Lettuce/Core/Compilers/GLSLCompiler.hpp"
+#include "Lettuce/Core/Compilers/SlangCompiler.hpp"
 
 using namespace Lettuce::Core;
 using namespace Lettuce::Core::Compilers;
 
-void GLSLCompiler::Load()
+void SlangCompiler::Load()
 {
     return;
 }
 
-std::vector<uint32_t> GLSLCompiler::Compile(std::string text, std::string inputFile, PipelineStage stage, bool optimize) 
+std::vector<uint32_t> SlangCompiler::Compile(std::string text, std::string inputFile, PipelineStage stage, bool optimize) 
 {
     shaderc_shader_kind kind;
 
@@ -78,7 +78,7 @@ std::vector<uint32_t> GLSLCompiler::Compile(std::string text, std::string inputF
     }
 }
 
-void GLSLCompiler::Destroy()
+void SlangCompiler::Destroy()
 {
     return;
 }

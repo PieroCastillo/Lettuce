@@ -2,6 +2,7 @@
 // Created by piero on 11/02/2024.
 //
 #pragma once
+#include "common.hpp"
 #include <algorithm>
 #include <iostream>
 #include <optional>

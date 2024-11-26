@@ -2,8 +2,10 @@
 #include "Core/Version.hpp"
 #include "Core/Utils.hpp"
 // shaders langs compilers
-#include "Core/Compilers/GLSLCompiler.hpp"
 #include "Core/Compilers/ICompiler.hpp"
+#include "Core/Compilers/GLSLCompiler.hpp"
+#include "Core/Compilers/SlangCompiler.hpp"
+#include "Core/Compilers/HLSLCompiler.hpp"
 // resources
 #include "Core/Buffer.hpp"
 #include "Core/Texture.hpp"
