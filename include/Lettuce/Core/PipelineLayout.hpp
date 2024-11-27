@@ -28,6 +28,7 @@ namespace Lettuce::Core
         }
 
         void Build(Device &device, Descriptors &descriptor);
+        void Build(Device &device);
 
         void Destroy();
     };

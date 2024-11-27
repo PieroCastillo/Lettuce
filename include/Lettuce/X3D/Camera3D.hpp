@@ -4,7 +4,6 @@
 #pragma once
 #include <vector>
 #include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
 
 namespace Lettuce::X3D
 {
@@ -22,6 +21,8 @@ namespace Lettuce::X3D
         Camera3D() {}
         Camera3D(int width, int height, float angleDegrees = 45.0f, float zNear = 0.1f, float zFar = 100.0f);
         glm::mat4 GetProjectionView();
+        void Rotate(glm::vec3 axis, float angle);
+        void MoveByMouse(double dx, double dy, double sensibility);
         void SetPosition(glm::vec3 position);
         void SetCenter(glm::vec3 center);
         void Update();

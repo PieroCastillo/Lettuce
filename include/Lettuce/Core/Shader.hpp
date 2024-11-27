@@ -32,7 +32,7 @@ namespace Lettuce::Core
                 .codeSize = code.size() * sizeof(uint32_t),
                 .pCode = code.data(),
             };
-            checkResult(vkCreateShaderModule(_device._device, &shaderModuleCI, nullptr, &_shaderModule), "shader module created sucessfully");
+            checkResult(vkCreateShaderModule(_device._device, &shaderModuleCI, nullptr, &_shaderModule));
         }
 
         void Destroy();

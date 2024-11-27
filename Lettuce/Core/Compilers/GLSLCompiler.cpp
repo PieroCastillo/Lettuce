@@ -19,7 +19,7 @@ void GLSLCompiler::Load()
     return;
 }
 
-std::vector<uint32_t> GLSLCompiler::Compile(std::string text, std::string inputFile, PipelineStage stage, bool optimize) 
+std::vector<uint32_t> GLSLCompiler::Compile(std::string text, std::string inputFile, PipelineStage stage, bool optimize)
 {
     shaderc_shader_kind kind;
 
@@ -52,7 +52,6 @@ std::vector<uint32_t> GLSLCompiler::Compile(std::string text, std::string inputF
     default:
         throw std::exception("shader stage doesn't supported by shaderc");
     }
-
     shaderc::Compiler compiler;
     shaderc::CompileOptions options;
 

@@ -22,18 +22,32 @@ public:
     Lettuce::Core::RenderPass renderpass;
     /* sync objects*/
     Lettuce::Core::Semaphore renderFinished;
-    /* rendering object */
+    /* rendering objects */
     Lettuce::Core::Buffer vertexBuffer;
     Lettuce::Core::Buffer indexBuffer;
+
+    Lettuce::Core::Buffer LineBuffer1;
+    Lettuce::Core::Buffer LineBuffer2;
+    Lettuce::Core::Buffer LineBuffer3;
+
     Lettuce::Core::Buffer uniformBuffer;
     Lettuce::Core::Descriptors descriptor;
+    Lettuce::Core::PipelineLayout linesLayout;
     Lettuce::Core::PipelineLayout connector;
     Lettuce::Core::GraphicsPipeline pipeline;
+    Lettuce::Core::GraphicsPipeline linesPipeline;
     Lettuce::Core::Compilers::GLSLCompiler compiler;
     Lettuce::Core::Shader fragmentShader;
     Lettuce::Core::Shader vertexShader;
+    Lettuce::Core::Shader psLineShader;
+    Lettuce::Core::Shader vsLineShader;
 
     Lettuce::X3D::Camera3D camera;
+
+    struct LineVertex
+    {
+        glm::vec3 position;
+    };
 
     struct Vertex
     {
@@ -53,11 +67,34 @@ public:
     std::vector<Vertex> vertices;
     std::vector<uint32_t> indices;
 
-    const std::string fragmentShaderText = R"(#version 450
-#
+    const std::string psLineShaderText = R"(#version 450
 layout (push_constant) uniform pushData {
     vec3 color;
-};
+} pushdata;
+layout (location = 0) out vec4 outColor;
+
+void main()
+{
+    outColor = vec4(pushdata.color,1.0);
+})";
+
+    const std::string vsLineShaderText = R"(#version 450
+layout (location=0) in vec3 pos;
+layout (set = 0, binding = 0) uniform DataUBO {
+    mat4 projectionView;
+    mat4 model;
+    vec3 cameraPos;
+} ubo;
+
+void main()
+{
+    gl_Position = ubo.projectionView * ubo.model * vec4(pos,1.0);
+})";
+
+    const std::string fragmentShaderText = R"(#version 450
+layout (push_constant) uniform pushData {
+    vec3 color;
+} data;
 layout (location = 0) in vec3 norm;
 layout (location = 0) out vec4 outColor;
 void main()
@@ -126,6 +163,19 @@ void main()
         renderpass.BuildFramebuffers();
     }
 
+    double sensibility = 0.01f;
+    void onCursorMotion(double xpos, double ypos)
+    {
+        if (pressed)
+        {
+            double dx = xl - xpos;
+            double dy = yl - ypos;
+
+            camera.MoveByMouse(dx, dy, sensibility);
+            std::cout << "moved by mouse" << std::endl;
+        }
+    }
+
     void createObjects()
     {
         renderFinished.Create(device, 0);
@@ -137,6 +187,7 @@ void main()
         uniformBuffer = Buffer::CreateUniformBuffer<DataUBO>(device);
         uniformBuffer.Map();
         uniformBuffer.SetData(&dataUBO);
+        /*setup stuff to render the donut*/
         descriptor.AddBinding(0, 0, DescriptorType::UniformBuffer, PipelineStage::Vertex, 1);
         descriptor.Build(device);
         descriptor.AddUpdateInfo<DataUBO>(0, 0, uniformBuffer);
@@ -168,7 +219,37 @@ void main()
 
         vertexShader.Destroy();
         fragmentShader.Destroy();
+        /*setup line buffers*/
 
+        LineBuffer1 = Buffer::CreateVertexBuffer<LineVertex>(device, {{glm::vec3(0)}, {glm::vec3(100, 0, 0)}});
+        LineBuffer2 = Buffer::CreateVertexBuffer<LineVertex>(device, {{glm::vec3(0)}, {glm::vec3(0, 100, 0)}});
+        LineBuffer3 = Buffer::CreateVertexBuffer<LineVertex>(device, {{glm::vec3(0)}, {glm::vec3(0, 0, 100)}});
+
+        /*setup pipeline for lines*/
+        vsLineShader.Create(device, compiler, vsLineShaderText, "main", "vsLine.glsl", PipelineStage::Vertex, true);
+        psLineShader.Create(device, compiler, psLineShaderText, "main", "psLine.glsl", PipelineStage::Fragment, true);
+
+        linesLayout.AddPushConstant<DataPush>(0, PipelineStage::Fragment);
+        linesLayout.Build(device, descriptor);
+
+        linesPipeline.AddVertexBindingDescription<LineVertex>(0);
+        linesPipeline.AddVertexAttribute(0, 0, 0, VK_FORMAT_R32G32B32_SFLOAT);
+        linesPipeline.AddShaderStage(vsLineShader);
+        linesPipeline.AddShaderStage(psLineShader);
+
+        linesPipeline.Build(device, linesLayout, renderpass, 0,
+                            {.rasterization = {
+                                 .frontFace = VK_FRONT_FACE_CLOCKWISE,
+                             },
+                             .colorBlend = {
+                                 .attachments = {
+                                     {
+                                         .colorWriteMask = VK_COMPONENT_SWIZZLE_R | VK_COMPONENT_SWIZZLE_G | VK_COMPONENT_SWIZZLE_B | VK_COMPONENT_SWIZZLE_A,
+                                     },
+                                 },
+                             }});
+        psLineShader.Destroy();
+        vsLineShader.Destroy();
         camera = Lettuce::X3D::Camera3D::Camera3D(width, height);
     }
     void buildCmds()
@@ -193,13 +274,13 @@ void main()
     void updateData()
     {
         dataPush.color = glm::vec3(1.0f, 0.5f, 0.31f);
-        //camera.SetPosition(glm::vec3(20, 20, 30));
+        // camera.SetPosition(glm::vec3(20, 20, 30));
         camera.SetPosition(cameraPosition);
         camera.SetCenter(glm::vec3(0.0f, 0.0f, 0.0f));
         camera.Update();
         dataUBO.projectionView = camera.GetProjectionView();
         dataUBO.model = glm::mat4(1.0f);
-        dataUBO.cameraPos = glm::vec3(20, 20, 30);
+        dataUBO.cameraPos = cameraPosition;
         // dataUBO.cameraPos = glm::vec3(30);
 
         uniformBuffer.SetData(&dataUBO);
@@ -260,6 +341,30 @@ void main()
         };
 
         vkCmdBeginRenderPass(cmd, &renderPassBI, VkSubpassContents::VK_SUBPASS_CONTENTS_INLINE);
+
+        /*render lines X Y Z */ // yellow, purple, green
+        std::vector<std::pair<Buffer, glm::vec3>> pairs = {{LineBuffer1, glm::vec3(1, 0.984, 0)}, {LineBuffer2, glm::vec3(0.506, 0.024, 0.98)}, {LineBuffer3, glm::vec3(0.024, 0.98, 0.173)}};
+        for (auto &[lineBuffer, color] : pairs)
+        {
+            vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, linesPipeline._pipeline);
+            VkDeviceSize size = 0;
+            vkCmdBindVertexBuffers(cmd, 0, 1, &(lineBuffer._buffer), &size);
+            // vkCmdBindIndexBuffer(cmd, indexBuffer._buffer, 0, VK_INDEX_TYPE_UINT32);
+            vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, linesLayout._pipelineLayout, 0, 1, descriptor._descriptorSets.data(), 0, nullptr);
+            dataPush.color = color;
+            vkCmdPushConstants(cmd, linesLayout._pipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(DataPush), &dataPush);
+            vkCmdSetLineWidth(cmd, 5.0f);
+            VkViewport viewport = {0, 0, (float)width, (float)height, 0.0f, 1.0f};
+            // vkCmdSetViewport(cmd, 0, 1, &viewport);
+            vkCmdSetViewportWithCount(cmd, 1, &viewport);
+            VkRect2D scissor = {{0, 0}, {static_cast<uint32_t>(width), static_cast<uint32_t>(height)}};
+            // vkCmdSetScissor(cmd, 0, 1, &scissor);
+            vkCmdSetScissorWithCount(cmd, 1, &scissor);
+            vkCmdSetPrimitiveTopology(cmd, VkPrimitiveTopology::VK_PRIMITIVE_TOPOLOGY_LINE_LIST);
+            vkCmdDraw(cmd, 2, 1, 0, 0);
+            // vkCmdDrawIndexed(cmd, indices.size(), 1, 0, 0, 0);
+        }
+        /*render donut*/
         vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline._pipeline);
         VkDeviceSize size = 0;
         vkCmdBindVertexBuffers(cmd, 0, 1, &(vertexBuffer._buffer), &size);
@@ -330,6 +435,13 @@ void main()
     {
         vkFreeCommandBuffers(device._device, pool, 1, &cmd);
         vkDestroyCommandPool(device._device, pool, nullptr);
+
+        linesPipeline.Destroy();
+        linesLayout.Destroy();
+        LineBuffer1.Destroy();
+        LineBuffer2.Destroy();
+        LineBuffer3.Destroy();
+
         pipeline.Destroy();
         connector.Destroy();
         descriptor.Destroy();
@@ -403,7 +515,7 @@ void main()
     }
 };
 
-static int main()
+int main()
 {
     LoadModel app;
     app.features = {

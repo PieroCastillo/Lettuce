@@ -75,7 +75,6 @@ std::vector<Vertex> vertices;
 std::vector<uint32_t> indices;
 
 const std::string fragmentShaderText = R"(#version 450
-#
 layout (push_constant) uniform pushData {
     vec3 color;
 };

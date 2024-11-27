@@ -36,6 +36,25 @@ void PipelineLayout::Build(Device &device, Descriptors &descriptor)
     checkResult(vkCreatePipelineLayout(_device._device, &pipelineLayoutCI, nullptr, &_pipelineLayout));
 }
 
+
+void PipelineLayout::Build(Device &device)
+{
+    _device = device;
+
+    VkPipelineLayoutCreateInfo pipelineLayoutCI = {
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
+        //.flags = VkPipelineLayoutCreateFlagBits::VK_PIPELINE_LAYOUT_CREATE_INDEPENDENT_SETS_BIT_EXT,
+    };
+
+    if (pushConstants.size() > 0)
+    {
+        pipelineLayoutCI.pPushConstantRanges = pushConstants.data();
+        pipelineLayoutCI.pushConstantRangeCount = (uint32_t)pushConstants.size();
+    }
+    
+    checkResult(vkCreatePipelineLayout(_device._device, &pipelineLayoutCI, nullptr, &_pipelineLayout));
+}
+
 void PipelineLayout::Destroy()
 {
     vkDestroyPipelineLayout(_device._device, _pipelineLayout, nullptr);

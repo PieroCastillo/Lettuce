@@ -22,6 +22,7 @@ protected:
         window = glfwCreateWindow(width, height, title.c_str(), nullptr, nullptr);
         glfwSetWindowUserPointer(window, this);
         glfwSetKeyCallback(window, keyCallback);
+        glfwSetCursorPosCallback(window, cursorCallback);
         //if (glfwRawMouseMotionSupported())
         //    glfwSetInputMode(window, GLFW_RAW_MOUSE_MOTION, GLFW_TRUE);
         glfwSetMouseButtonCallback(window, mouseButtonCallback);
@@ -123,9 +124,10 @@ protected:
     // down -y
     void onKeyPress(int key, int action, int mods)
     {
-        double dx, dy;
-        dx = 0.1;
-        dy = 0.1;
+        double dx, dy, dz;
+        dx = 0.3;
+        dy = 0.3;
+        dz = 0.3;
         std::cout << std::fixed << std::setprecision(6);
         if (key == GLFW_KEY_UP && action == GLFW_REPEAT)
         {
@@ -138,15 +140,24 @@ protected:
         }
         else if (key == GLFW_KEY_LEFT && action == GLFW_REPEAT)
         {
-            cameraPosition.x -= dx;
+            cameraPosition.z -= dz;
         }
         else if (key == GLFW_KEY_RIGHT && action == GLFW_REPEAT)
         {
-            cameraPosition.x += dx;
+            cameraPosition.z += dz;
         }
 
         if(action == GLFW_REPEAT)
             std::cout << "camera pos: x : " << cameraPosition.x << " y : " <<  cameraPosition.y << " z : " << cameraPosition.z  << std::endl;
+    }
+
+    static void cursorCallback(GLFWwindow *window, double xpos, double ypos)
+    {
+        LettuceSampleApp *app = static_cast<LettuceSampleApp *>(glfwGetWindowUserPointer(window));
+        if (app)
+        {
+            app->onCursorMotion(xpos, ypos);
+        }
     }
 
     // up -> +z
@@ -156,17 +167,26 @@ protected:
         LettuceSampleApp *app = static_cast<LettuceSampleApp *>(glfwGetWindowUserPointer(window));
         if (app)
         {
-            app->onMouseButton(button, action, mods);
+            app->onMouseButtonCore(button, action, mods);
         }
     }
 
-    // modifies direction of camera
-    void onMouseButton(int button, int action, int mods)
+    virtual void onCursorMotion(double xpos, double ypos)
     {
-        if (button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_PRESS)
+        
+    }
+    bool pressed = false;
+    double xl, yl;
+    // modifies direction of camera
+    void onMouseButtonCore(int button, int action, int mods)
+    {
+        if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS)
         {
-            double xpos, ypos;
-            glfwGetCursorPos(window, &xpos, &ypos);
+            pressed = true;
+            glfwGetCursorPos(window, &xl, &yl);
+        }
+        else{
+            pressed = false;
         }
     }
 
