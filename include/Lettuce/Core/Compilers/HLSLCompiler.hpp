@@ -6,7 +6,6 @@
 #include <iostream>
 #include <string>
 #include <exception>
-#include <atlbase.h>
 #include <dxcapi.h>
 #include "ICompiler.hpp"
 
