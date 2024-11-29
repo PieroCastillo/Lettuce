@@ -1,6 +1,8 @@
 # Lettuce
 
-Lettuce is a rendering Vulkan-based library
+Lettuce is a rendering Vulkan-based library.
+The focus of Lettuce is be a library of real-time graphics oriented to design and engineering with the better 
+performance as possible.
 
 ### Docs
  Tools:
@@ -19,7 +21,7 @@ Lettuce is a rendering Vulkan-based library
 - [x] GraphicsPipeline
 - [x] ComputePipeline
 - [x] Mesh shading
-- [x] Buffer
+- [x] Buffer (bad, this impl uses 1 allocation per buffer)
 - [x] Textures
 - [x] Samplers
 - [x] Dynamic states
@@ -35,6 +37,7 @@ Lettuce is a rendering Vulkan-based library
 - [ ] Video
 - [ ] HLSL
 - [ ] SLang
+- [ ] MemoryBlock (various buffers into 1 allocation)
 ### Lettuce Foundation
 - [ ] Render Graph
 - [ ] Multi-thread Rendering
