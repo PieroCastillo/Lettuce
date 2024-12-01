@@ -12,15 +12,16 @@ performance as possible.
 ## Components 
 
 ### Lettuce Core
+This is the core lib of Lettuce, the main function is provide access to Vulkan and manage Vulkan objects.
 - [x] Instance
 - [x] GPU
 - [ ] Multi-GPU support
 - [ ] Headless 
-- [x] Swapchain
+- [x] Swapchain 
 - [x] CommandList (partial)
 - [x] GraphicsPipeline
 - [x] ComputePipeline
-- [x] Mesh shading
+- [x] Mesh shading (partial)
 - [x] Buffer (bad, this impl uses 1 allocation per buffer)
 - [x] Textures
 - [x] Samplers
@@ -33,11 +34,12 @@ performance as possible.
 - [ ] VK_EXT_conservative_rasterization
 - [ ] VK_KHR_fragment_shading_rate
 - [ ] Indirect Drawing
+- [ ] Raytracing
 - [ ] Execution Graphs (when it becomes available to Vulkan standard)
 - [ ] Video
 - [ ] HLSL
 - [ ] SLang
-- [ ] MemoryBlock (various buffers into 1 allocation)
+- [ ] MemoryBlock/Virtual Buffer (various buffers into 1 allocation)
 ### Lettuce Foundation
 - [ ] Render Graph
 - [ ] Multi-thread Rendering
@@ -60,6 +62,7 @@ performance as possible.
 - [ ] Imports glft2 files (priority)
 - [ ] GPU Driving rendering
 ### Lettuce Compute
+- [ ] Kernels
 
 ### hardware-vendors recommendations
 
