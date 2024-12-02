@@ -21,25 +21,28 @@ This is the core lib of Lettuce, the main function is provide access to Vulkan a
 - [x] CommandList (partial)
 - [x] GraphicsPipeline
 - [x] ComputePipeline
-- [x] Mesh shading (partial)
 - [x] Buffer (bad, this impl uses 1 allocation per buffer)
 - [x] Textures
 - [x] Samplers
 - [x] Dynamic states
-- [x] Timeline Semaphores
-- [x] Synchronization2
-- [x] Descriptor Indexing
-- [ ] Buffer Device Address
-- [ ] VK_EXT_memory_budget
-- [ ] VK_EXT_conservative_rasterization
-- [ ] VK_KHR_fragment_shading_rate
 - [ ] Indirect Drawing
-- [ ] Raytracing
 - [ ] Execution Graphs (when it becomes available to Vulkan standard)
 - [ ] Video
 - [ ] HLSL
 - [ ] SLang
 - [ ] MemoryBlock/Virtual Buffer (various buffers into 1 allocation)
+- Extensions & features:
+  - [x] Mesh shading (partial) _(VK_EXT_mesh_shader)_
+  - [ ] Raytracing             _(VK_KHR_acceleration_structure,VK_KHR_ray_tracing_pipeline,VK_KHR_ray_query,VK_KHR_pipeline_library,VK_KHR_deferred_host_operations)_
+  - [x] Timeline Semaphores _(1.2 feature)_
+  - [x] Synchronization2 _(1.3 feature)_
+  - [x] Descriptor Indexing _(1.2 feature)_
+  - [ ] Dynamic Rendering _(1.2 feature)_
+  - [ ] Buffer Device Address _(1.3 feature)_
+  - [ ] Memory Budget  _(VK_EXT_memory_budget)_
+  - [ ] Conservative Rasterization _(VK_EXT_conservative_rasterization)_
+  - [ ] Fragment Shading Rate _(VK_KHR_fragment_shading_rate)_
+
 ### Lettuce Foundation
 - [ ] Render Graph
 - [ ] Multi-thread Rendering
