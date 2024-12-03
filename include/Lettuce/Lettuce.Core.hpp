@@ -18,7 +18,6 @@
 #include "Core/PipelineLayout.hpp"
 
 // other Lettuce objects
-#include "Core/CommandList.hpp"
 #include "Core/Descriptors.hpp"
 #include "Core/Device.hpp"
 #include "Core/GPU.hpp"
@@ -27,3 +26,4 @@
 #include "Core/Semaphore.hpp"
 #include "Core/Shader.hpp"
 #include "Core/Swapchain.hpp"
+#include "Core/MemoryBlock.hpp"

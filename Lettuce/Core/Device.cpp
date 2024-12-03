@@ -91,6 +91,12 @@ void Device::createFeaturesChain()
         descriptorBufferFeature.descriptorBufferPushDescriptors = VK_TRUE;
         _enabledFeatures.DescriptorBuffer = true;
     }
+
+    if(_features.DynamicRendering){
+        gpuFeatures13.dynamicRendering = VK_TRUE;
+        _enabledFeatures.DynamicRendering = true;
+    }
+
     gpuFeatures12.bufferDeviceAddress = VK_TRUE;
 
     gpuFeatures12.shaderSampledImageArrayNonUniformIndexing = VK_TRUE;

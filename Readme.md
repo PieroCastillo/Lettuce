@@ -18,16 +18,13 @@ This is the core lib of Lettuce, the main function is provide access to Vulkan a
 - [ ] Multi-GPU support
 - [ ] Headless 
 - [x] Swapchain 
-- [x] CommandList (partial)
-- [x] GraphicsPipeline
-- [x] ComputePipeline
+- [x] Graphics Pipeline
+- [x] Compute Pipeline
 - [x] Buffer (bad, this impl uses 1 allocation per buffer)
 - [x] Textures
 - [x] Samplers
 - [x] Dynamic states
 - [ ] Indirect Drawing
-- [ ] Execution Graphs (when it becomes available to Vulkan standard)
-- [ ] Video
 - [ ] HLSL
 - [ ] SLang
 - [ ] MemoryBlock/Virtual Buffer (various buffers into 1 allocation)
@@ -42,6 +39,9 @@ This is the core lib of Lettuce, the main function is provide access to Vulkan a
   - [ ] Memory Budget  _(VK_EXT_memory_budget)_
   - [ ] Conservative Rasterization _(VK_EXT_conservative_rasterization)_
   - [ ] Fragment Shading Rate _(VK_KHR_fragment_shading_rate)_
+  - [ ] Execution Graphs (when it becomes available to Vulkan standard)
+  - [ ] Video Encode
+  - [ ] Video Decode
 
 ### Lettuce Foundation
 - [ ] Render Graph

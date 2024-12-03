@@ -6,8 +6,13 @@
 #include <iostream>
 #include <string>
 #include <exception>
-#include <dxcapi.h>
 #include "ICompiler.hpp"
+#include <dxcapi.h>
+#ifdef _WIN32
+    #include <atlbase.h>
+    #include <windows.h>
+    #include <winerror.h>
+#endif
 
 namespace Lettuce::Core::Compilers
 {

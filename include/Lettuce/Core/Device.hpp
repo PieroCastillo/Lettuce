@@ -22,6 +22,7 @@ namespace Lettuce::Core
         bool MemoryBudget;
         bool ConditionalRendering;
         bool DescriptorBuffer;
+        bool DynamicRendering;
     };
 
     class Device
@@ -58,14 +59,20 @@ namespace Lettuce::Core
             .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MESH_SHADER_FEATURES_EXT,
             .pNext = &presentWaitFeature,
         };
+        VkPhysicalDeviceDynamicRenderingFeatures dynamicRenderingFeature = {
+            .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DYNAMIC_RENDERING_FEATURES,
+            .pNext = &meshShaderFeature,
+        };
         VkPhysicalDeviceConditionalRenderingFeaturesEXT conditionalRenderingFeature = {
             .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_CONDITIONAL_RENDERING_FEATURES_EXT,
-            .pNext = &meshShaderFeature,
+            .pNext = &dynamicRenderingFeature,
         };
         VkPhysicalDeviceDescriptorBufferFeaturesEXT descriptorBufferFeature = {
             .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_BUFFER_FEATURES_EXT,
             .pNext = &conditionalRenderingFeature,
         };
+
+
 
         bool tryAddFeatureAndExt(const char *extName);
 
