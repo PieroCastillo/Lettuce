@@ -98,7 +98,8 @@ void Device::createFeaturesChain()
     }
 
     gpuFeatures12.bufferDeviceAddress = VK_TRUE;
-
+    gpuFeatures12.drawIndirectCount = VK_TRUE;
+    //enables descriptor indexing
     gpuFeatures12.shaderSampledImageArrayNonUniformIndexing = VK_TRUE;
     gpuFeatures12.descriptorBindingUniformBufferUpdateAfterBind = VK_TRUE;
     gpuFeatures12.descriptorBindingSampledImageUpdateAfterBind = VK_TRUE;

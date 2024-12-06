@@ -26,13 +26,13 @@ namespace Lettuce::Core
         VmaAllocation _allocation;
         VkBuffer _buffer;
 
-        void Reserve(int size);
-        void AddSubblock(int index, uint32_t size, VkBufferUsageFlags usage);
-        SubblockInfo GetSubblockInfo(int index);
+        // void Reserve(int size);
+        // void AddSubblock(int index, uint32_t size, VkBufferUsageFlags usage);
+        // SubblockInfo GetSubblockInfo(int index);
 
-        void Build(Device& device, VmaMemoryUsage memoryUsage, VmaAllocationCreateFlags allocation);
-        void Destroy();
+        // void Build(Device& device, VmaMemoryUsage memoryUsage, VmaAllocationCreateFlags allocation);
+        // void Destroy();
 
-        static void TransferSubblock(MemoryBlock &blockSrc, MemoryBlock &blockDst);
+        // static void TransferSubblock(MemoryBlock &blockSrc, MemoryBlock &blockDst);
     };
 }
