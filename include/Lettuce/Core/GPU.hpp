@@ -31,6 +31,7 @@ namespace Lettuce::Core
         std::optional<uint32_t> presentFamily;
         std::optional<uint32_t> computeFamily;
         std::vector<char *> availableExtensionsNames;
+        uint32_t bufferImageGranularity = 0;
 
         void Create(VkSurfaceKHR &surface, VkPhysicalDevice &device);
 

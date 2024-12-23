@@ -19,6 +19,7 @@ void GPU::Create(VkSurfaceKHR &surface, VkPhysicalDevice &device)
 
     deviceType = deviceProperties.deviceType;
     geometryShaderPresent = deviceFeatures.geometryShader;
+    bufferImageGranularity = deviceProperties.limits.bufferImageGranularity;
     deviceName = std::string(deviceProperties.deviceName);
     loadQueuesFamilies();
     checkSurfaceCapabilities();
