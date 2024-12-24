@@ -7,8 +7,11 @@
 #define GLFW_EXPOSE_NATIVE_WIN32
 #include <GLFW/glfw3native.h>
 #include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/ext/matrix_clip_space.hpp>
 #include <iomanip>
 #include "Lettuce/Lettuce.Core.hpp"
+#include "Lettuce/Lettuce.X3D.hpp"
 
 /// @brief this is a simple class to implement Lettuce samples quickly
 class LettuceSampleApp
@@ -23,8 +26,8 @@ protected:
         glfwSetWindowUserPointer(window, this);
         glfwSetKeyCallback(window, keyCallback);
         glfwSetCursorPosCallback(window, cursorCallback);
-        //if (glfwRawMouseMotionSupported())
-        //    glfwSetInputMode(window, GLFW_RAW_MOUSE_MOTION, GLFW_TRUE);
+        // if (glfwRawMouseMotionSupported())
+        //     glfwSetInputMode(window, GLFW_RAW_MOUSE_MOTION, GLFW_TRUE);
         glfwSetMouseButtonCallback(window, mouseButtonCallback);
     }
     void endWindow()
@@ -117,38 +120,57 @@ protected:
         }
     }
 
-    // modifies position on XY of camera
-    // <- -x
-    // -> +x
-    // up +y
-    // down -y
     void onKeyPress(int key, int action, int mods)
     {
-        double dx, dy, dz;
-        dx = 0.3;
-        dy = 0.3;
-        dz = 0.3;
+        float su, sd, sdt; // sensibility of up, direction, direction orthogonal vectors
+        su = 0.05;
+        sd = 0.05;
+        sdt = 0.05;
         std::cout << std::fixed << std::setprecision(6);
-        if (key == GLFW_KEY_UP && action == GLFW_REPEAT)
+        auto distance = camera.center - camera.eye;
+        auto dd = -sd * distance; // the minus is for thew reflect effect
+        auto ddt = -sdt * (glm::cross(camera.up, distance));
+        auto du = su * camera.up;
+        // forward
+        if (key == GLFW_KEY_UP && (action == GLFW_PRESS || action == GLFW_REPEAT))
         {
-            cameraPosition.y += dy;
-            std::cout << "camera pos: " << cameraPosition.x << cameraPosition.y << cameraPosition.z  << std::endl;
+            camera.center += dd;
+            camera.eye += dd;
         }
-        else if (key == GLFW_KEY_DOWN && action == GLFW_REPEAT)
+        // backward
+        else if (key == GLFW_KEY_DOWN && (action == GLFW_PRESS || action == GLFW_REPEAT))
         {
-            cameraPosition.y -= dy;
+            camera.center -= dd;
+            camera.eye -= dd;
         }
-        else if (key == GLFW_KEY_LEFT && action == GLFW_REPEAT)
+        // left
+        else if (key == GLFW_KEY_LEFT && (action == GLFW_PRESS || action == GLFW_REPEAT))
         {
-            cameraPosition.z -= dz;
+            camera.center += ddt;
+            camera.eye += ddt;
         }
-        else if (key == GLFW_KEY_RIGHT && action == GLFW_REPEAT)
+        // right
+        else if (key == GLFW_KEY_RIGHT && (action == GLFW_PRESS || action == GLFW_REPEAT))
         {
-            cameraPosition.z += dz;
+            camera.center -= ddt;
+            camera.eye -= ddt;
         }
+        // up
+        else if (key == GLFW_KEY_R && (action == GLFW_PRESS || action == GLFW_REPEAT))
+        {
+            camera.center += du;
+            camera.eye += du;
+        }
+        // down
+        else if (key == GLFW_KEY_F && (action == GLFW_PRESS || action == GLFW_REPEAT))
+        {
+            camera.center -= du;
+            camera.eye -= du;
+        }
+        camera.Update();
 
-        if(action == GLFW_REPEAT)
-            std::cout << "camera pos: x : " << cameraPosition.x << " y : " <<  cameraPosition.y << " z : " << cameraPosition.z  << std::endl;
+        // if (action == GLFW_REPEAT)
+        //     std::cout << "camera pos: x : " << cameraPosition.x << " y : " << cameraPosition.y << " z : " << cameraPosition.z << std::endl;
     }
 
     static void cursorCallback(GLFWwindow *window, double xpos, double ypos)
@@ -173,7 +195,13 @@ protected:
 
     virtual void onCursorMotion(double xpos, double ypos)
     {
-        
+        double sx = 0.0001f, sy = 0.0001f; /*sensiblities*/
+        if (pressed)
+        {
+            double dx = xl - xpos;
+            double dy = yl - ypos;
+            camera.Rotate(sx * dx, sy * dy);
+        }
     }
     bool pressed = false;
     double xl, yl;
@@ -185,7 +213,8 @@ protected:
             pressed = true;
             glfwGetCursorPos(window, &xl, &yl);
         }
-        else{
+        else
+        {
             pressed = false;
         }
     }
@@ -201,9 +230,7 @@ public:
     Lettuce::Core::Instance instance;
     Lettuce::Core::Device device;
     Lettuce::Core::Swapchain swapchain;
-    /*Variable to travel around the space*/
-    glm::vec3 cameraPosition = {20, 20, 30};
-    glm::vec3 cameraDirection = {0, 0, 0};
+    Lettuce::X3D::Camera3D camera;
     void run()
     {
         initWindow();

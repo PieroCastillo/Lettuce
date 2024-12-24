@@ -1,8 +1,10 @@
 //
 // Created by piero on 21/09/2024.
 //
+#include <numbers>
+#include <algorithm>
 #include "Lettuce/X3D/Camera3D.hpp"
-#define  GLM_ENABLE_EXPERIMENTAL
+#define GLM_ENABLE_EXPERIMENTAL
 #include <glm/glm.hpp>
 #include "glm/gtc/matrix_transform.hpp"
 #include "glm/gtc/constants.hpp"
@@ -18,31 +20,33 @@ Camera3D::Camera3D(int width, int height, float angleDegrees, float zNear, float
 }
 glm::mat4 Camera3D::GetProjectionView()
 {
-   return projection * view;
+    return projection * view;
 }
 
-void Camera3D::MoveByMouse(double dx, double dy, double sensibility)
+void Camera3D::Move(glm::vec3 dr)
 {
-    Rotate(glm::vec3(0,1,0), - dx * sensibility );
-    glm::vec3 right = glm::normalize(glm::cross(center - eye, up));
-    Rotate(right, - dy * sensibility);
+    center += dr;
+    eye += dr;
 }
 
-void Camera3D::Rotate(glm::vec3 axis, float angle)
+void Camera3D::Rotate(float dtheta, float dphi)
 {
+    dphi = std::min(dphi,std::numbers::pi_v<float>);
     glm::vec3 direction = center - eye;
-    glm::quat rotation = glm::angleAxis(glm::radians(angle), glm::normalize(axis));
-    direction = rotation * direction;
-    up = glm::normalize(rotation* up);
+    // first rotate for dtheta
+    auto rotMatrix = glm::rotate(glm::mat4(1.0f), dtheta,up);
+    direction = (rotMatrix * glm::vec4(direction, 1.0f));
+    // next rotate for dphi
+    rotMatrix = glm::rotate(glm::mat4(1.0f), dphi, glm::cross(up, direction));
+    direction = (rotMatrix * glm::vec4(direction, 1.0f));
+    // finally, apply the rotation
     center = eye + direction;
 }
-void Camera3D::SetPosition(glm::vec3 position)
+void Camera3D::Reset(glm::vec3 eye, glm::vec3 center, glm::vec3 up)
 {
-    eye = position;
-}
-void Camera3D::SetCenter(glm::vec3 center)
-{
+    this->eye = eye;
     this->center = center;
+    this->up = up;
 }
 void Camera3D::Update()
 {
