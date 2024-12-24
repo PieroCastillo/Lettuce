@@ -26,4 +26,3 @@
 #include "Core/Semaphore.hpp"
 #include "Core/Shader.hpp"
 #include "Core/Swapchain.hpp"
-#include "Core/MemoryBlock.hpp"
