@@ -92,6 +92,18 @@ namespace Lettuce::Core
         Resolve,
     };
 
+    enum class ResourceType
+    {
+        Buffer,
+        Image
+    };
+
+    enum class ResourceLinearity
+    {
+        Linear,
+        NonLinear
+    };
+
     enum class ImageLayout
     {
         Undefined = 0,

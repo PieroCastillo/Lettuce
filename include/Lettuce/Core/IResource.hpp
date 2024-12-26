@@ -10,10 +10,14 @@
 
 namespace Lettuce::Core
 {
-    class IResource{
-        public:
+    class IResource
+    {
+    public:
         virtual ResourceType GetResourceType();
+        virtual ResourceLinearity GetResourceLinearity();
         virtual uint32_t GetSize();
-        virtual void* GetReference();
+        virtual uint32_t GetAlignment();
+        virtual VkMemoryRequirements GetResourceMemoryRequirements();
+        virtual void *GetReference();
     };
 }

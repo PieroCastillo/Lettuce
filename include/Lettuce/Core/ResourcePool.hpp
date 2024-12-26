@@ -9,8 +9,9 @@
 
 namespace Lettuce::Core
 {
-    class ResourcePool{
-        public:
+    class ResourcePool
+    {
+    public:
         std::vector<std::unique_ptr<IResource>> resourcePtrs;
         VkDeviceMemory _memory;
         void Bind(Device &device);

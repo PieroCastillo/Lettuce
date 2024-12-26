@@ -7,6 +7,8 @@
 #include "Core/Compilers/SlangCompiler.hpp"
 #include "Core/Compilers/HLSLCompiler.hpp"
 // resources
+#include "Core/IResource.hpp"
+#include "Core/ResourcePool.hpp"
 #include "Core/Buffer.hpp"
 #include "Core/Texture.hpp"
 #include "Core/TextureView.hpp"

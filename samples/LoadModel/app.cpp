@@ -42,8 +42,6 @@ public:
     Lettuce::Core::Shader psLineShader;
     Lettuce::Core::Shader vsLineShader;
 
-    Lettuce::X3D::Camera3D camera;
-
     struct LineVertex
     {
         glm::vec3 position;
@@ -163,19 +161,6 @@ void main()
         renderpass.BuildFramebuffers();
     }
 
-    double sensibility = 0.01f;
-    void onCursorMotion(double xpos, double ypos)
-    {
-        if (pressed)
-        {
-            double dx = xl - xpos;
-            double dy = yl - ypos;
-
-            camera.MoveByMouse(dx, dy, sensibility);
-            std::cout << "moved by mouse" << std::endl;
-        }
-    }
-
     void createObjects()
     {
         renderFinished.Create(device, 0);
@@ -251,6 +236,7 @@ void main()
         psLineShader.Destroy();
         vsLineShader.Destroy();
         camera = Lettuce::X3D::Camera3D::Camera3D(width, height);
+        beforeResize();
     }
     void buildCmds()
     {
@@ -275,12 +261,10 @@ void main()
     {
         dataPush.color = glm::vec3(1.0f, 0.5f, 0.31f);
         // camera.SetPosition(glm::vec3(20, 20, 30));
-        camera.SetPosition(cameraPosition);
-        camera.SetCenter(glm::vec3(0.0f, 0.0f, 0.0f));
         camera.Update();
         dataUBO.projectionView = camera.GetProjectionView();
         dataUBO.model = glm::mat4(1.0f);
-        dataUBO.cameraPos = cameraPosition;
+        dataUBO.cameraPos = camera.eye;
         // dataUBO.cameraPos = glm::vec3(30);
 
         uniformBuffer.SetData(&dataUBO);
@@ -429,6 +413,7 @@ void main()
     void beforeResize()
     {
         camera = Lettuce::X3D::Camera3D::Camera3D(width, height);
+        camera.Reset(glm::vec3(20,20,30),glm::vec3(0.0f),glm::vec3(0.57735026919)); //1 / sqrt(3)
     }
 
     void destroyObjects()

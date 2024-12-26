@@ -94,7 +94,7 @@ void MeshPipeline::Build(Device &device, PipelineLayout &connector, RenderPass &
         // int32_t                                          basePipelineIndex;
     };
 
-    checkResult(vkCreateGraphicsPipelines(_device._device, VK_NULL_HANDLE, 1, &graphicsPipelineCI, nullptr, &_pipeline), "mesh pipeline created sucessfully");
+    checkResult(vkCreateGraphicsPipelines(_device._device, VK_NULL_HANDLE, 1, &graphicsPipelineCI, nullptr, &_pipeline));
 }
 
 void MeshPipeline::Destroy()
