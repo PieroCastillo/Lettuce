@@ -37,23 +37,24 @@ else
 */
 void ResourcePool::Bind(Device &device, VkMemoryPropertyFlags requiredFlags)
 {
-    uint32_t offset = 0;
     uint32_t measuredSize = 0;
     uint32_t memoryTypeIndex;
     std::vector<VkBindBufferMemoryInfo> bufferBindInfos;
     std::vector<VkBindImageMemoryInfo> imageBindInfos;
-
     // measure
 
     // fill with memory requirements of resources
     // we do this to avoid get memory requirements 2 times of the same resource
     std::vector<VkMemoryRequirements> memoryReqs;
     memoryReqs.reserve(resourcePtrs.size());
+    std::vector<uint32_t> offsets;
+    offsets.reserve(resourcePtrs.size());
+
     for (int i = 0; i < resourcePtrs.size(); i++)
     {
         memoryReqs.push_back(resourcePtrs[i]->GetResourceMemoryRequirements());
     }
-
+    offsets.push_back(0);
     if (resourcePtrs.size() > 1)
     {
         measuredSize = resourcePtrs[0]->GetSize();
@@ -75,6 +76,7 @@ void ResourcePool::Bind(Device &device, VkMemoryPropertyFlags requiredFlags)
             mod = std::lcm(granularity, memoryReqs[i].alignment);
 
             measuredSize += (mod + rmemoryReqs[i - 1].size - 1) & ~(mod - 1);
+            offsets.push_back(measuredSize);
         }
         measuredSize += memoryReqs[resourcePtrs.size() - 1].size;
     }
@@ -94,7 +96,7 @@ void ResourcePool::Bind(Device &device, VkMemoryPropertyFlags requiredFlags)
 
     if (memTypeBits == 0)
     {
-        throw std::runtime_error("memory bind error, resources should have at least 1 memory type bit at common");
+        throw std::runtime_error("Memory Bind Error: Resources should have at least 1 memory type bit at common.");
     }
 
     VkPhysicalDeviceMemoryProperties memoryProperties;
@@ -123,7 +125,7 @@ void ResourcePool::Bind(Device &device, VkMemoryPropertyFlags requiredFlags)
     }
 
     if (!exists)
-        throw std::runtime_error("there's no memory type with the required flags");
+        throw std::runtime_error("Memory Bind Error: There's no memory type with the required flags.");
 
     // create allocation
     VkMemoryAllocateInfo memoryAI = {
@@ -135,15 +137,10 @@ void ResourcePool::Bind(Device &device, VkMemoryPropertyFlags requiredFlags)
     checkResult(vkAllocateMemory(device._device, &memoryAI, nullptr, &_memory));
 
     // create bind infos
-    offset = 0;
+    int j = 0;
     bool start = true;
     for (auto resourcePtr : resourcePtrs)
     {
-        if (!start && last != resourcePtr->GetResourceType())
-        {
-            // offset += (device._gpu.bufferImageGranularity-1);
-        }
-
         switch (resourcePtr->GetResourceType())
         {
         case ResourceType::Buffer:
@@ -151,6 +148,7 @@ void ResourcePool::Bind(Device &device, VkMemoryPropertyFlags requiredFlags)
                 .sType = VK_STRUCTURE_TYPE_BIND_BUFFER_MEMORY_INFO,
                 .buffer = (&VkBuffer)resourcePtr->GetReference(),
                 .memory = _memory,
+                .memoryOffset = offsets[j],
             };
             bufferBindInfos.push_back(bindBufferI);
             break;
@@ -159,18 +157,18 @@ void ResourcePool::Bind(Device &device, VkMemoryPropertyFlags requiredFlags)
                 .sType = VK_STRUCTURE_TYPE_BIND_IMAGE_MEMORY_INFO,
                 .image = (&VkImage)resourcePtr->GetReference(),
                 .memory = _memory,
+                .memoryOffset = offsets[j],
             };
             imageBindInfos.push_back(bindImageI);
             break;
         default:
             break;
         }
-        offset += resourcePtr->GetSize();
         start = false;
+        j++;
     }
 
     // bind resources
-
     if (bufferBindInfos.size() > 0)
     {
         checkResult(vkBindBufferMemory2(device._device, (uint32_t)bufferBindInfos.size(), bufferBindInfos.data()));
