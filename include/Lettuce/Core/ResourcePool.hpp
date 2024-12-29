@@ -14,6 +14,6 @@ namespace Lettuce::Core
     public:
         std::vector<std::unique_ptr<IResource>> resourcePtrs;
         VkDeviceMemory _memory;
-        void Bind(Device &device);
+        void Bind(Device &device, VkMemoryPropertyFlags requiredFlags);
     };
 }

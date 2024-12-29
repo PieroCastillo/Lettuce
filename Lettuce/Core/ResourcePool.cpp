@@ -35,7 +35,7 @@ else
 
         measuredSize += resources[n-1].size
 */
-void ResourcePool::Bind(Device &device)
+void ResourcePool::Bind(Device &device, VkMemoryPropertyFlags requiredFlags)
 {
     uint32_t offset = 0;
     uint32_t measuredSize = 0;
@@ -82,17 +82,17 @@ void ResourcePool::Bind(Device &device)
     // find memory type
     // here we are going to execute an "and" operator for every memory type bits in memory reqs
     // if result == 0, throws error
-    // else, choose the selected memmory type, with preference of 
+    // else, choose the selected memmory type, with preference of
     // memory types with device_local_bit flag
 
     uint32_t memTypeBits = (std::numeric_limits<uint32_t>)::max();
 
-    for(int i = 0; i < resourcePtrs.size(); i++)
+    for (int i = 0; i < resourcePtrs.size(); i++)
     {
         memTypeBits = memTypeBits & memoryReqs[i].memoryTypeBits;
     }
 
-    if(memTypeBits == 0)
+    if (memTypeBits == 0)
     {
         throw std::runtime_error("memory bind error, resources should have at least 1 memory type bit at common");
     }
@@ -100,11 +100,32 @@ void ResourcePool::Bind(Device &device)
     VkPhysicalDeviceMemoryProperties memoryProperties;
     vkGetPhysicalDeviceMemoryProperties(device._pdevice, &memoryProperties);
 
-    // TODO: extract i-th bit of memTypeBits and put it into memoryTypeIndex 
-    // select the bit 1 at position j
+    std::vector<int> suitableMemoryTypeIndices;
+    suitableMemoryTypeIndices.resize(memoryProperties.memoryTypeCount); // max count of memory types
+
+    for (int i = 0; i < memoryProperties.memoryTypeCount; i++)
+    {
+        if ((memTypeBits >> i) & 1) // check if the i-th bit of memTypeBits is true
+        {
+            suitableMemoryTypeIndices.push_back(i);
+        }
+    }
+
+    // select memory type with the required memory flags
+    bool exists = false;
+    for (int i = 0; i < suitableMemoryTypeIndices.size(); i++)
+    {
+        if (memoryProperties.memoryTypes[suitableMemoryTypeIndices[i]].propertyFlags & requiredFlags)
+        {
+            memoryTypeIndex = i;
+            exists = true;
+        }
+    }
+
+    if (!exists)
+        throw std::runtime_error("there's no memory type with the required flags");
 
     // create allocation
-
     VkMemoryAllocateInfo memoryAI = {
         .sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
         .allocationSize = measuredSize,
