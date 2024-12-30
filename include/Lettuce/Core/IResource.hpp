@@ -15,9 +15,7 @@ namespace Lettuce::Core
     public:
         virtual ResourceType GetResourceType();
         virtual ResourceLinearity GetResourceLinearity();
-        virtual uint32_t GetSize();
-        virtual uint32_t GetAlignment();
         virtual VkMemoryRequirements GetResourceMemoryRequirements();
-        virtual void *GetReference();
+        virtual void* GetReference();
     };
 }
