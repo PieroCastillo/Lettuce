@@ -12,13 +12,12 @@ namespace Lettuce::Core
     class ImageResource : public IRecordInfo
     {
     public:
+        std::shared_ptr<Device> _device;
         VkImage _image;
-        void Create(Device &device);
+        void Create(const std::shared_ptr<Device>& device);
         ResourceType GetResourceType();
         ResourceLinearity GetResourceLinearity();
-        uint32_t GetSize();
-        uint32_t GetAlignment();
         VkMemoryRequirements GetResourceMemoryRequirements();
-        void *GetReference();
+        virtual std::shared_ptr<IResource> GetReference();
     };
 }

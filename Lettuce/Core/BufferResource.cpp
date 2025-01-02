@@ -9,8 +9,10 @@
 
 using namespace Lettuce::Core;
 
-void BufferResource::Create(Device &device, uint32_t size, VkBufferUsageFlags usage)
+void BufferResource::Create(const std::shared_ptr<Device>& device, uint32_t size, VkBufferUsageFlags usage)
 {
+    _device = device;
+
     VkBufferCreateInfo bufferCI = {
         .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
         .size = size,
@@ -31,8 +33,10 @@ ResourceLinearity BufferResource::GetResourceLinearity()
 VkMemoryRequirements BufferResource::GetResourceMemoryRequirements()
 {
     VkMemoryRequirements memReqs;
-    vkGetBufferMemoryRequirements()
+    vkGetBufferMemoryRequirements(_device->_device, _buffer, &memReqs);
+    return memReqs;
 }
-void *BufferResource::GetReference()
+std::shared_ptr<IResource> BufferResource::GetReference()
 {
+    return std::shared_ptr<IResource>(this);
 }

@@ -4,6 +4,7 @@
 #pragma once
 #include <iostream>
 #include <vector>
+#include <memory>
 #include "IResource.hpp"
 #include "Device.hpp"
 
@@ -13,10 +14,11 @@ namespace Lettuce::Core
     {
     public:
         VkBuffer _buffer;
-        void Create(Device &device);
+        std::shared_ptr<Device> _device;
+        void Create(const std::shared_ptr<Device>& device, uint32_t size, VkBufferUsageFlags usage);
         ResourceType GetResourceType();
         ResourceLinearity GetResourceLinearity();
         VkMemoryRequirements GetResourceMemoryRequirements();
-        void *GetReference();
+        std::shared_ptr<IResource> GetReference();
     };
 }

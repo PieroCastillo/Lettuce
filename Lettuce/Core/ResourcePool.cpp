@@ -5,11 +5,14 @@
 #include <iostream>
 #include <vector>
 #include <algorithm>
+#include <memory>
 #include <numeric>
 #include <limits>
 #include "Lettuce/Core/Device.hpp"
 #include "Lettuce/Core/ResourcePool.hpp"
 #include "Lettuce/Core/IResource.hpp"
+#include "Lettuce/Core/BufferResource.hpp"
+#include "Lettuce/Core/ImageResource.hpp"
 #include "Lettuce/Core/Utils.hpp"
 
 using namespace Lettuce::Core;
@@ -146,7 +149,7 @@ void ResourcePool::Bind(Device &device, VkMemoryPropertyFlags requiredFlags)
         case ResourceType::Buffer:
             VkBindBufferMemoryInfo bindBufferI = {
                 .sType = VK_STRUCTURE_TYPE_BIND_BUFFER_MEMORY_INFO,
-                .buffer = (&VkBuffer)resourcePtr->GetReference(),
+                .buffer = std::dynamic_pointer_cast<BufferResource>(resourcePtr->GetReference())->_buffer,
                 .memory = _memory,
                 .memoryOffset = offsets[j],
             };
@@ -155,7 +158,7 @@ void ResourcePool::Bind(Device &device, VkMemoryPropertyFlags requiredFlags)
         case ResourceType::Image:
             VkBindImageMemoryInfo bindImageI = {
                 .sType = VK_STRUCTURE_TYPE_BIND_IMAGE_MEMORY_INFO,
-                .image = (&VkImage)resourcePtr->GetReference(),
+                .image = std::dynamic_pointer_cast<ImageResource>(resourcePtr->GetReference())->_image,
                 .memory = _memory,
                 .memoryOffset = offsets[j],
             };
