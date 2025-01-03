@@ -10,7 +10,7 @@
 
 namespace Lettuce::Core
 {
-    class BufferResource : public IRecordInfo
+    class BufferResource : public IResource
     {
     public:
         VkBuffer _buffer;

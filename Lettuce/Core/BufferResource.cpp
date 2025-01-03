@@ -9,7 +9,7 @@
 
 using namespace Lettuce::Core;
 
-void BufferResource::Create(const std::shared_ptr<Device>& device, uint32_t size, VkBufferUsageFlags usage)
+void BufferResource::Create(const std::shared_ptr<Device> &device, uint32_t size, VkBufferUsageFlags usage)
 {
     _device = device;
 
@@ -19,7 +19,7 @@ void BufferResource::Create(const std::shared_ptr<Device>& device, uint32_t size
         .usage = usage,
         .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
     };
-    checkResult(vkCreateBuffer(device._device, &bufferCI, nullptr, &_buffer));
+    checkResult(vkCreateBuffer(device->_device, &bufferCI, nullptr, &_buffer));
 }
 
 ResourceType BufferResource::GetResourceType()

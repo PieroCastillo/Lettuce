@@ -1,5 +1,6 @@
 #pragma once 
 
+#define NOMINMAX
 #include <volk.h>
 #include <vma/vk_mem_alloc.h>
 #ifdef LETTUCE_EXPERIMENTAL

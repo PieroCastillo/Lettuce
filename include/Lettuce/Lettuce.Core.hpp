@@ -1,14 +1,20 @@
 #include "Core/common.hpp"
 #include "Core/Version.hpp"
 #include "Core/Utils.hpp"
+
 // shaders langs compilers
 #include "Core/Compilers/ICompiler.hpp"
 #include "Core/Compilers/GLSLCompiler.hpp"
 #include "Core/Compilers/SlangCompiler.hpp"
 #include "Core/Compilers/HLSLCompiler.hpp"
-// resources
+
+// resources with shared allocation
 #include "Core/IResource.hpp"
 #include "Core/ResourcePool.hpp"
+#include "Core/BufferResource.hpp"
+#include "Core/ImageResource.hpp"
+
+// resouces with own allocation
 #include "Core/Buffer.hpp"
 #include "Core/Texture.hpp"
 #include "Core/TextureView.hpp"

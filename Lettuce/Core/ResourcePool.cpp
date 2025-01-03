@@ -60,13 +60,13 @@ void ResourcePool::Bind(Device &device, VkMemoryPropertyFlags requiredFlags)
     offsets.push_back(0);
     if (resourcePtrs.size() > 1)
     {
-        measuredSize = resourcePtrs[0]->GetSize();
+        measuredSize = memoryReqs[0].size;
     }
     else
     {
         uint32_t granularity = 1;
         uint32_t mod = 0;
-        ResourceLinearity lastType = resourcePtrs[0]->GetResourceMemoryType();
+        ResourceLinearity lastType = resourcePtrs[0]->GetResourceLinearity();
 
         // here we do the "real" measure
         for (int i = 1; i < resourcePtrs.size(); i++)
@@ -78,7 +78,7 @@ void ResourcePool::Bind(Device &device, VkMemoryPropertyFlags requiredFlags)
 
             mod = std::lcm(granularity, memoryReqs[i].alignment);
 
-            measuredSize += (mod + rmemoryReqs[i - 1].size - 1) & ~(mod - 1);
+            measuredSize += (mod + memoryReqs[i - 1].size - 1) & ~(mod - 1);
             offsets.push_back(measuredSize);
         }
         measuredSize += memoryReqs[resourcePtrs.size() - 1].size;
@@ -89,8 +89,7 @@ void ResourcePool::Bind(Device &device, VkMemoryPropertyFlags requiredFlags)
     // if result == 0, throws error
     // else, choose the selected memmory type, with preference of
     // memory types with device_local_bit flag
-
-    uint32_t memTypeBits = (std::numeric_limits<uint32_t>)::max();
+    uint32_t memTypeBits = std::numeric_limits<uint32_t>::max();
 
     for (int i = 0; i < resourcePtrs.size(); i++)
     {
@@ -142,11 +141,12 @@ void ResourcePool::Bind(Device &device, VkMemoryPropertyFlags requiredFlags)
     // create bind infos
     int j = 0;
     bool start = true;
-    for (auto resourcePtr : resourcePtrs)
+    for (const auto &resourcePtr : resourcePtrs)
     {
         switch (resourcePtr->GetResourceType())
         {
         case ResourceType::Buffer:
+        {
             VkBindBufferMemoryInfo bindBufferI = {
                 .sType = VK_STRUCTURE_TYPE_BIND_BUFFER_MEMORY_INFO,
                 .buffer = std::dynamic_pointer_cast<BufferResource>(resourcePtr->GetReference())->_buffer,
@@ -155,7 +155,9 @@ void ResourcePool::Bind(Device &device, VkMemoryPropertyFlags requiredFlags)
             };
             bufferBindInfos.push_back(bindBufferI);
             break;
+        }
         case ResourceType::Image:
+        {
             VkBindImageMemoryInfo bindImageI = {
                 .sType = VK_STRUCTURE_TYPE_BIND_IMAGE_MEMORY_INFO,
                 .image = std::dynamic_pointer_cast<ImageResource>(resourcePtr->GetReference())->_image,
@@ -164,6 +166,7 @@ void ResourcePool::Bind(Device &device, VkMemoryPropertyFlags requiredFlags)
             };
             imageBindInfos.push_back(bindImageI);
             break;
+        }
         default:
             break;
         }
@@ -180,4 +183,9 @@ void ResourcePool::Bind(Device &device, VkMemoryPropertyFlags requiredFlags)
     {
         checkResult(vkBindImageMemory2(device._device, (uint32_t)imageBindInfos.size(), imageBindInfos.data()));
     }
+}
+
+void ResourcePool::AddResource(std::shared_ptr<IResource> resourcePtr)
+{
+    resourcePtrs.push_back(resourcePtr);
 }
