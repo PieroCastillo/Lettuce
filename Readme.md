@@ -9,6 +9,13 @@ performance as possible.
   -  Doxygen + Doxygen Awesome, for API reference
   -  Docsify for Documentation
 
+## Organization
+
+- include: c++ header files
+- src: c++ source files
+- docs: documentation 
+- samples: samples of Lettuce
+
 ## Components 
 
 ### Lettuce Core
