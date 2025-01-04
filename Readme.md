@@ -4,6 +4,10 @@ Lettuce is a rendering Vulkan-based library.
 The focus of Lettuce is be a library of real-time graphics oriented to design and engineering with the better 
 performance as possible.
 
+## TODO
+- impl virtual buffers system
+- use smart ptrs for samples and other classes
+
 ### Docs
  Tools:
   -  Doxygen + Doxygen Awesome, for API reference
