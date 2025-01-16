@@ -61,6 +61,7 @@ void ResourcePool::Bind(Device &device, VkMemoryPropertyFlags requiredFlags)
     if (resourcePtrs.size() > 1)
     {
         measuredSize = memoryReqs[0].size;
+        resourcePtrs[i]->offset = 0;
     }
     else
     {
@@ -77,6 +78,12 @@ void ResourcePool::Bind(Device &device, VkMemoryPropertyFlags requiredFlags)
                 granularity = 1;
 
             mod = std::lcm(granularity, memoryReqs[i].alignment);
+            resourcePtrs[i]->offset = measuredSize+1; //offset is size+1
+            /*
+                |=====| |=============| |==========|
+                0     n n+1           s s+1        ....
+                offset  offset          offset
+            */
 
             measuredSize += (mod + memoryReqs[i - 1].size - 1) & ~(mod - 1);
             offsets.push_back(measuredSize);
