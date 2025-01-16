@@ -78,6 +78,8 @@ This is the core lib of Lettuce, the main function is provide access to Vulkan a
 - [ ] Lighting System
 - [ ] Imports glft2 files (priority)
 - [ ] GPU Driving rendering
+- [ ] Post Proccessing Effects
+  - [ ] Bookeh by distance
 ### Lettuce Compute
 - [ ] Kernels
 
