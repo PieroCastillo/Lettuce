@@ -18,6 +18,7 @@ void ImageResource::Create(const std::shared_ptr<Device> &device, uint32_t width
                            VkImageLayout initialLayout)
 {
     _device = device;
+    _layout = initialLayout;
 
     VkImageCreateInfo imageCI = {
         .sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,

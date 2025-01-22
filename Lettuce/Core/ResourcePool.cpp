@@ -20,7 +20,7 @@ using namespace Lettuce::Core;
 /*
 to measure the required size of a ResourcePool / VkDeviceMemory,
 we use the next expression:
-total_size = size[n] + sumatory from i = 1 to n of:
+total_size = size[0] + sumatory from i = 1 to n-1 of:
     M ( lcm(granularity, alignment[i-1]) , size[i-1])
 where:
 n : # resources

@@ -12,6 +12,8 @@
 #include "Sampler.hpp"
 #include "Utils.hpp"
 #include "TextureView.hpp"
+#include "BufferResource.hpp"
+#include "ImageViewResource.hpp"
 
 namespace Lettuce::Core
 {
@@ -42,9 +44,11 @@ namespace Lettuce::Core
         void AddBinding(uint32_t set, uint32_t binding, DescriptorType type, PipelineStage stage, uint32_t descriptorCount = 1);
 
         void AddUpdateInfo(uint32_t set, uint32_t binding, std::vector<std::pair<uint32_t, Buffer>> sizeBuffersPairs);
+        void AddUpdateInfo(uint32_t set, uint32_t binding, std::vector<std::pair<uint32_t, BufferResource>> sizeBuffersPairs);
         void AddUpdateInfo(uint32_t set, uint32_t binding, std::vector<TextureView> views);
         void AddUpdateInfo(uint32_t set, uint32_t binding, std::vector<Sampler> samplers);
         void AddUpdateInfo(uint32_t set, uint32_t binding, std::vector<Sampler> samplers, std::vector<TextureView> views);
+        void AddUpdateInfo(uint32_t set, uint32_t binding, std::vector<Sampler> samplers, std::vector<ImageViewResource> views);
 
         template <typename TBufferDataType>
         void AddUpdateInfo(uint32_t set, uint32_t binding, Buffer buffer)

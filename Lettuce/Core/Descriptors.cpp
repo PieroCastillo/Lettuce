@@ -12,6 +12,8 @@
 #include "Lettuce/Core/Sampler.hpp"
 #include "Lettuce/Core/TextureView.hpp"
 #include "Lettuce/Core/Descriptors.hpp"
+#include "Lettuce/Core/BufferResource.hpp"
+#include "Lettuce/Core/ImageViewResource.hpp"
 
 using namespace Lettuce::Core;
 
@@ -140,6 +142,35 @@ void Descriptors::AddUpdateInfo(uint32_t set, uint32_t binding, std::vector<std:
     };
     writes.push_back(write);
 }
+void Descriptors::AddUpdateInfo(uint32_t set, uint32_t binding, std::vector<std::pair<uint32_t, BufferResource>> sizeBuffersPairs)
+{
+    std::vector<VkDescriptorBufferInfo> bufferInfos(sizeBuffersPairs.size());
+
+    int index = 0;
+    for (auto &[size, buffer] : sizeBuffersPairs)
+    {
+        VkDescriptorBufferInfo bufferI = {
+            .buffer = buffer._buffer,
+            .offset = 0,
+            .range = size,
+        };
+        bufferInfos[index] = bufferI;
+        index++;
+    }
+    // this is needed for disabling the auto-deleting of the bufferInfos vector
+    writesFieldsMap[{set, binding}].bufferInfos = bufferInfos;
+
+    VkWriteDescriptorSet write = {
+        .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+        .dstSet = _descriptorSets[(int)set],
+        .dstBinding = binding,
+        .dstArrayElement = 0,
+        .descriptorCount = (uint32_t)sizeBuffersPairs.size(),
+        .descriptorType = bindingsTypes[{set, binding}],
+        .pBufferInfo = writesFieldsMap[{set, binding}].bufferInfos.data(),
+    };
+    writes.push_back(write);
+}
 
 void Descriptors::AddUpdateInfo(uint32_t set, uint32_t binding, std::vector<TextureView> views)
 {
@@ -200,6 +231,33 @@ void Descriptors::AddUpdateInfo(uint32_t set, uint32_t binding, std::vector<Samp
             .sampler = samplers[i]._sampler,
             .imageView = views[i]._imageView,
             .imageLayout = views[i]._texture->_imageLayout,
+        };
+    }
+    writesFieldsMap[{set, binding}].imageInfos = imageInfos;
+    VkWriteDescriptorSet write = {
+        .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+        .dstSet = _descriptorSets[(int)set],
+        .dstBinding = binding,
+        .dstArrayElement = 0,
+        .descriptorCount = 1,
+        .descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+        .pImageInfo = imageInfos.data(),
+    };
+    writes.push_back(write);
+}
+void AddUpdateInfo(uint32_t set, uint32_t binding, std::vector<Sampler> samplers, std::vector<ImageViewResource> views)
+{
+    if (samplers.size() != views.size())
+    {
+        throw std::runtime_error("views and samplers should have the same size");
+    }
+    std::vector<VkDescriptorImageInfo> imageInfos(samplers.size());
+    for (int i = 0; i < samplers.size(); i++)
+    {
+        imageInfos[i] = VkDescriptorImageInfo{
+            .sampler = samplers[i]._sampler,
+            .imageView = views[i]._imageView,
+            .imageLayout = views[i]._image->_layout,
         };
     }
     writesFieldsMap[{set, binding}].imageInfos = imageInfos;

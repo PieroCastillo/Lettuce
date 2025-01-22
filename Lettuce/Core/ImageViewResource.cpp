@@ -4,16 +4,17 @@
 #include "Lettuce/Core/common.hpp"
 #include <iostream>
 #include <vector>
+#include <memory>
 #include "Lettuce/Core/Device.hpp"
-#include "Lettuce/Core/Texture.hpp"
-#include "Lettuce/Core/TextureView.hpp"
+#include "Lettuce/Core/ImageResource.hpp"
+#include "Lettuce/Core/ImageViewResource.hpp"
 
 using namespace Lettuce::Core;
 
-void TextureView::Build(Device &device, std::shared_ptr<Texture> texture, VkImageViewType viewType)
+void ImageViewResource::Build(Device &device, std::shared_ptr<ImageResource> resource, VkImageViewType viewType = VK_IMAGE_VIEW_TYPE_2D)
 {
     _device = device;
-    _texture = texture;
+    _image = resource;
     _viewType = viewType;
     _subresourceRange = {
         .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
@@ -25,7 +26,7 @@ void TextureView::Build(Device &device, std::shared_ptr<Texture> texture, VkImag
 
     VkImageViewCreateInfo imageViewCI = {
         .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
-        .image = texture->_image,
+        .image = resource->_image,
         .viewType = viewType,
         // and arrays
         .format = texture->GetFormat(),
@@ -41,7 +42,7 @@ void TextureView::Build(Device &device, std::shared_ptr<Texture> texture, VkImag
     checkResult(vkCreateImageView(_device._device, &imageViewCI, nullptr, &_imageView));
 }
 
-void TextureView::Destroy()
+void ImageViewResource::Destroy()
 {
     vkDestroyImageView(_device._device, _imageView, nullptr);
 }
