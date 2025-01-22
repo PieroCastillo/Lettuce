@@ -13,6 +13,7 @@
 #include "Core/ResourcePool.hpp"
 #include "Core/BufferResource.hpp"
 #include "Core/ImageResource.hpp"
+#include "Core/ImageViewResource.hpp"
 
 // resouces with own allocation
 #include "Core/Buffer.hpp"
