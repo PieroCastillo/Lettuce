@@ -15,6 +15,9 @@ namespace Lettuce::Core
         std::shared_ptr<Device> _device;
         VkImage _image;
         VkImageLayout _layout;
+        uint32_t _mipLevels, _layerCount;
+        VkFormat _format;
+
         void Create(const std::shared_ptr<Device> &device, uint32_t width, uint32_t height, uint32_t depth,
                     VkImageType type,
                     VkImageUsageFlags imageUsage,
@@ -22,9 +25,11 @@ namespace Lettuce::Core
                     uint32_t layerCount,
                     VkFormat format,
                     VkImageLayout initialLayout);
+                    
+        VkFormat GetFormat();
         ResourceType GetResourceType();
         ResourceLinearity GetResourceLinearity();
         VkMemoryRequirements GetResourceMemoryRequirements();
-        virtual std::shared_ptr<IResource> GetReference();
+        std::shared_ptr<IResource> GetReference();
     };
 }

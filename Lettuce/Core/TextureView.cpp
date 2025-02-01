@@ -28,7 +28,7 @@ void TextureView::Build(Device &device, std::shared_ptr<Texture> texture, VkImag
         .image = texture->_image,
         .viewType = viewType,
         // and arrays
-        .format = texture->GetFormat(),
+        .format = texture->_imageFormat,
         .components =
             {
                 .r = VK_COMPONENT_SWIZZLE_IDENTITY,

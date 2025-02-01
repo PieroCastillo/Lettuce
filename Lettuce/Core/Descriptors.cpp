@@ -245,7 +245,7 @@ void Descriptors::AddUpdateInfo(uint32_t set, uint32_t binding, std::vector<Samp
     };
     writes.push_back(write);
 }
-void AddUpdateInfo(uint32_t set, uint32_t binding, std::vector<Sampler> samplers, std::vector<ImageViewResource> views)
+void Descriptors::AddUpdateInfo(uint32_t set, uint32_t binding, std::vector<Sampler> samplers, std::vector<ImageViewResource> views)
 {
     if (samplers.size() != views.size())
     {

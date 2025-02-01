@@ -48,12 +48,7 @@ void Texture::Build(Device &device, uint32_t width, uint32_t height, uint32_t de
         .priority = 1.0f,
     };
 
-    checkResult(vmaCreateImage(_device.allocator, &imageCI, &allocationCI, &_image, &_allocation, nullptr), "image created successfully");
-}
-
-VkFormat Texture::GetFormat()
-{
-    return this->_imageFormat;
+    checkResult(vmaCreateImage(_device.allocator, &imageCI, &allocationCI, &_image, &_allocation, nullptr));
 }
 
 void Texture::Destroy()

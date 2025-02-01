@@ -13,14 +13,14 @@ namespace Lettuce::Core
     class ImageViewResource
     {
     public:
-        Device _device;
+        std::shared_ptr<Device> _device;
         std::shared_ptr<ImageResource> _image;
         VkImageView _imageView;
         VkImageViewType _viewType;
         VkImageSubresourceRange _subresourceRange;
 
-        void Build(Device &device, std::shared_ptr<ImageResource> resource, VkImageViewType viewType = VK_IMAGE_VIEW_TYPE_2D);
-        
+        void Build(const std::shared_ptr<Device> &device, const std::shared_ptr<ImageResource> &image, std::shared_ptr<ImageResource> resource, VkImageViewType viewType = VK_IMAGE_VIEW_TYPE_2D);
+
         void Destroy();
     };
 }

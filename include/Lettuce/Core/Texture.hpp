@@ -13,13 +13,13 @@ namespace Lettuce::Core
     class Texture
     {
     private:
-        VkFormat _imageFormat;
 
     public:
         Device _device;
         VkImage _image;
         VmaAllocation _allocation;
         uint32_t _width, _height, _depth, _mipLevels, _layerCount;
+        VkFormat _imageFormat;
         VkImageType _type;
         VkImageLayout _imageLayout;
 
@@ -31,8 +31,6 @@ namespace Lettuce::Core
                    VkFormat format = VkFormat::VK_FORMAT_B8G8R8A8_SRGB,
                    VmaMemoryUsage memoryUsage = VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE,
                    VkImageLayout initialLayout = VK_IMAGE_LAYOUT_PREINITIALIZED);
-
-        VkFormat GetFormat();
 
         void Destroy();
     };

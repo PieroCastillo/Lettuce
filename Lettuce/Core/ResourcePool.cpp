@@ -40,7 +40,7 @@ else
 */
 void ResourcePool::Bind(Device &device, VkMemoryPropertyFlags requiredFlags)
 {
-    uint32_t measuredSize = 0;
+    uint64_t measuredSize = 0;
     uint32_t memoryTypeIndex;
     std::vector<VkBindBufferMemoryInfo> bufferBindInfos;
     std::vector<VkBindImageMemoryInfo> imageBindInfos;
@@ -61,7 +61,7 @@ void ResourcePool::Bind(Device &device, VkMemoryPropertyFlags requiredFlags)
     if (resourcePtrs.size() > 1)
     {
         measuredSize = memoryReqs[0].size;
-        resourcePtrs[i]->offset = 0;
+        resourcePtrs[0]->offset = 0;
     }
     else
     {
