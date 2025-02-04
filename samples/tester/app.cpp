@@ -144,7 +144,7 @@ void initLettuce()
     features.MeshShading = false;
     features.ConditionalRendering = false;
     features.MemoryBudget = false;
-    device.Create(instance, gpus.front(), features);
+    device->Create(instance, gpus.front(), features);
     std::cout << "-------- device created ----------" << std::endl;
     swapchain.Create(device, width, height);
     std::cout << "-------- swapchain created ----------" << std::endl;
@@ -239,9 +239,9 @@ void buildCmds()
     VkCommandPoolCreateInfo poolCI = {
         .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
         .flags = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT | VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT,
-        .queueFamilyIndex = device._gpu.graphicsFamily.value(),
+        .queueFamilyIndex = device->_gpu.graphicsFamily.value(),
     };
-    checkResult(vkCreateCommandPool(device._device, &poolCI, nullptr, &pool));
+    checkResult(vkCreateCommandPool(device->_device, &poolCI, nullptr, &pool));
 
     VkCommandBufferAllocateInfo cmdAI = {
         .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
@@ -249,7 +249,7 @@ void buildCmds()
         .level = VkCommandBufferLevel::VK_COMMAND_BUFFER_LEVEL_PRIMARY,
         .commandBufferCount = 1,
     };
-    checkResult(vkAllocateCommandBuffers(device._device, &cmdAI, &cmd));
+    checkResult(vkAllocateCommandBuffers(device->_device, &cmdAI, &cmd));
 }
 
 void updateData()
@@ -378,7 +378,7 @@ void draw()
         .pSignalSemaphoreInfos = &signalSI,
     };
 
-    checkResult(vkQueueSubmit2(device._graphicsQueues[0], 1, &submit2I, VK_NULL_HANDLE));
+    checkResult(vkQueueSubmit2(device->_graphicsQueues[0], 1, &submit2I, VK_NULL_HANDLE));
     renderFinished.Wait(renderFinishedValue + 1);
 
     swapchain.Present();
@@ -388,8 +388,8 @@ void draw()
 
 void endLettuce()
 {
-    vkFreeCommandBuffers(device._device, pool, 1, &cmd);
-    vkDestroyCommandPool(device._device, pool, nullptr);
+    vkFreeCommandBuffers(device->_device, pool, 1, &cmd);
+    vkDestroyCommandPool(device->_device, pool, nullptr);
     pipeline.Destroy();
     connector.Destroy();
     descriptor.Destroy();
@@ -402,7 +402,7 @@ void endLettuce()
     renderpass.DestroyFramebuffers();
     renderpass.Destroy();
     swapchain.Destroy();
-    device.Destroy();
+    device->Destroy();
     instance.Destroy();
 }
 
@@ -415,7 +415,7 @@ void mainLoop()
         updateData();
         draw();
     }
-    device.Wait();
+    device->Wait();
 }
 
 void initWindow()

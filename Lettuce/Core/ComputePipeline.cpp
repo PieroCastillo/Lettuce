@@ -7,7 +7,7 @@
 
 using namespace Lettuce::Core;
 
-void ComputePipeline::Build(Device &device, PipelineLayout &connector, Shader &shader)
+void ComputePipeline::Build(const std::shared_ptr<Device> &device, PipelineLayout &connector, Shader &shader)
 {
     _device = device;
     _pipelineLayout = connector._pipelineLayout;
@@ -27,10 +27,10 @@ void ComputePipeline::Build(Device &device, PipelineLayout &connector, Shader &s
         // int32_t                            basePipelineIndex;
     };
 
-    checkResult(vkCreateComputePipelines(_device._device, VK_NULL_HANDLE, 1, &computePipelineCI, nullptr, &_pipeline));
+    checkResult(vkCreateComputePipelines(_device->_device, VK_NULL_HANDLE, 1, &computePipelineCI, nullptr, &_pipeline));
 }
 
 void ComputePipeline::Destroy()
 {
-    vkDestroyPipeline(_device._device, _pipeline, nullptr);
+    vkDestroyPipeline(_device->_device, _pipeline, nullptr);
 }

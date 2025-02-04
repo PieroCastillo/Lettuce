@@ -32,7 +32,7 @@ namespace Lettuce::Core
         void createFramebuffers();
 
     public:
-        Device _device;
+        std::shared_ptr<Device> _device;
         VkSwapchainKHR _swapchain = VK_NULL_HANDLE;
         VkRenderPass _renderPass = VK_NULL_HANDLE;
         // Texture _depthImage;
@@ -50,7 +50,7 @@ namespace Lettuce::Core
         VkExtent2D extent;
         VkFence _fence;
 
-        void Create(Device &device, uint32_t initialWidth, uint32_t initialHeight);
+        void Create(const std::shared_ptr<Device> &device, uint32_t initialWidth, uint32_t initialHeight);
 
         void SetResizeFunc(std::function<std::tuple<uint32_t, uint32_t>(void)> call, std::function<void(void)> postFunc);
 

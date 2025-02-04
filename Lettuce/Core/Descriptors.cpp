@@ -17,7 +17,7 @@
 
 using namespace Lettuce::Core;
 
-void Descriptors::Build(Device &device, uint32_t maxSets)
+void Descriptors::Build(const std::shared_ptr<Device> &device, uint32_t maxSets)
 {
     _device = device;
     // create descriptor set layouts
@@ -52,7 +52,7 @@ void Descriptors::Build(Device &device, uint32_t maxSets)
             .pBindings = bindings.data(),
         };
         VkDescriptorSetLayout layout;
-        checkResult(vkCreateDescriptorSetLayout(device._device, &layoutCI, nullptr, &layout));
+        checkResult(vkCreateDescriptorSetLayout(_device->_device, &layoutCI, nullptr, &layout));
         _layouts[index] = layout;
         index++;
     }
@@ -74,7 +74,7 @@ void Descriptors::Build(Device &device, uint32_t maxSets)
         .poolSizeCount = (uint32_t)sizes.size(),
         .pPoolSizes = sizes.data(),
     };
-    checkResult(vkCreateDescriptorPool(device._device, &poolCI, nullptr, &_pool));
+    checkResult(vkCreateDescriptorPool(device->_device, &poolCI, nullptr, &_pool));
 
     // creates descriptor set
     _descriptorSets.resize(_layouts.size(), VK_NULL_HANDLE);
@@ -84,16 +84,16 @@ void Descriptors::Build(Device &device, uint32_t maxSets)
         .descriptorSetCount = (uint32_t)_descriptorSets.size(),
         .pSetLayouts = _layouts.data(),
     };
-    checkResult(vkAllocateDescriptorSets(device._device, &descriptorSetAI, _descriptorSets.data()));
+    checkResult(vkAllocateDescriptorSets(device->_device, &descriptorSetAI, _descriptorSets.data()));
 }
 
 void Descriptors::Destroy()
 {
-    checkResult(vkResetDescriptorPool(_device._device, _pool, 0));
-    vkDestroyDescriptorPool(_device._device, _pool, nullptr);
+    checkResult(vkResetDescriptorPool(_device->_device, _pool, 0));
+    vkDestroyDescriptorPool(_device->_device, _pool, nullptr);
     for (auto layout : _layouts)
     {
-        vkDestroyDescriptorSetLayout(_device._device, layout, nullptr);
+        vkDestroyDescriptorSetLayout(_device->_device, layout, nullptr);
     }
     bindingsMap.clear();
     _layouts.clear();
@@ -275,7 +275,7 @@ void Descriptors::AddUpdateInfo(uint32_t set, uint32_t binding, std::vector<Samp
 
 void Descriptors::Update()
 {
-    vkUpdateDescriptorSets(_device._device, (uint32_t)writes.size(), writes.data(), 0, nullptr);
+    vkUpdateDescriptorSets(_device->_device, (uint32_t)writes.size(), writes.data(), 0, nullptr);
     writes.clear();
     writesFieldsMap.clear();
 }

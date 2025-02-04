@@ -5,6 +5,7 @@
 #include <iostream>
 #include <vector>
 #include <map>
+#include <memory>
 #include <tuple>
 #include "Device.hpp"
 #include "TextureView.hpp"
@@ -39,11 +40,11 @@ namespace Lettuce::Core
         void buildSubpasses();
 
     public:
-        Device _device;
+        std::shared_ptr<Device> _device;
         VkRenderPass _renderPass = VK_NULL_HANDLE;
         std::vector<VkFramebuffer> _framebuffers;
 
-        void Build(Device& device);
+        void Build(const std::shared_ptr<Device> &device);
         void Destroy();
         void BuildFramebuffers();
         void DestroyFramebuffers();

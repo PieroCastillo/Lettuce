@@ -38,7 +38,7 @@ namespace Lettuce::X2D
     private:
         QueueGeometryMaterial materialsPairs;
         uint32_t width, height;
-        Device device;
+        std::shared_ptr<Device> device;
         Compilers::GLSLCompiler compiler;
         Descriptors descriptors;
         void recontruct();
@@ -48,7 +48,7 @@ namespace Lettuce::X2D
         RenderPass renderPass;
         glm::mat4 globalTransform = glm::mat4(1);
         RenderContext2D() {};
-        RenderContext2D(Device &device, VkFormat swapchainImageFormat);
+        RenderContext2D(const std::shared_ptr<Device> &device, VkFormat swapchainImageFormat);
         template <typename T, typename TData>
             requires InheritsMaterial<T, TData>
         void RenderMaterial(Geometries::GeometryBase &geometry, T &material, TData data)

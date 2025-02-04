@@ -162,7 +162,7 @@ void RenderPass::AddFramebuffer(uint32_t width, uint32_t height, std::vector<Tex
     framebuffersCI.push_back(framebufferCI);
 }
 
-void RenderPass::Build(Device &device)
+void RenderPass::Build(const std::shared_ptr<Device> &device)
 {
     _device = device;
     VkRenderPassCreateInfo renderPassCI = {
@@ -193,12 +193,12 @@ void RenderPass::Build(Device &device)
         renderPassCI.pDependencies = dependencies.data();
     }
 
-    checkResult(vkCreateRenderPass(_device._device, &renderPassCI, nullptr, &_renderPass));
+    checkResult(vkCreateRenderPass(_device->_device, &renderPassCI, nullptr, &_renderPass));
 }
 
 void RenderPass::Destroy()
 {
-    vkDestroyRenderPass(_device._device, _renderPass, nullptr);
+    vkDestroyRenderPass(_device->_device, _renderPass, nullptr);
     attachments.clear();
     attachmentReferencesStorage.clear();
     subpasses.clear();
@@ -215,7 +215,7 @@ void RenderPass::BuildFramebuffers()
     for (auto framebufferCI : framebuffersCI)
     {
         VkFramebuffer fb;
-        checkResult(vkCreateFramebuffer(_device._device, &framebufferCI, nullptr, &fb));
+        checkResult(vkCreateFramebuffer(_device->_device, &framebufferCI, nullptr, &fb));
         _framebuffers[i] = fb;
         i++;
     }
@@ -225,7 +225,7 @@ void RenderPass::DestroyFramebuffers()
 {
     for (auto fb : _framebuffers)
     {
-        vkDestroyFramebuffer(_device._device, fb, nullptr);
+        vkDestroyFramebuffer(_device->_device, fb, nullptr);
     }
     _framebuffers.clear();
     fbviews.clear();

@@ -5,6 +5,7 @@
 #include <iostream>
 #include <vector>
 #include <vector>
+#include <memory>
 #include "Device.hpp"
 #include "Shader.hpp"
 #include "RenderPass.hpp"
@@ -81,7 +82,7 @@ namespace Lettuce::Core
             } dynamic;
         };
 
-        Device _device;
+        std::shared_ptr<Device> _device;
         VkPipelineLayout _pipelineLayout;
         VkPipeline _pipeline;
         RenderPass _renderpass;
@@ -105,7 +106,7 @@ namespace Lettuce::Core
 
         void AddShaderStage(Shader &shader);
 
-        void Build(Device &device, PipelineLayout &connector, RenderPass &renderpass, uint32_t subpassIndex, PipelineBuildData pipelineData);
+        void Build(const std::shared_ptr<Device> &device, PipelineLayout &connector, RenderPass &renderpass, uint32_t subpassIndex, PipelineBuildData pipelineData);
 
         void Destroy();
     };

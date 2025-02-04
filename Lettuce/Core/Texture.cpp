@@ -9,7 +9,7 @@
 
 using namespace Lettuce::Core;
 
-void Texture::Build(Device &device, uint32_t width, uint32_t height, uint32_t depth,
+void Texture::Build(const std::shared_ptr<Device> &device, uint32_t width, uint32_t height, uint32_t depth,
                     VkImageType type,
                     VkImageUsageFlags imageUsage,
                     uint32_t mipLevels,
@@ -48,10 +48,10 @@ void Texture::Build(Device &device, uint32_t width, uint32_t height, uint32_t de
         .priority = 1.0f,
     };
 
-    checkResult(vmaCreateImage(_device.allocator, &imageCI, &allocationCI, &_image, &_allocation, nullptr));
+    checkResult(vmaCreateImage(_device->allocator, &imageCI, &allocationCI, &_image, &_allocation, nullptr));
 }
 
 void Texture::Destroy()
 {
-    vmaDestroyImage(_device.allocator, _image, _allocation);
+    vmaDestroyImage(_device->allocator, _image, _allocation);
 }

@@ -10,7 +10,7 @@
 
 using namespace Lettuce::Core;
 
-void Buffer::Create(Device &device, uint32_t size, BufferUsage usage,
+void Buffer::Create(const std::shared_ptr<Device> &device, uint32_t size, BufferUsage usage,
                     VmaAllocationCreateFlags allocationFlags,
                     VmaMemoryUsage memoryUsage)
 {
@@ -23,9 +23,9 @@ void Buffer::Create(Device &device, uint32_t size, BufferUsage usage,
         VkCommandPoolCreateInfo poolCI = {
             .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
             .flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT,
-            .queueFamilyIndex = _device._gpu.graphicsFamily.value(),
+            .queueFamilyIndex = _device->_gpu.graphicsFamily.value(),
         };
-        checkResult(vkCreateCommandPool(_device._device, &poolCI, nullptr, &_pool));
+        checkResult(vkCreateCommandPool(_device->_device, &poolCI, nullptr, &_pool));
     }
 
     VkBufferCreateInfo bufferCI = {
@@ -40,12 +40,12 @@ void Buffer::Create(Device &device, uint32_t size, BufferUsage usage,
         .usage = memoryUsage,
     };
 
-    checkResult(vmaCreateBuffer(_device.allocator, &bufferCI, &allocationCI, &_buffer, &_allocation, nullptr));
+    checkResult(vmaCreateBuffer(_device->allocator, &bufferCI, &allocationCI, &_buffer, &_allocation, nullptr));
 }
 
 void Buffer::Map()
 {
-    checkResult(vmaMapMemory(_device.allocator, _allocation, &data));
+    checkResult(vmaMapMemory(_device->allocator, _allocation, &data));
 }
 
 void Buffer::SetData(void *src)
@@ -55,8 +55,8 @@ void Buffer::SetData(void *src)
 
 void Buffer::Unmap()
 {
-    vmaUnmapMemory(_device.allocator, _allocation);
-    checkResult(vmaFlushAllocation(_device.allocator, _allocation, 0, _size));
+    vmaUnmapMemory(_device->allocator, _allocation);
+    checkResult(vmaFlushAllocation(_device->allocator, _allocation, 0, _size));
 }
 
 void Buffer::CopyTo(Buffer buffer)
@@ -68,7 +68,7 @@ void Buffer::CopyTo(Buffer buffer)
         .commandBufferCount = 1,
     };
     VkCommandBuffer cmd;
-    vkAllocateCommandBuffers(_device._device, &commandBufferAI, &cmd);
+    vkAllocateCommandBuffers(_device->_device, &commandBufferAI, &cmd);
 
     VkCommandBufferBeginInfo cmdBeginI = {
         .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
@@ -88,14 +88,14 @@ void Buffer::CopyTo(Buffer buffer)
         .commandBufferCount = 1,
         .pCommandBuffers = &cmd,
     };
-    vkQueueSubmit(_device._graphicsQueues[0], 1, &submitI, nullptr);
+    vkQueueSubmit(_device->_graphicsQueues[0], 1, &submitI, nullptr);
 
-    vkQueueWaitIdle(_device._graphicsQueues[0]);
+    vkQueueWaitIdle(_device->_graphicsQueues[0]);
 
-    vkFreeCommandBuffers(_device._device, _pool, 1, &cmd);
+    vkFreeCommandBuffers(_device->_device, _pool, 1, &cmd);
 }
 
-Buffer Buffer::CreateBufferWithStaging(Device &device, BufferUsage bufferDstUsage, uint32_t size, void *data)
+Buffer Buffer::CreateBufferWithStaging(const std::shared_ptr<Device> &device, BufferUsage bufferDstUsage, uint32_t size, void *data)
 {
     Buffer stagingBuffer;
     Buffer buffer;
@@ -115,10 +115,10 @@ Buffer Buffer::CreateBufferWithStaging(Device &device, BufferUsage bufferDstUsag
 
 void Buffer::Destroy()
 {
-    vmaDestroyBuffer(_device.allocator, _buffer, _allocation);
+    vmaDestroyBuffer(_device->allocator, _buffer, _allocation);
 
     if (_usage == BufferUsage::TransferSrc)
     {
-        vkDestroyCommandPool(_device._device, _pool, nullptr);
+        vkDestroyCommandPool(_device->_device, _pool, nullptr);
     }
 }

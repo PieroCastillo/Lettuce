@@ -5,6 +5,7 @@
 #include <iostream>
 #include <vector>
 #include <string>
+#include <memory>
 #include "Device.hpp"
 #include "Shader.hpp"
 #include "RenderPass.hpp"
@@ -17,7 +18,7 @@ namespace Lettuce::Core
     class MeshPipeline
     {
     public:
-        Device _device;
+        std::shared_ptr<Device> _device;
         VkPipelineLayout _pipelineLayout;
         VkPipeline _pipeline;
         std::vector<VkPipelineShaderStageCreateInfo> stages;
@@ -26,7 +27,7 @@ namespace Lettuce::Core
 
         void AddShaderStage(Shader &shader);
 
-        void Build(Device &device, PipelineLayout &connector, RenderPass &renderpass, uint32_t subpassIndex, FrontFace frontFace = FrontFace::Clockwise);
+        void Build(const std::shared_ptr<Device> &device, PipelineLayout &connector, RenderPass &renderpass, uint32_t subpassIndex, FrontFace frontFace = FrontFace::Clockwise);
 
         void Destroy();
     };

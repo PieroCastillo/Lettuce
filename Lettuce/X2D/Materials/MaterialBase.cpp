@@ -16,7 +16,7 @@ using namespace Lettuce::Core;
 using namespace Lettuce::X2D::Materials;
 
 template<typename T, typename TPushData>
-void MaterialBase<T,TPushData>::Load(Device &device, RenderPass &renderpass, Compilers::ICompiler &compiler)
+void MaterialBase<T,TPushData>::Load(const std::shared_ptr<Device> &device, RenderPass &renderpass, Compilers::ICompiler &compiler)
 {
     MaterialBase<T,TPushData> &material = static_cast<T*>(this);
 

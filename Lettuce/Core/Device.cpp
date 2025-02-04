@@ -144,18 +144,18 @@ void Device::listLayers()
 
 void Device::loadExtensionsLayersAndFeatures()
 {
-    if (_instance._debug)
+    if (_instance->_debug)
     {
         requestedLayersNames.emplace_back("VK_LAYER_KHRONOS_validation");
     }
 
-    if (_instance.IsSurfaceCreated())
+    if (_instance->IsSurfaceCreated())
     {
         requestedExtensionsNames.emplace_back(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
     }
 }
 
-void Device::Create(Instance &instance, GPU &gpu, Features gpuFeatures, uint32_t graphicsQueuesCount)
+void Device::Create(const std::shared_ptr<Instance> &instance, GPU &gpu, Features gpuFeatures, uint32_t graphicsQueuesCount)
 {
     _pdevice = gpu._pdevice;
     _instance = instance;
@@ -220,7 +220,7 @@ void Device::Create(Instance &instance, GPU &gpu, Features gpuFeatures, uint32_t
         .physicalDevice = _pdevice,
         .device = _device,
         .pVulkanFunctions = &vulkanFunctions,
-        .instance = _instance._instance,
+        .instance = _instance->_instance,
         .vulkanApiVersion = VK_API_VERSION_1_3,
     };
     checkResult(vmaCreateAllocator(&allocatorI, &allocator));

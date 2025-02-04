@@ -15,7 +15,7 @@ namespace Lettuce::X2D::Geometries
     public:
         glm::mat4 transform;
         Rectangle();
-        Rectangle(Device &device);
+        Rectangle(const std::shared_ptr<Device> &device);
         void SetSizeAndCenter(uint32_t x, uint32_t y, uint32_t width, uint32_t height);
     };
 }

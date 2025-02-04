@@ -4,6 +4,7 @@
 #pragma once
 #include <iostream>
 #include <vector>
+#include <memory>
 #include "Device.hpp"
 #include "Utils.hpp"
 
@@ -56,7 +57,7 @@ namespace Lettuce::Core
         void *data;
 
     public:
-        Device _device;
+        std::shared_ptr<Device> _device;
         VkBuffer _buffer;
         VmaAllocation _allocation;
         VkCommandPool _pool;
@@ -69,7 +70,7 @@ namespace Lettuce::Core
         /// @param usage usage of the buffer
         /// @param allocationFlags
         /// @param memoryUsage
-        void Create(Device &device, uint32_t size, BufferUsage usage,
+        void Create(const std::shared_ptr<Device> &device, uint32_t size, BufferUsage usage,
                     VmaAllocationCreateFlags allocationFlags = VmaAllocationCreateFlagBits::VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT,
                     VmaMemoryUsage memoryUsage = VmaMemoryUsage::VMA_MEMORY_USAGE_AUTO);
 
@@ -88,28 +89,28 @@ namespace Lettuce::Core
         void CopyTo(Buffer buffer);
 
         // template <typename T>
-        // static Buffer CreateVertexBuffer(Device &device, std::vector<T> vertices);
+        // static Buffer CreateVertexBuffer(const std::shared_ptr<Device> &device, std::vector<T> vertices);
 
         // template <typename T, typename = std::enable_if_t<
         //                           std::is_integral<T>::value && std::is_unsigned<T>::value>>
-        // static Buffer CreateIndexBuffer(Device &device, std::vector<T> indices);
+        // static Buffer CreateIndexBuffer(const std::shared_ptr<Device> &device, std::vector<T> indices);
         // template <typename T>
-        // static Buffer CreateUniformBuffer(Device &device, T **data);
+        // static Buffer CreateUniformBuffer(const std::shared_ptr<Device> &device, T **data);
 
         template <typename T>
-        static Buffer CreateVertexBuffer(Device &device, std::vector<T> vertices)
+        static Buffer CreateVertexBuffer(const std::shared_ptr<Device> &device, std::vector<T> vertices)
         {
             return CreateBufferWithStaging(device, BufferUsage::VertexBuffer, sizeof(vertices[0]) * vertices.size(), vertices.data());
         }
 
         template <typename T, typename = std::enable_if_t<std::is_integral<T>::value && std::is_unsigned<T>::value>>
-        static Buffer CreateIndexBuffer(Device &device, std::vector<T> indices)
+        static Buffer CreateIndexBuffer(const std::shared_ptr<Device> &device, std::vector<T> indices)
         {
             return CreateBufferWithStaging(device, BufferUsage::IndexBuffer, sizeof(indices[0]) * indices.size(), indices.data());
         }
 
         template <typename T>
-        static Buffer CreateUniformBuffer(Device &device)
+        static Buffer CreateUniformBuffer(const std::shared_ptr<Device> &device)
         {
             Buffer buffer;
             buffer.Create(device, sizeof(T), BufferUsage::UniformBuffer,
@@ -118,7 +119,7 @@ namespace Lettuce::Core
             return buffer;
         }
 
-        static Buffer CreateBufferWithStaging(Device &device, BufferUsage bufferDstUsage, uint32_t size, void *data);
+        static Buffer CreateBufferWithStaging(const std::shared_ptr<Device> &device, BufferUsage bufferDstUsage, uint32_t size, void *data);
 
         void Destroy();
     };

@@ -9,7 +9,7 @@
 
 using namespace Lettuce::X2D::Geometries;
 
-Rectangle::Rectangle(Device &device)
+Rectangle::Rectangle(const std::shared_ptr<Device> &device)
 {
     indexBuffer = Buffer::CreateIndexBuffer<uint32_t>(device, {0,1,3,1,2,3});
     vertexBuffer = Buffer::CreateVertexBuffer<Vertex>(device, {

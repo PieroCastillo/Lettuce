@@ -3,6 +3,7 @@
 //
 #pragma once
 #include <iostream>
+#include <memory>
 #include "Device.hpp"
 #include "PipelineLayout.hpp"
 #include "Swapchain.hpp"
@@ -13,11 +14,11 @@ namespace Lettuce::Core
     class ComputePipeline
     {
     public:
-        Device _device;
+        std::shared_ptr<Device> _device;
         VkPipelineLayout _pipelineLayout;
         VkPipeline _pipeline;
 
-        void Build(Device &device, PipelineLayout &connector, Shader &shader);
+        void Build(const std::shared_ptr<Device> &device, PipelineLayout &connector, Shader &shader);
 
         void Destroy();
     };

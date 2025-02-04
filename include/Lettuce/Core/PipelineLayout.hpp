@@ -6,13 +6,14 @@
 #include <vector>
 #include "Device.hpp"
 #include "Descriptors.hpp"
+#include <memory>
 
 namespace Lettuce::Core
 {
     class PipelineLayout
     {
     public:
-        Device _device;
+        std::shared_ptr<Device> _device;
         VkPipelineLayout _pipelineLayout;
         std::vector<VkPushConstantRange> pushConstants;
 
@@ -27,8 +28,8 @@ namespace Lettuce::Core
             pushConstants.emplace_back(pushConstantRange);
         }
 
-        void Build(Device &device, Descriptors &descriptor);
-        void Build(Device &device);
+        void Build(const std::shared_ptr<Device> &device, Descriptors &descriptor);
+        void Build(const std::shared_ptr<Device> &device);
 
         void Destroy();
     };

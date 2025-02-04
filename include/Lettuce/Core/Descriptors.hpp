@@ -7,6 +7,7 @@
 #include <map>
 #include <string>
 #include <tuple>
+#include <memory>
 #include "Device.hpp"
 #include "Buffer.hpp"
 #include "Sampler.hpp"
@@ -33,12 +34,12 @@ namespace Lettuce::Core
         std::map<std::pair<uint32_t, uint32_t>, WriteFieldsInfo> writesFieldsMap; // stores image and buffer infos to update
 
     public:
-        Device _device;
+        std::shared_ptr<Device> _device;
         std::vector<VkDescriptorSet> _descriptorSets;
         VkDescriptorPool _pool = VK_NULL_HANDLE;
         std::vector<VkDescriptorSetLayout> _layouts;
 
-        void Build(Device &device, uint32_t maxSets = 16);
+        void Build(const std::shared_ptr<Device> &device, uint32_t maxSets = 16);
         void Destroy();
 
         void AddBinding(uint32_t set, uint32_t binding, DescriptorType type, PipelineStage stage, uint32_t descriptorCount = 1);

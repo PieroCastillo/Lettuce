@@ -29,7 +29,7 @@ namespace Lettuce::X2D::Materials
         virtual std::string GetFragmentShaderText();
         virtual std::string GetVertexShaderText();
         // virtual void PushData(TPushData data);
-        void Load(Device &device, RenderPass &renderpass, Compilers::ICompiler &compiler);
+        void Load(const std::shared_ptr<Device> &device, RenderPass &renderpass, Compilers::ICompiler &compiler);
         void Release();
     };
 }

@@ -18,9 +18,9 @@ using namespace Lettuce::Core;
 
 void Swapchain::loadImages()
 {
-    vkGetSwapchainImagesKHR(_device._device, _swapchain, &imageCount, nullptr);
+    vkGetSwapchainImagesKHR(_device->_device, _swapchain, &imageCount, nullptr);
     swapChainImages.resize(imageCount);
-    vkGetSwapchainImagesKHR(_device._device, _swapchain, &imageCount, swapChainImages.data());
+    vkGetSwapchainImagesKHR(_device->_device, _swapchain, &imageCount, swapChainImages.data());
 }
 
 void Swapchain::createImageViews()
@@ -37,7 +37,7 @@ void Swapchain::createImageViews()
             .components = {VK_COMPONENT_SWIZZLE_IDENTITY, VK_COMPONENT_SWIZZLE_IDENTITY, VK_COMPONENT_SWIZZLE_IDENTITY, VK_COMPONENT_SWIZZLE_IDENTITY},
             .subresourceRange = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1},
         };
-        checkResult(vkCreateImageView(_device._device, &imageViewCI, nullptr, &swapChainImageViews[i]));
+        checkResult(vkCreateImageView(_device->_device, &imageViewCI, nullptr, &swapChainImageViews[i]));
 
         TextureView tvw;
         tvw._device = _device;
@@ -48,7 +48,7 @@ void Swapchain::createImageViews()
 
 void Swapchain::createDepthImage()
 {
-    // depthFormat = _device._gpu.findSupportedFormat(
+    // depthFormat = _device->_gpu.findSupportedFormat(
     //     {VK_FORMAT_D16_UNORM, VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT},
     //     VK_IMAGE_TILING_OPTIMAL,
     //     VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT);
@@ -127,7 +127,7 @@ void Swapchain::createRenderPass()
     renderPassCI.dependencyCount = 2;
     renderPassCI.pDependencies = subpassDependencies;
 
-    checkResult(vkCreateRenderPass(_device._device, &renderPassCI, nullptr, &_renderPass));
+    checkResult(vkCreateRenderPass(_device->_device, &renderPassCI, nullptr, &_renderPass));
 }
 void Swapchain::createFramebuffers()
 {
@@ -149,29 +149,29 @@ void Swapchain::createFramebuffers()
     {
         // views[0] = swapChainImageViews[i];
         framebufferCI.pAttachments = &(swapChainImageViews[i]);
-        checkResult(vkCreateFramebuffer(_device._device, &framebufferCI, nullptr, &framebuffers.at(i)));
+        checkResult(vkCreateFramebuffer(_device->_device, &framebufferCI, nullptr, &framebuffers.at(i)));
     }
 }
 
-void Swapchain::Create(Device &device, uint32_t initialWidth, uint32_t initialHeight)
+void Swapchain::Create(const std::shared_ptr<Device> &device, uint32_t initialWidth, uint32_t initialHeight)
 {
     _device = device;
-    auto capabilities = _device._gpu.capabilities;
+    auto capabilities = _device->_gpu.capabilities;
     imageCount = capabilities.minImageCount + 1;
     if (capabilities.maxImageCount > 0 && imageCount > capabilities.maxImageCount)
     {
         imageCount = capabilities.maxImageCount;
     }
-    imageFormat = _device._gpu.surfaceFormat.format;
+    imageFormat = _device->_gpu.surfaceFormat.format;
     width = initialWidth;
     height = initialHeight;
     extent = {initialWidth, initialHeight};
     VkSwapchainCreateInfoKHR swapchainCI = {
         .sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR,
-        .surface = _device._instance._surface,
+        .surface = _device->_instance->_surface,
         .minImageCount = imageCount,
         .imageFormat = imageFormat,
-        .imageColorSpace = _device._gpu.surfaceFormat.colorSpace,
+        .imageColorSpace = _device->_gpu.surfaceFormat.colorSpace,
         .imageExtent = extent,
         .imageArrayLayers = 1,
         .imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
@@ -180,16 +180,16 @@ void Swapchain::Create(Device &device, uint32_t initialWidth, uint32_t initialHe
         // .pQueueFamilyIndices;
         .preTransform = capabilities.currentTransform,
         .compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR,
-        .presentMode = _device._gpu.presentMode,
+        .presentMode = _device->_gpu.presentMode,
         .clipped = VK_TRUE,
         .oldSwapchain = VK_NULL_HANDLE,
     };
 
     std::vector<uint32_t> queueFamilyIndices;
-    queueFamilyIndices.push_back(_device._gpu.graphicsFamily.value());
-    queueFamilyIndices.push_back(_device._gpu.presentFamily.value());
+    queueFamilyIndices.push_back(_device->_gpu.graphicsFamily.value());
+    queueFamilyIndices.push_back(_device->_gpu.presentFamily.value());
 
-    if (_device._gpu.graphicsFamily.value() != _device._gpu.presentFamily.value())
+    if (_device->_gpu.graphicsFamily.value() != _device->_gpu.presentFamily.value())
     {
         swapchainCI.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
         swapchainCI.queueFamilyIndexCount = (uint32_t)queueFamilyIndices.size();
@@ -200,12 +200,12 @@ void Swapchain::Create(Device &device, uint32_t initialWidth, uint32_t initialHe
         swapchainCI.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
     }
 
-    checkResult(vkCreateSwapchainKHR(_device._device, &swapchainCI, nullptr, &_swapchain));
+    checkResult(vkCreateSwapchainKHR(_device->_device, &swapchainCI, nullptr, &_swapchain));
 
     VkFenceCreateInfo fenceCI = {
         .sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO,
     };
-    checkResult(vkCreateFence(_device._device, &fenceCI, nullptr, &_fence));
+    checkResult(vkCreateFence(_device->_device, &fenceCI, nullptr, &_fence));
 
     loadImages();
     createImageViews();
@@ -216,9 +216,9 @@ void Swapchain::Create(Device &device, uint32_t initialWidth, uint32_t initialHe
 
 void Swapchain::AcquireNextImage()
 {
-    checkResult(vkResetFences(_device._device, 1, &_fence));
-    checkResult(vkAcquireNextImageKHR(_device._device, _swapchain, (std::numeric_limits<uint64_t>::max)(), VK_NULL_HANDLE, _fence, &index));
-    checkResult(vkWaitForFences(_device._device, 1, &_fence, VK_TRUE, (std::numeric_limits<uint64_t>::max)()));
+    checkResult(vkResetFences(_device->_device, 1, &_fence));
+    checkResult(vkAcquireNextImageKHR(_device->_device, _swapchain, (std::numeric_limits<uint64_t>::max)(), VK_NULL_HANDLE, _fence, &index));
+    checkResult(vkWaitForFences(_device->_device, 1, &_fence, VK_TRUE, (std::numeric_limits<uint64_t>::max)()));
 }
 
 void Swapchain::Present()
@@ -229,7 +229,7 @@ void Swapchain::Present()
         .pSwapchains = &_swapchain,
         .pImageIndices = &index,
     };
-    auto result = vkQueuePresentKHR(_device._presentQueue, &presentI);
+    auto result = vkQueuePresentKHR(_device->_presentQueue, &presentI);
 
     switch (result)
     {
@@ -248,14 +248,14 @@ void Swapchain::Present()
         break;
     }
 
-    checkResult(vkQueueWaitIdle(_device._presentQueue));
+    checkResult(vkQueueWaitIdle(_device->_presentQueue));
 }
 
 void Swapchain::Wait()
 {
     // VkPresentIdKHR s = {
     // };
-    // vkWaitForPresentKHR(_device._device, _swapchain, )
+    // vkWaitForPresentKHR(_device->_device, _swapchain, )
 }
 
 void Swapchain::SetResizeFunc(std::function<std::tuple<uint32_t, uint32_t>(void)> call, std::function<void(void)> postFunc)
@@ -268,7 +268,7 @@ void Swapchain::Resize(uint32_t newWidth, uint32_t newHeight)
 {
     for (auto fb : framebuffers)
     {
-        vkDestroyFramebuffer(_device._device, fb, nullptr);
+        vkDestroyFramebuffer(_device->_device, fb, nullptr);
     }
     framebuffers.clear();
     //_depthImageView.Destroy();
@@ -276,20 +276,20 @@ void Swapchain::Resize(uint32_t newWidth, uint32_t newHeight)
 
     for (auto imageView : swapChainImageViews)
     {
-        vkDestroyImageView(_device._device, imageView, nullptr);
+        vkDestroyImageView(_device->_device, imageView, nullptr);
     }
     swapChainImageViews.clear();
     swapChainImages.clear();
-    vkDestroySwapchainKHR(_device._device, _swapchain, nullptr);
+    vkDestroySwapchainKHR(_device->_device, _swapchain, nullptr);
     width = newWidth;
     height = newHeight;
     extent = {newWidth, newHeight};
     VkSwapchainCreateInfoKHR swapchainCI = {
         .sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR,
-        .surface = _device._instance._surface,
+        .surface = _device->_instance->_surface,
         .minImageCount = imageCount,
         .imageFormat = imageFormat,
-        .imageColorSpace = _device._gpu.surfaceFormat.colorSpace,
+        .imageColorSpace = _device->_gpu.surfaceFormat.colorSpace,
         .imageExtent = extent,
         .imageArrayLayers = 1,
         .imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
@@ -298,15 +298,15 @@ void Swapchain::Resize(uint32_t newWidth, uint32_t newHeight)
         // .pQueueFamilyIndices;
         .preTransform = capabilities.currentTransform,
         .compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR,
-        .presentMode = _device._gpu.presentMode,
+        .presentMode = _device->_gpu.presentMode,
         .clipped = VK_TRUE,
         .oldSwapchain = VK_NULL_HANDLE,
     };
     std::vector<uint32_t> queueFamilyIndices;
-    queueFamilyIndices.push_back(_device._gpu.graphicsFamily.value());
-    queueFamilyIndices.push_back(_device._gpu.presentFamily.value());
+    queueFamilyIndices.push_back(_device->_gpu.graphicsFamily.value());
+    queueFamilyIndices.push_back(_device->_gpu.presentFamily.value());
 
-    if (_device._gpu.graphicsFamily.value() != _device._gpu.presentFamily.value())
+    if (_device->_gpu.graphicsFamily.value() != _device->_gpu.presentFamily.value())
     {
         swapchainCI.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
         swapchainCI.queueFamilyIndexCount = (uint32_t)queueFamilyIndices.size();
@@ -317,7 +317,7 @@ void Swapchain::Resize(uint32_t newWidth, uint32_t newHeight)
         swapchainCI.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
     }
 
-    checkResult(vkCreateSwapchainKHR(_device._device, &swapchainCI, nullptr, &_swapchain));
+    checkResult(vkCreateSwapchainKHR(_device->_device, &swapchainCI, nullptr, &_swapchain));
     loadImages();
     createImageViews();
     createFramebuffers();
@@ -327,7 +327,7 @@ void Swapchain::Destroy()
 {
     for (auto fb : framebuffers)
     {
-        vkDestroyFramebuffer(_device._device, fb, nullptr);
+        vkDestroyFramebuffer(_device->_device, fb, nullptr);
     }
     framebuffers.clear();
     //_depthImageView.Destroy();
@@ -335,11 +335,11 @@ void Swapchain::Destroy()
 
     for (auto imageView : swapChainImageViews)
     {
-        vkDestroyImageView(_device._device, imageView, nullptr);
+        vkDestroyImageView(_device->_device, imageView, nullptr);
     }
     swapChainImageViews.clear();
     swapChainImages.clear();
-    vkDestroyRenderPass(_device._device, _renderPass, nullptr);
-    vkDestroyFence(_device._device, _fence, nullptr);
-    vkDestroySwapchainKHR(_device._device, _swapchain, nullptr);
+    vkDestroyRenderPass(_device->_device, _renderPass, nullptr);
+    vkDestroyFence(_device->_device, _fence, nullptr);
+    vkDestroySwapchainKHR(_device->_device, _swapchain, nullptr);
 }

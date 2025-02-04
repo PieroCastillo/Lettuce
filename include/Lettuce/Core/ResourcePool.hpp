@@ -15,6 +15,6 @@ namespace Lettuce::Core
         std::vector<std::shared_ptr<IResource>> resourcePtrs;
         VkDeviceMemory _memory;
         void AddResource(std::shared_ptr<IResource> resourcePtr);
-        void Bind(Device &device, VkMemoryPropertyFlags requiredFlags);
+        void Bind(const std::shared_ptr<Device> &device, VkMemoryPropertyFlags requiredFlags);
     };
 }

@@ -14,13 +14,13 @@ namespace Lettuce::Core
     class TextureView
     {
     public:
-        Device _device;
+        std::shared_ptr<Device> _device;
         std::shared_ptr<Texture> _texture;
         VkImageView _imageView;
         VkImageViewType _viewType;
         VkImageSubresourceRange _subresourceRange;
 
-        void Build(Device &device, std::shared_ptr<Texture> texture, VkImageViewType viewType = VK_IMAGE_VIEW_TYPE_2D);
+        void Build(const std::shared_ptr<Device> &device, std::shared_ptr<Texture> texture, VkImageViewType viewType = VK_IMAGE_VIEW_TYPE_2D);
         
         void Destroy();
     };

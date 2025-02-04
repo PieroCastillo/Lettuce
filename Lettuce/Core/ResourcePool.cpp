@@ -38,7 +38,7 @@ else
 
         measuredSize += resources[n-1].size
 */
-void ResourcePool::Bind(Device &device, VkMemoryPropertyFlags requiredFlags)
+void ResourcePool::Bind(const std::shared_ptr<Device> &device, VkMemoryPropertyFlags requiredFlags)
 {
     uint64_t measuredSize = 0;
     uint32_t memoryTypeIndex;
@@ -73,7 +73,7 @@ void ResourcePool::Bind(Device &device, VkMemoryPropertyFlags requiredFlags)
         for (int i = 1; i < resourcePtrs.size(); i++)
         {
             if (lastType != resourcePtrs[i]->GetResourceLinearity())
-                granularity = device._gpu.bufferImageGranularity;
+                granularity = device->_gpu.bufferImageGranularity;
             else
                 granularity = 1;
 
@@ -109,7 +109,7 @@ void ResourcePool::Bind(Device &device, VkMemoryPropertyFlags requiredFlags)
     }
 
     VkPhysicalDeviceMemoryProperties memoryProperties;
-    vkGetPhysicalDeviceMemoryProperties(device._pdevice, &memoryProperties);
+    vkGetPhysicalDeviceMemoryProperties(device->_pdevice, &memoryProperties);
 
     std::vector<int> suitableMemoryTypeIndices;
     suitableMemoryTypeIndices.resize(memoryProperties.memoryTypeCount); // max count of memory types
@@ -143,7 +143,7 @@ void ResourcePool::Bind(Device &device, VkMemoryPropertyFlags requiredFlags)
         .memoryTypeIndex = memoryTypeIndex,
     };
 
-    checkResult(vkAllocateMemory(device._device, &memoryAI, nullptr, &_memory));
+    checkResult(vkAllocateMemory(device->_device, &memoryAI, nullptr, &_memory));
 
     // create bind infos
     int j = 0;
@@ -184,11 +184,11 @@ void ResourcePool::Bind(Device &device, VkMemoryPropertyFlags requiredFlags)
     // bind resources
     if (bufferBindInfos.size() > 0)
     {
-        checkResult(vkBindBufferMemory2(device._device, (uint32_t)bufferBindInfos.size(), bufferBindInfos.data()));
+        checkResult(vkBindBufferMemory2(device->_device, (uint32_t)bufferBindInfos.size(), bufferBindInfos.data()));
     }
     if (imageBindInfos.size() > 0)
     {
-        checkResult(vkBindImageMemory2(device._device, (uint32_t)imageBindInfos.size(), imageBindInfos.data()));
+        checkResult(vkBindImageMemory2(device->_device, (uint32_t)imageBindInfos.size(), imageBindInfos.data()));
     }
 }
 

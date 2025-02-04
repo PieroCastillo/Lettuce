@@ -12,10 +12,10 @@ namespace Lettuce::Core
     class Sampler
     {
     public:
-        Device _device;
+        std::shared_ptr<Device> _device;
         VkSampler _sampler;
 
-        void Build(Device &device,
+        void Build(const std::shared_ptr<Device> &device,
                    SamplerAddressMode addressModeU = SamplerAddressMode::Repeat,
                    SamplerAddressMode addressModeV = SamplerAddressMode::Repeat,
                    SamplerAddressMode addressModeW = SamplerAddressMode::Repeat);

@@ -12,7 +12,7 @@
 
 using namespace Lettuce::Core;
 
-void PipelineLayout::Build(Device &device, Descriptors &descriptor)
+void PipelineLayout::Build(const std::shared_ptr<Device> &device, Descriptors &descriptor)
 {
     _device = device;
 
@@ -33,11 +33,11 @@ void PipelineLayout::Build(Device &device, Descriptors &descriptor)
         pipelineLayoutCI.setLayoutCount = (uint32_t)descriptor._layouts.size();
     }
 
-    checkResult(vkCreatePipelineLayout(_device._device, &pipelineLayoutCI, nullptr, &_pipelineLayout));
+    checkResult(vkCreatePipelineLayout(_device->_device, &pipelineLayoutCI, nullptr, &_pipelineLayout));
 }
 
 
-void PipelineLayout::Build(Device &device)
+void PipelineLayout::Build(const std::shared_ptr<Device> &device)
 {
     _device = device;
 
@@ -52,10 +52,10 @@ void PipelineLayout::Build(Device &device)
         pipelineLayoutCI.pushConstantRangeCount = (uint32_t)pushConstants.size();
     }
     
-    checkResult(vkCreatePipelineLayout(_device._device, &pipelineLayoutCI, nullptr, &_pipelineLayout));
+    checkResult(vkCreatePipelineLayout(_device->_device, &pipelineLayoutCI, nullptr, &_pipelineLayout));
 }
 
 void PipelineLayout::Destroy()
 {
-    vkDestroyPipelineLayout(_device._device, _pipelineLayout, nullptr);
+    vkDestroyPipelineLayout(_device->_device, _pipelineLayout, nullptr);
 }

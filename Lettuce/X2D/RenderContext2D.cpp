@@ -15,7 +15,7 @@ using namespace Lettuce::X2D;
 // use subpasses
 //  use secondary command buffers and record with multi threading
 
-RenderContext2D::RenderContext2D(Device &device, VkFormat swapchainImageFormat)
+RenderContext2D::RenderContext2D(const std::shared_ptr<Device> &device, VkFormat swapchainImageFormat)
 {
     this->device = device;
     // swapchain color attachment
@@ -33,7 +33,7 @@ RenderContext2D::RenderContext2D(Device &device, VkFormat swapchainImageFormat)
 
     // // depth attachment
     // renderPass.AddAttachment(2, AttachmentType::DepthStencil,
-    //                          device._gpu.GetDepthFormat(),
+    //                          device->_gpu.GetDepthFormat(),
     //                          LoadOp::DontCare, StoreOp::Store,
     //                          LoadOp::DontCare, StoreOp::Store,
     //                          ImageLayout::DepthStencilAttachmentOptimal, ImageLayout::DepthAttachmentStencilReadOnlyOptimal, ImageLayout::DepthStencilAttachmentOptimal);
