@@ -13,9 +13,8 @@
 
 using namespace Lettuce::Core;
 
-void Semaphore::Create(const std::shared_ptr<Device> &device, uint64_t initialValue)
+Semaphore(const std::shared_ptr<Device> &device, uint64_t initialValue) : _device(device)
 {
-    _device = device;
     VkSemaphoreTypeCreateInfo semaphoreTypeCI = {
         .sType = VK_STRUCTURE_TYPE_SEMAPHORE_TYPE_CREATE_INFO,
         .semaphoreType = VkSemaphoreType::VK_SEMAPHORE_TYPE_TIMELINE,
@@ -26,7 +25,6 @@ void Semaphore::Create(const std::shared_ptr<Device> &device, uint64_t initialVa
         .pNext = &semaphoreTypeCI,
     };
     checkResult(vkCreateSemaphore(device->_device, &semaphoreCI, nullptr, &_semaphore));
-    
 }
 void Semaphore::Wait(uint64_t value)
 {
@@ -39,7 +37,7 @@ void Semaphore::Wait(uint64_t value)
     checkResult(vkWaitSemaphores(_device->_device, &waitI, (std::numeric_limits<uint64_t>::max)()));
 }
 
-void Semaphore::Destroy()
+~Semaphore::Destroy()
 {
     vkDestroySemaphore(_device->_device, _semaphore, nullptr);
 }

@@ -92,14 +92,15 @@ void Device::createFeaturesChain()
         _enabledFeatures.DescriptorBuffer = true;
     }
 
-    if(_features.DynamicRendering){
+    if (_features.DynamicRendering)
+    {
         gpuFeatures13.dynamicRendering = VK_TRUE;
         _enabledFeatures.DynamicRendering = true;
     }
 
     gpuFeatures12.bufferDeviceAddress = VK_TRUE;
     gpuFeatures12.drawIndirectCount = VK_TRUE;
-    //enables descriptor indexing
+    // enables descriptor indexing
     gpuFeatures12.shaderSampledImageArrayNonUniformIndexing = VK_TRUE;
     gpuFeatures12.descriptorBindingUniformBufferUpdateAfterBind = VK_TRUE;
     gpuFeatures12.descriptorBindingSampledImageUpdateAfterBind = VK_TRUE;
@@ -155,12 +156,11 @@ void Device::loadExtensionsLayersAndFeatures()
     }
 }
 
-void Device::Create(const std::shared_ptr<Instance> &instance, GPU &gpu, Features gpuFeatures, uint32_t graphicsQueuesCount)
+Device(const std::shared_ptr<Instance> &instance, GPU &gpu, Features gpuFeatures, uint32_t graphicsQueuesCount) : _pdevice(gpu._pdevice),
+                                                                                                                  _instance(instance),
+                                                                                                                  _gpu(gpu),
+                                                                                                                  _features(gpuFeatures)
 {
-    _pdevice = gpu._pdevice;
-    _instance = instance;
-    _gpu = gpu;
-    _features = gpuFeatures;
     listExtensions();
     listLayers();
     loadExtensionsLayersAndFeatures();
@@ -245,7 +245,7 @@ void Device::Wait()
     checkResult(vkDeviceWaitIdle(_device));
 }
 
-void Device::Destroy()
+~Device::Destroy()
 {
     vmaDestroyAllocator(allocator);
     vkDestroyDevice(_device, nullptr);

@@ -18,7 +18,7 @@ namespace Lettuce::Core
         uint32_t _mipLevels, _layerCount;
         VkFormat _format;
 
-        void Create(const std::shared_ptr<Device> &device, uint32_t width, uint32_t height, uint32_t depth,
+        ImageResource(const std::shared_ptr<Device> &device, uint32_t width, uint32_t height, uint32_t depth,
                     VkImageType type,
                     VkImageUsageFlags imageUsage,
                     uint32_t mipLevels,

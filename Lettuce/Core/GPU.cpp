@@ -10,10 +10,10 @@
 
 using namespace Lettuce::Core;
 
-void GPU::Create(VkSurfaceKHR &surface, VkPhysicalDevice &device)
+GPU(VkSurfaceKHR &surface, VkPhysicalDevice &device) : _surface(surface),
+                                                       _pdevice(device)
 {
-    _surface = surface;
-    _pdevice = device;
+
     vkGetPhysicalDeviceProperties(device, &deviceProperties);
     vkGetPhysicalDeviceFeatures(device, &deviceFeatures);
 
@@ -23,7 +23,6 @@ void GPU::Create(VkSurfaceKHR &surface, VkPhysicalDevice &device)
     deviceName = std::string(deviceProperties.deviceName);
     loadQueuesFamilies();
     checkSurfaceCapabilities();
-    std::cout << "gpu ptr: " << _pdevice << std::endl;
 }
 
 bool GPU::GraphicsCapable()

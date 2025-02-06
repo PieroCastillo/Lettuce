@@ -50,7 +50,8 @@ namespace Lettuce::Core
         VkExtent2D extent;
         VkFence _fence;
 
-        void Create(const std::shared_ptr<Device> &device, uint32_t initialWidth, uint32_t initialHeight);
+        Swapchain(const std::shared_ptr<Device> &device, uint32_t initialWidth, uint32_t initialHeight);
+        ~Swapchain();
 
         void SetResizeFunc(std::function<std::tuple<uint32_t, uint32_t>(void)> call, std::function<void(void)> postFunc);
 
@@ -62,6 +63,5 @@ namespace Lettuce::Core
 
         void Wait();
 
-        void Destroy();
     };
 }

@@ -20,7 +20,7 @@ namespace Lettuce::Core
      * renderPass.AddSubpass()
      * renderPass.AddDependency()
      * no matter the order of submission before Build()
-     * renderPass.Build() // here build the internal objects
+     * renderPass = std::make_shared<>() // here build the internal objects
      * renderPass.AddFramebuffer()
      * renderPass.BuildFramebuffers()
      * here finalize the setup
@@ -44,8 +44,8 @@ namespace Lettuce::Core
         VkRenderPass _renderPass = VK_NULL_HANDLE;
         std::vector<VkFramebuffer> _framebuffers;
 
-        void Build(const std::shared_ptr<Device> &device);
-        void Destroy();
+        RenderPass(const std::shared_ptr<Device> &device);
+        ~RenderPass();
         void BuildFramebuffers();
         void DestroyFramebuffers();
         void AddAttachment(

@@ -39,18 +39,18 @@ namespace Lettuce::Core
     public:
         VkInstance _instance;
         VkSurfaceKHR _surface;
-        bool _debug = false;
+        bool _debug;
 
-        void Create(std::string appName, Version appVersion, std::vector<char *> requestedExtensions);
+        Instance(std::string appName, Version appVersion, std::vector<char *> requestedExtensions, bool debug = false);
+        ~Instance();
         template <typename T1, typename T2>
         void CreateSurface(T1 window, T2 process)
         {
             isSurfaceCreated = true;
-            checkResult(CreateVkSurface(_instance, window, process, _surface, nullptr), "surface created successfully");
+            checkResult(CreateVkSurface(_instance, window, process, _surface, nullptr),);
         }
         std::list<GPU> getGPUs();
 
         bool IsSurfaceCreated();
-        void Destroy();
     };
 }

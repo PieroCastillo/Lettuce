@@ -33,7 +33,7 @@ namespace Lettuce::Core
         std::vector<char *> availableExtensionsNames;
         uint32_t bufferImageGranularity = 0;
 
-        void Create(VkSurfaceKHR &surface, VkPhysicalDevice &device);
+        GPU(VkSurfaceKHR &surface, VkPhysicalDevice &device);
 
         bool GraphicsCapable();
 

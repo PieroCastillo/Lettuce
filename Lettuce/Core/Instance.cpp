@@ -72,7 +72,7 @@ void Instance::loadPlatformAndFeatures()
     requestedExtensionsNames.emplace_back(name);
 }
 
-void Instance::Create(std::string appName, Version appVersion, std::vector<char *> requestedExtensions)
+Instance(std::string appName, Version appVersion, std::vector<char *> requestedExtensions, bool debug) : _debug(debug)
 {
     for (auto ext : requestedExtensions)
     {
@@ -136,11 +136,11 @@ void Instance::Create(std::string appName, Version appVersion, std::vector<char 
         instanceCI.pNext = &debugUtilsCI;
     }
 
-    checkResult(vkCreateInstance(&instanceCI, nullptr, &_instance), "instance created successfully");
+    checkResult(vkCreateInstance(&instanceCI, nullptr, &_instance));
     volkLoadInstance(_instance);
     if (_debug)
     {
-        checkResult(CreateDebugUtilsMessengerEXT(_instance, &debugUtilsCI, nullptr, &debugMessenger), "debug messenger created successfully");
+        checkResult(CreateDebugUtilsMessengerEXT(_instance, &debugUtilsCI, nullptr, &debugMessenger));
     }
 }
 
@@ -155,7 +155,7 @@ std::list<GPU> Instance::getGPUs()
     for (auto dev : physicalDevices)
     {
         GPU gpu;
-        gpu.Create(_surface, dev);
+        gpu = std::make_shared<>(_surface, dev);
         gpus.push_front(gpu);
     }
     return gpus;
@@ -166,7 +166,7 @@ bool Instance::IsSurfaceCreated()
     return isSurfaceCreated;
 }
 
-void Instance::Destroy()
+~Instance::Destroy()
 {
     if (isSurfaceCreated)
     {

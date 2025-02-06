@@ -17,9 +17,20 @@
 
 using namespace Lettuce::Core;
 
-void Descriptors::Build(const std::shared_ptr<Device> &device, uint32_t maxSets)
+Descriptors(const std::shared_ptr<Device> &device, const std::vector<DescriptorBinding> &bindings, uint32_t maxSets) : _device(device)
 {
-    _device = device;
+    for (auto &binding : bindings)
+    {
+        VkDescriptorSetLayoutBinding layoutBinding = {
+            .binding = binding.binding,
+            .descriptorType = (VkDescriptorType)binding.type,
+            .descriptorCount = binding.descriptorCount,
+            .stageFlags = (VkShaderStageFlags)binding.stage,
+        };
+        bindingsMap[set].push_back(binding.layoutBinding);
+        bindingsTypes[{set, binding}] = (VkDescriptorType)binding.type;
+    }
+
     // create descriptor set layouts
     int index = 0;
     _layouts.resize(bindingsMap.size());
@@ -87,7 +98,7 @@ void Descriptors::Build(const std::shared_ptr<Device> &device, uint32_t maxSets)
     checkResult(vkAllocateDescriptorSets(device->_device, &descriptorSetAI, _descriptorSets.data()));
 }
 
-void Descriptors::Destroy()
+~Descriptors::Destroy()
 {
     checkResult(vkResetDescriptorPool(_device->_device, _pool, 0));
     vkDestroyDescriptorPool(_device->_device, _pool, nullptr);
@@ -101,19 +112,36 @@ void Descriptors::Destroy()
     sizes.clear();
 }
 
-void Descriptors::AddBinding(uint32_t set, uint32_t binding, DescriptorType type, PipelineStage stage, uint32_t descriptorCount)
+void Descriptors::AddUpdateInfo(uint32_t set, uint32_t binding, const std::vector<std::pair<uint32_t, std::shared_pointer<Buffer>>> &sizeBuffersPairs)
 {
-    VkDescriptorSetLayoutBinding layoutBinding = {
-        .binding = binding,
-        .descriptorType = (VkDescriptorType)type,
-        .descriptorCount = descriptorCount,
-        .stageFlags = (VkShaderStageFlags)stage,
-    };
-    bindingsMap[set].push_back(layoutBinding);
-    bindingsTypes[{set, binding}] = (VkDescriptorType)type;
-}
+    std::vector<VkDescriptorBufferInfo> bufferInfos(sizeBuffersPairs.size());
 
-void Descriptors::AddUpdateInfo(uint32_t set, uint32_t binding, std::vector<std::pair<uint32_t, Buffer>> sizeBuffersPairs)
+    int index = 0;
+    for (auto &[size, buffer] : sizeBuffersPairs)
+    {
+        VkDescriptorBufferInfo bufferI = {
+            .buffer = buffer->_buffer,
+            .offset = 0,
+            .range = size,
+        };
+        bufferInfos[index] = bufferI;
+        index++;
+    }
+    // this is needed for disabling the auto-deleting of the bufferInfos vector
+    writesFieldsMap[{set, binding}].bufferInfos = bufferInfos;
+
+    VkWriteDescriptorSet write = {
+        .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+        .dstSet = _descriptorSets[(int)set],
+        .dstBinding = binding,
+        .dstArrayElement = 0,
+        .descriptorCount = (uint32_t)sizeBuffersPairs.size(),
+        .descriptorType = bindingsTypes[{set, binding}],
+        .pBufferInfo = writesFieldsMap[{set, binding}].bufferInfos.data(),
+    };
+    writes.push_back(write);
+}
+void Descriptors::AddUpdateInfo(uint32_t set, uint32_t binding, const std::vector<std::pair<uint32_t, std::shared_pointer<BufferResource>>> &sizeBuffersPairs)
 {
     std::vector<VkDescriptorBufferInfo> bufferInfos(sizeBuffersPairs.size());
 
@@ -142,37 +170,8 @@ void Descriptors::AddUpdateInfo(uint32_t set, uint32_t binding, std::vector<std:
     };
     writes.push_back(write);
 }
-void Descriptors::AddUpdateInfo(uint32_t set, uint32_t binding, std::vector<std::pair<uint32_t, BufferResource>> sizeBuffersPairs)
-{
-    std::vector<VkDescriptorBufferInfo> bufferInfos(sizeBuffersPairs.size());
 
-    int index = 0;
-    for (auto &[size, buffer] : sizeBuffersPairs)
-    {
-        VkDescriptorBufferInfo bufferI = {
-            .buffer = buffer._buffer,
-            .offset = 0,
-            .range = size,
-        };
-        bufferInfos[index] = bufferI;
-        index++;
-    }
-    // this is needed for disabling the auto-deleting of the bufferInfos vector
-    writesFieldsMap[{set, binding}].bufferInfos = bufferInfos;
-
-    VkWriteDescriptorSet write = {
-        .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-        .dstSet = _descriptorSets[(int)set],
-        .dstBinding = binding,
-        .dstArrayElement = 0,
-        .descriptorCount = (uint32_t)sizeBuffersPairs.size(),
-        .descriptorType = bindingsTypes[{set, binding}],
-        .pBufferInfo = writesFieldsMap[{set, binding}].bufferInfos.data(),
-    };
-    writes.push_back(write);
-}
-
-void Descriptors::AddUpdateInfo(uint32_t set, uint32_t binding, std::vector<TextureView> views)
+void Descriptors::AddUpdateInfo(uint32_t set, uint32_t binding, const std::vector<std::shared_pointer<TextureView>> &views)
 {
     std::vector<VkDescriptorImageInfo> imageInfos(views.size());
     for (int i = 0; i < views.size(); i++)
@@ -196,7 +195,7 @@ void Descriptors::AddUpdateInfo(uint32_t set, uint32_t binding, std::vector<Text
     writes.push_back(write);
 }
 
-void Descriptors::AddUpdateInfo(uint32_t set, uint32_t binding, std::vector<Sampler> samplers)
+void Descriptors::AddUpdateInfo(uint32_t set, uint32_t binding, const std::vector<std::shared_pointer<Sampler>> &samplers)
 {
     std::vector<VkDescriptorImageInfo> imageInfos(samplers.size());
     for (int i = 0; i < samplers.size(); i++)
@@ -218,20 +217,16 @@ void Descriptors::AddUpdateInfo(uint32_t set, uint32_t binding, std::vector<Samp
     writes.push_back(write);
 }
 
-void Descriptors::AddUpdateInfo(uint32_t set, uint32_t binding, std::vector<Sampler> samplers, std::vector<TextureView> views)
+void Descriptors::AddUpdateInfo(uint32_t set, uint32_t binding, const std::vector<std::pair<std::shared_pointer<Sampler>, std::shared_pointer<TextureView>>> &samplerViewsPairs)
 {
-    if (samplers.size() != views.size())
-    {
-        throw std::runtime_error("views and samplers should have the same size");
-    }
     std::vector<VkDescriptorImageInfo> imageInfos(samplers.size());
-    for (int i = 0; i < samplers.size(); i++)
+    for (auto &[sampler, view] : samplerViewsPairs)
     {
-        imageInfos[i] = VkDescriptorImageInfo{
-            .sampler = samplers[i]._sampler,
-            .imageView = views[i]._imageView,
-            .imageLayout = views[i]._texture->_imageLayout,
-        };
+        imageInfos.push_back({
+            .sampler = sampler->_sampler,
+            .imageView = view->_imageView,
+            .imageLayout = view->_texture->_layout,
+        });
     }
     writesFieldsMap[{set, binding}].imageInfos = imageInfos;
     VkWriteDescriptorSet write = {
@@ -245,20 +240,17 @@ void Descriptors::AddUpdateInfo(uint32_t set, uint32_t binding, std::vector<Samp
     };
     writes.push_back(write);
 }
-void Descriptors::AddUpdateInfo(uint32_t set, uint32_t binding, std::vector<Sampler> samplers, std::vector<ImageViewResource> views)
+void Descriptors::AddUpdateInfo(uint32_t set, uint32_t binding, const std::vector<std::pair<std::shared_pointer<Sampler>, std::shared_pointer<ImageViewResource>>> &samplerViewsPairs)
 {
-    if (samplers.size() != views.size())
-    {
-        throw std::runtime_error("views and samplers should have the same size");
-    }
     std::vector<VkDescriptorImageInfo> imageInfos(samplers.size());
-    for (int i = 0; i < samplers.size(); i++)
+
+    for (auto &[sampler, view] : samplerViewsPairs)
     {
-        imageInfos[i] = VkDescriptorImageInfo{
-            .sampler = samplers[i]._sampler,
-            .imageView = views[i]._imageView,
-            .imageLayout = views[i]._image->_layout,
-        };
+        imageInfos.push_back({
+            .sampler = sampler->_sampler,
+            .imageView = view->_imageView,
+            .imageLayout = view->_image->_layout,
+        });
     }
     writesFieldsMap[{set, binding}].imageInfos = imageInfos;
     VkWriteDescriptorSet write = {

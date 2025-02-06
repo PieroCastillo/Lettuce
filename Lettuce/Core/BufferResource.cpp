@@ -9,7 +9,7 @@
 
 using namespace Lettuce::Core;
 
-void BufferResource::Create(const std::shared_ptr<Device> &device, std::vector<BufferBlock> bufferBlocks, VkBufferUsageFlags usage)
+BufferResource(const std::shared_ptr<Device> &device, std::vector<BufferBlock> bufferBlocks, VkBufferUsageFlags usage)
 {
     _device = device;
     _blocks = bufferBlocks;
@@ -21,10 +21,10 @@ void BufferResource::Create(const std::shared_ptr<Device> &device, std::vector<B
 
         size+=block.size;
     }
-    Create(device, size, usage);
+    Build(device, size, usage);
 }
 
-void BufferResource::Create(const std::shared_ptr<Device> &device, uint32_t size, VkBufferUsageFlags usage)
+BufferResource(const std::shared_ptr<Device> &device, uint32_t size, VkBufferUsageFlags usage)
 {
     _device = device;
 

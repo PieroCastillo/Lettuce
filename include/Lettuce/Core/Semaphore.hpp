@@ -17,10 +17,10 @@ namespace Lettuce::Core
         VkSemaphore _semaphore;
         // uint64_t currentValue;
 
-        void Create(const std::shared_ptr<Device> &device, uint64_t initialValue);
+        Semaphore(const std::shared_ptr<Device> &device, uint64_t initialValue);
+        ~Semaphore();
         void Wait(uint64_t value);
         void Signal(uint64_t signalValue);
-        void Destroy();
         static std::vector<Semaphore> CreateSemaphores(const std::shared_ptr<Device> &device, uint32_t semaphoresCount);
         static void WaitSemaphores(std::vector<Semaphore> semaphores, std::vector<uint64_t> values);
         static void DestroySemaphores(std::vector<Semaphore> semaphores);

@@ -43,7 +43,7 @@ RenderContext2D::RenderContext2D(const std::shared_ptr<Device> &device, VkFormat
 
     // renderPass.AddDependency(0, VK_SUBPASS_EXTERNAL, AccessStage::)
 
-    renderPass.Build(device);
+    renderPass = std::make_shared<>(device);
 }
 void RenderContext2D::Record(VkCommandBuffer cmd, VkImage swapchainImage, uint32_t swapchainImageIndex, VkClearColorValue color)
 {

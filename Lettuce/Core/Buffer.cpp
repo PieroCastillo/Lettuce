@@ -10,14 +10,12 @@
 
 using namespace Lettuce::Core;
 
-void Buffer::Create(const std::shared_ptr<Device> &device, uint32_t size, BufferUsage usage,
-                    VmaAllocationCreateFlags allocationFlags,
-                    VmaMemoryUsage memoryUsage)
+Buffer(const std::shared_ptr<Device> &device, uint32_t size, BufferUsage usage,
+       VmaAllocationCreateFlags allocationFlags,
+       VmaMemoryUsage memoryUsage) : _device(device),
+                                     _size(size),
+                                     _usage(usage)
 {
-    _device = device;
-    _size = size;
-    _usage = usage;
-
     if (usage == BufferUsage::TransferSrc)
     {
         VkCommandPoolCreateInfo poolCI = {
@@ -95,25 +93,23 @@ void Buffer::CopyTo(Buffer buffer)
     vkFreeCommandBuffers(_device->_device, _pool, 1, &cmd);
 }
 
-Buffer Buffer::CreateBufferWithStaging(const std::shared_ptr<Device> &device, BufferUsage bufferDstUsage, uint32_t size, void *data)
+std::shared_ptr<Buffer> Buffer::CreateBufferWithStaging(const std::shared_ptr<Device> &device, BufferUsage bufferDstUsage, uint32_t size, void *data)
 {
-    Buffer stagingBuffer;
-    Buffer buffer;
-    stagingBuffer.Create(device, size, BufferUsage::TransferSrc,
-                         VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT | VMA_ALLOCATION_CREATE_MAPPED_BIT);
-    stagingBuffer.Map();
-    stagingBuffer.SetData(data);
-    stagingBuffer.Unmap();
+    auto stagingBuffer = std::make_shared<Buffer>(device, size, BufferUsage::TransferSrc,
+                                                  VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT | VMA_ALLOCATION_CREATE_MAPPED_BIT);
+    stagingBuffer->Map();
+    stagingBuffer->SetData(data);
+    stagingBuffer->Unmap();
 
     auto usage = BufferUsage::TransferDst;
     usage |= bufferDstUsage;
-    buffer.Create(device, size, usage, VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT | VMA_ALLOCATION_CREATE_MAPPED_BIT, VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE);
-    stagingBuffer.CopyTo(buffer);
-    stagingBuffer.Destroy();
+    auto buffer = std::make_shared<Buffer>(device, size, usage, VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT | VMA_ALLOCATION_CREATE_MAPPED_BIT, VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE);
+    stagingBuffer->CopyTo(buffer);
+    stagingBuffer->
     return buffer;
 }
 
-void Buffer::Destroy()
+~Buffer()
 {
     vmaDestroyBuffer(_device->allocator, _buffer, _allocation);
 

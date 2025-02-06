@@ -23,7 +23,7 @@ namespace Lettuce::Core
         VkImageType _type;
         VkImageLayout _imageLayout;
 
-        void Build(const std::shared_ptr<Device> &device, uint32_t width, uint32_t height, uint32_t depth = 1,
+        Texture(const std::shared_ptr<Device> &device, uint32_t width, uint32_t height, uint32_t depth = 1,
                    VkImageType type = VK_IMAGE_TYPE_2D,
                    VkImageUsageFlags imageUsage = VK_IMAGE_USAGE_SAMPLED_BIT,
                    uint32_t mipLevels = 1,
@@ -32,6 +32,6 @@ namespace Lettuce::Core
                    VmaMemoryUsage memoryUsage = VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE,
                    VkImageLayout initialLayout = VK_IMAGE_LAYOUT_PREINITIALIZED);
 
-        void Destroy();
+        ~Texture();
     };
 }

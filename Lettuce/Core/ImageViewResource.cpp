@@ -11,7 +11,7 @@
 
 using namespace Lettuce::Core;
 
-void ImageViewResource::Build(const std::shared_ptr<Device> &device, const std::shared_ptr<ImageResource> &image, std::shared_ptr<ImageResource> resource, VkImageViewType viewType)
+ImageViewResource(const std::shared_ptr<Device> &device, const std::shared_ptr<ImageResource> &image, std::shared_ptr<ImageResource> resource, VkImageViewType viewType)
 {
     _device = device;
     _image = image;
@@ -42,7 +42,7 @@ void ImageViewResource::Build(const std::shared_ptr<Device> &device, const std::
     checkResult(vkCreateImageView(_device->_device, &imageViewCI, nullptr, &_imageView));
 }
 
-void ImageViewResource::Destroy()
+~ImageViewResource::Destroy()
 {
     vkDestroyImageView(_device->_device, _imageView, nullptr);
 }

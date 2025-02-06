@@ -38,8 +38,7 @@ protected:
     }
     void initializeLettuce()
     {
-        instance->_debug = true;
-        instance->Create(appName, Lettuce::Core::Version{0, 1, 0, 0}, {});
+        instance = std::make_shared<Lettuce::Core::Instance>(appName, Lettuce::Core::Version{0, 1, 0, 0}, {}, true);
         instance->CreateSurface(glfwGetWin32Window(window), GetModuleHandle(nullptr));
         auto gpus = instance->getGPUs();
         // create device
@@ -47,8 +46,8 @@ protected:
         features.MeshShading = false;
         features.ConditionalRendering = false;
         features.MemoryBudget = false;
-        device->Create(instance, gpus.front(), features);
-        swapchain->Create(device, width, height);
+        device = std::make_shared<Lettuce::Core::Device>(instance, gpus.front(), features);
+        swapchain = std::make_shared<Lettuce::Core::Swapchain>(device, width, height);
         createRenderPass();
         swapchain->SetResizeFunc([this]()
                                 { return resizeCall(); }, [this]()
@@ -96,9 +95,9 @@ protected:
     }
     void destroyLettuce()
     {
-        swapchain->Destroy();
-        device->Destroy();
-        instance.Destroy();
+        swapchain.reset();
+        device.reset();
+        instance.reset();
     }
 
     std::tuple<uint32_t, uint32_t> resizeCall()
@@ -128,47 +127,47 @@ protected:
         sd = 0.05;
         sdt = 0.05;
         std::cout << std::fixed << std::setprecision(6);
-        auto distance = camera->center - camera->eye;
+        auto distance = camera.center - camera.eye;
         auto dd = -sd * distance; // the minus is for thew reflect effect
-        auto ddt = -sdt * (glm::cross(camera->up, distance));
-        auto du = su * camera->up;
+        auto ddt = -sdt * (glm::cross(camera.up, distance));
+        auto du = su * camera.up;
         // forward
         if (key == GLFW_KEY_UP && (action == GLFW_PRESS || action == GLFW_REPEAT))
         {
-            camera->center += dd;
-            camera->eye += dd;
+            camera.center += dd;
+            camera.eye += dd;
         }
         // backward
         else if (key == GLFW_KEY_DOWN && (action == GLFW_PRESS || action == GLFW_REPEAT))
         {
-            camera->center -= dd;
-            camera->eye -= dd;
+            camera.center -= dd;
+            camera.eye -= dd;
         }
         // left
         else if (key == GLFW_KEY_LEFT && (action == GLFW_PRESS || action == GLFW_REPEAT))
         {
-            camera->center += ddt;
-            camera->eye += ddt;
+            camera.center += ddt;
+            camera.eye += ddt;
         }
         // right
         else if (key == GLFW_KEY_RIGHT && (action == GLFW_PRESS || action == GLFW_REPEAT))
         {
-            camera->center -= ddt;
-            camera->eye -= ddt;
+            camera.center -= ddt;
+            camera.eye -= ddt;
         }
         // up
         else if (key == GLFW_KEY_R && (action == GLFW_PRESS || action == GLFW_REPEAT))
         {
-            camera->center += du;
-            camera->eye += du;
+            camera.center += du;
+            camera.eye += du;
         }
         // down
         else if (key == GLFW_KEY_F && (action == GLFW_PRESS || action == GLFW_REPEAT))
         {
-            camera->center -= du;
-            camera->eye -= du;
+            camera.center -= du;
+            camera.eye -= du;
         }
-        camera->Update();
+        camera.Update();
 
         // if (action == GLFW_REPEAT)
         //     std::cout << "camera pos: x : " << cameraPosition.x << " y : " << cameraPosition.y << " z : " << cameraPosition.z << std::endl;
@@ -201,7 +200,7 @@ protected:
         {
             double dx = xl - xpos;
             double dy = yl - ypos;
-            camera->Rotate(sx * dx, sy * dy);
+            camera.Rotate(sx * dx, sy * dy);
         }
     }
     bool pressed = false;
@@ -231,7 +230,7 @@ public:
     std::shared_ptr<Lettuce::Core::Instance> instance;
     std::shared_ptr<Lettuce::Core::Device> device;
     std::shared_ptr<Lettuce::Core::Swapchain> swapchain;
-    std::shared_ptr<Lettuce::X3D::Camera3D> camera;
+    Lettuce::X3D::Camera3D camera;
     void run()
     {
         initWindow();

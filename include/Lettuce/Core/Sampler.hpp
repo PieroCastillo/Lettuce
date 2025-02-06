@@ -15,11 +15,11 @@ namespace Lettuce::Core
         std::shared_ptr<Device> _device;
         VkSampler _sampler;
 
-        void Build(const std::shared_ptr<Device> &device,
+        Sampler(const std::shared_ptr<Device> &device,
                    SamplerAddressMode addressModeU = SamplerAddressMode::Repeat,
                    SamplerAddressMode addressModeV = SamplerAddressMode::Repeat,
                    SamplerAddressMode addressModeW = SamplerAddressMode::Repeat);
 
-        void Destroy();
+        ~Sampler();
     };
 }

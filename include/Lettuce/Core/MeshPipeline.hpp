@@ -27,8 +27,8 @@ namespace Lettuce::Core
 
         void AddShaderStage(Shader &shader);
 
-        void Build(const std::shared_ptr<Device> &device, PipelineLayout &connector, RenderPass &renderpass, uint32_t subpassIndex, FrontFace frontFace = FrontFace::Clockwise);
+        MeshPipeline(const std::shared_ptr<Device> &device, PipelineLayout &connector, RenderPass &renderpass, uint32_t subpassIndex, FrontFace frontFace = FrontFace::Clockwise);
 
-        void Destroy();
+        ~MeshPipeline();
     };
 }

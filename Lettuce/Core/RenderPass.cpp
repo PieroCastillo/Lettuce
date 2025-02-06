@@ -162,7 +162,7 @@ void RenderPass::AddFramebuffer(uint32_t width, uint32_t height, std::vector<Tex
     framebuffersCI.push_back(framebufferCI);
 }
 
-void RenderPass::Build(const std::shared_ptr<Device> &device)
+RenderPass(const std::shared_ptr<Device> &device)
 {
     _device = device;
     VkRenderPassCreateInfo renderPassCI = {
@@ -196,7 +196,7 @@ void RenderPass::Build(const std::shared_ptr<Device> &device)
     checkResult(vkCreateRenderPass(_device->_device, &renderPassCI, nullptr, &_renderPass));
 }
 
-void RenderPass::Destroy()
+~RenderPass::Destroy()
 {
     vkDestroyRenderPass(_device->_device, _renderPass, nullptr);
     attachments.clear();

@@ -19,7 +19,7 @@ namespace Lettuce::Core
         std::string _name;
 
         template <class T = Compilers::ICompiler>
-        void Create(const std::shared_ptr<Device> &device, T &compiler, std::string text, std::string mainMethod, std::string inputFile, PipelineStage stage, bool optimize = false)
+        Shader(const std::shared_ptr<Device> &device, T &compiler, std::string text, std::string mainMethod, std::string inputFile, PipelineStage stage, bool optimize = false)
         {
             _device = device;
             _stage = stage;
@@ -35,6 +35,6 @@ namespace Lettuce::Core
             checkResult(vkCreateShaderModule(_device->_device, &shaderModuleCI, nullptr, &_shaderModule));
         }
 
-        void Destroy();
+        ~Shader();
     };
 }

@@ -18,6 +18,15 @@
 
 namespace Lettuce::Core
 {
+    struct DescriptorBinding
+    {
+        uint32_t set;
+        uint32_t binding;
+        DescriptorType type;
+        PipelineStage stage;
+        uint32_t descriptorCount;
+    }
+
     class Descriptors
     {
     private:
@@ -39,20 +48,18 @@ namespace Lettuce::Core
         VkDescriptorPool _pool = VK_NULL_HANDLE;
         std::vector<VkDescriptorSetLayout> _layouts;
 
-        void Build(const std::shared_ptr<Device> &device, uint32_t maxSets = 16);
-        void Destroy();
+        Descriptors(const std::shared_ptr<Device> &device, const std::vector<DescriptorBinding> &bindings, uint32_t maxSets = 16);
+        ~Descriptors();
 
-        void AddBinding(uint32_t set, uint32_t binding, DescriptorType type, PipelineStage stage, uint32_t descriptorCount = 1);
-
-        void AddUpdateInfo(uint32_t set, uint32_t binding, std::vector<std::pair<uint32_t, Buffer>> sizeBuffersPairs);
-        void AddUpdateInfo(uint32_t set, uint32_t binding, std::vector<std::pair<uint32_t, BufferResource>> sizeBuffersPairs);
-        void AddUpdateInfo(uint32_t set, uint32_t binding, std::vector<TextureView> views);
-        void AddUpdateInfo(uint32_t set, uint32_t binding, std::vector<Sampler> samplers);
-        void AddUpdateInfo(uint32_t set, uint32_t binding, std::vector<Sampler> samplers, std::vector<TextureView> views);
-        void AddUpdateInfo(uint32_t set, uint32_t binding, std::vector<Sampler> samplers, std::vector<ImageViewResource> views);
+        void AddUpdateInfo(uint32_t set, uint32_t binding, const std::vector<std::pair<uint32_t, std::shared_pointer<Buffer>>> &sizeBuffersPairs);
+        void AddUpdateInfo(uint32_t set, uint32_t binding, const std::vector<std::pair<uint32_t, std::shared_pointer<BufferResource>>> &sizeBuffersPairs);
+        void AddUpdateInfo(uint32_t set, uint32_t binding, const std::vector<std::shared_pointer<TextureView>> &views);
+        void AddUpdateInfo(uint32_t set, uint32_t binding, const std::vector<std::shared_pointer<Sampler>> &samplers);
+        void AddUpdateInfo(uint32_t set, uint32_t binding, const std::vector<std::pair<std::shared_pointer<Sampler>, std::shared_pointer<TextureView>>> &samplerViewsPairs);
+        void AddUpdateInfo(uint32_t set, uint32_t binding, const std::vector<std::pair<std::shared_pointer<Sampler>, std::shared_pointer<ImageViewResource>>> &samplerViewsPairs);
 
         template <typename TBufferDataType>
-        void AddUpdateInfo(uint32_t set, uint32_t binding, Buffer buffer)
+        void AddUpdateInfo(uint32_t set, uint32_t binding, const std::shared_pointer<Buffer> &buffer)
         {
             AddUpdateInfo(set, binding, {{(uint32_t)sizeof(TBufferDataType), buffer}});
         }

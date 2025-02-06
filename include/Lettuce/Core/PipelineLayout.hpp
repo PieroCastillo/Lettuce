@@ -15,22 +15,10 @@ namespace Lettuce::Core
     public:
         std::shared_ptr<Device> _device;
         VkPipelineLayout _pipelineLayout;
-        std::vector<VkPushConstantRange> pushConstants;
 
-        template <typename T1>
-        void AddPushConstant(uint32_t offset, PipelineStage stage)
-        {
-            VkPushConstantRange pushConstantRange = {
-                .stageFlags = (VkShaderStageFlags)stage,
-                .offset = offset,
-                .size = sizeof(T1),
-            };
-            pushConstants.emplace_back(pushConstantRange);
-        }
+        PipelineLayout(const std::shared_ptr<Device> &device, const std::vector<VkPushConstantRange> &pushConstants, const std::shared_ptr<Descriptors> &descriptor);
+        PipelineLayout(const std::shared_ptr<Device> &device);
 
-        void Build(const std::shared_ptr<Device> &device, Descriptors &descriptor);
-        void Build(const std::shared_ptr<Device> &device);
-
-        void Destroy();
+        ~PipelineLayout();
     };
 }

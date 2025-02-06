@@ -83,7 +83,7 @@ void onResize()
 void initLettuce()
 {
     instance._debug = true;
-    instance.Create("Sample X2D", Lettuce::Core::Version{0, 1, 0, 0}, {});
+    instance = std::make_shared<>("Sample X2D", Lettuce::Core::Version{0, 1, 0, 0}, {});
     instance.CreateSurface(glfwGetWin32Window(window), GetModuleHandle(nullptr));
     auto gpus = instance.getGPUs();
     for (auto gpu : gpus)
@@ -95,8 +95,8 @@ void initLettuce()
     features.MeshShading = false;
     features.ConditionalRendering = false;
     features.MemoryBudget = false;
-    device->Create(instance, gpus.front(), features);
-    swapchain.Create(device, width, height);
+    device = std::make_shared<>(instance, gpus.front(), features);
+    swapchain = std::make_shared<>(device, width, height);
 
     // renderpass.AddAttachment(0, AttachmentType::Color,
     //                          swapchain.imageFormat,
@@ -119,7 +119,7 @@ void initLettuce()
     //                          AccessStage::ColorAttachmentOutput,
     //                          AccessBehavior::ColorAttachmentWrite,
     //                          AccessBehavior::None);
-    // renderpass.Build(device);
+    // renderpass = std::make_shared<>(device);
     // std::cout << "-------- renderpass created ----------" << std::endl;
     // for (auto &view : swapchain.swapchainTextureViews)
     // {
@@ -129,7 +129,7 @@ void initLettuce()
     std::cout << "-------- framebuffers created ----------" << std::endl;
     swapchain.SetResizeFunc(resizeCall, onResize);
     // create sync objects
-    renderFinished.Create(device, 0);
+    renderFinished = std::make_shared<>(device, 0);
     // build command buffers
     buildCmds();
     //camera = Camera3D(width, height);

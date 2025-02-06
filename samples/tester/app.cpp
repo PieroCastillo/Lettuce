@@ -132,7 +132,7 @@ void onResize()
 void initLettuce()
 {
     instance._debug = true;
-    instance.Create("DonutSample", Lettuce::Core::Version{0, 1, 0, 0}, {});
+    instance = std::make_shared<>("DonutSample", Lettuce::Core::Version{0, 1, 0, 0}, {});
     instance.CreateSurface(glfwGetWin32Window(window), GetModuleHandle(nullptr));
     auto gpus = instance.getGPUs();
     for (auto gpu : gpus)
@@ -144,9 +144,9 @@ void initLettuce()
     features.MeshShading = false;
     features.ConditionalRendering = false;
     features.MemoryBudget = false;
-    device->Create(instance, gpus.front(), features);
+    device = std::make_shared<>(instance, gpus.front(), features);
     std::cout << "-------- device created ----------" << std::endl;
-    swapchain.Create(device, width, height);
+    swapchain = std::make_shared<>(device, width, height);
     std::cout << "-------- swapchain created ----------" << std::endl;
 
     renderpass.AddAttachment(0, AttachmentType::Color,
@@ -170,7 +170,7 @@ void initLettuce()
                              AccessStage::ColorAttachmentOutput,
                              AccessBehavior::ColorAttachmentWrite,
                              AccessBehavior::None);
-    renderpass.Build(device);
+    renderpass = std::make_shared<>(device);
     std::cout << "-------- renderpass created ----------" << std::endl;
     for (auto &view : swapchain.swapchainTextureViews)
     {
@@ -182,7 +182,7 @@ void initLettuce()
     swapchain.SetResizeFunc(resizeCall, onResize);
 
     // create sync objects
-    renderFinished.Create(device, 0);
+    renderFinished = std::make_shared<>(device, 0);
     // build command buffers
     buildCmds();
 
@@ -198,25 +198,25 @@ void initLettuce()
     std::cout << "-------- uniform buffer created ----------" << std::endl;
 
     descriptor.AddBinding(0, 0, DescriptorType::UniformBuffer, PipelineStage::Vertex, 1);
-    descriptor.Build(device);
+    descriptor = std::make_shared<>(device);
     std::cout << "-------- descriptor created ----------" << std::endl;
     descriptor.AddUpdateInfo(0, 0, {{sizeof(LettuceVertexInfo),vertexInfoBuffer}});
     descriptor.Update();
     std::cout << "-------- descriptor updated ----------" << std::endl;
 
     connector.AddPushConstant<DataPush>(0, PipelineStage::Fragment);
-    connector.Build(device, descriptor);
+    connector = std::make_shared<>(device, descriptor);
 
     // add pipeline stuff here
-    vertexShader.Create(device, compiler, vertexShaderText, "main", "vertex.glsl", PipelineStage::Vertex, true);
-    fragmentShader.Create(device, compiler, fragmentShaderText, "main", "fragment.glsl", PipelineStage::Fragment, true);
+    vertexShader = std::make_shared<>(device, compiler, vertexShaderText, "main", "vertex.glsl", PipelineStage::Vertex, true);
+    fragmentShader = std::make_shared<>(device, compiler, fragmentShaderText, "main", "fragment.glsl", PipelineStage::Fragment, true);
 
     pipeline.AddVertexBindingDescription<Vertex>(0);                                  // binding = 0
     pipeline.AddVertexAttribute(0, 0, 0, VK_FORMAT_R32G32B32_SFLOAT);                 // layout(location = 0) in vec3 pos;
     pipeline.AddVertexAttribute(0, 1, sizeof(glm::vec3), VK_FORMAT_R32G32B32_SFLOAT); // layout(location = 1) in vec3 normal;
     pipeline.AddShaderStage(vertexShader);
     pipeline.AddShaderStage(fragmentShader);
-    pipeline.Build(device, connector, renderpass, 0,
+    pipeline = std::make_shared<>(device, connector, renderpass, 0,
                    {.rasterization = {
                         .frontFace = VK_FRONT_FACE_CLOCKWISE,
                     },

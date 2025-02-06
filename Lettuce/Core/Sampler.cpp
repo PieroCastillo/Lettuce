@@ -10,7 +10,7 @@
 
 using namespace Lettuce::Core;
 
-void Sampler::Build(const std::shared_ptr<Device> &device,
+Sampler(const std::shared_ptr<Device> &device,
                     SamplerAddressMode addressModeU,
                     SamplerAddressMode addressModeV,
                     SamplerAddressMode addressModeW)
@@ -35,7 +35,7 @@ void Sampler::Build(const std::shared_ptr<Device> &device,
     checkResult(vkCreateSampler(_device->_device, &samplerCI, nullptr, &_sampler), "sampler created successfully");
 }
 
-void Sampler::Destroy()
+~Sampler::Destroy()
 {
     vkDestroySampler(_device->_device, _sampler, nullptr);
 }

@@ -52,8 +52,8 @@ void Swapchain::createDepthImage()
     //     {VK_FORMAT_D16_UNORM, VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT},
     //     VK_IMAGE_TILING_OPTIMAL,
     //     VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT);
-    // _depthImage.Build(this->_device, width, height, 1, VkImageUsageFlagBits::VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, 1, 1, depthFormat);
-    // _depthImageView.Build(this->_device, _depthImage);
+    // _depthImage = std::make_shared<>(this->_device, width, height, 1, VkImageUsageFlagBits::VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, 1, 1, depthFormat);
+    // _depthImageView = std::make_shared<>(this->_device, _depthImage);
 }
 
 void Swapchain::createRenderPass()
@@ -153,9 +153,8 @@ void Swapchain::createFramebuffers()
     }
 }
 
-void Swapchain::Create(const std::shared_ptr<Device> &device, uint32_t initialWidth, uint32_t initialHeight)
+Swapchain(const std::shared_ptr<Device> &device, uint32_t initialWidth, uint32_t initialHeight) : _device(device)
 {
-    _device = device;
     auto capabilities = _device->_gpu.capabilities;
     imageCount = capabilities.minImageCount + 1;
     if (capabilities.maxImageCount > 0 && imageCount > capabilities.maxImageCount)
@@ -323,7 +322,7 @@ void Swapchain::Resize(uint32_t newWidth, uint32_t newHeight)
     createFramebuffers();
 }
 
-void Swapchain::Destroy()
+~Swapchain::Destroy()
 {
     for (auto fb : framebuffers)
     {

@@ -19,6 +19,7 @@ using namespace Lettuce::Core;
 class LoadModel : public LettuceSampleApp
 {
 public:
+    Lettuce::Core::Compilers::GLSLCompiler compiler;
     std::shared_ptr<Lettuce::Core::RenderPass> renderpass;
     /* sync objects*/
     std::shared_ptr<Lettuce::Core::Semaphore> renderFinished;
@@ -35,8 +36,7 @@ public:
     std::shared_ptr<Lettuce::Core::PipelineLayout> linesLayout;
     std::shared_ptr<Lettuce::Core::PipelineLayout> connector;
     std::shared_ptr<Lettuce::Core::GraphicsPipeline> pipeline;
-    std::shared_ptr<Lettuce::Core::GraphicsPipeline> linesPipeline;
-    std::shared_ptr<Lettuce::Core::Compilers::GLSLCompiler> compiler;
+    std::shared_ptr<Lettuce::Core::GraphicsPipeline> linespipeline;
     std::shared_ptr<Lettuce::Core::Shader> fragmentShader;
     std::shared_ptr<Lettuce::Core::Shader> vertexShader;
     std::shared_ptr<Lettuce::Core::Shader> psLineShader;
@@ -123,27 +123,27 @@ void main()
     void createRenderPass()
     {
         renderpass->AddAttachment(0, AttachmentType::Color,
-                                 swapchain->imageFormat,
-                                 LoadOp::Clear,
-                                 StoreOp::Store,
-                                 LoadOp::DontCare,
-                                 StoreOp::DontCare,
-                                 ImageLayout::Undefined,
-                                 ImageLayout::PresentSrc,
-                                 ImageLayout::ColorAttachmentOptimal);
+                                  swapchain->imageFormat,
+                                  LoadOp::Clear,
+                                  StoreOp::Store,
+                                  LoadOp::DontCare,
+                                  StoreOp::DontCare,
+                                  ImageLayout::Undefined,
+                                  ImageLayout::PresentSrc,
+                                  ImageLayout::ColorAttachmentOptimal);
         renderpass->AddSubpass(0, BindPoint::Graphics, {0});
         renderpass->AddDependency(VK_SUBPASS_EXTERNAL, 0,
-                                 AccessStage::ColorAttachmentOutput,
-                                 AccessStage::ColorAttachmentOutput,
-                                 AccessBehavior::None,
-                                 AccessBehavior::ColorAttachmentWrite);
+                                  AccessStage::ColorAttachmentOutput,
+                                  AccessStage::ColorAttachmentOutput,
+                                  AccessBehavior::None,
+                                  AccessBehavior::ColorAttachmentWrite);
 
         renderpass->AddDependency(0, VK_SUBPASS_EXTERNAL,
-                                 AccessStage::ColorAttachmentOutput,
-                                 AccessStage::ColorAttachmentOutput,
-                                 AccessBehavior::ColorAttachmentWrite,
-                                 AccessBehavior::None);
-        renderpass->Build(device);
+                                  AccessStage::ColorAttachmentOutput,
+                                  AccessStage::ColorAttachmentOutput,
+                                  AccessBehavior::ColorAttachmentWrite,
+                                  AccessBehavior::None);
+        renderpass = std::make_shared<>(device);
         for (auto &view : swapchain->swapchainTextureViews)
         {
             renderpass->AddFramebuffer(width, height, {view});
@@ -163,7 +163,7 @@ void main()
 
     void createObjects()
     {
-        renderFinished->Create(device, 0);
+        renderFinished = std::make_shared<Lettuce::Core::Semaphore>(device, 0);
         buildCmds();
         genTorus();
         vertexBuffer = Buffer::CreateVertexBuffer(device, vertices);
@@ -173,34 +173,32 @@ void main()
         uniformBuffer->Map();
         uniformBuffer->SetData(&dataUBO);
         /*setup stuff to render the donut*/
-        descriptor->AddBinding(0, 0, DescriptorType::UniformBuffer, PipelineStage::Vertex, 1);
-        descriptor->Build(device);
+        descriptor = std::make_shared<Lettuce::Core::Descriptors>(device, {{0, 0, DescriptorType::UniformBuffer, PipelineStage::Vertex, 1}});
         descriptor->AddUpdateInfo<DataUBO>(0, 0, uniformBuffer);
         descriptor->Update();
 
-        connector->AddPushConstant<DataPush>(0, PipelineStage::Fragment);
-        connector->Build(device, descriptor);
+        connector = std::make_shared<Lettuce::Core::PipelineLayout>(device, {{0, VkShaderStageFlagBits::VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(DataPush)}} ,descriptor);
 
         // add pipeline stuff here
-        vertexShader.Create(device, compiler, vertexShaderText, "main", "vertex.glsl", PipelineStage::Vertex, true);
-        fragmentShader.Create(device, compiler, fragmentShaderText, "main", "fragment.glsl", PipelineStage::Fragment, true);
+        vertexShader = std::make_shared<Lettuce::Core::Shader>(device, compiler, vertexShaderText, "main", "vertex.glsl", PipelineStage::Vertex, true);
+        fragmentShader = std::make_shared<Lettuce::Core::Shader>(device, compiler, fragmentShaderText, "main", "fragment.glsl", PipelineStage::Fragment, true);
 
         pipeline->AddVertexBindingDescription<Vertex>(0);                                  // binding = 0
         pipeline->AddVertexAttribute(0, 0, 0, VK_FORMAT_R32G32B32_SFLOAT);                 // layout(location = 0) in vec3 pos;
         pipeline->AddVertexAttribute(0, 1, sizeof(glm::vec3), VK_FORMAT_R32G32B32_SFLOAT); // layout(location = 1) in vec3 normal;
         pipeline->AddShaderStage(vertexShader);
         pipeline->AddShaderStage(fragmentShader);
-        pipeline->Build(device, connector, renderpass, 0,
-                       {.rasterization = {
-                            .frontFace = VK_FRONT_FACE_CLOCKWISE,
-                        },
-                        .colorBlend = {
-                            .attachments = {
-                                {
-                                    .colorWriteMask = VK_COMPONENT_SWIZZLE_R | VK_COMPONENT_SWIZZLE_G | VK_COMPONENT_SWIZZLE_B | VK_COMPONENT_SWIZZLE_A,
-                                },
-                            },
-                        }});
+        pipeline = std::make_shared<>(device, connector, renderpass, 0,
+                                      {.rasterization = {
+                                           .frontFace = VK_FRONT_FACE_CLOCKWISE,
+                                       },
+                                       .colorBlend = {
+                                           .attachments = {
+                                               {
+                                                   .colorWriteMask = VK_COMPONENT_SWIZZLE_R | VK_COMPONENT_SWIZZLE_G | VK_COMPONENT_SWIZZLE_B | VK_COMPONENT_SWIZZLE_A,
+                                               },
+                                           },
+                                       }});
 
         vertexShader.Destroy();
         fragmentShader.Destroy();
@@ -211,28 +209,28 @@ void main()
         LineBuffer3 = Buffer::CreateVertexBuffer<LineVertex>(device, {{glm::vec3(0)}, {glm::vec3(0, 0, 100)}});
 
         /*setup pipeline for lines*/
-        vsLineShader->Create(device, compiler, vsLineShaderText, "main", "vsLine.glsl", PipelineStage::Vertex, true);
-        psLineShader.Create(device, compiler, psLineShaderText, "main", "psLine.glsl", PipelineStage::Fragment, true);
+        vsLineShader = std::make_shared<>(device, compiler, vsLineShaderText, "main", "vsLine.glsl", PipelineStage::Vertex, true);
+        psLineShader = std::make_shared<>(device, compiler, psLineShaderText, "main", "psLine.glsl", PipelineStage::Fragment, true);
 
         linesLayout->AddPushConstant<DataPush>(0, PipelineStage::Fragment);
-        linesLayout->Build(device, descriptor);
+        linesLayout = std::make_shared<>(device, descriptor);
 
         linespipeline->AddVertexBindingDescription<LineVertex>(0);
         linespipeline->AddVertexAttribute(0, 0, 0, VK_FORMAT_R32G32B32_SFLOAT);
         linespipeline->AddShaderStage(vsLineShader);
         linespipeline->AddShaderStage(psLineShader);
 
-        linespipeline->Build(device, linesLayout, renderpass, 0,
-                            {.rasterization = {
-                                 .frontFace = VK_FRONT_FACE_CLOCKWISE,
-                             },
-                             .colorBlend = {
-                                 .attachments = {
-                                     {
-                                         .colorWriteMask = VK_COMPONENT_SWIZZLE_R | VK_COMPONENT_SWIZZLE_G | VK_COMPONENT_SWIZZLE_B | VK_COMPONENT_SWIZZLE_A,
-                                     },
-                                 },
-                             }});
+        linespipeline = std::make_shared<>(device, linesLayout, renderpass, 0,
+                                           {.rasterization = {
+                                                .frontFace = VK_FRONT_FACE_CLOCKWISE,
+                                            },
+                                            .colorBlend = {
+                                                .attachments = {
+                                                    {
+                                                        .colorWriteMask = VK_COMPONENT_SWIZZLE_R | VK_COMPONENT_SWIZZLE_G | VK_COMPONENT_SWIZZLE_B | VK_COMPONENT_SWIZZLE_A,
+                                                    },
+                                                },
+                                            }});
         psLineShader.Destroy();
         vsLineShader->Destroy();
         camera = Lettuce::X3D::Camera3D::Camera3D(width, height);
@@ -260,11 +258,11 @@ void main()
     void updateData()
     {
         dataPush.color = glm::vec3(1.0f, 0.5f, 0.31f);
-        // camera->SetPosition(glm::vec3(20, 20, 30));
-        camera->Update();
-        dataUBO.projectionView = camera->GetProjectionView();
+        // camera.SetPosition(glm::vec3(20, 20, 30));
+        camera.Update();
+        dataUBO.projectionView = camera.GetProjectionView();
         dataUBO.model = glm::mat4(1.0f);
-        dataUBO.cameraPos = camera->eye;
+        dataUBO.cameraPos = camera.eye;
         // dataUBO.cameraPos = glm::vec3(30);
 
         uniformBuffer->SetData(&dataUBO);
@@ -413,7 +411,7 @@ void main()
     void beforeResize()
     {
         camera = Lettuce::X3D::Camera3D::Camera3D(width, height);
-        camera->Reset(glm::vec3(20, 20, 30), glm::vec3(0.0f), glm::vec3(0.57735026919)); // 1 / sqrt(3)
+        camera.Reset(glm::vec3(20, 20, 30), glm::vec3(0.0f), glm::vec3(0.57735026919)); // 1 / sqrt(3)
     }
 
     void destroyObjects()
@@ -421,23 +419,24 @@ void main()
         vkFreeCommandBuffers(device->_device, pool, 1, &cmd);
         vkDestroyCommandPool(device->_device, pool, nullptr);
 
-        linespipeline->Destroy();
-        linesLayout->Destroy();
-        LineBuffer1->Destroy();
-        LineBuffer2->Destroy();
-        LineBuffer3->Destroy();
+        linespipeline.reset();
+        linesLayout.reset();
+        ;
+        LineBuffer1.reset();
+        LineBuffer2.reset();
+        LineBuffer3.reset();
 
-        pipeline->Destroy();
-        connector->Destroy();
-        descriptor->Destroy();
+        pipeline.reset();
+        connector.reset();
+        descriptor.reset();
 
         uniformBuffer->Unmap();
-        uniformBuffer->Destroy();
-        vertexBuffer.Destroy();
-        indexBuffer.Destroy();
-        renderFinished->Destroy();
+        uniformBuffer.reset();
+        vertexBuffer.reset();
+        indexBuffer.reset();
+        renderFinished.reset();
         renderpass->DestroyFramebuffers();
-        renderpass->Destroy();
+        renderpass.reset();
     }
 
     void genTorus()

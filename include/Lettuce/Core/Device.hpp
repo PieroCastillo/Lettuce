@@ -96,10 +96,10 @@ namespace Lettuce::Core
 
         Features GetEnabledFeatures();
 
-        void Create(const std::shared_ptr<Instance> &instance, GPU &gpu, Features features, uint32_t graphicsQueuesCount = 1);
+        Device(const std::shared_ptr<Instance> &instance, GPU &gpu, Features features, uint32_t graphicsQueuesCount = 1);
 
         void Wait();
 
-        void Destroy();
+        ~Device();
     };
 }

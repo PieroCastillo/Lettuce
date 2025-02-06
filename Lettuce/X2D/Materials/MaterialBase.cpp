@@ -21,17 +21,17 @@ void MaterialBase<T,TPushData>::Load(const std::shared_ptr<Device> &device, Rend
     MaterialBase<T,TPushData> &material = static_cast<T*>(this);
 
     layout.AddPushConstant<TPushData>(0, PipelineStage::Fragment);
-    layout.Build(device, *descriptorsPtr);
+    layout = std::make_shared<>(device, *descriptorsPtr);
     Shader frag, vert;
-    frag.Create(device, compiler, material.GetFragmentShaderText(), "main", "fragment.glsl", PipelineStage::Fragment, true);
-    vert.Create(device, compiler, material.GetVertexShaderText(), "main", "vertex.glsl", PipelineStage::Vertex, true);
+    frag = std::make_shared<>(device, compiler, material.GetFragmentShaderText(), "main", "fragment.glsl", PipelineStage::Fragment, true);
+    vert = std::make_shared<>(device, compiler, material.GetVertexShaderText(), "main", "vertex.glsl", PipelineStage::Vertex, true);
 
     pipeline.AddVertexBindingDescription<Lettuce::X2D::Geometries::Vertex>(0);
     pipeline.AddVertexAttribute(0, 0, 0, VK_FORMAT_R32G32_SFLOAT);
     pipeline.AddVertexAttribute(0, 1, sizeof(glm::vec2), VK_FORMAT_R32G32_SFLOAT);
     pipeline.AddShaderStage(frag);
     pipeline.AddShaderStage(vert);
-    pipeline.Build(device, this->layout, renderpass, 0,
+    pipeline = std::make_shared<>(device, this->layout, renderpass, 0,
                    {.rasterization = {
                         .frontFace = VK_FRONT_FACE_CLOCKWISE,
                     },

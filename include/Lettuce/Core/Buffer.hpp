@@ -70,9 +70,11 @@ namespace Lettuce::Core
         /// @param usage usage of the buffer
         /// @param allocationFlags
         /// @param memoryUsage
-        void Create(const std::shared_ptr<Device> &device, uint32_t size, BufferUsage usage,
-                    VmaAllocationCreateFlags allocationFlags = VmaAllocationCreateFlagBits::VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT,
-                    VmaMemoryUsage memoryUsage = VmaMemoryUsage::VMA_MEMORY_USAGE_AUTO);
+        Buffer(const std::shared_ptr<Device> &device, uint32_t size, BufferUsage usage,
+               VmaAllocationCreateFlags allocationFlags = VmaAllocationCreateFlagBits::VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT,
+               VmaMemoryUsage memoryUsage = VmaMemoryUsage::VMA_MEMORY_USAGE_AUTO);
+
+        ~Buffer();
 
         void Map();
 
@@ -89,38 +91,35 @@ namespace Lettuce::Core
         void CopyTo(Buffer buffer);
 
         // template <typename T>
-        // static Buffer CreateVertexBuffer(const std::shared_ptr<Device> &device, std::vector<T> vertices);
+        // static std::shared_ptr<Buffer> CreateVertexBuffer(const std::shared_ptr<Device> &device, std::vector<T> vertices);
 
         // template <typename T, typename = std::enable_if_t<
         //                           std::is_integral<T>::value && std::is_unsigned<T>::value>>
-        // static Buffer CreateIndexBuffer(const std::shared_ptr<Device> &device, std::vector<T> indices);
+        // static std::shared_ptr<Buffer> CreateIndexBuffer(const std::shared_ptr<Device> &device, std::vector<T> indices);
         // template <typename T>
-        // static Buffer CreateUniformBuffer(const std::shared_ptr<Device> &device, T **data);
+        // static std::shared_ptr<Buffer> CreateUniformBuffer(const std::shared_ptr<Device> &device, T **data);
 
         template <typename T>
-        static Buffer CreateVertexBuffer(const std::shared_ptr<Device> &device, std::vector<T> vertices)
+        static std::shared_ptr<Buffer> CreateVertexBuffer(const std::shared_ptr<Device> &device, std::vector<T> &vertices)
         {
             return CreateBufferWithStaging(device, BufferUsage::VertexBuffer, sizeof(vertices[0]) * vertices.size(), vertices.data());
         }
 
         template <typename T, typename = std::enable_if_t<std::is_integral<T>::value && std::is_unsigned<T>::value>>
-        static Buffer CreateIndexBuffer(const std::shared_ptr<Device> &device, std::vector<T> indices)
+        static std::shared_ptr<Buffer> CreateIndexBuffer(const std::shared_ptr<Device> &device, std::vector<T> &indices)
         {
             return CreateBufferWithStaging(device, BufferUsage::IndexBuffer, sizeof(indices[0]) * indices.size(), indices.data());
         }
 
         template <typename T>
-        static Buffer CreateUniformBuffer(const std::shared_ptr<Device> &device)
+        static std::shared_ptr<Buffer> CreateUniformBuffer(const std::shared_ptr<Device> &device)
         {
-            Buffer buffer;
-            buffer.Create(device, sizeof(T), BufferUsage::UniformBuffer,
-                          VMA_ALLOCATION_CREATE_MAPPED_BIT | VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT,
-                          VMA_MEMORY_USAGE_AUTO_PREFER_HOST);
+            std::shared_ptr<Buffer> buffer = std::make_shared(device, sizeof(T), BufferUsage::UniformBuffer,
+                                                              VMA_ALLOCATION_CREATE_MAPPED_BIT | VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT,
+                                                              VMA_MEMORY_USAGE_AUTO_PREFER_HOST);
             return buffer;
         }
 
-        static Buffer CreateBufferWithStaging(const std::shared_ptr<Device> &device, BufferUsage bufferDstUsage, uint32_t size, void *data);
-
-        void Destroy();
+        static std::shared_ptr<Buffer> CreateBufferWithStaging(const std::shared_ptr<Device> &device, BufferUsage bufferDstUsage, uint32_t size, void *data);
     };
 }

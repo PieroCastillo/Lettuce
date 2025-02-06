@@ -27,7 +27,7 @@ void MeshPipeline::AddShaderStage(Shader &shader)
     stages.emplace_back(pipelineShaderStageCI);
 }
 
-void MeshPipeline::Build(const std::shared_ptr<Device> &device, PipelineLayout &connector, RenderPass &renderpass, uint32_t subpassIndex, FrontFace frontFace)
+MeshPipeline(const std::shared_ptr<Device> &device, PipelineLayout &connector, RenderPass &renderpass, uint32_t subpassIndex, FrontFace frontFace)
 {
     _device = device;
     _pipelineLayout = connector._pipelineLayout;
@@ -97,7 +97,7 @@ void MeshPipeline::Build(const std::shared_ptr<Device> &device, PipelineLayout &
     checkResult(vkCreateGraphicsPipelines(_device->_device, VK_NULL_HANDLE, 1, &graphicsPipelineCI, nullptr, &_pipeline));
 }
 
-void MeshPipeline::Destroy()
+~MeshPipeline::Destroy()
 {
     vkDestroyPipeline(_device->_device, _pipeline, nullptr);
 }

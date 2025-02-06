@@ -18,8 +18,8 @@ namespace Lettuce::Core
         VkPipelineLayout _pipelineLayout;
         VkPipeline _pipeline;
 
-        void Build(const std::shared_ptr<Device> &device, PipelineLayout &connector, Shader &shader);
+        ComputePipeline(const std::shared_ptr<Device> &device, PipelineLayout &connector, Shader &shader);
 
-        void Destroy();
+        ~ComputePipeline();
     };
 }
