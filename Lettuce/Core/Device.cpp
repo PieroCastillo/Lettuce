@@ -156,7 +156,7 @@ void Device::loadExtensionsLayersAndFeatures()
     }
 }
 
-Device(const std::shared_ptr<Instance> &instance, GPU &gpu, Features gpuFeatures, uint32_t graphicsQueuesCount) : _pdevice(gpu._pdevice),
+Device::Device(const std::shared_ptr<Instance> &instance, GPU &gpu, Features gpuFeatures, uint32_t graphicsQueuesCount) : _pdevice(gpu._pdevice),
                                                                                                                   _instance(instance),
                                                                                                                   _gpu(gpu),
                                                                                                                   _features(gpuFeatures)
@@ -245,7 +245,7 @@ void Device::Wait()
     checkResult(vkDeviceWaitIdle(_device));
 }
 
-~Device::Destroy()
+Device::~Device()
 {
     vmaDestroyAllocator(allocator);
     vkDestroyDevice(_device, nullptr);

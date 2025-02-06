@@ -17,7 +17,7 @@
 
 using namespace Lettuce::Core;
 
-Descriptors(const std::shared_ptr<Device> &device, const std::vector<DescriptorBinding> &bindings, uint32_t maxSets) : _device(device)
+Descriptors::Descriptors(const std::shared_ptr<Device> &device, const std::vector<DescriptorBinding> &bindings, uint32_t maxSets) : _device(device)
 {
     for (auto &binding : bindings)
     {
@@ -27,8 +27,8 @@ Descriptors(const std::shared_ptr<Device> &device, const std::vector<DescriptorB
             .descriptorCount = binding.descriptorCount,
             .stageFlags = (VkShaderStageFlags)binding.stage,
         };
-        bindingsMap[set].push_back(binding.layoutBinding);
-        bindingsTypes[{set, binding}] = (VkDescriptorType)binding.type;
+        bindingsMap[binding.set].push_back(layoutBinding);
+        bindingsTypes[{binding.set, binding.binding}] = (VkDescriptorType)binding.type;
     }
 
     // create descriptor set layouts
@@ -98,7 +98,7 @@ Descriptors(const std::shared_ptr<Device> &device, const std::vector<DescriptorB
     checkResult(vkAllocateDescriptorSets(device->_device, &descriptorSetAI, _descriptorSets.data()));
 }
 
-~Descriptors::Destroy()
+Descriptors::~Descriptors()
 {
     checkResult(vkResetDescriptorPool(_device->_device, _pool, 0));
     vkDestroyDescriptorPool(_device->_device, _pool, nullptr);
@@ -112,7 +112,7 @@ Descriptors(const std::shared_ptr<Device> &device, const std::vector<DescriptorB
     sizes.clear();
 }
 
-void Descriptors::AddUpdateInfo(uint32_t set, uint32_t binding, const std::vector<std::pair<uint32_t, std::shared_pointer<Buffer>>> &sizeBuffersPairs)
+void Descriptors::AddUpdateInfo(uint32_t set, uint32_t binding, const std::vector<std::pair<uint32_t, std::shared_ptr<Buffer>>> &sizeBuffersPairs)
 {
     std::vector<VkDescriptorBufferInfo> bufferInfos(sizeBuffersPairs.size());
 
@@ -141,7 +141,7 @@ void Descriptors::AddUpdateInfo(uint32_t set, uint32_t binding, const std::vecto
     };
     writes.push_back(write);
 }
-void Descriptors::AddUpdateInfo(uint32_t set, uint32_t binding, const std::vector<std::pair<uint32_t, std::shared_pointer<BufferResource>>> &sizeBuffersPairs)
+void Descriptors::AddUpdateInfo(uint32_t set, uint32_t binding, const std::vector<std::pair<uint32_t, std::shared_ptr<BufferResource>>> &sizeBuffersPairs)
 {
     std::vector<VkDescriptorBufferInfo> bufferInfos(sizeBuffersPairs.size());
 
@@ -149,7 +149,7 @@ void Descriptors::AddUpdateInfo(uint32_t set, uint32_t binding, const std::vecto
     for (auto &[size, buffer] : sizeBuffersPairs)
     {
         VkDescriptorBufferInfo bufferI = {
-            .buffer = buffer._buffer,
+            .buffer = buffer->_buffer,
             .offset = 0,
             .range = size,
         };
@@ -171,14 +171,14 @@ void Descriptors::AddUpdateInfo(uint32_t set, uint32_t binding, const std::vecto
     writes.push_back(write);
 }
 
-void Descriptors::AddUpdateInfo(uint32_t set, uint32_t binding, const std::vector<std::shared_pointer<TextureView>> &views)
+void Descriptors::AddUpdateInfo(uint32_t set, uint32_t binding, const std::vector<std::shared_ptr<TextureView>> &views)
 {
     std::vector<VkDescriptorImageInfo> imageInfos(views.size());
     for (int i = 0; i < views.size(); i++)
     {
         VkDescriptorImageInfo imageI = {
-            .imageView = views[i]._imageView,
-            .imageLayout = views[i]._texture->_imageLayout,
+            .imageView = views[i]->_imageView,
+            .imageLayout = views[i]->_texture->_imageLayout,
         };
         imageInfos[i] = imageI;
     }
@@ -195,13 +195,13 @@ void Descriptors::AddUpdateInfo(uint32_t set, uint32_t binding, const std::vecto
     writes.push_back(write);
 }
 
-void Descriptors::AddUpdateInfo(uint32_t set, uint32_t binding, const std::vector<std::shared_pointer<Sampler>> &samplers)
+void Descriptors::AddUpdateInfo(uint32_t set, uint32_t binding, const std::vector<std::shared_ptr<Sampler>> &samplers)
 {
     std::vector<VkDescriptorImageInfo> imageInfos(samplers.size());
     for (int i = 0; i < samplers.size(); i++)
     {
         imageInfos[i] = VkDescriptorImageInfo{
-            .sampler = samplers[i]._sampler,
+            .sampler = samplers[i]->_sampler,
         };
     }
     writesFieldsMap[{set, binding}].imageInfos = imageInfos;
@@ -217,15 +217,15 @@ void Descriptors::AddUpdateInfo(uint32_t set, uint32_t binding, const std::vecto
     writes.push_back(write);
 }
 
-void Descriptors::AddUpdateInfo(uint32_t set, uint32_t binding, const std::vector<std::pair<std::shared_pointer<Sampler>, std::shared_pointer<TextureView>>> &samplerViewsPairs)
+void Descriptors::AddUpdateInfo(uint32_t set, uint32_t binding, const std::vector<std::pair<std::shared_ptr<Sampler>, std::shared_ptr<TextureView>>> &samplerViewsPairs)
 {
-    std::vector<VkDescriptorImageInfo> imageInfos(samplers.size());
+    std::vector<VkDescriptorImageInfo> imageInfos(samplerViewsPairs.size());
     for (auto &[sampler, view] : samplerViewsPairs)
     {
         imageInfos.push_back({
             .sampler = sampler->_sampler,
             .imageView = view->_imageView,
-            .imageLayout = view->_texture->_layout,
+            .imageLayout = view->_texture->_imageLayout,
         });
     }
     writesFieldsMap[{set, binding}].imageInfos = imageInfos;
@@ -240,9 +240,9 @@ void Descriptors::AddUpdateInfo(uint32_t set, uint32_t binding, const std::vecto
     };
     writes.push_back(write);
 }
-void Descriptors::AddUpdateInfo(uint32_t set, uint32_t binding, const std::vector<std::pair<std::shared_pointer<Sampler>, std::shared_pointer<ImageViewResource>>> &samplerViewsPairs)
+void Descriptors::AddUpdateInfo(uint32_t set, uint32_t binding, const std::vector<std::pair<std::shared_ptr<Sampler>, std::shared_ptr<ImageViewResource>>> &samplerViewsPairs)
 {
-    std::vector<VkDescriptorImageInfo> imageInfos(samplers.size());
+    std::vector<VkDescriptorImageInfo> imageInfos(samplerViewsPairs.size());
 
     for (auto &[sampler, view] : samplerViewsPairs)
     {

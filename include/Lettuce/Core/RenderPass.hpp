@@ -12,8 +12,39 @@
 
 namespace Lettuce::Core
 {
-    /** 
-     * @brief RenderPass is an abstraction of VkRenderPass and VkFramebuffer[], also  
+    struct RenderPassAttachment
+    {
+        uint32_t index;
+        AttachmentType type;
+        VkFormat format;
+        LoadOp loadOp;
+        StoreOp storeOp;
+        LoadOp stencilLoadOp;
+        StoreOp stencilStoreOp;
+        ImageLayout initial;
+        ImageLayout final;
+        ImageLayout reference;
+    };
+
+    struct RenderPassSubpass
+    {
+        uint32_t index;
+        BindPoint bindpoint;
+        std::vector<uint32_t> attachments;
+    };
+
+    struct RenderPassDependency
+    {
+        uint32_t srcSubpassIndex;
+        uint32_t dstSubpassIndex;
+        AccessStage srcStage;
+        AccessStage dstStage;
+        AccessBehavior srcBehavior;
+        AccessBehavior dstBehavior
+    };
+
+    /**
+     * @brief RenderPass is an abstraction of VkRenderPass and VkFramebuffer[], also
      * automatizate the generation of AttachmentRefences.
      * Lifecycle:
      * renderPass.AddAttachments()
@@ -25,7 +56,7 @@ namespace Lettuce::Core
      * renderPass.BuildFramebuffers()
      * here finalize the setup
      * renderPass.DestroyFrambuffers()
-     * renderPass.Destroy() //destroy and clear internal objects 
+     * renderPass.Destroy() //destroy and clear internal objects
      */
     class RenderPass
     {
@@ -35,8 +66,8 @@ namespace Lettuce::Core
         std::vector<VkSubpassDependency> dependencies;
         std::map<uint32_t, std::tuple<BindPoint, std::vector<uint32_t>>> subpassesMap;
         std::vector<VkFramebufferCreateInfo> framebuffersCI;
-        std::vector<std::vector<VkAttachmentReference>> attachmentReferencesStorage; //to keep references alive
-        std::vector<std::vector<VkImageView>> fbviews; //to keep the vector<imageView> alive
+        std::vector<std::vector<VkAttachmentReference>> attachmentReferencesStorage; // to keep references alive
+        std::vector<std::vector<VkImageView>> fbviews;                               // to keep the vector<imageView> alive
         void buildSubpasses();
 
     public:
@@ -44,28 +75,13 @@ namespace Lettuce::Core
         VkRenderPass _renderPass = VK_NULL_HANDLE;
         std::vector<VkFramebuffer> _framebuffers;
 
-        RenderPass(const std::shared_ptr<Device> &device);
+        RenderPass(const std::shared_ptr<Device> &device,
+                   const std::vector<RenderPassAttachment> &attachments,
+                   const std::vector<RenderPassSubpass> &subpasses,
+                   const std::vector<RenderPassDependency> &dependencies);
         ~RenderPass();
         void BuildFramebuffers();
         void DestroyFramebuffers();
-        void AddAttachment(
-            uint32_t index,
-            AttachmentType type,
-            VkFormat format,
-            LoadOp loadOp = LoadOp::Clear,
-            StoreOp storeOp = StoreOp::Store,
-            LoadOp stencilLoadOp = LoadOp::DontCare,
-            StoreOp stencilStoreOp = StoreOp::DontCare,
-            ImageLayout initial = ImageLayout::ColorAttachmentOptimal,
-            ImageLayout final = ImageLayout::ColorAttachmentOptimal,
-            ImageLayout reference = ImageLayout::ColorAttachmentOptimal);
-        void AddSubpass(uint32_t index, BindPoint bindpoint, std::vector<uint32_t> attachments);
-        void AddDependency(uint32_t srcSubpassIndex,
-                           uint32_t dstSubpassIndex,
-                           AccessStage srcStage,
-                           AccessStage dstStage,
-                           AccessBehavior srcBehavior,
-                           AccessBehavior dstBehavior);
         void AddFramebuffer(uint32_t width, uint32_t height, std::vector<TextureView> attachments);
     };
 }

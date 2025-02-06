@@ -9,24 +9,18 @@
 
 using namespace Lettuce::Core;
 
-BufferResource(const std::shared_ptr<Device> &device, std::vector<BufferBlock> bufferBlocks, VkBufferUsageFlags usage)
+BufferResource::BufferResource(const std::shared_ptr<Device> &device, std::vector<BufferBlock> bufferBlocks, VkBufferUsageFlags usage)
+    : _device(device),
+      _blocks(bufferBlocks)
 {
-    _device = device;
-    _blocks = bufferBlocks;
     uint32_t size = 0;
-    for(const auto& block : bufferBlocks)
+    for (const auto &block : bufferBlocks)
     {
-        if(block.size == 0)
+        if (block.size == 0)
             continue;
 
-        size+=block.size;
+        size += block.size;
     }
-    Build(device, size, usage);
-}
-
-BufferResource(const std::shared_ptr<Device> &device, uint32_t size, VkBufferUsageFlags usage)
-{
-    _device = device;
 
     VkBufferCreateInfo bufferCI = {
         .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
@@ -35,6 +29,22 @@ BufferResource(const std::shared_ptr<Device> &device, uint32_t size, VkBufferUsa
         .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
     };
     checkResult(vkCreateBuffer(device->_device, &bufferCI, nullptr, &_buffer));
+}
+
+BufferResource::BufferResource(const std::shared_ptr<Device> &device, uint32_t size, VkBufferUsageFlags usage) : _device(device)
+{
+    VkBufferCreateInfo bufferCI = {
+        .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
+        .size = size,
+        .usage = usage,
+        .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
+    };
+    checkResult(vkCreateBuffer(device->_device, &bufferCI, nullptr, &_buffer));
+}
+
+BufferResource::~BufferResource()
+{
+    vkDestroyBuffer(_device->_device, _buffer, nullptr);
 }
 
 ResourceType BufferResource::GetResourceType()

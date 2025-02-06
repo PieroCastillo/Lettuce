@@ -38,7 +38,7 @@ else
 
         measuredSize += resources[n-1].size
 */
-void ResourcePool::Bind(const std::shared_ptr<Device> &device, VkMemoryPropertyFlags requiredFlags)
+void ResourcePool::Bind(const std::shared_ptr<Device> &device, VkMemoryPropertyFlags requiredFlags) : _device(device)
 {
     uint64_t measuredSize = 0;
     uint32_t memoryTypeIndex;
@@ -195,4 +195,9 @@ void ResourcePool::Bind(const std::shared_ptr<Device> &device, VkMemoryPropertyF
 void ResourcePool::AddResource(std::shared_ptr<IResource> resourcePtr)
 {
     resourcePtrs.push_back(resourcePtr);
+}
+
+void ResourcePool::Release()
+{
+    vkFreeMemory(_device->_device, _memory, nullptr);
 }

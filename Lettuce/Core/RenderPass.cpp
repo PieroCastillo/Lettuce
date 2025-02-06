@@ -13,29 +13,24 @@
 
 using namespace Lettuce::Core;
 
-void RenderPass::AddAttachment(
-    uint32_t index,
-    AttachmentType type,
-    VkFormat format,
-    LoadOp loadOp,
-    StoreOp storeOp,
-    LoadOp stencilLoadOp,
-    StoreOp stencilStoreOp,
-    ImageLayout initial,
-    ImageLayout final,
-    ImageLayout reference)
+void RenderPass::AddFramebuffer(uint32_t width, uint32_t height, std::vector<TextureView> attachments)
 {
-    VkAttachmentDescription attachment = {
-        .format = format,
-        .samples = VK_SAMPLE_COUNT_1_BIT,
-        .loadOp = (VkAttachmentLoadOp)loadOp,
-        .storeOp = (VkAttachmentStoreOp)storeOp,
-        .stencilLoadOp = (VkAttachmentLoadOp)stencilLoadOp,
-        .stencilStoreOp = (VkAttachmentStoreOp)stencilStoreOp,
-        .initialLayout = (VkImageLayout)initial,
-        .finalLayout = (VkImageLayout) final,
+    std::vector<VkImageView> views;
+    for (auto view : attachments)
+    {
+        views.push_back(view._imageView);
+    }
+    fbviews.push_back(views);
+    VkFramebufferCreateInfo framebufferCI = {
+        .sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO,
+        .renderPass = _renderPass,
+        .attachmentCount = (uint32_t)fbviews.back().size(),
+        .pAttachments = fbviews.back().data(),
+        .width = width,
+        .height = height,
+        .layers = 1,
     };
-    attachments[index] = std::make_tuple(type, attachment, (VkImageLayout)reference);
+    framebuffersCI.push_back(framebufferCI);
 }
 
 void RenderPass::buildSubpasses()
@@ -118,53 +113,46 @@ void RenderPass::buildSubpasses()
     }
 }
 
-void RenderPass::AddDependency(uint32_t srcSubpassIndex,
-                               uint32_t dstSubpassIndex,
-                               AccessStage srcStage,
-                               AccessStage dstStage,
-                               AccessBehavior srcBehavior,
-                               AccessBehavior dstBehavior)
+RenderPass::RenderPass(const std::shared_ptr<Device> &device,
+                       const std::vector<RenderPassAttachment> &attachments,
+                       const std::vector<RenderPassSubpass> &subpasses,
+                       const std::vector<RenderPassDependency> &dependencies)
+    : _device(device)
 {
-    VkSubpassDependency dependency = {
-        .srcSubpass = srcSubpassIndex,
-        .dstSubpass = dstSubpassIndex,
-        .srcStageMask = (VkPipelineStageFlags)srcStage,
-        .dstStageMask = (VkPipelineStageFlags)dstStage,
-        .srcAccessMask = (VkAccessFlags)srcBehavior,
-        .dstAccessMask = (VkAccessFlags)dstBehavior,
-        .dependencyFlags = 0,
-    };
-    dependencies.push_back(dependency);
-}
-
-void RenderPass::AddSubpass(uint32_t index, BindPoint bindpoint, std::vector<uint32_t> attachments)
-{
-    subpassesMap[index] = std::make_tuple(bindpoint, attachments);
-}
-
-void RenderPass::AddFramebuffer(uint32_t width, uint32_t height, std::vector<TextureView> attachments)
-{
-    std::vector<VkImageView> views;
-    for (auto view : attachments)
+    for (auto &attachmentData : attachments)
     {
-        views.push_back(view._imageView);
+        VkAttachmentDescription attachment = {
+            .format = attachmentData.format,
+            .samples = VK_SAMPLE_COUNT_1_BIT,
+            .loadOp = (VkAttachmentLoadOp)attachmentData.loadOp,
+            .storeOp = (VkAttachmentStoreOp)attachmentData.storeOp,
+            .stencilLoadOp = (VkAttachmentLoadOp)attachmentData.stencilLoadOp,
+            .stencilStoreOp = (VkAttachmentStoreOp)attachmentData.stencilStoreOp,
+            .initialLayout = (VkImageLayout)attachmentData.initial,
+            .finalLayout = (VkImageLayout)attachmentData.final,
+        };
+        attachments[index] = std::make_tuple(attachmentData.type, attachment, (VkImageLayout)attachmentData.reference);
     }
-    fbviews.push_back(views);
-    VkFramebufferCreateInfo framebufferCI = {
-        .sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO,
-        .renderPass = _renderPass,
-        .attachmentCount = (uint32_t)fbviews.back().size(),
-        .pAttachments = fbviews.back().data(),
-        .width = width,
-        .height = height,
-        .layers = 1,
-    };
-    framebuffersCI.push_back(framebufferCI);
-}
 
-RenderPass(const std::shared_ptr<Device> &device)
-{
-    _device = device;
+    for (auto &subpass : subpasses)
+    {
+        subpassesMap[subpass.index] = std::make_tuple(subpass.bindpoint, subpass.attachments);
+    }
+
+    for (auto &dependency : dependencies)
+    {
+        VkSubpassDependency dependency = {
+            .srcSubpass = srcSubpassIndex,
+            .dstSubpass = dstSubpassIndex,
+            .srcStageMask = (VkPipelineStageFlags)srcStage,
+            .dstStageMask = (VkPipelineStageFlags)dstStage,
+            .srcAccessMask = (VkAccessFlags)srcBehavior,
+            .dstAccessMask = (VkAccessFlags)dstBehavior,
+            .dependencyFlags = 0,
+        };
+        dependencies.push_back(dependency);
+    }
+
     VkRenderPassCreateInfo renderPassCI = {
         .sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO,
     };
@@ -196,7 +184,7 @@ RenderPass(const std::shared_ptr<Device> &device)
     checkResult(vkCreateRenderPass(_device->_device, &renderPassCI, nullptr, &_renderPass));
 }
 
-~RenderPass::Destroy()
+RenderPass::~RenderPass()
 {
     vkDestroyRenderPass(_device->_device, _renderPass, nullptr);
     attachments.clear();

@@ -47,7 +47,7 @@ namespace Lettuce::Core
         void CreateSurface(T1 window, T2 process)
         {
             isSurfaceCreated = true;
-            checkResult(CreateVkSurface(_instance, window, process, _surface, nullptr),);
+            checkResult(CreateVkSurface(_instance, window, process, _surface, nullptr));
         }
         std::list<GPU> getGPUs();
 

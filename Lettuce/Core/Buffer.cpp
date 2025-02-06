@@ -10,7 +10,7 @@
 
 using namespace Lettuce::Core;
 
-Buffer(const std::shared_ptr<Device> &device, uint32_t size, BufferUsage usage,
+Buffer::Buffer(const std::shared_ptr<Device> &device, uint32_t size, BufferUsage usage,
        VmaAllocationCreateFlags allocationFlags,
        VmaMemoryUsage memoryUsage) : _device(device),
                                      _size(size),
@@ -57,7 +57,7 @@ void Buffer::Unmap()
     checkResult(vmaFlushAllocation(_device->allocator, _allocation, 0, _size));
 }
 
-void Buffer::CopyTo(Buffer buffer)
+void Buffer::CopyTo(const std::shared_ptr<Buffer>& buffer)
 {
     VkCommandBufferAllocateInfo commandBufferAI = {
         .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
@@ -77,7 +77,7 @@ void Buffer::CopyTo(Buffer buffer)
     VkBufferCopy bufferC = {
         .size = _size,
     };
-    vkCmdCopyBuffer(cmd, _buffer, buffer._buffer, 1, &bufferC);
+    vkCmdCopyBuffer(cmd, _buffer, buffer->_buffer, 1, &bufferC);
 
     vkEndCommandBuffer(cmd);
 
@@ -105,11 +105,11 @@ std::shared_ptr<Buffer> Buffer::CreateBufferWithStaging(const std::shared_ptr<De
     usage |= bufferDstUsage;
     auto buffer = std::make_shared<Buffer>(device, size, usage, VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT | VMA_ALLOCATION_CREATE_MAPPED_BIT, VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE);
     stagingBuffer->CopyTo(buffer);
-    stagingBuffer->
+    stagingBuffer.reset();
     return buffer;
 }
 
-~Buffer()
+Buffer::~Buffer()
 {
     vmaDestroyBuffer(_device->allocator, _buffer, _allocation);
 

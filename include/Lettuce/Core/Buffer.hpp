@@ -88,7 +88,7 @@ namespace Lettuce::Core
         /// the usage of this function is for staging buffers creation only, another
         /// usage may have unexpected behaviors.
         /// @param buffer the dst buffer
-        void CopyTo(Buffer buffer);
+        void CopyTo(const std::shared_ptr<Buffer>& buffer);
 
         // template <typename T>
         // static std::shared_ptr<Buffer> CreateVertexBuffer(const std::shared_ptr<Device> &device, std::vector<T> vertices);
