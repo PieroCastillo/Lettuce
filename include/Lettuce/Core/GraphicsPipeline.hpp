@@ -85,7 +85,7 @@ namespace Lettuce::Core
         std::shared_ptr<Device> _device;
         VkPipelineLayout _pipelineLayout;
         VkPipeline _pipeline;
-        RenderPass _renderpass;
+        std::shared_ptr<RenderPass> _renderpass;
         uint32_t _subpassIndex;
         std::vector<VkPipelineShaderStageCreateInfo> stages;
         std::vector<VkVertexInputBindingDescription> vertexInputBindings;

@@ -10,8 +10,8 @@
 
 using namespace Lettuce::Core;
 
-GPU(VkSurfaceKHR &surface, VkPhysicalDevice &device) : _surface(surface),
-                                                       _pdevice(device)
+GPU::GPU(VkSurfaceKHR &surface, VkPhysicalDevice &device) : _surface(surface),
+                                                            _pdevice(device)
 {
 
     vkGetPhysicalDeviceProperties(device, &deviceProperties);

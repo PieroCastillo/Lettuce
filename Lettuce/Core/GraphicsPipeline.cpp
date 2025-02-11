@@ -33,7 +33,8 @@ void GraphicsPipeline::AddShaderStage(Shader &shader)
     stages.emplace_back(pipelineShaderStageCI);
 }
 
-GraphicsPipeline(const std::shared_ptr<Device> &device, PipelineLayout &connector, RenderPass &renderpass, uint32_t subpassIndex, PipelineBuildData pipelineData)
+//TODO: refactor this
+GraphicsPipeline::GraphicsPipeline(const std::shared_ptr<Device> &device, PipelineLayout &connector, RenderPass &renderpass, uint32_t subpassIndex, PipelineBuildData pipelineData)
 {
     _device = device;
     _pipelineLayout = connector._pipelineLayout;
@@ -159,7 +160,7 @@ GraphicsPipeline(const std::shared_ptr<Device> &device, PipelineLayout &connecto
     checkResult(vkCreateGraphicsPipelines(_device->_device, VK_NULL_HANDLE, 1, &graphicsPipelineCI, nullptr, &_pipeline));
 }
 
-~GraphicsPipeline::Destroy()
+GraphicsPipeline::~GraphicsPipeline()
 {
     vkDestroyPipeline(_device->_device, _pipeline, nullptr);
 }

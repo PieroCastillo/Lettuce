@@ -40,7 +40,7 @@ namespace Lettuce::Core
         AccessStage srcStage;
         AccessStage dstStage;
         AccessBehavior srcBehavior;
-        AccessBehavior dstBehavior
+        AccessBehavior dstBehavior;
     };
 
     /**
