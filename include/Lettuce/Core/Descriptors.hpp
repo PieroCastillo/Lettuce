@@ -48,8 +48,16 @@ namespace Lettuce::Core
         VkDescriptorPool _pool = VK_NULL_HANDLE;
         std::vector<VkDescriptorSetLayout> _layouts;
 
-        Descriptors(const std::shared_ptr<Device> &device, const std::vector<DescriptorBinding> &bindings, uint32_t maxSets = 16);
+        void AddBinding(uint32_t set,
+                        uint32_t binding,
+                        DescriptorType type,
+                        PipelineStage stage,
+                        uint32_t descriptorCount);
+
+        Descriptors(const std::shared_ptr<Device> &device);
         ~Descriptors();
+
+        void Assemble(uint32_t maxSets = 16);
 
         void AddUpdateInfo(uint32_t set, uint32_t binding, const std::vector<std::pair<uint32_t, std::shared_ptr<Buffer>>> &sizeBuffersPairs);
         void AddUpdateInfo(uint32_t set, uint32_t binding, const std::vector<std::pair<uint32_t, std::shared_ptr<BufferResource>>> &sizeBuffersPairs);

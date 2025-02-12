@@ -49,7 +49,7 @@ namespace Lettuce::Core
             isSurfaceCreated = true;
             checkResult(CreateVkSurface(_instance, window, process, _surface, nullptr));
         }
-        std::vector<std::shared_ptr<GPU>> getGPUs();
+        std::vector<GPU> getGPUs();
 
         bool IsSurfaceCreated();
     };

@@ -69,6 +69,6 @@ namespace Lettuce::Core
                            AccessBehavior dstBehavior);
         void BuildFramebuffers();
         void DestroyFramebuffers();
-        void AddFramebuffer(uint32_t width, uint32_t height, std::vector<TextureView> attachments);
+        void AddFramebuffer(uint32_t width, uint32_t height, std::vector<std::shared_ptr<TextureView>> attachments);
     };
 }

@@ -100,21 +100,21 @@ namespace Lettuce::Core
         // static std::shared_ptr<Buffer> CreateUniformBuffer(const std::shared_ptr<Device> &device, T **data);
 
         template <typename T>
-        static std::shared_ptr<Buffer> CreateVertexBuffer(const std::shared_ptr<Device> &device, std::vector<T> &vertices)
+        static std::shared_ptr<Buffer> CreateVertexBuffer(const std::shared_ptr<Device> &device, const std::vector<T> &vertices)
         {
-            return CreateBufferWithStaging(device, BufferUsage::VertexBuffer, sizeof(vertices[0]) * vertices.size(), vertices.data());
+            return Buffer::CreateBufferWithStaging(device, BufferUsage::VertexBuffer, sizeof(vertices[0]) * vertices.size(), (void*)vertices.data());
         }
 
         template <typename T, typename = std::enable_if_t<std::is_integral<T>::value && std::is_unsigned<T>::value>>
-        static std::shared_ptr<Buffer> CreateIndexBuffer(const std::shared_ptr<Device> &device, std::vector<T> &indices)
+        static std::shared_ptr<Buffer> CreateIndexBuffer(const std::shared_ptr<Device> &device, const std::vector<T> &indices)
         {
-            return CreateBufferWithStaging(device, BufferUsage::IndexBuffer, sizeof(indices[0]) * indices.size(), indices.data());
+            return Buffer::CreateBufferWithStaging(device, BufferUsage::IndexBuffer, sizeof(indices[0]) * indices.size(), (void*)indices.data());
         }
 
         template <typename T>
         static std::shared_ptr<Buffer> CreateUniformBuffer(const std::shared_ptr<Device> &device)
         {
-            std::shared_ptr<Buffer> buffer = std::make_shared(device, sizeof(T), BufferUsage::UniformBuffer,
+            auto buffer = std::make_shared<Buffer>(device, sizeof(T), BufferUsage::UniformBuffer,
                                                               VMA_ALLOCATION_CREATE_MAPPED_BIT | VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT,
                                                               VMA_MEMORY_USAGE_AUTO_PREFER_HOST);
             return buffer;

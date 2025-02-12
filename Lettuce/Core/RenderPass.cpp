@@ -96,12 +96,12 @@ void RenderPass::AddDependency(uint32_t srcSubpassIndex,
     dependencies.push_back(dependency);
 }
 
-void RenderPass::AddFramebuffer(uint32_t width, uint32_t height, std::vector<TextureView> attachments)
+void RenderPass::AddFramebuffer(uint32_t width, uint32_t height, std::vector<std::shared_ptr<TextureView>> attachments)
 {
     std::vector<VkImageView> views;
     for (auto view : attachments)
     {
-        views.push_back(view._imageView);
+        views.push_back(view->_imageView);
     }
     fbviews.push_back(views);
     VkFramebufferCreateInfo framebufferCI = {

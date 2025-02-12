@@ -17,20 +17,24 @@
 
 using namespace Lettuce::Core;
 
-Descriptors::Descriptors(const std::shared_ptr<Device> &device, const std::vector<DescriptorBinding> &bindings, uint32_t maxSets) : _device(device)
+void Descriptors::AddBinding(uint32_t set,
+                             uint32_t binding,
+                             DescriptorType type,
+                             PipelineStage stage,
+                             uint32_t descriptorCount)
 {
-    for (auto &binding : bindings)
-    {
-        VkDescriptorSetLayoutBinding layoutBinding = {
-            .binding = binding.binding,
-            .descriptorType = (VkDescriptorType)binding.type,
-            .descriptorCount = binding.descriptorCount,
-            .stageFlags = (VkShaderStageFlags)binding.stage,
-        };
-        bindingsMap[binding.set].push_back(layoutBinding);
-        bindingsTypes[{binding.set, binding.binding}] = (VkDescriptorType)binding.type;
-    }
+    VkDescriptorSetLayoutBinding layoutBinding = {
+        .binding = binding,
+        .descriptorType = (VkDescriptorType)type,
+        .descriptorCount = descriptorCount,
+        .stageFlags = (VkShaderStageFlags)stage,
+    };
+    bindingsMap[set].push_back(layoutBinding);
+    bindingsTypes[{set, binding}] = (VkDescriptorType)type;
+}
 
+void Descriptors::Assemble(uint32_t maxSets)
+{
     // create descriptor set layouts
     int index = 0;
     _layouts.resize(bindingsMap.size());
@@ -85,7 +89,7 @@ Descriptors::Descriptors(const std::shared_ptr<Device> &device, const std::vecto
         .poolSizeCount = (uint32_t)sizes.size(),
         .pPoolSizes = sizes.data(),
     };
-    checkResult(vkCreateDescriptorPool(device->_device, &poolCI, nullptr, &_pool));
+    checkResult(vkCreateDescriptorPool(_device->_device, &poolCI, nullptr, &_pool));
 
     // creates descriptor set
     _descriptorSets.resize(_layouts.size(), VK_NULL_HANDLE);
@@ -95,7 +99,11 @@ Descriptors::Descriptors(const std::shared_ptr<Device> &device, const std::vecto
         .descriptorSetCount = (uint32_t)_descriptorSets.size(),
         .pSetLayouts = _layouts.data(),
     };
-    checkResult(vkAllocateDescriptorSets(device->_device, &descriptorSetAI, _descriptorSets.data()));
+    checkResult(vkAllocateDescriptorSets(_device->_device, &descriptorSetAI, _descriptorSets.data()));
+}
+
+Descriptors::Descriptors(const std::shared_ptr<Device> &device) : _device(device)
+{
 }
 
 Descriptors::~Descriptors()

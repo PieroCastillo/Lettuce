@@ -158,18 +158,18 @@ Instance::~Instance()
     volkFinalize();
 }
 
-std::vector<std::shared_ptr<GPU>> Instance::getGPUs()
+std::vector<GPU> Instance::getGPUs()
 {
     uint32_t physicalDevicesCount = 0;
     vkEnumeratePhysicalDevices(_instance, &physicalDevicesCount, nullptr);
     std::vector<VkPhysicalDevice> physicalDevices(physicalDevicesCount);
     vkEnumeratePhysicalDevices(_instance, &physicalDevicesCount, physicalDevices.data());
 
-    std::vector<std::shared_ptr<GPU>> gpus;
+    std::vector<GPU> gpus;
     gpus.reserve(physicalDevicesCount - 1);
     for (auto dev : physicalDevices)
     {
-        auto gpu = std::make_shared<GPU>(_surface, dev);
+        auto gpu = GPU(_surface, dev);
         gpus.push_back(gpu);
     }
     return gpus;

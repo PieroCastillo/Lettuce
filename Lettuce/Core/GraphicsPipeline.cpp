@@ -23,13 +23,13 @@ void GraphicsPipeline::AddVertexAttribute(uint32_t binding, uint32_t location, u
     vertexInputAttributes.emplace_back(attributeDescription);
 }
 
-void GraphicsPipeline::AddShaderStage(Shader &shader)
+void GraphicsPipeline::AddShaderStage(const std::shared_ptr<Shader> &shader)
 {
     VkPipelineShaderStageCreateInfo pipelineShaderStageCI = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
-        .stage = (VkShaderStageFlagBits)shader._stage,
-        .module = shader._shaderModule,
-        .pName = shader._name.c_str(),
+        .stage = (VkShaderStageFlagBits)shader->_stage,
+        .module = shader->_shaderModule,
+        .pName = shader->_name.c_str(),
     };
     stages.emplace_back(pipelineShaderStageCI);
 }
@@ -147,7 +147,7 @@ void GraphicsPipeline::Assemble(uint32_t subpassIndex, const PipelineBuildData &
         .pDepthStencilState = &depthStencilStateCI,
         .pColorBlendState = &colorBlendStateCI,
         .pDynamicState = &dynamicStateCI,
-        .layout = _pipelineLayout,
+        .layout = _layout->_pipelineLayout,
         .renderPass = _renderpass->_renderPass,
         .subpass = _subpassIndex,
         // VkPipeline                                       basePipelineHandle;
@@ -161,7 +161,7 @@ GraphicsPipeline::GraphicsPipeline(const std::shared_ptr<Device> &device,
                                    const std::shared_ptr<PipelineLayout> &connector,
                                    const std::shared_ptr<RenderPass> &renderpass)
     : _device(device),
-      _pipelineLayout(connector->_pipelineLayout),
+      _layout(connector),
       _renderpass(renderpass)
 {
 }

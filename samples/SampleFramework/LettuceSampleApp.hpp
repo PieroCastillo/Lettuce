@@ -3,14 +3,14 @@
 //
 #pragma once
 #include <string>
+#include <iomanip>
+#include <memory>
 #include <GLFW/glfw3.h>
 #define GLFW_EXPOSE_NATIVE_WIN32
 #include <GLFW/glfw3native.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/ext/matrix_clip_space.hpp>
-#include <iomanip>
-#include <memory>
 #include "Lettuce/Lettuce.Core.hpp"
 #include "Lettuce/Lettuce.X3D.hpp"
 
@@ -36,13 +36,16 @@ protected:
         glfwDestroyWindow(window);
         glfwTerminate();
     }
+
     void initializeLettuce()
     {
-        instance = std::make_shared<Lettuce::Core::Instance>(appName, Lettuce::Core::Version{0, 1, 0, 0}, {}, true);
+        Lettuce::Core::Version version = {0, 1, 0, 0};
+        std::vector<char *> reqExts = {};
+        instance = std::make_shared<Lettuce::Core::Instance>(appName, version, reqExts, true);
         instance->CreateSurface(glfwGetWin32Window(window), GetModuleHandle(nullptr));
         auto gpus = instance->getGPUs();
-        // create device
 
+        // create device
         features.MeshShading = false;
         features.ConditionalRendering = false;
         features.MemoryBudget = false;
@@ -50,8 +53,8 @@ protected:
         swapchain = std::make_shared<Lettuce::Core::Swapchain>(device, width, height);
         createRenderPass();
         swapchain->SetResizeFunc([this]()
-                                { return resizeCall(); }, [this]()
-                                { onResize(); });
+                                 { return resizeCall(); }, [this]()
+                                 { onResize(); });
     }
 
     virtual void createRenderPass()

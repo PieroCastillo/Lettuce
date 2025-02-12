@@ -122,7 +122,7 @@ void main()
 
     void createRenderPass()
     {
-        renderpass = std::make_shared<>(device);
+        renderpass = std::make_shared<RenderPass>(device);
         renderpass->AddAttachment(0, AttachmentType::Color,
                                   swapchain->imageFormat,
                                   LoadOp::Clear,
@@ -174,35 +174,39 @@ void main()
         uniformBuffer->Map();
         uniformBuffer->SetData(&dataUBO);
         /*setup stuff to render the donut*/
-        descriptor = std::make_shared<Lettuce::Core::Descriptors>(device, {{0, 0, DescriptorType::UniformBuffer, PipelineStage::Vertex, 1}});
+        descriptor = std::make_shared<Lettuce::Core::Descriptors>(device);
+        descriptor->AddBinding(0, 0, DescriptorType::UniformBuffer, PipelineStage::Vertex, 1);
+        descriptor->Assemble();
         descriptor->AddUpdateInfo<DataUBO>(0, 0, uniformBuffer);
         descriptor->Update();
 
-        connector = std::make_shared<Lettuce::Core::PipelineLayout>(device, {{0, VkShaderStageFlagBits::VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(DataPush)}}, descriptor);
-
+        connector = std::make_shared<Lettuce::Core::PipelineLayout>(device, descriptor);
+        connector->AddPushConstant<DataPush>(0, PipelineStage::Fragment);
+        connector->Assemble();
         // add pipeline stuff here
         vertexShader = std::make_shared<Lettuce::Core::Shader>(device, compiler, vertexShaderText, "main", "vertex.glsl", PipelineStage::Vertex, true);
         fragmentShader = std::make_shared<Lettuce::Core::Shader>(device, compiler, fragmentShaderText, "main", "fragment.glsl", PipelineStage::Fragment, true);
 
+        pipeline = std::make_shared<GraphicsPipeline>(device, connector, renderpass);
         pipeline->AddVertexBindingDescription<Vertex>(0);                                  // binding = 0
         pipeline->AddVertexAttribute(0, 0, 0, VK_FORMAT_R32G32B32_SFLOAT);                 // layout(location = 0) in vec3 pos;
         pipeline->AddVertexAttribute(0, 1, sizeof(glm::vec3), VK_FORMAT_R32G32B32_SFLOAT); // layout(location = 1) in vec3 normal;
         pipeline->AddShaderStage(vertexShader);
         pipeline->AddShaderStage(fragmentShader);
-        pipeline = std::make_shared<>(device, connector, renderpass, 0,
-                                      {.rasterization = {
-                                           .frontFace = VK_FRONT_FACE_CLOCKWISE,
-                                       },
-                                       .colorBlend = {
-                                           .attachments = {
-                                               {
-                                                   .colorWriteMask = VK_COMPONENT_SWIZZLE_R | VK_COMPONENT_SWIZZLE_G | VK_COMPONENT_SWIZZLE_B | VK_COMPONENT_SWIZZLE_A,
-                                               },
-                                           },
-                                       }});
+        pipeline->Assemble(0,
+                           {.rasterization = {
+                                .frontFace = VK_FRONT_FACE_CLOCKWISE,
+                            },
+                            .colorBlend = {
+                                .attachments = {
+                                    {
+                                        .colorWriteMask = VK_COMPONENT_SWIZZLE_R | VK_COMPONENT_SWIZZLE_G | VK_COMPONENT_SWIZZLE_B | VK_COMPONENT_SWIZZLE_A,
+                                    },
+                                },
+                            }});
 
-        vertexShader.Destroy();
-        fragmentShader.Destroy();
+        vertexShader.reset();
+        fragmentShader.reset();
         /*setup line buffers*/
 
         LineBuffer1 = Buffer::CreateVertexBuffer<LineVertex>(device, {{glm::vec3(0)}, {glm::vec3(100, 0, 0)}});
@@ -210,30 +214,32 @@ void main()
         LineBuffer3 = Buffer::CreateVertexBuffer<LineVertex>(device, {{glm::vec3(0)}, {glm::vec3(0, 0, 100)}});
 
         /*setup pipeline for lines*/
-        vsLineShader = std::make_shared<>(device, compiler, vsLineShaderText, "main", "vsLine.glsl", PipelineStage::Vertex, true);
-        psLineShader = std::make_shared<>(device, compiler, psLineShaderText, "main", "psLine.glsl", PipelineStage::Fragment, true);
+        vsLineShader = std::make_shared<Shader>(device, compiler, vsLineShaderText, "main", "vsLine.glsl", PipelineStage::Vertex, true);
+        psLineShader = std::make_shared<Shader>(device, compiler, psLineShaderText, "main", "psLine.glsl", PipelineStage::Fragment, true);
 
+        linesLayout = std::make_shared<PipelineLayout>(device, descriptor);
         linesLayout->AddPushConstant<DataPush>(0, PipelineStage::Fragment);
-        linesLayout = std::make_shared<>(device, descriptor);
+        linesLayout->Assemble();
+
+        linespipeline = std::make_shared<GraphicsPipeline>(device, linesLayout, renderpass);
 
         linespipeline->AddVertexBindingDescription<LineVertex>(0);
         linespipeline->AddVertexAttribute(0, 0, 0, VK_FORMAT_R32G32B32_SFLOAT);
         linespipeline->AddShaderStage(vsLineShader);
         linespipeline->AddShaderStage(psLineShader);
-
-        linespipeline = std::make_shared<>(device, linesLayout, renderpass, 0,
-                                           {.rasterization = {
-                                                .frontFace = VK_FRONT_FACE_CLOCKWISE,
+        linespipeline->Assemble(0, {.rasterization = {
+                                        .frontFace = VK_FRONT_FACE_CLOCKWISE,
+                                    },
+                                    .colorBlend = {
+                                        .attachments = {
+                                            {
+                                                .colorWriteMask = VK_COMPONENT_SWIZZLE_R | VK_COMPONENT_SWIZZLE_G | VK_COMPONENT_SWIZZLE_B | VK_COMPONENT_SWIZZLE_A,
                                             },
-                                            .colorBlend = {
-                                                .attachments = {
-                                                    {
-                                                        .colorWriteMask = VK_COMPONENT_SWIZZLE_R | VK_COMPONENT_SWIZZLE_G | VK_COMPONENT_SWIZZLE_B | VK_COMPONENT_SWIZZLE_A,
-                                                    },
-                                                },
-                                            }});
-        psLineShader.Destroy();
-        vsLineShader->Destroy();
+                                        },
+                                    }});
+
+        psLineShader.reset();
+        vsLineShader.reset();
         camera = Lettuce::X3D::Camera3D::Camera3D(width, height);
         beforeResize();
     }
@@ -326,12 +332,12 @@ void main()
         vkCmdBeginRenderPass(cmd, &renderPassBI, VkSubpassContents::VK_SUBPASS_CONTENTS_INLINE);
 
         /*render lines X Y Z */ // yellow, purple, green
-        std::vector<std::pair<Buffer, glm::vec3>> pairs = {{LineBuffer1, glm::vec3(1, 0.984, 0)}, {LineBuffer2, glm::vec3(0.506, 0.024, 0.98)}, {LineBuffer3, glm::vec3(0.024, 0.98, 0.173)}};
+        std::vector<std::pair<std::shared_ptr<Buffer>, glm::vec3>> pairs = {{LineBuffer1, glm::vec3(1, 0.984, 0)}, {LineBuffer2, glm::vec3(0.506, 0.024, 0.98)}, {LineBuffer3, glm::vec3(0.024, 0.98, 0.173)}};
         for (auto &[lineBuffer, color] : pairs)
         {
             vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, linespipeline->_pipeline);
             VkDeviceSize size = 0;
-            vkCmdBindVertexBuffers(cmd, 0, 1, &(lineBuffer._buffer), &size);
+            vkCmdBindVertexBuffers(cmd, 0, 1, &(lineBuffer->_buffer), &size);
             // vkCmdBindIndexBuffer(cmd, indexBuffer._buffer, 0, VK_INDEX_TYPE_UINT32);
             vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, linesLayout->_pipelineLayout, 0, 1, descriptor->_descriptorSets.data(), 0, nullptr);
             dataPush.color = color;
@@ -350,8 +356,8 @@ void main()
         /*render donut*/
         vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->_pipeline);
         VkDeviceSize size = 0;
-        vkCmdBindVertexBuffers(cmd, 0, 1, &(vertexBuffer._buffer), &size);
-        vkCmdBindIndexBuffer(cmd, indexBuffer._buffer, 0, VK_INDEX_TYPE_UINT32);
+        vkCmdBindVertexBuffers(cmd, 0, 1, &(vertexBuffer->_buffer), &size);
+        vkCmdBindIndexBuffer(cmd, indexBuffer->_buffer, 0, VK_INDEX_TYPE_UINT32);
         vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, connector->_pipelineLayout, 0, 1, descriptor->_descriptorSets.data(), 0, nullptr);
 
         vkCmdPushConstants(cmd, connector->_pipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(DataPush), &dataPush);

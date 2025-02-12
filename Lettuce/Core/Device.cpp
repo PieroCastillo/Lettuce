@@ -157,9 +157,9 @@ void Device::loadExtensionsLayersAndFeatures()
 }
 
 Device::Device(const std::shared_ptr<Instance> &instance, GPU &gpu, Features gpuFeatures, uint32_t graphicsQueuesCount) : _pdevice(gpu._pdevice),
-                                                                                                                  _instance(instance),
-                                                                                                                  _gpu(gpu),
-                                                                                                                  _features(gpuFeatures)
+                                                                                                                                                 _instance(instance),
+                                                                                                                                                 _gpu(gpu),
+                                                                                                                                                 _features(gpuFeatures)
 {
     listExtensions();
     listLayers();
