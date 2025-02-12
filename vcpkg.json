@@ -6,6 +6,6 @@
     "vulkan",
     "vulkan-memory-allocator",
     "vulkan-sdk-components",
-    "tinygltf"
+    "fastgltf"
   ]
 }
