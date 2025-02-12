@@ -3,20 +3,24 @@
 //
 #include "Lettuce/Core/common.hpp"
 #include <iostream>
+#include <memory>
+#include "Lettuce/Core/Device.hpp"
+#include "Lettuce/Core/PipelineLayout.hpp"
+#include "Lettuce/Core/Shader.hpp"
 #include "Lettuce/Core/ComputePipeline.hpp"
 
 using namespace Lettuce::Core;
 
-ComputePipeline::ComputePipeline(const std::shared_ptr<Device> &device, PipelineLayout &connector, Shader &shader)
+ComputePipeline::ComputePipeline(const std::shared_ptr<Device> &device, const std::shared_ptr<PipelineLayout> &connector, const std::shared_ptr<Shader> &shader)
 {
     _device = device;
-    _pipelineLayout = connector._pipelineLayout;
+    _pipelineLayout = connector->_pipelineLayout;
 
     VkPipelineShaderStageCreateInfo pipelineShaderStageCI = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
-        .stage = (VkShaderStageFlagBits)shader._stage,
-        .module = shader._shaderModule,
-        .pName = shader._name.c_str(),
+        .stage = (VkShaderStageFlagBits)shader->_stage,
+        .module = shader->_shaderModule,
+        .pName = shader->_name.c_str(),
     };
 
     VkComputePipelineCreateInfo computePipelineCI = {

@@ -6,7 +6,6 @@
 #include <memory>
 #include "Device.hpp"
 #include "PipelineLayout.hpp"
-#include "Swapchain.hpp"
 #include "Shader.hpp"
 
 namespace Lettuce::Core
@@ -18,7 +17,7 @@ namespace Lettuce::Core
         VkPipelineLayout _pipelineLayout;
         VkPipeline _pipeline;
 
-        ComputePipeline(const std::shared_ptr<Device> &device, PipelineLayout &connector, Shader &shader);
+        ComputePipeline(const std::shared_ptr<Device> &device, const std::shared_ptr<PipelineLayout> &connector, const std::shared_ptr<Shader> &shader);
 
         ~ComputePipeline();
     };
