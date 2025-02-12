@@ -38,8 +38,9 @@ else
 
         measuredSize += resources[n-1].size
 */
-void ResourcePool::Bind(const std::shared_ptr<Device> &device, VkMemoryPropertyFlags requiredFlags) : _device(device)
+void ResourcePool::Bind(const std::shared_ptr<Device> &device, VkMemoryPropertyFlags requiredFlags)
 {
+    _device = device;
     uint64_t measuredSize = 0;
     uint32_t memoryTypeIndex;
     std::vector<VkBindBufferMemoryInfo> bufferBindInfos;
@@ -78,7 +79,7 @@ void ResourcePool::Bind(const std::shared_ptr<Device> &device, VkMemoryPropertyF
                 granularity = 1;
 
             mod = std::lcm(granularity, memoryReqs[i].alignment);
-            resourcePtrs[i]->offset = measuredSize+1; //offset is size+1
+            resourcePtrs[i]->offset = measuredSize + 1; // offset is size+1
             /*
                 |=====| |=============| |==========|
                 0     n n+1           s s+1        ....

@@ -3,6 +3,7 @@
 //
 #pragma once
 #include <vector>
+#include <memory>
 #include "commonX3D.hpp"
 #include "Lettuce/Core/Buffer.hpp"
 
@@ -18,7 +19,7 @@ namespace Lettuce::X3D
         // main data
         tinygltf::Model model;
         static tinygltf::TinyGLTF loader;
-        std::vector<Lettuce::Core::Buffer> buffers;  
+        std::vector<std::shared_ptr<Lettuce::Core::Buffer>> buffers;  
         void check();
         void setup();
 

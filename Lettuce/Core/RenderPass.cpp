@@ -59,22 +59,22 @@ void RenderPass::AddAttachment(uint32_t index,
 {
 
     VkAttachmentDescription attachment = {
-        .format = attachmentData.format,
+        .format = format,
         .samples = VK_SAMPLE_COUNT_1_BIT,
-        .loadOp = (VkAttachmentLoadOp)attachmentData.loadOp,
-        .storeOp = (VkAttachmentStoreOp)attachmentData.storeOp,
-        .stencilLoadOp = (VkAttachmentLoadOp)attachmentData.stencilLoadOp,
-        .stencilStoreOp = (VkAttachmentStoreOp)attachmentData.stencilStoreOp,
-        .initialLayout = (VkImageLayout)attachmentData.initial,
-        .finalLayout = (VkImageLayout)attachmentData.final,
+        .loadOp = (VkAttachmentLoadOp)loadOp,
+        .storeOp = (VkAttachmentStoreOp)storeOp,
+        .stencilLoadOp = (VkAttachmentLoadOp)stencilLoadOp,
+        .stencilStoreOp = (VkAttachmentStoreOp)stencilStoreOp,
+        .initialLayout = (VkImageLayout)initial,
+        .finalLayout = (VkImageLayout)final,
     };
-    attachments[index] = std::make_tuple(attachmentData.type, attachment, (VkImageLayout)attachmentData.reference);
+    attachments[index] = std::make_tuple(type, attachment, (VkImageLayout)reference);
 }
 void RenderPass::AddSubpass(uint32_t index,
                             BindPoint bindpoint,
                             std::vector<uint32_t> attachments)
 {
-    subpassesMap[subpass.index] = std::make_tuple(subpass.bindpoint, subpass.attachments);
+    subpassesMap[index] = std::make_tuple(bindpoint, attachments);
 }
 
 void RenderPass::AddDependency(uint32_t srcSubpassIndex,

@@ -7,13 +7,14 @@
 #include <string>
 #include <algorithm>
 #include <limits>
+#include <memory>
 #include "Lettuce/Core/Device.hpp"
 #include "Lettuce/Core/Semaphore.hpp"
 #include "Lettuce/Core/Utils.hpp"
 
 using namespace Lettuce::Core;
 
-Semaphore(const std::shared_ptr<Device> &device, uint64_t initialValue) : _device(device)
+Semaphore::Semaphore(const std::shared_ptr<Device> &device, uint64_t initialValue) : _device(device)
 {
     VkSemaphoreTypeCreateInfo semaphoreTypeCI = {
         .sType = VK_STRUCTURE_TYPE_SEMAPHORE_TYPE_CREATE_INFO,
@@ -37,7 +38,7 @@ void Semaphore::Wait(uint64_t value)
     checkResult(vkWaitSemaphores(_device->_device, &waitI, (std::numeric_limits<uint64_t>::max)()));
 }
 
-~Semaphore::Destroy()
+Semaphore::~Semaphore()
 {
     vkDestroySemaphore(_device->_device, _semaphore, nullptr);
 }
@@ -52,9 +53,9 @@ void Semaphore::Signal(uint64_t signalValue)
     checkResult(vkSignalSemaphore(_device->_device, &semaphoreSignalI));
 }
 
-std::vector<Semaphore> Semaphore::CreateSemaphores(const std::shared_ptr<Device> &device, uint32_t semaphoresCount)
+std::vector<std::shared_ptr<Semaphore>> Semaphore::CreateSemaphores(const std::shared_ptr<Device> &device, uint32_t semaphoresCount)
 {
-    std::vector<Semaphore> semaphores;
+    std::vector<std::shared_ptr<Semaphore>> semaphores;
     semaphores.resize(semaphoresCount);
 
     // uses timeline semaphores
@@ -68,8 +69,8 @@ std::vector<Semaphore> Semaphore::CreateSemaphores(const std::shared_ptr<Device>
     };
     for (int i = 0; i < semaphoresCount; i++)
     {
-        semaphores[i]._device = device;
-        checkResult(vkCreateSemaphore(device->_device, &semaphoreCI, nullptr, &(semaphores[i]._semaphore)), "semaphore #" + std::to_string(i) + " created succesfully");
+        semaphores[i]->_device = device;
+        checkResult(vkCreateSemaphore(device->_device, &semaphoreCI, nullptr, &(semaphores[i]->_semaphore)), "semaphore #" + std::to_string(i) + " created succesfully");
     }
     return semaphores;
 }

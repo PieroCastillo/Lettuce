@@ -28,11 +28,11 @@ add_compile_definitions(PATCH_VERSION=${PATCH_VERSION})
 file(GLOB LETTUCE_SOURCES Lettuce/Core/*.cpp 
                         Lettuce/Core/Compilers/*.cpp 
                         Lettuce/X3D/*.cpp 
-                        Lettuce/X3D/Materials/*.cpp
-                        Lettuce/X2D/*.cpp 
-                        Lettuce/X2D/Geometries/*.cpp 
-                        Lettuce/X2D/Lights/*.cpp  
-                        Lettuce/X2D/Materials/*.cpp )
+                        Lettuce/X3D/Materials/*.cpp)
+                        # Lettuce/X2D/*.cpp 
+                        # Lettuce/X2D/Geometries/*.cpp 
+                        # Lettuce/X2D/Lights/*.cpp  
+                        # Lettuce/X2D/Materials/*.cpp )
 
 add_library(Lettuce)
 target_sources(Lettuce PRIVATE ${LETTUCE_SOURCES})

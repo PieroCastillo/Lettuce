@@ -40,12 +40,12 @@ namespace Lettuce::X2D
         uint32_t width, height;
         std::shared_ptr<Device> device;
         Compilers::GLSLCompiler compiler;
-        Descriptors descriptors;
+        std::shared_ptr<Descriptors> descriptors;
         void recontruct();
         void renderMaterialPair(VkCommandBuffer cmd, Geometries::GeometryBase &geometry, Materials::IMaterial &material, std::any &data);
 
     public:
-        RenderPass renderPass;
+        std::shared_ptr<RenderPass> renderPass;
         glm::mat4 globalTransform = glm::mat4(1);
         RenderContext2D() {};
         RenderContext2D(const std::shared_ptr<Device> &device, VkFormat swapchainImageFormat);

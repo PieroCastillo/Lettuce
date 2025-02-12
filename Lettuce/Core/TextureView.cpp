@@ -10,7 +10,7 @@
 
 using namespace Lettuce::Core;
 
-TextureView(const std::shared_ptr<Device> &device, std::shared_ptr<Texture> texture, VkImageViewType viewType)
+TextureView::TextureView(const std::shared_ptr<Device> &device, std::shared_ptr<Texture> texture, VkImageViewType viewType)
 {
     _device = device;
     _texture = texture;
@@ -41,7 +41,12 @@ TextureView(const std::shared_ptr<Device> &device, std::shared_ptr<Texture> text
     checkResult(vkCreateImageView(_device->_device, &imageViewCI, nullptr, &_imageView));
 }
 
-~TextureView::Destroy()
+TextureView::TextureView(const std::shared_ptr<Device> &device, const VkImageView &imageView)
+    : _device(device), _imageView(imageView)
+{
+}
+
+TextureView::~TextureView()
 {
     vkDestroyImageView(_device->_device, _imageView, nullptr);
 }

@@ -21,6 +21,7 @@ namespace Lettuce::Core
         VkImageSubresourceRange _subresourceRange;
 
         TextureView(const std::shared_ptr<Device> &device, std::shared_ptr<Texture> texture, VkImageViewType viewType = VK_IMAGE_VIEW_TYPE_2D);
+        TextureView(const std::shared_ptr<Device> &device, const VkImageView& imageView);
         
         ~TextureView();
     };

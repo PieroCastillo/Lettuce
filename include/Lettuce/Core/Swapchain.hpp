@@ -39,7 +39,7 @@ namespace Lettuce::Core
         // TextureView _depthImageView;
         std::vector<VkImage> swapChainImages;
         std::vector<VkImageView> swapChainImageViews;
-        std::vector<TextureView> swapchainTextureViews;
+        std::vector<std::shared_ptr<TextureView>> swapchainTextureViews;
         std::vector<VkAttachmentDescription> attachments;
         std::vector<VkFramebuffer> framebuffers;
         uint32_t index;

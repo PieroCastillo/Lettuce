@@ -39,10 +39,7 @@ void Swapchain::createImageViews()
         };
         checkResult(vkCreateImageView(_device->_device, &imageViewCI, nullptr, &swapChainImageViews[i]));
 
-        TextureView tvw;
-        tvw._device = _device;
-        tvw._imageView = swapChainImageViews[i];
-        swapchainTextureViews[i] = tvw;
+        swapchainTextureViews[i] = std::make_shared<TextureView>(_device, swapChainImageViews[i]);
     }
 }
 
@@ -153,7 +150,7 @@ void Swapchain::createFramebuffers()
     }
 }
 
-Swapchain(const std::shared_ptr<Device> &device, uint32_t initialWidth, uint32_t initialHeight) : _device(device)
+Swapchain::Swapchain(const std::shared_ptr<Device> &device, uint32_t initialWidth, uint32_t initialHeight) : _device(device)
 {
     auto capabilities = _device->_gpu.capabilities;
     imageCount = capabilities.minImageCount + 1;
@@ -208,9 +205,9 @@ Swapchain(const std::shared_ptr<Device> &device, uint32_t initialWidth, uint32_t
 
     loadImages();
     createImageViews();
-    //createDepthImage();
-    //createRenderPass();
-    //createFramebuffers();
+    // createDepthImage();
+    // createRenderPass();
+    // createFramebuffers();
 }
 
 void Swapchain::AcquireNextImage()
@@ -322,7 +319,7 @@ void Swapchain::Resize(uint32_t newWidth, uint32_t newHeight)
     createFramebuffers();
 }
 
-~Swapchain::Destroy()
+Swapchain::~Swapchain()
 {
     for (auto fb : framebuffers)
     {
