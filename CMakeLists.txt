@@ -47,6 +47,7 @@ add_executable(tester
                 samples/tester/app.cpp)
 add_executable(loadModel
                 samples/LoadModel/app.cpp)
+target_include_directories(DonutSample PUBLIC samples/SampleFramework)
 target_include_directories(loadModel PUBLIC samples/SampleFramework)
 # add_executable(TriangleSample
 #         samples/TriangleSample/app.cpp)

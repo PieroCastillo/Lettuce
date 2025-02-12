@@ -44,9 +44,12 @@ TextureView::TextureView(const std::shared_ptr<Device> &device, std::shared_ptr<
 TextureView::TextureView(const std::shared_ptr<Device> &device, const VkImageView &imageView)
     : _device(device), _imageView(imageView)
 {
+    autoDestroy = false;
 }
 
 TextureView::~TextureView()
 {
+    if (!autoDestroy)
+        return;
     vkDestroyImageView(_device->_device, _imageView, nullptr);
 }

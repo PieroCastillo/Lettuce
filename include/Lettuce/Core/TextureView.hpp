@@ -19,6 +19,7 @@ namespace Lettuce::Core
         VkImageView _imageView;
         VkImageViewType _viewType;
         VkImageSubresourceRange _subresourceRange;
+        bool autoDestroy = true;
 
         TextureView(const std::shared_ptr<Device> &device, std::shared_ptr<Texture> texture, VkImageViewType viewType = VK_IMAGE_VIEW_TYPE_2D);
         TextureView(const std::shared_ptr<Device> &device, const VkImageView& imageView);
