@@ -22,7 +22,6 @@
 
 //pipelines
 #include "Core/ComputePipeline.hpp"
-#include "Core/MeshPipeline.hpp"
 #include "Core/GraphicsPipeline.hpp"
 #include "Core/PipelineLayout.hpp"
 

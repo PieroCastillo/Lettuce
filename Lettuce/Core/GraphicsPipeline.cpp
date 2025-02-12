@@ -8,6 +8,7 @@
 #include "Lettuce/Core/PipelineLayout.hpp"
 #include "Lettuce/Core/Swapchain.hpp"
 #include "Lettuce/Core/Shader.hpp"
+#include "Lettuce/Core/RenderPass.hpp"
 
 using namespace Lettuce::Core;
 
@@ -33,12 +34,8 @@ void GraphicsPipeline::AddShaderStage(Shader &shader)
     stages.emplace_back(pipelineShaderStageCI);
 }
 
-//TODO: refactor this
-GraphicsPipeline::GraphicsPipeline(const std::shared_ptr<Device> &device, PipelineLayout &connector, RenderPass &renderpass, uint32_t subpassIndex, PipelineBuildData pipelineData)
+void GraphicsPipeline::Assemble(uint32_t subpassIndex, const PipelineBuildData &pipelineData)
 {
-    _device = device;
-    _pipelineLayout = connector._pipelineLayout;
-    _renderpass = renderpass;
     _subpassIndex = subpassIndex;
 
     VkPipelineVertexInputStateCreateInfo vertexInputStateCI = {
@@ -151,13 +148,22 @@ GraphicsPipeline::GraphicsPipeline(const std::shared_ptr<Device> &device, Pipeli
         .pColorBlendState = &colorBlendStateCI,
         .pDynamicState = &dynamicStateCI,
         .layout = _pipelineLayout,
-        .renderPass = _renderpass._renderPass,
+        .renderPass = _renderpass->_renderPass,
         .subpass = _subpassIndex,
         // VkPipeline                                       basePipelineHandle;
         // int32_t                                          basePipelineIndex;
     };
 
     checkResult(vkCreateGraphicsPipelines(_device->_device, VK_NULL_HANDLE, 1, &graphicsPipelineCI, nullptr, &_pipeline));
+}
+
+GraphicsPipeline::GraphicsPipeline(const std::shared_ptr<Device> &device,
+                                   const std::shared_ptr<PipelineLayout> &connector,
+                                   const std::shared_ptr<RenderPass> &renderpass)
+    : _device(device),
+      _pipelineLayout(connector->_pipelineLayout),
+      _renderpass(renderpass)
+{
 }
 
 GraphicsPipeline::~GraphicsPipeline()

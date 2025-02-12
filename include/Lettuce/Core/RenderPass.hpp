@@ -12,37 +12,6 @@
 
 namespace Lettuce::Core
 {
-    struct RenderPassAttachment
-    {
-        uint32_t index;
-        AttachmentType type;
-        VkFormat format;
-        LoadOp loadOp;
-        StoreOp storeOp;
-        LoadOp stencilLoadOp;
-        StoreOp stencilStoreOp;
-        ImageLayout initial;
-        ImageLayout final;
-        ImageLayout reference;
-    };
-
-    struct RenderPassSubpass
-    {
-        uint32_t index;
-        BindPoint bindpoint;
-        std::vector<uint32_t> attachments;
-    };
-
-    struct RenderPassDependency
-    {
-        uint32_t srcSubpassIndex;
-        uint32_t dstSubpassIndex;
-        AccessStage srcStage;
-        AccessStage dstStage;
-        AccessBehavior srcBehavior;
-        AccessBehavior dstBehavior;
-    };
-
     /**
      * @brief RenderPass is an abstraction of VkRenderPass and VkFramebuffer[], also
      * automatizate the generation of AttachmentRefences.
@@ -50,8 +19,8 @@ namespace Lettuce::Core
      * renderPass.AddAttachments()
      * renderPass.AddSubpass()
      * renderPass.AddDependency()
-     * no matter the order of submission before Build()
-     * renderPass = std::make_shared<>() // here build the internal objects
+     * no matter the order of submission before Assemble()
+     * renderPass.Assemble() // here build the internal objects
      * renderPass.AddFramebuffer()
      * renderPass.BuildFramebuffers()
      * here finalize the setup
@@ -75,11 +44,29 @@ namespace Lettuce::Core
         VkRenderPass _renderPass = VK_NULL_HANDLE;
         std::vector<VkFramebuffer> _framebuffers;
 
-        RenderPass(const std::shared_ptr<Device> &device,
-                   const std::vector<RenderPassAttachment> &attachments,
-                   const std::vector<RenderPassSubpass> &subpasses,
-                   const std::vector<RenderPassDependency> &dependencies);
+        RenderPass(const std::shared_ptr<Device> &device);
         ~RenderPass();
+        void Assemble();
+        void AddAttachment(uint32_t index,
+                           AttachmentType type,
+                           VkFormat format,
+                           LoadOp loadOp,
+                           StoreOp storeOp,
+                           LoadOp stencilLoadOp,
+                           StoreOp stencilStoreOp,
+                           ImageLayout initial,
+                           ImageLayout final,
+                           ImageLayout reference);
+        void AddSubpass(uint32_t index,
+                        BindPoint bindpoint,
+                        std::vector<uint32_t> attachments);
+
+        void AddDependency(uint32_t srcSubpassIndex,
+                           uint32_t dstSubpassIndex,
+                           AccessStage srcStage,
+                           AccessStage dstStage,
+                           AccessBehavior srcBehavior,
+                           AccessBehavior dstBehavior);
         void BuildFramebuffers();
         void DestroyFramebuffers();
         void AddFramebuffer(uint32_t width, uint32_t height, std::vector<TextureView> attachments);

@@ -12,48 +12,40 @@
 
 using namespace Lettuce::Core;
 
-PipelineLayout(const std::shared_ptr<Device> &device, const std::vector<VkPushConstantRange> &pushConstants, const std::shared_ptr<Descriptors> &descriptor)
-    : _device(device)
+PipelineLayout::PipelineLayout(const std::shared_ptr<Device> &device, const std::shared_ptr<Descriptors> &descriptor)
+    : _device(device), _descriptors(descriptor)
 {
-    VkPipelineLayoutCreateInfo pipelineLayoutCI = {
-        .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
-        //.flags = VkPipelineLayoutCreateFlagBits::VK_PIPELINE_LAYOUT_CREATE_INDEPENDENT_SETS_BIT_EXT,
-    };
-
-    if (pushConstants.size() > 0)
-    {
-        pipelineLayoutCI.pPushConstantRanges = pushConstants.data();
-        pipelineLayoutCI.pushConstantRangeCount = (uint32_t)pushConstants.size();
-    }
-
-    if (descriptor._pool != VK_NULL_HANDLE && descriptor._layouts.size() > 0)
-    {
-        pipelineLayoutCI.pSetLayouts = descriptor->_layouts.data();
-        pipelineLayoutCI.setLayoutCount = (uint32_t)descriptor->_layouts.size();
-    }
-
-    checkResult(vkCreatePipelineLayout(_device->_device, &pipelineLayoutCI, nullptr, &_pipelineLayout));
+  
 }
 
-PipelineLayout(const std::shared_ptr<Device> &device)
+PipelineLayout::PipelineLayout(const std::shared_ptr<Device> &device) : _device(device)
 {
-    _device = device;
-
-    VkPipelineLayoutCreateInfo pipelineLayoutCI = {
-        .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
-        //.flags = VkPipelineLayoutCreateFlagBits::VK_PIPELINE_LAYOUT_CREATE_INDEPENDENT_SETS_BIT_EXT,
-    };
-
-    if (pushConstants.size() > 0)
-    {
-        pipelineLayoutCI.pPushConstantRanges = pushConstants.data();
-        pipelineLayoutCI.pushConstantRangeCount = (uint32_t)pushConstants.size();
-    }
-
-    checkResult(vkCreatePipelineLayout(_device->_device, &pipelineLayoutCI, nullptr, &_pipelineLayout));
+   
 }
 
-~PipelineLayout::Destroy()
+PipelineLayout::~PipelineLayout()
 {
     vkDestroyPipelineLayout(_device->_device, _pipelineLayout, nullptr);
+}
+
+void PipelineLayout::Assemble()
+{
+     VkPipelineLayoutCreateInfo pipelineLayoutCI = {
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
+        //.flags = VkPipelineLayoutCreateFlagBits::VK_PIPELINE_LAYOUT_CREATE_INDEPENDENT_SETS_BIT_EXT,
+    };
+
+    if (pushConstants.size() > 0)
+    {
+        pipelineLayoutCI.pPushConstantRanges = pushConstants.data();
+        pipelineLayoutCI.pushConstantRangeCount = (uint32_t)pushConstants.size();
+    }
+
+    if (_descriptors && _descriptors._pool != VK_NULL_HANDLE && _descriptors._layouts.size() > 0)
+    {
+        pipelineLayoutCI.pSetLayouts = _descriptors->_layouts.data();
+        pipelineLayoutCI.setLayoutCount = (uint32_t)_descriptors->_layouts.size();
+    }
+
+    checkResult(vkCreatePipelineLayout(_device->_device, &pipelineLayoutCI, nullptr, &_pipelineLayout));
 }

@@ -122,6 +122,7 @@ void main()
 
     void createRenderPass()
     {
+        renderpass = std::make_shared<>(device);
         renderpass->AddAttachment(0, AttachmentType::Color,
                                   swapchain->imageFormat,
                                   LoadOp::Clear,
@@ -143,7 +144,7 @@ void main()
                                   AccessStage::ColorAttachmentOutput,
                                   AccessBehavior::ColorAttachmentWrite,
                                   AccessBehavior::None);
-        renderpass = std::make_shared<>(device);
+        renderpass->Assemble();
         for (auto &view : swapchain->swapchainTextureViews)
         {
             renderpass->AddFramebuffer(width, height, {view});
@@ -177,7 +178,7 @@ void main()
         descriptor->AddUpdateInfo<DataUBO>(0, 0, uniformBuffer);
         descriptor->Update();
 
-        connector = std::make_shared<Lettuce::Core::PipelineLayout>(device, {{0, VkShaderStageFlagBits::VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(DataPush)}} ,descriptor);
+        connector = std::make_shared<Lettuce::Core::PipelineLayout>(device, {{0, VkShaderStageFlagBits::VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(DataPush)}}, descriptor);
 
         // add pipeline stuff here
         vertexShader = std::make_shared<Lettuce::Core::Shader>(device, compiler, vertexShaderText, "main", "vertex.glsl", PipelineStage::Vertex, true);

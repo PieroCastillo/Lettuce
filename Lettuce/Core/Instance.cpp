@@ -72,7 +72,7 @@ void Instance::loadPlatformAndFeatures()
     requestedExtensionsNames.emplace_back(name);
 }
 
-Instance(std::string appName, Version appVersion, std::vector<char *> requestedExtensions, bool debug) : _debug(debug)
+Instance::Instance(std::string appName, Version appVersion, std::vector<char *> requestedExtensions, bool debug) : _debug(debug)
 {
     for (auto ext : requestedExtensions)
     {
@@ -144,29 +144,7 @@ Instance(std::string appName, Version appVersion, std::vector<char *> requestedE
     }
 }
 
-std::list<GPU> Instance::getGPUs()
-{
-    uint32_t physicalDevicesCount = 0;
-    vkEnumeratePhysicalDevices(_instance, &physicalDevicesCount, nullptr);
-    std::vector<VkPhysicalDevice> physicalDevices(physicalDevicesCount);
-    vkEnumeratePhysicalDevices(_instance, &physicalDevicesCount, physicalDevices.data());
-
-    std::list<GPU> gpus(physicalDevicesCount - 1);
-    for (auto dev : physicalDevices)
-    {
-        GPU gpu;
-        gpu = std::make_shared<>(_surface, dev);
-        gpus.push_front(gpu);
-    }
-    return gpus;
-}
-
-bool Instance::IsSurfaceCreated()
-{
-    return isSurfaceCreated;
-}
-
-~Instance::Destroy()
+Instance::~Instance()
 {
     if (isSurfaceCreated)
     {
@@ -178,4 +156,26 @@ bool Instance::IsSurfaceCreated()
     }
     vkDestroyInstance(_instance, nullptr);
     volkFinalize();
+}
+
+std::vector<std::shared_ptr<GPU>> Instance::getGPUs()
+{
+    uint32_t physicalDevicesCount = 0;
+    vkEnumeratePhysicalDevices(_instance, &physicalDevicesCount, nullptr);
+    std::vector<VkPhysicalDevice> physicalDevices(physicalDevicesCount);
+    vkEnumeratePhysicalDevices(_instance, &physicalDevicesCount, physicalDevices.data());
+
+    std::vector<std::shared_ptr<GPU>> gpus;
+    gpus.reserve(physicalDevicesCount - 1);
+    for (auto dev : physicalDevices)
+    {
+        auto gpu = std::make_shared<GPU>(_surface, dev);
+        gpus.push_back(gpu);
+    }
+    return gpus;
+}
+
+bool Instance::IsSurfaceCreated()
+{
+    return isSurfaceCreated;
 }

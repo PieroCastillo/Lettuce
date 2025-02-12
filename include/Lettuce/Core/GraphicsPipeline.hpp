@@ -83,9 +83,9 @@ namespace Lettuce::Core
         };
 
         std::shared_ptr<Device> _device;
+        std::shared_ptr<RenderPass> _renderpass;
         VkPipelineLayout _pipelineLayout;
         VkPipeline _pipeline;
-        std::shared_ptr<RenderPass> _renderpass;
         uint32_t _subpassIndex;
         std::vector<VkPipelineShaderStageCreateInfo> stages;
         std::vector<VkVertexInputBindingDescription> vertexInputBindings;
@@ -106,8 +106,13 @@ namespace Lettuce::Core
 
         void AddShaderStage(Shader &shader);
 
-        GraphicsPipeline(const std::shared_ptr<Device> &device, PipelineLayout &connector, RenderPass &renderpass, uint32_t subpassIndex, PipelineBuildData pipelineData);
-
+        GraphicsPipeline(const std::shared_ptr<Device> &device,
+                         const std::shared_ptr<PipelineLayout> &connector,
+                         const std::shared_ptr<RenderPass> &renderpass);
+        // maybe a build() or construct() ?
+        //  solution: Assemble(...)
         ~GraphicsPipeline();
+
+        void Assemble(uint32_t subpassIndex, const PipelineBuildData &pipelineData);
     };
 }

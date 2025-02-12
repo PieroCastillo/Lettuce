@@ -8,7 +8,7 @@
 #include <iostream>
 #include <vector>
 #include <cstdint>
-#include <list>
+#include <memory>
 #include "GPU.hpp"
 #include "Utils.hpp"
 #include "Version.hpp"
@@ -49,7 +49,7 @@ namespace Lettuce::Core
             isSurfaceCreated = true;
             checkResult(CreateVkSurface(_instance, window, process, _surface, nullptr));
         }
-        std::list<GPU> getGPUs();
+        std::vector<std::shared_ptr<GPU>> getGPUs();
 
         bool IsSurfaceCreated();
     };

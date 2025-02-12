@@ -13,6 +13,89 @@
 
 using namespace Lettuce::Core;
 
+void RenderPass::Assemble()
+{
+    VkRenderPassCreateInfo renderPassCI = {
+        .sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO,
+    };
+    buildSubpasses();
+    std::vector<VkAttachmentDescription> attachmentsVec;
+
+    for (auto [index, att] : attachments)
+    {
+        auto [type, desc, refLayout] = att;
+        attachmentsVec.push_back(desc);
+    }
+
+    if (attachments.size() > 0)
+    {
+        renderPassCI.attachmentCount = (uint32_t)attachmentsVec.size();
+        renderPassCI.pAttachments = attachmentsVec.data();
+    }
+    if (subpasses.size() > 0)
+    {
+        renderPassCI.subpassCount = (uint32_t)subpasses.size();
+        renderPassCI.pSubpasses = subpasses.data();
+    }
+    if (dependencies.size() > 0)
+    {
+        renderPassCI.dependencyCount = (uint32_t)dependencies.size();
+        renderPassCI.pDependencies = dependencies.data();
+    }
+
+    checkResult(vkCreateRenderPass(_device->_device, &renderPassCI, nullptr, &_renderPass));
+}
+
+void RenderPass::AddAttachment(uint32_t index,
+                               AttachmentType type,
+                               VkFormat format,
+                               LoadOp loadOp,
+                               StoreOp storeOp,
+                               LoadOp stencilLoadOp,
+                               StoreOp stencilStoreOp,
+                               ImageLayout initial,
+                               ImageLayout final,
+                               ImageLayout reference)
+{
+
+    VkAttachmentDescription attachment = {
+        .format = attachmentData.format,
+        .samples = VK_SAMPLE_COUNT_1_BIT,
+        .loadOp = (VkAttachmentLoadOp)attachmentData.loadOp,
+        .storeOp = (VkAttachmentStoreOp)attachmentData.storeOp,
+        .stencilLoadOp = (VkAttachmentLoadOp)attachmentData.stencilLoadOp,
+        .stencilStoreOp = (VkAttachmentStoreOp)attachmentData.stencilStoreOp,
+        .initialLayout = (VkImageLayout)attachmentData.initial,
+        .finalLayout = (VkImageLayout)attachmentData.final,
+    };
+    attachments[index] = std::make_tuple(attachmentData.type, attachment, (VkImageLayout)attachmentData.reference);
+}
+void RenderPass::AddSubpass(uint32_t index,
+                            BindPoint bindpoint,
+                            std::vector<uint32_t> attachments)
+{
+    subpassesMap[subpass.index] = std::make_tuple(subpass.bindpoint, subpass.attachments);
+}
+
+void RenderPass::AddDependency(uint32_t srcSubpassIndex,
+                               uint32_t dstSubpassIndex,
+                               AccessStage srcStage,
+                               AccessStage dstStage,
+                               AccessBehavior srcBehavior,
+                               AccessBehavior dstBehavior)
+{
+    VkSubpassDependency dependency = {
+        .srcSubpass = srcSubpassIndex,
+        .dstSubpass = dstSubpassIndex,
+        .srcStageMask = (VkPipelineStageFlags)srcStage,
+        .dstStageMask = (VkPipelineStageFlags)dstStage,
+        .srcAccessMask = (VkAccessFlags)srcBehavior,
+        .dstAccessMask = (VkAccessFlags)dstBehavior,
+        .dependencyFlags = 0,
+    };
+    dependencies.push_back(dependency);
+}
+
 void RenderPass::AddFramebuffer(uint32_t width, uint32_t height, std::vector<TextureView> attachments)
 {
     std::vector<VkImageView> views;
@@ -113,75 +196,8 @@ void RenderPass::buildSubpasses()
     }
 }
 
-RenderPass::RenderPass(const std::shared_ptr<Device> &device,
-                       const std::vector<RenderPassAttachment> &attachments,
-                       const std::vector<RenderPassSubpass> &subpasses,
-                       const std::vector<RenderPassDependency> &dependencies)
-    : _device(device)
+RenderPass::RenderPass(const std::shared_ptr<Device> &device) : _device(device)
 {
-    for (auto &attachmentData : attachments)
-    {
-        VkAttachmentDescription attachment = {
-            .format = attachmentData.format,
-            .samples = VK_SAMPLE_COUNT_1_BIT,
-            .loadOp = (VkAttachmentLoadOp)attachmentData.loadOp,
-            .storeOp = (VkAttachmentStoreOp)attachmentData.storeOp,
-            .stencilLoadOp = (VkAttachmentLoadOp)attachmentData.stencilLoadOp,
-            .stencilStoreOp = (VkAttachmentStoreOp)attachmentData.stencilStoreOp,
-            .initialLayout = (VkImageLayout)attachmentData.initial,
-            .finalLayout = (VkImageLayout)attachmentData.final,
-        };
-        attachments[index] = std::make_tuple(attachmentData.type, attachment, (VkImageLayout)attachmentData.reference);
-    }
-
-    for (auto &subpass : subpasses)
-    {
-        subpassesMap[subpass.index] = std::make_tuple(subpass.bindpoint, subpass.attachments);
-    }
-
-    for (auto &dependency : dependencies)
-    {
-        VkSubpassDependency dependency = {
-            .srcSubpass = srcSubpassIndex,
-            .dstSubpass = dstSubpassIndex,
-            .srcStageMask = (VkPipelineStageFlags)srcStage,
-            .dstStageMask = (VkPipelineStageFlags)dstStage,
-            .srcAccessMask = (VkAccessFlags)srcBehavior,
-            .dstAccessMask = (VkAccessFlags)dstBehavior,
-            .dependencyFlags = 0,
-        };
-        dependencies.push_back(dependency);
-    }
-
-    VkRenderPassCreateInfo renderPassCI = {
-        .sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO,
-    };
-    buildSubpasses();
-    std::vector<VkAttachmentDescription> attachmentsVec;
-
-    for (auto [index, att] : attachments)
-    {
-        auto [type, desc, refLayout] = att;
-        attachmentsVec.push_back(desc);
-    }
-
-    if (attachments.size() > 0)
-    {
-        renderPassCI.attachmentCount = (uint32_t)attachmentsVec.size();
-        renderPassCI.pAttachments = attachmentsVec.data();
-    }
-    if (subpasses.size() > 0)
-    {
-        renderPassCI.subpassCount = (uint32_t)subpasses.size();
-        renderPassCI.pSubpasses = subpasses.data();
-    }
-    if (dependencies.size() > 0)
-    {
-        renderPassCI.dependencyCount = (uint32_t)dependencies.size();
-        renderPassCI.pDependencies = dependencies.data();
-    }
-
-    checkResult(vkCreateRenderPass(_device->_device, &renderPassCI, nullptr, &_renderPass));
 }
 
 RenderPass::~RenderPass()

@@ -9,7 +9,7 @@
 
 using namespace Lettuce::Core;
 
-ImageResource(const std::shared_ptr<Device> &device, uint32_t width, uint32_t height, uint32_t depth,
+ImageResource::ImageResource(const std::shared_ptr<Device> &device, uint32_t width, uint32_t height, uint32_t depth,
               VkImageType type,
               VkImageUsageFlags imageUsage,
               uint32_t mipLevels,
@@ -19,7 +19,7 @@ ImageResource(const std::shared_ptr<Device> &device, uint32_t width, uint32_t he
                                              _layout(initialLayout),
                                              _mipLevels(mipLevels),
                                              _layerCount(layerCount),
-                                             _format(format),
+                                             _format(format)
 {
 
     VkImageCreateInfo imageCI = {
