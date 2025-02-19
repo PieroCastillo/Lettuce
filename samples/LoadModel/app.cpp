@@ -41,6 +41,7 @@ public:
     std::shared_ptr<Lettuce::Core::Shader> vertexShader;
     std::shared_ptr<Lettuce::Core::Shader> psLineShader;
     std::shared_ptr<Lettuce::Core::Shader> vsLineShader;
+    std::shared_ptr<Lettuce::X3D::Scene> scene;
 
     struct LineVertex
     {
@@ -166,6 +167,7 @@ void main()
     {
         renderFinished = std::make_shared<Lettuce::Core::Semaphore>(device, 0);
         buildCmds();
+        genScene();
         genTorus();
         vertexBuffer = Buffer::CreateVertexBuffer(device, vertices);
         indexBuffer = Buffer::CreateIndexBuffer(device, indices);
@@ -444,6 +446,12 @@ void main()
         renderFinished.reset();
         renderpass->DestroyFramebuffers();
         renderpass.reset();
+    }
+
+    void genScene()
+    {
+        scene = std::make_shared<Lettuce::X3D::Scene>();
+        scene->LoadFromFile(device, "../../glTF-Sample-Assets/Models/Avocado/glTF/Avocado.gltf");
     }
 
     void genTorus()

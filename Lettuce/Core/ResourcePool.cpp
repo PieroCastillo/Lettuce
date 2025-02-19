@@ -193,12 +193,12 @@ void ResourcePool::Bind(const std::shared_ptr<Device> &device, VkMemoryPropertyF
     }
 }
 
-void ResourcePool::AddResource(std::shared_ptr<IResource> resourcePtr)
+void ResourcePool::AddResource(const std::shared_ptr<IResource> &resourcePtr)
 {
     resourcePtrs.push_back(resourcePtr);
 }
 
-void ResourcePool::Release()
+ResourcePool::~ResourcePool()
 {
     vkFreeMemory(_device->_device, _memory, nullptr);
 }

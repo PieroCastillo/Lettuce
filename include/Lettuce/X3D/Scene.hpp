@@ -5,7 +5,9 @@
 #include <vector>
 #include <memory>
 #include "commonX3D.hpp"
-#include "Lettuce/Core/Buffer.hpp"
+#include "Lettuce/Core/ResourcePool.hpp"
+#include "Lettuce/Core/BufferResource.hpp"
+#include "Lettuce/Core/Device.hpp"
 
 namespace Lettuce::X3D
 {
@@ -17,18 +19,15 @@ namespace Lettuce::X3D
         std::string err;
         std::string warn;
         // main data
-        tinygltf::Model model;
-        static tinygltf::TinyGLTF loader;
-        std::vector<std::shared_ptr<Lettuce::Core::Buffer>> buffers;  
+        std::shared_ptr<Lettuce::Core::ResourcePool> _buffersPool;
+        std::shared_ptr<Lettuce::Core::Device> _device;
+        std::vector<std::shared_ptr<Lettuce::Core::BufferResource>> _buffers;  
         void check();
         void setup();
 
     public:
         Scene() {}
-        void LoadASCIIFromFile(std::string fileName);
-        void LoadASCIIFromString(std::string data, std::string baseDir);
-        void LoadBinaryFromFile(const std::string fileName);
-        void LoadBinaryFromMemory(unsigned char *data, unsigned int size, std::string baseDir = "");
+        void LoadFromFile(const std::shared_ptr<Lettuce::Core::Device>& device, std::filesystem::path path);
 
         void Release();
     };
