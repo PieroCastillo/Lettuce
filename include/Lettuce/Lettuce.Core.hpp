@@ -14,6 +14,7 @@
 #include "Core/BufferResource.hpp"
 #include "Core/ImageResource.hpp"
 #include "Core/ImageViewResource.hpp"
+#include "Core/TransferManager.hpp"
 
 // resouces with own allocation
 #include "Core/Buffer.hpp"

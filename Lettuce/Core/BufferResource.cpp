@@ -9,17 +9,19 @@
 
 using namespace Lettuce::Core;
 
-BufferResource::BufferResource(const std::shared_ptr<Device> &device, std::vector<BufferBlock> bufferBlocks, VkBufferUsageFlags usage)
+BufferResource::BufferResource(const std::shared_ptr<Device> &device, std::vector<BufferBlock> bufferBlocks)
     : _device(device),
       _blocks(bufferBlocks)
 {
     uint32_t size = 0;
+    VkBufferUsageFlags usage = 0;
     for (const auto &block : bufferBlocks)
     {
         if (block.size == 0)
             continue;
 
         size += block.size;
+        usage |= block.usage;
     }
 
     VkBufferCreateInfo bufferCI = {
@@ -29,10 +31,12 @@ BufferResource::BufferResource(const std::shared_ptr<Device> &device, std::vecto
         .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
     };
     checkResult(vkCreateBuffer(device->_device, &bufferCI, nullptr, &_buffer));
+    _size = size;
 }
 
 BufferResource::BufferResource(const std::shared_ptr<Device> &device, uint32_t size, VkBufferUsageFlags usage) : _device(device)
 {
+    _size = size;
     VkBufferCreateInfo bufferCI = {
         .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
         .size = size,
