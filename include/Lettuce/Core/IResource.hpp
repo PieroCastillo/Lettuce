@@ -14,9 +14,9 @@ namespace Lettuce::Core
     {
     public:
         uint32_t offset;
-        virtual ResourceType GetResourceType();
-        virtual ResourceLinearity GetResourceLinearity();
-        virtual VkMemoryRequirements GetResourceMemoryRequirements();
-        virtual std::shared_ptr<IResource> GetReference();
+        virtual ResourceType GetResourceType() = 0;
+        virtual ResourceLinearity GetResourceLinearity() = 0;
+        virtual VkMemoryRequirements GetResourceMemoryRequirements() = 0;
+        virtual std::shared_ptr<IResource> GetReference() = 0;
     };
 }

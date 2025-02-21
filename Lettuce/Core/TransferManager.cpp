@@ -4,10 +4,11 @@
 #include "Lettuce/Core/common.hpp"
 #include <memory>
 #include "Lettuce/Core/Device.hpp"
+#include "Lettuce/Core/IResource.hpp"
 #include "Lettuce/Core/BufferResource.hpp"
-#include "Lettuce/Core/TransferManager.hpp"
 #include "Lettuce/Core/Semaphore.hpp"
 #include "Lettuce/Core/Utils.hpp"
+#include "Lettuce/Core/TransferManager.hpp"
 
 using namespace Lettuce::Core;
 

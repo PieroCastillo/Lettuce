@@ -2,7 +2,7 @@
 // Created by piero on 19/02/2025.
 //
 #pragma once
-#include "Primitive.hpp"
+#include "Lettuce/Core/Primitive.hpp"
 #include <memory>
 #include "Lettuce/Core/Device.hpp"
 #include "Lettuce/Core/BufferResource.hpp"

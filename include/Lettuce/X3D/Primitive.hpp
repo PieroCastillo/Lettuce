@@ -18,7 +18,7 @@ namespace Lettuce::X3D
     class Primitive
     {
     public:
-         PrimitiveInfo info;
+        PrimitiveInfo info;
         std::vector<glm::vec3> points;
         std::vector<uint32_t> indices;
         void Clear()

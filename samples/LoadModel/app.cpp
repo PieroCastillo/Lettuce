@@ -451,7 +451,7 @@ void main()
     void genScene()
     {
         scene = std::make_shared<Lettuce::X3D::Scene>();
-        scene->LoadFromFile(device, "../../glTF-Sample-Assets/Models/Avocado/glTF/Avocado.gltf");
+        //scene->LoadFromFile(device, "../../glTF-Sample-Assets/Models/Avocado/glTF/Avocado.gltf");
     }
 
     void genTorus()

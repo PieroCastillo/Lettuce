@@ -16,8 +16,7 @@ Geometries::Sphere::Sphere(glm::vec3 origin, float radius, int sectorCount, int 
         0, 1, 2, 0, 2, 3, 4, 5, 6, 4, 6, 7, 0, 1, 5, 0, 4, 5, 2, 3, 6, 3, 6, 7, 1, 2, 5, 2, 5, 6, 0, 3, 4, 3, 4, 7};
     points.reserve(8);
 
-    float x, y, z, xy;                           // vertex position
-    float nx, ny, nz, lengthInv = 1.0f / radius; // vertex normal
+    float x, y, z, xy; // vertex position
     float s, t;
 
     float sectorStep = 2 * std::numbers::pi_v<float> / sectorCount;
@@ -39,7 +38,7 @@ Geometries::Sphere::Sphere(glm::vec3 origin, float radius, int sectorCount, int 
             // vertex position (x, y, z)
             x = xy * cosf(sectorAngle); // r * cos(u) * cos(v)
             y = xy * sinf(sectorAngle); // r * cos(u) * sin(v)
-            points.push_back({x, y, z});
+            points.push_back({x + origin.x, y + origin.y, z + origin.z});
         }
     }
 

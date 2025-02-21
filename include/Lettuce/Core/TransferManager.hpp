@@ -29,7 +29,7 @@ namespace Lettuce::Core
     {
     public:
         std::shared_ptr<Device> _device;
-        std::shared_ptr<Lettuce::Core::Semaphore> transferFinished;
+        std::shared_ptr<Semaphore> transferFinished;
         uint64_t transferFinishedValue = 0;
         VkCommandPool cmdPool;
         VkCommandBuffer cmd;
