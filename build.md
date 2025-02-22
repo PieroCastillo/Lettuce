@@ -2,25 +2,28 @@
 
 - vcpkg
 - Vulkan SDK
-- CMake 3.26 or greater
+- CMake 3.30 or greater
+- C++ compiler with C++ 20 support
 
 ## Prepare the poject to build
 
 ### Step 1
-Install vcpkg packages with the follow command:
-
+Clone the repository.
 ```cmd
-vcpkg install glfw3 glm volk vulkan vulkan-memory-allocator vulkan-sdk-components tinygltf 
+git clone --recurse-submodules https://github.com/PieroCastillo/Lettuce.git
 ```
-### Step 2 
-
+### Step 2
+Update vcpkg baseline.
+```cmd
+vcpkg x-update-baseline
+```
 ### Step 3
-run the follow command in the console:
+Configure the project with the generator of your preference (in this case with Visual Studio).
 ```cmd
 cmake --preset=vcpkg -G "Visual Studio 17 2022"
 ```
 ## Build
-To build run the follow command:
+Build with cmake.
 ```cmd
 cmake --build build
 ```

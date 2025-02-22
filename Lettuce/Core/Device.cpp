@@ -91,12 +91,19 @@ void Device::createFeaturesChain()
         descriptorBufferFeature.descriptorBufferPushDescriptors = VK_TRUE;
         _enabledFeatures.DescriptorBuffer = true;
     }
+    if (_features.DeviceGeneratedCommands && tryAddFeatureAndExt(VK_EXT_DEVICE_GENERATED_COMMANDS_EXTENSION_NAME))
+    {
+        deviceGeneratedCommandsFeature.deviceGeneratedCommands = true;
+        deviceGeneratedCommandsFeature.dynamicGeneratedPipelineLayout = true;
+        _enabledFeatures.DeviceGeneratedCommands = true;
+    }
 
     if (_features.DynamicRendering)
     {
         gpuFeatures13.dynamicRendering = VK_TRUE;
         _enabledFeatures.DynamicRendering = true;
     }
+
 
     gpuFeatures12.bufferDeviceAddress = VK_TRUE;
     gpuFeatures12.drawIndirectCount = VK_TRUE;
@@ -157,9 +164,9 @@ void Device::loadExtensionsLayersAndFeatures()
 }
 
 Device::Device(const std::shared_ptr<Instance> &instance, GPU &gpu, Features gpuFeatures, uint32_t graphicsQueuesCount) : _pdevice(gpu._pdevice),
-                                                                                                                                                 _instance(instance),
-                                                                                                                                                 _gpu(gpu),
-                                                                                                                                                 _features(gpuFeatures)
+                                                                                                                          _instance(instance),
+                                                                                                                          _gpu(gpu),
+                                                                                                                          _features(gpuFeatures)
 {
     listExtensions();
     listLayers();
@@ -197,7 +204,7 @@ Device::Device(const std::shared_ptr<Instance> &instance, GPU &gpu, Features gpu
 
     VkDeviceCreateInfo deviceCI = {
         .sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
-        .pNext = &descriptorBufferFeature,
+        .pNext = &deviceGeneratedCommandsFeature,
         .queueCreateInfoCount = (uint32_t)queueCreateInfos.size(),
         .pQueueCreateInfos = queueCreateInfos.data(),
         .enabledLayerCount = 0,

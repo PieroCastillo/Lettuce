@@ -81,22 +81,28 @@ void Lettuce::X3D::Scene::LoadFromFile(const std::shared_ptr<Lettuce::Core::Devi
 {
     _device = device;
     // loads gltf file
-    fastgltf::GltfDataBuffer data = fastgltf::GltfDataBuffer();
-    data.loadFromFile(path);
+    auto data = fastgltf::GltfDataBuffer::FromPath(path);
+    if (data.error() != fastgltf::Error::None)
+    {
+        return;
+    }
     fastgltf::Parser parser;
-    auto asset = parser.loadGltf(&data, path.parent_path());
-
+    auto asset = parser.loadGltf(data.get(), path.parent_path(), fastgltf::Options::None);
+    if (auto error = asset.error(); error != fastgltf::Error::None)
+    {
+        return;
+    }
     /*
     - gltf buffer: contains info of length, name and the data itself
     - gltf bufferview: info of index, length, offset, stride, name and target
     */
     // here we load the buffers of the scene
     // and create temporal buffers (located in host memory)
-    _buffers.reserve(asset.get().buffers.size());
+    _buffers.reserve(asset->buffers.size());
     ResourcePool tempBuffersPool;
     std::vector<std::shared_ptr<BufferResource>> tempBuffers; // create temporal buffer, flags: src
     tempBuffers.reserve(_buffers.size());
-    for (auto &buffer : asset.get().buffers)
+    for (auto &buffer : asset->buffers)
     {
         auto Lbuffer = std::make_shared<Lettuce::Core::BufferResource>(_device, buffer.byteLength,
                                                                        VkBufferUsageFlagBits::VK_BUFFER_USAGE_INDEX_BUFFER_BIT |
@@ -120,7 +126,7 @@ void Lettuce::X3D::Scene::LoadFromFile(const std::shared_ptr<Lettuce::Core::Devi
     // vkBeginCommandBuffer(cmd, )
     uint32_t offset = 0;
     void *bufferData;
-    for (auto &buffer : asset.get().buffers)
+    for (auto &buffer : asset->buffers)
     {
         // copy raw data to temp buffer
         vkMapMemory(_device->_device, tempBuffersPool._memory, offset, buffer.byteLength, 0, &bufferData);
@@ -129,20 +135,19 @@ void Lettuce::X3D::Scene::LoadFromFile(const std::shared_ptr<Lettuce::Core::Devi
         vkUnmapMemory(_device->_device, tempBuffersPool._memory);
     }
 
-    for (auto &accessor : asset.get().accessors)
-    {
-        
-    }
-
-    for (auto &img : asset.get().images)
+    for (auto &accessor : asset->accessors)
     {
     }
 
-    for (auto &texture : asset.get().textures)
+    for (auto &img : asset->images)
     {
     }
 
-    for (auto &mesh : asset.get().meshes)
+    for (auto &texture : asset->textures)
+    {
+    }
+
+    for (auto &mesh : asset->meshes)
     {
     }
 

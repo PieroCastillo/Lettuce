@@ -23,6 +23,7 @@ namespace Lettuce::Core
         bool ConditionalRendering;
         bool DescriptorBuffer;
         bool DynamicRendering;
+        bool DeviceGeneratedCommands;
     };
 
     class Device
@@ -71,8 +72,10 @@ namespace Lettuce::Core
             .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_BUFFER_FEATURES_EXT,
             .pNext = &conditionalRenderingFeature,
         };
-
-
+        VkPhysicalDeviceDeviceGeneratedCommandsFeaturesEXT deviceGeneratedCommandsFeature = {
+            .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DEVICE_GENERATED_COMMANDS_FEATURES_EXT,
+            .pNext = &descriptorBufferFeature,
+        };
 
         bool tryAddFeatureAndExt(const char *extName);
 

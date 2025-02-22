@@ -16,7 +16,7 @@
 
 using namespace Lettuce::Core;
 
-class LoadModel : public LettuceSampleApp
+class GeometrySample : public LettuceSampleApp
 {
 public:
     Lettuce::Core::Compilers::GLSLCompiler compiler;
@@ -41,7 +41,6 @@ public:
     std::shared_ptr<Lettuce::Core::Shader> vertexShader;
     std::shared_ptr<Lettuce::Core::Shader> psLineShader;
     std::shared_ptr<Lettuce::Core::Shader> vsLineShader;
-    std::shared_ptr<Lettuce::X3D::Scene> scene;
 
     struct LineVertex
     {
@@ -450,8 +449,7 @@ void main()
 
     void genScene()
     {
-        scene = std::make_shared<Lettuce::X3D::Scene>();
-        //scene->LoadFromFile(device, "../../glTF-Sample-Assets/Models/Avocado/glTF/Avocado.gltf");
+
     }
 
     void genTorus()
@@ -516,7 +514,7 @@ void main()
 
 int main()
 {
-    LoadModel app;
+    GeometrySample app;
     app.features = {
         .FragmentShadingRate = false,
         .PresentWait = false,

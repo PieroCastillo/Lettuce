@@ -3,7 +3,6 @@
     "glfw3",
     "glm",
     "volk",
-    "vulkan",
     "vulkan-memory-allocator",
     "vulkan-sdk-components",
     "fastgltf"
