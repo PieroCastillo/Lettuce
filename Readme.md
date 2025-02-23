@@ -46,31 +46,31 @@ This is the core lib of Lettuce, the main function is provide access to Vulkan a
 |TranferManager | | | 🟢|
 
 - Extensions & features:
-  |Name |Extension Name |Status |
+  |Name |Extension/Feature Name |Status |
   |:----------------------|:--------------------|:--------|
   |_Required:_ | | |
+  |Indirect Drawing || | 🟡 |
   |Timeline Semaphores |_(1.2 feature)_| 🟢|
-  |Synchronization2 |_(1.3 feature)_|🟢 |
   |Descriptor Indexing |_(1.2 feature)_| 🟢|
   |Draw Indirect Count| _(1.2 feature)_|🚧|
-  |Indirect Drawing || | 🟡 |
+  |Synchronization2 |_(1.3 feature)_|🟢 |
   |HLSL support| _Not added_| 🚧 |
   |SLang support | _Not added_| 🚧 |
   | _Optional:_| | |
-  |Mesh shading |_(VK_EXT_mesh_shader)_|🟡 |
-  |Raytracing | _VK_KHR_acceleration_structure_ <br> _VK_KHR_ray_tracing_pipeline_ <br> _VK_KHR_ray_query_ <br> _VK_KHR_pipeline_library_ <br> _VK_KHR_deferred_host_operations_| 🚧|
   |Dynamic Rendering |_(1.2 feature)_| 🚧|
   |Buffer Device Address |_(1.3 feature)_|🚧 |
   |Memory Budget | _(VK_EXT_memory_budget)_| 🚧|
   |Conservative Rasteriz+ation |_(VK_EXT_conservative_rasterization)_|🚧 |
   |Device Generated Commands |_(VK_EXT_device_generated_commands)_| 🟡|
+  |Mesh shading |_(VK_EXT_mesh_shader)_|🟡 |
   |Fragment Shading Rate| _(VK_KHR_fragment_shading_rate)_|🚧 |
-  |Execution Graphs |(when it becomes available to Vulkan standard) |🚧 |
+  |Raytracing | _VK_KHR_acceleration_structure_ <br> _VK_KHR_ray_tracing_pipeline_ <br> _VK_KHR_ray_query_ <br> _VK_KHR_pipeline_library_ <br> _VK_KHR_deferred_host_operations_| 🚧|
   |Video Encode| | 🚧|
   |Video Decode| | 🚧|
   |Multi-GPU support | | 🚧 |
   |Headless | | 🚧 |
-
+  |Execution Graphs |(when it becomes available to Vulkan standard) |🚧 |
+  
 ### Lettuce Foundation
 
 - [ ] Render Graph
