@@ -6,6 +6,7 @@
 #include "Lettuce/Core/Device.hpp"
 #include "Lettuce/Core/IResource.hpp"
 #include "Lettuce/Core/BufferResource.hpp"
+#include "Lettuce/Core/ResourcePool.hpp"
 #include "Lettuce/Core/Semaphore.hpp"
 #include "Lettuce/Core/Utils.hpp"
 #include "Lettuce/Core/TransferManager.hpp"
@@ -28,6 +29,8 @@ TransferManager::TransferManager(const std::shared_ptr<Device> &device) : _devic
         .commandBufferCount = 1,
     };
     checkResult(vkAllocateCommandBuffers(device->_device, &cmdAI, &cmd));
+
+    transferFinished = std::make_shared<Semaphore>(device, transferFinishedValue);
 }
 TransferManager::~TransferManager()
 {
@@ -43,6 +46,7 @@ void TransferManager::Prepare()
     };
     checkResult(vkBeginCommandBuffer(cmd, &cmdBI));
 }
+
 void TransferManager::AddTransference(const std::shared_ptr<BufferResource> &src, const std::shared_ptr<BufferResource> &dst, TransferType type)
 {
     if (src->_size != dst->_size)

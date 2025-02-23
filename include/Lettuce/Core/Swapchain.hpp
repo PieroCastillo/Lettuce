@@ -9,8 +9,6 @@
 #include <algorithm>
 #include "Device.hpp"
 #include "Semaphore.hpp"
-#include "Texture.hpp"
-#include "TextureView.hpp"
 
 namespace Lettuce::Core
 {
@@ -27,9 +25,6 @@ namespace Lettuce::Core
 
         void loadImages();
         void createImageViews();
-        void createDepthImage();
-        void createRenderPass();
-        void createFramebuffers();
 
     public:
         std::shared_ptr<Device> _device;
@@ -39,9 +34,6 @@ namespace Lettuce::Core
         // TextureView _depthImageView;
         std::vector<VkImage> swapChainImages;
         std::vector<VkImageView> swapChainImageViews;
-        std::vector<std::shared_ptr<TextureView>> swapchainTextureViews;
-        std::vector<VkAttachmentDescription> attachments;
-        std::vector<VkFramebuffer> framebuffers;
         uint32_t index;
         uint32_t width;
         uint32_t height;

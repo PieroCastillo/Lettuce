@@ -16,11 +16,6 @@
 #include "Core/ImageViewResource.hpp"
 #include "Core/TransferManager.hpp"
 
-// resouces with own allocation
-#include "Core/Buffer.hpp"
-#include "Core/Texture.hpp"
-#include "Core/TextureView.hpp"
-
 //pipelines
 #include "Core/ComputePipeline.hpp"
 #include "Core/GraphicsPipeline.hpp"

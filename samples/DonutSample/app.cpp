@@ -21,17 +21,18 @@ class DonutSample : public LettuceSampleApp
 public:
     Lettuce::Core::Compilers::GLSLCompiler compiler;
     std::shared_ptr<Lettuce::Core::RenderPass> renderpass;
+    /*memory objects*/
+    std::shared_ptr<Lettuce::Core::ResourcePool> hostResources;     // host cached, memory placed in host memory
+    std::shared_ptr<Lettuce::Core::ResourcePool> deviceResources;   // device local, memory places in device memory
+    std::shared_ptr<Lettuce::Core::ResourcePool> coherentResources; // device local|host coherent, memory placed in device memory able to be mapped
+    std::shared_ptr<Lettuce::Core::TransferManager> transfer;
     /* sync objects*/
     std::shared_ptr<Lettuce::Core::Semaphore> renderFinished;
     /* rendering objects */
-    std::shared_ptr<Lettuce::Core::Buffer> vertexBuffer;
-    std::shared_ptr<Lettuce::Core::Buffer> indexBuffer;
+    std::shared_ptr<Lettuce::Core::BufferResource> deviceBuffer, hostBuffer; // buffer to store data
 
-    std::shared_ptr<Lettuce::Core::Buffer> LineBuffer1;
-    std::shared_ptr<Lettuce::Core::Buffer> LineBuffer2;
-    std::shared_ptr<Lettuce::Core::Buffer> LineBuffer3;
+    std::shared_ptr<Lettuce::Core::BufferResource> uniformBuffer;
 
-    std::shared_ptr<Lettuce::Core::Buffer> uniformBuffer;
     std::shared_ptr<Lettuce::Core::Descriptors> descriptor;
     std::shared_ptr<Lettuce::Core::PipelineLayout> linesLayout;
     std::shared_ptr<Lettuce::Core::PipelineLayout> connector;
@@ -145,7 +146,7 @@ void main()
                                   AccessBehavior::ColorAttachmentWrite,
                                   AccessBehavior::None);
         renderpass->Assemble();
-        for (auto &view : swapchain->swapchainTextureViews)
+        for (auto &view : swapchain->swapChainImageViews)
         {
             renderpass->AddFramebuffer(width, height, {view});
         }
@@ -155,7 +156,7 @@ void main()
     void onResize()
     {
         renderpass->DestroyFramebuffers();
-        for (auto &view : swapchain->swapchainTextureViews)
+        for (auto &view : swapchain->swapChainImageViews)
         {
             renderpass->AddFramebuffer(width, height, {view});
         }
@@ -167,17 +168,71 @@ void main()
         renderFinished = std::make_shared<Lettuce::Core::Semaphore>(device, 0);
         buildCmds();
         genTorus();
-        vertexBuffer = Buffer::CreateVertexBuffer(device, vertices);
-        indexBuffer = Buffer::CreateIndexBuffer(device, indices);
 
-        uniformBuffer = Buffer::CreateUniformBuffer<DataUBO>(device);
-        uniformBuffer->Map();
-        uniformBuffer->SetData(&dataUBO);
+        hostResources = std::make_shared<Lettuce::Core::ResourcePool>();
+        deviceResources = std::make_shared<Lettuce::Core::ResourcePool>();
+        transfer = std::make_shared<TransferManager>(device);
+
+        // buffer  blocks layout:
+        // |                  buffer                     |
+        // |  vertex  |   index  | line1 | line2 | line3 |
+        uint32_t lineVerticesSize = 3 * sizeof(LineVertex);
+        uint32_t indicesSize = indices.size() * sizeof(uint32_t);
+        uint32_t verticesSize = vertices.size() * sizeof(Vertex);
+        uint32_t bufferSize = lineVerticesSize + indicesSize + verticesSize;
+
+        // create buffers
+        hostBuffer = std::make_shared<BufferResource>(device, bufferSize, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_SRC_BIT);
+        deviceBuffer = std::make_shared<BufferResource>(device, bufferSize, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT);
+
+        // add buffers to their respectives pools
+        hostResources->AddResource(hostBuffer);
+        deviceResources->AddResource(deviceBuffer);
+
+        // bind resources
+        hostResources->Bind(device, VK_MEMORY_PROPERTY_HOST_CACHED_BIT);    // create pool in host memory
+        deviceResources->Bind(device, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT); // create pool in device memory
+
+        // write host buffer
+        void *data = malloc(bufferSize); // create a temporal pointer to write data
+        uint8_t *ptr = static_cast<uint8_t *>(data);
+        memcpy(ptr, vertices.data(), verticesSize);
+        ptr += verticesSize;
+
+        memcpy(ptr, indices.data(), indicesSize);
+        ptr += indicesSize;
+
+        std::vector<glm::vec3> lines = {glm::vec3(0), glm::vec3(100, 0, 0), glm::vec3(0), glm::vec3(0, 100, 0), glm::vec3(0), glm::vec3(0, 0, 100)};
+        memcpy(ptr, lines.data(), lineVerticesSize);
+        // transfer memory to memory allocation
+        hostResources->Map(0, bufferSize);
+        hostResources->SetData(data, 0, bufferSize);
+        hostResources->UnMap();
+        free(data); // release the temporal pointer
+
+        // transfer resources from host to device memory
+        transfer->Prepare();
+        transfer->AddTransference(hostBuffer, deviceBuffer, TransferType::HostToDevice);
+        transfer->TransferAll();
+
+        // release host resources
+        hostBuffer.reset();
+        hostResources.reset();
+
+        // create coherent resources
+        coherentResources = std::make_shared<ResourcePool>();
+        uniformBuffer = std::make_shared<BufferResource>(device, sizeof(DataUBO), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT);
+        coherentResources->AddResource(uniformBuffer);
+        coherentResources->Bind(device, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+
+        // write coherent buffer
+        coherentResources->Map(0, sizeof(DataUBO));
+
         /*setup stuff to render the donut*/
         descriptor = std::make_shared<Lettuce::Core::Descriptors>(device);
         descriptor->AddBinding(0, 0, DescriptorType::UniformBuffer, PipelineStage::Vertex, 1);
         descriptor->Assemble();
-        descriptor->AddUpdateInfo<DataUBO>(0, 0, uniformBuffer);
+        descriptor->AddUpdateInfo(0, 0, {{sizeof(DataUBO), uniformBuffer}});
         descriptor->Update();
 
         connector = std::make_shared<Lettuce::Core::PipelineLayout>(device, descriptor);
@@ -207,11 +262,6 @@ void main()
 
         vertexShader.reset();
         fragmentShader.reset();
-        /*setup line buffers*/
-
-        LineBuffer1 = Buffer::CreateVertexBuffer<LineVertex>(device, {{glm::vec3(0)}, {glm::vec3(100, 0, 0)}});
-        LineBuffer2 = Buffer::CreateVertexBuffer<LineVertex>(device, {{glm::vec3(0)}, {glm::vec3(0, 100, 0)}});
-        LineBuffer3 = Buffer::CreateVertexBuffer<LineVertex>(device, {{glm::vec3(0)}, {glm::vec3(0, 0, 100)}});
 
         /*setup pipeline for lines*/
         vsLineShader = std::make_shared<Shader>(device, compiler, vsLineShaderText, "main", "vsLine.glsl", PipelineStage::Vertex, true);
@@ -272,7 +322,7 @@ void main()
         dataUBO.cameraPos = camera.eye;
         // dataUBO.cameraPos = glm::vec3(30);
 
-        uniformBuffer->SetData(&dataUBO);
+        coherentResources->SetData(&dataUBO, 0, sizeof(DataUBO));
     }
     void recordCmds()
     {
@@ -332,12 +382,18 @@ void main()
         vkCmdBeginRenderPass(cmd, &renderPassBI, VkSubpassContents::VK_SUBPASS_CONTENTS_INLINE);
 
         /*render lines X Y Z */ // yellow, purple, green
-        std::vector<std::pair<std::shared_ptr<Buffer>, glm::vec3>> pairs = {{LineBuffer1, glm::vec3(1, 0.984, 0)}, {LineBuffer2, glm::vec3(0.506, 0.024, 0.98)}, {LineBuffer3, glm::vec3(0.024, 0.98, 0.173)}};
-        for (auto &[lineBuffer, color] : pairs)
+        uint32_t baseSize = (vertices.size() * sizeof(Vertex)) + (indices.size() * sizeof(uint32_t));
+        std::vector<std::pair<uint32_t, glm::vec3>> pairs = {
+            {baseSize, glm::vec3(1, 0.984, 0)},
+            {baseSize + sizeof(LineVertex), glm::vec3(0.506, 0.024, 0.98)},
+            {baseSize + (2 * sizeof(LineVertex)), glm::vec3(0.024, 0.98, 0.173)},
+        };
+        for (auto &[offset, color] : pairs)
         {
             vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, linespipeline->_pipeline);
-            VkDeviceSize size = 0;
-            vkCmdBindVertexBuffers(cmd, 0, 1, &(lineBuffer->_buffer), &size);
+            VkDeviceSize _offset = offset;
+            VkDeviceSize size = sizeof(LineVertex);
+            vkCmdBindVertexBuffers2(cmd, 0, 1, &(deviceBuffer->_buffer), &_offset, &size, nullptr);
             // vkCmdBindIndexBuffer(cmd, indexBuffer._buffer, 0, VK_INDEX_TYPE_UINT32);
             vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, linesLayout->_pipelineLayout, 0, 1, descriptor->_descriptorSets.data(), 0, nullptr);
             dataPush.color = color;
@@ -355,9 +411,10 @@ void main()
         }
         /*render donut*/
         vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->_pipeline);
-        VkDeviceSize size = 0;
-        vkCmdBindVertexBuffers(cmd, 0, 1, &(vertexBuffer->_buffer), &size);
-        vkCmdBindIndexBuffer(cmd, indexBuffer->_buffer, 0, VK_INDEX_TYPE_UINT32);
+        VkDeviceSize size = vertices.size() * sizeof(Vertex);
+        VkDeviceSize offset = 0;
+        vkCmdBindVertexBuffers2(cmd, 0, 1, &(deviceBuffer->_buffer), &offset, &size, nullptr);
+        vkCmdBindIndexBuffer2(cmd, deviceBuffer->_buffer, vertices.size() * sizeof(Vertex), indices.size() * sizeof(uint32_t), VK_INDEX_TYPE_UINT32);
         vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, connector->_pipelineLayout, 0, 1, descriptor->_descriptorSets.data(), 0, nullptr);
 
         vkCmdPushConstants(cmd, connector->_pipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(DataPush), &dataPush);
@@ -428,19 +485,18 @@ void main()
 
         linespipeline.reset();
         linesLayout.reset();
-        ;
-        LineBuffer1.reset();
-        LineBuffer2.reset();
-        LineBuffer3.reset();
 
         pipeline.reset();
         connector.reset();
         descriptor.reset();
 
-        uniformBuffer->Unmap();
+        deviceBuffer.reset();
         uniformBuffer.reset();
-        vertexBuffer.reset();
-        indexBuffer.reset();
+        deviceResources.reset();
+        coherentResources->UnMap();
+        coherentResources.reset();
+        transfer.reset();
+
         renderFinished.reset();
         renderpass->DestroyFramebuffers();
         renderpass.reset();

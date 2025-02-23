@@ -52,7 +52,3 @@ VkMemoryRequirements ImageResource::GetResourceMemoryRequirements()
     vkGetImageMemoryRequirements(_device->_device, _image, &memReqs);
     return memReqs;
 }
-std::shared_ptr<IResource> ImageResource::GetReference()
-{
-    return std::shared_ptr<IResource>(this);
-}

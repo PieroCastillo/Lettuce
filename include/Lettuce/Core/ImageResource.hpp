@@ -30,6 +30,5 @@ namespace Lettuce::Core
         ResourceType GetResourceType();
         ResourceLinearity GetResourceLinearity();
         VkMemoryRequirements GetResourceMemoryRequirements();
-        std::shared_ptr<IResource> GetReference();
     };
 }

@@ -8,7 +8,6 @@
 #include <memory>
 #include <tuple>
 #include "Device.hpp"
-#include "TextureView.hpp"
 
 namespace Lettuce::Core
 {
@@ -69,6 +68,6 @@ namespace Lettuce::Core
                            AccessBehavior dstBehavior);
         void BuildFramebuffers();
         void DestroyFramebuffers();
-        void AddFramebuffer(uint32_t width, uint32_t height, std::vector<std::shared_ptr<TextureView>> attachments);
+        void AddFramebuffer(uint32_t width, uint32_t height, std::vector<VkImageView> attachments);
     };
 }

@@ -6,6 +6,7 @@
 #include "Device.hpp"
 #include "BufferResource.hpp"
 #include "Semaphore.hpp"
+#include "ResourcePool.hpp"
 
 namespace Lettuce::Core
 {

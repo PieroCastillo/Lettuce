@@ -146,7 +146,7 @@ void main()
                                   AccessBehavior::ColorAttachmentWrite,
                                   AccessBehavior::None);
         renderpass->Assemble();
-        for (auto &view : swapchain->swapchainTextureViews)
+        for (auto &view : swapchain->swapChainImageViews)
         {
             renderpass->AddFramebuffer(width, height, {view});
         }
@@ -156,7 +156,7 @@ void main()
     void onResize()
     {
         renderpass->DestroyFramebuffers();
-        for (auto &view : swapchain->swapchainTextureViews)
+        for (auto &view : swapchain->swapChainImageViews)
         {
             renderpass->AddFramebuffer(width, height, {view});
         }

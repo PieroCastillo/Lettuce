@@ -24,34 +24,8 @@ public:
     /* sync objects*/
     std::shared_ptr<Lettuce::Core::Semaphore> renderFinished;
     /* rendering objects */
-    std::shared_ptr<Lettuce::Core::Buffer> vertexBuffer;
-    std::shared_ptr<Lettuce::Core::Buffer> indexBuffer;
 
-    std::shared_ptr<Lettuce::Core::Buffer> LineBuffer1;
-    std::shared_ptr<Lettuce::Core::Buffer> LineBuffer2;
-    std::shared_ptr<Lettuce::Core::Buffer> LineBuffer3;
 
-    std::shared_ptr<Lettuce::Core::Buffer> uniformBuffer;
-    std::shared_ptr<Lettuce::Core::Descriptors> descriptor;
-    std::shared_ptr<Lettuce::Core::PipelineLayout> linesLayout;
-    std::shared_ptr<Lettuce::Core::PipelineLayout> connector;
-    std::shared_ptr<Lettuce::Core::GraphicsPipeline> pipeline;
-    std::shared_ptr<Lettuce::Core::GraphicsPipeline> linespipeline;
-    std::shared_ptr<Lettuce::Core::Shader> fragmentShader;
-    std::shared_ptr<Lettuce::Core::Shader> vertexShader;
-    std::shared_ptr<Lettuce::Core::Shader> psLineShader;
-    std::shared_ptr<Lettuce::Core::Shader> vsLineShader;
-
-    struct LineVertex
-    {
-        glm::vec3 position;
-    };
-
-    struct Vertex
-    {
-        glm::vec3 position;
-        glm::vec3 normal;
-    };
     struct DataUBO
     {
         glm::mat4 projectionView;
@@ -62,60 +36,8 @@ public:
     {
         glm::vec3 color;
     } dataPush;
-    std::vector<Vertex> vertices;
-    std::vector<uint32_t> indices;
 
-    const std::string psLineShaderText = R"(#version 450
-layout (push_constant) uniform pushData {
-    vec3 color;
-} pushdata;
-layout (location = 0) out vec4 outColor;
-
-void main()
-{
-    outColor = vec4(pushdata.color,1.0);
-})";
-
-    const std::string vsLineShaderText = R"(#version 450
-layout (location=0) in vec3 pos;
-layout (set = 0, binding = 0) uniform DataUBO {
-    mat4 projectionView;
-    mat4 model;
-    vec3 cameraPos;
-} ubo;
-
-void main()
-{
-    gl_Position = ubo.projectionView * ubo.model * vec4(pos,1.0);
-})";
-
-    const std::string fragmentShaderText = R"(#version 450
-layout (push_constant) uniform pushData {
-    vec3 color;
-} data;
-layout (location = 0) in vec3 norm;
-layout (location = 0) out vec4 outColor;
-void main()
-{
-    outColor = vec4(normalize(norm),1.0);
-})";
-
-    const std::string vertexShaderText = R"(#version 450
-layout (location = 0) in vec3 pos;
-layout (location = 1) in vec3 normal;
-layout (location = 0) out vec3 norm;
-
-layout (set = 0, binding = 0) uniform DataUBO {
-    mat4 projectionView;
-    mat4 model;
-    vec3 cameraPos;
-} ubo;
-
-void main()
-{   
-    norm = mat3(transpose(inverse(ubo.model))) * normal;
-    gl_Position = ubo.projectionView * ubo.model * vec4(pos,1.0);
-})";
+   
 
     VkCommandPool pool;
     VkCommandBuffer cmd;
@@ -145,7 +67,7 @@ void main()
                                   AccessBehavior::ColorAttachmentWrite,
                                   AccessBehavior::None);
         renderpass->Assemble();
-        for (auto &view : swapchain->swapchainTextureViews)
+        for (auto &view : swapchain->swapChainImageViews)
         {
             renderpass->AddFramebuffer(width, height, {view});
         }
@@ -155,7 +77,7 @@ void main()
     void onResize()
     {
         renderpass->DestroyFramebuffers();
-        for (auto &view : swapchain->swapchainTextureViews)
+        for (auto &view : swapchain->swapChainImageViews)
         {
             renderpass->AddFramebuffer(width, height, {view});
         }
@@ -167,80 +89,7 @@ void main()
         renderFinished = std::make_shared<Lettuce::Core::Semaphore>(device, 0);
         buildCmds();
         genScene();
-        genTorus();
-        vertexBuffer = Buffer::CreateVertexBuffer(device, vertices);
-        indexBuffer = Buffer::CreateIndexBuffer(device, indices);
 
-        uniformBuffer = Buffer::CreateUniformBuffer<DataUBO>(device);
-        uniformBuffer->Map();
-        uniformBuffer->SetData(&dataUBO);
-        /*setup stuff to render the donut*/
-        descriptor = std::make_shared<Lettuce::Core::Descriptors>(device);
-        descriptor->AddBinding(0, 0, DescriptorType::UniformBuffer, PipelineStage::Vertex, 1);
-        descriptor->Assemble();
-        descriptor->AddUpdateInfo<DataUBO>(0, 0, uniformBuffer);
-        descriptor->Update();
-
-        connector = std::make_shared<Lettuce::Core::PipelineLayout>(device, descriptor);
-        connector->AddPushConstant<DataPush>(0, PipelineStage::Fragment);
-        connector->Assemble();
-        // add pipeline stuff here
-        vertexShader = std::make_shared<Lettuce::Core::Shader>(device, compiler, vertexShaderText, "main", "vertex.glsl", PipelineStage::Vertex, true);
-        fragmentShader = std::make_shared<Lettuce::Core::Shader>(device, compiler, fragmentShaderText, "main", "fragment.glsl", PipelineStage::Fragment, true);
-
-        pipeline = std::make_shared<GraphicsPipeline>(device, connector, renderpass);
-        pipeline->AddVertexBindingDescription<Vertex>(0);                                  // binding = 0
-        pipeline->AddVertexAttribute(0, 0, 0, VK_FORMAT_R32G32B32_SFLOAT);                 // layout(location = 0) in vec3 pos;
-        pipeline->AddVertexAttribute(0, 1, sizeof(glm::vec3), VK_FORMAT_R32G32B32_SFLOAT); // layout(location = 1) in vec3 normal;
-        pipeline->AddShaderStage(vertexShader);
-        pipeline->AddShaderStage(fragmentShader);
-        pipeline->Assemble(0,
-                           {.rasterization = {
-                                .frontFace = VK_FRONT_FACE_CLOCKWISE,
-                            },
-                            .colorBlend = {
-                                .attachments = {
-                                    {
-                                        .colorWriteMask = VK_COMPONENT_SWIZZLE_R | VK_COMPONENT_SWIZZLE_G | VK_COMPONENT_SWIZZLE_B | VK_COMPONENT_SWIZZLE_A,
-                                    },
-                                },
-                            }});
-
-        vertexShader.reset();
-        fragmentShader.reset();
-        /*setup line buffers*/
-
-        LineBuffer1 = Buffer::CreateVertexBuffer<LineVertex>(device, {{glm::vec3(0)}, {glm::vec3(100, 0, 0)}});
-        LineBuffer2 = Buffer::CreateVertexBuffer<LineVertex>(device, {{glm::vec3(0)}, {glm::vec3(0, 100, 0)}});
-        LineBuffer3 = Buffer::CreateVertexBuffer<LineVertex>(device, {{glm::vec3(0)}, {glm::vec3(0, 0, 100)}});
-
-        /*setup pipeline for lines*/
-        vsLineShader = std::make_shared<Shader>(device, compiler, vsLineShaderText, "main", "vsLine.glsl", PipelineStage::Vertex, true);
-        psLineShader = std::make_shared<Shader>(device, compiler, psLineShaderText, "main", "psLine.glsl", PipelineStage::Fragment, true);
-
-        linesLayout = std::make_shared<PipelineLayout>(device, descriptor);
-        linesLayout->AddPushConstant<DataPush>(0, PipelineStage::Fragment);
-        linesLayout->Assemble();
-
-        linespipeline = std::make_shared<GraphicsPipeline>(device, linesLayout, renderpass);
-
-        linespipeline->AddVertexBindingDescription<LineVertex>(0);
-        linespipeline->AddVertexAttribute(0, 0, 0, VK_FORMAT_R32G32B32_SFLOAT);
-        linespipeline->AddShaderStage(vsLineShader);
-        linespipeline->AddShaderStage(psLineShader);
-        linespipeline->Assemble(0, {.rasterization = {
-                                        .frontFace = VK_FRONT_FACE_CLOCKWISE,
-                                    },
-                                    .colorBlend = {
-                                        .attachments = {
-                                            {
-                                                .colorWriteMask = VK_COMPONENT_SWIZZLE_R | VK_COMPONENT_SWIZZLE_G | VK_COMPONENT_SWIZZLE_B | VK_COMPONENT_SWIZZLE_A,
-                                            },
-                                        },
-                                    }});
-
-        psLineShader.reset();
-        vsLineShader.reset();
         camera = Lettuce::X3D::Camera3D::Camera3D(width, height);
         beforeResize();
     }
@@ -273,7 +122,6 @@ void main()
         dataUBO.cameraPos = camera.eye;
         // dataUBO.cameraPos = glm::vec3(30);
 
-        uniformBuffer->SetData(&dataUBO);
     }
     void recordCmds()
     {
@@ -332,45 +180,8 @@ void main()
 
         vkCmdBeginRenderPass(cmd, &renderPassBI, VkSubpassContents::VK_SUBPASS_CONTENTS_INLINE);
 
-        /*render lines X Y Z */ // yellow, purple, green
-        std::vector<std::pair<std::shared_ptr<Buffer>, glm::vec3>> pairs = {{LineBuffer1, glm::vec3(1, 0.984, 0)}, {LineBuffer2, glm::vec3(0.506, 0.024, 0.98)}, {LineBuffer3, glm::vec3(0.024, 0.98, 0.173)}};
-        for (auto &[lineBuffer, color] : pairs)
-        {
-            vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, linespipeline->_pipeline);
-            VkDeviceSize size = 0;
-            vkCmdBindVertexBuffers(cmd, 0, 1, &(lineBuffer->_buffer), &size);
-            // vkCmdBindIndexBuffer(cmd, indexBuffer._buffer, 0, VK_INDEX_TYPE_UINT32);
-            vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, linesLayout->_pipelineLayout, 0, 1, descriptor->_descriptorSets.data(), 0, nullptr);
-            dataPush.color = color;
-            vkCmdPushConstants(cmd, linesLayout->_pipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(DataPush), &dataPush);
-            vkCmdSetLineWidth(cmd, 5.0f);
-            VkViewport viewport = {0, 0, (float)width, (float)height, 0.0f, 1.0f};
-            // vkCmdSetViewport(cmd, 0, 1, &viewport);
-            vkCmdSetViewportWithCount(cmd, 1, &viewport);
-            VkRect2D scissor = {{0, 0}, {static_cast<uint32_t>(width), static_cast<uint32_t>(height)}};
-            // vkCmdSetScissor(cmd, 0, 1, &scissor);
-            vkCmdSetScissorWithCount(cmd, 1, &scissor);
-            vkCmdSetPrimitiveTopology(cmd, VkPrimitiveTopology::VK_PRIMITIVE_TOPOLOGY_LINE_LIST);
-            vkCmdDraw(cmd, 2, 1, 0, 0);
-            // vkCmdDrawIndexed(cmd, indices.size(), 1, 0, 0, 0);
-        }
-        /*render donut*/
-        vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->_pipeline);
-        VkDeviceSize size = 0;
-        vkCmdBindVertexBuffers(cmd, 0, 1, &(vertexBuffer->_buffer), &size);
-        vkCmdBindIndexBuffer(cmd, indexBuffer->_buffer, 0, VK_INDEX_TYPE_UINT32);
-        vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, connector->_pipelineLayout, 0, 1, descriptor->_descriptorSets.data(), 0, nullptr);
 
-        vkCmdPushConstants(cmd, connector->_pipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(DataPush), &dataPush);
-        vkCmdSetLineWidth(cmd, 1.0f);
-        VkViewport viewport = {0, 0, (float)width, (float)height, 0.0f, 1.0f};
-        // vkCmdSetViewport(cmd, 0, 1, &viewport);
-        vkCmdSetViewportWithCount(cmd, 1, &viewport);
-        VkRect2D scissor = {{0, 0}, {static_cast<uint32_t>(width), static_cast<uint32_t>(height)}};
-        // vkCmdSetScissor(cmd, 0, 1, &scissor);
-        vkCmdSetScissorWithCount(cmd, 1, &scissor);
-        vkCmdSetPrimitiveTopology(cmd, VkPrimitiveTopology::VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
-        vkCmdDrawIndexed(cmd, indices.size(), 1, 0, 0, 0);
+       
         vkCmdEndRenderPass(cmd);
 
         checkResult(vkEndCommandBuffer(cmd));
@@ -427,21 +238,7 @@ void main()
         vkFreeCommandBuffers(device->_device, pool, 1, &cmd);
         vkDestroyCommandPool(device->_device, pool, nullptr);
 
-        linespipeline.reset();
-        linesLayout.reset();
-        ;
-        LineBuffer1.reset();
-        LineBuffer2.reset();
-        LineBuffer3.reset();
-
-        pipeline.reset();
-        connector.reset();
-        descriptor.reset();
-
-        uniformBuffer->Unmap();
-        uniformBuffer.reset();
-        vertexBuffer.reset();
-        indexBuffer.reset();
+       
         renderFinished.reset();
         renderpass->DestroyFramebuffers();
         renderpass.reset();
@@ -452,64 +249,6 @@ void main()
 
     }
 
-    void genTorus()
-    {
-        float radiusMajor = 10;
-        float radiusMinor = 5;
-        // float sectorStep = 10;
-        float sectorCount = 30;
-        // float sideStep;
-        float sideCount = 15;
-
-        float theta;
-        float phi;
-
-        const float pi = std::numbers::pi_v<float>;
-
-        // add vertices
-        for (int i = 0; i <= sideCount; i++)
-        {
-            phi = pi - (2 * pi * (i / sideCount));
-            for (int j = 0; j <= sectorCount; j++)
-            {
-                theta = (2 * pi * (j / sectorCount));
-                float x = (radiusMajor + (radiusMinor * std::cos(phi))) * (std::cos(theta));
-                float y = (radiusMajor + (radiusMinor * std::cos(phi))) * (std::sin(theta));
-                float z = (radiusMinor * std::sin(phi));
-
-                float nx = std::cosf(phi) * std::cosf(theta);
-                float ny = std::cosf(phi) * std::sinf(theta);
-                float nz = std::sinf(phi);
-
-                vertices.push_back({{x, y, z}, {nx, ny, nz}});
-            }
-        }
-
-        // add indices
-
-        // indices
-        //  k1--k1+1
-        //  |  / |
-        //  | /  |
-        //  k2--k2+1
-        unsigned int k1, k2;
-        for (int i = 0; i < sideCount; ++i)
-        {
-            k1 = i * (sectorCount + 1); // beginning of current side
-            k2 = k1 + sectorCount + 1;  // beginning of next side
-
-            for (int j = 0; j < sectorCount; ++j, ++k1, ++k2)
-            {
-                // 2 triangles per sector
-                indices.push_back(k1);
-                indices.push_back(k2);
-                indices.push_back(k1 + 1); // k1---k2---k1+1
-                indices.push_back(k1 + 1);
-                indices.push_back(k2);
-                indices.push_back(k2 + 1); // k1+1---k2---k2+1
-            }
-        }
-    }
 };
 
 int main()
@@ -525,6 +264,7 @@ int main()
         .MemoryBudget = false,
         .ConditionalRendering = false,
         .DescriptorBuffer = false,
+        .DeviceGeneratedCommands = false,
     };
     app.run();
     return 0;

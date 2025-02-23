@@ -9,10 +9,8 @@
 #include <tuple>
 #include <memory>
 #include "Device.hpp"
-#include "Buffer.hpp"
 #include "Sampler.hpp"
 #include "Utils.hpp"
-#include "TextureView.hpp"
 #include "BufferResource.hpp"
 #include "ImageViewResource.hpp"
 
@@ -59,18 +57,9 @@ namespace Lettuce::Core
 
         void Assemble(uint32_t maxSets = 16);
 
-        void AddUpdateInfo(uint32_t set, uint32_t binding, const std::vector<std::pair<uint32_t, std::shared_ptr<Buffer>>> &sizeBuffersPairs);
         void AddUpdateInfo(uint32_t set, uint32_t binding, const std::vector<std::pair<uint32_t, std::shared_ptr<BufferResource>>> &sizeBuffersPairs);
-        void AddUpdateInfo(uint32_t set, uint32_t binding, const std::vector<std::shared_ptr<TextureView>> &views);
         void AddUpdateInfo(uint32_t set, uint32_t binding, const std::vector<std::shared_ptr<Sampler>> &samplers);
-        void AddUpdateInfo(uint32_t set, uint32_t binding, const std::vector<std::pair<std::shared_ptr<Sampler>, std::shared_ptr<TextureView>>> &samplerViewsPairs);
         void AddUpdateInfo(uint32_t set, uint32_t binding, const std::vector<std::pair<std::shared_ptr<Sampler>, std::shared_ptr<ImageViewResource>>> &samplerViewsPairs);
-
-        template <typename TBufferDataType>
-        void AddUpdateInfo(uint32_t set, uint32_t binding, const std::shared_ptr<Buffer> &buffer)
-        {
-            AddUpdateInfo(set, binding, {{(uint32_t)sizeof(TBufferDataType), buffer}});
-        }
 
         void Update();
     };

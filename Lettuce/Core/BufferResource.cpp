@@ -65,7 +65,3 @@ VkMemoryRequirements BufferResource::GetResourceMemoryRequirements()
     vkGetBufferMemoryRequirements(_device->_device, _buffer, &memReqs);
     return memReqs;
 }
-std::shared_ptr<IResource> BufferResource::GetReference()
-{
-    return std::shared_ptr<IResource>(this);
-}

@@ -8,6 +8,7 @@
 #include <memory>
 #include <numeric>
 #include <limits>
+#include <bitset>
 #include "Lettuce/Core/Device.hpp"
 #include "Lettuce/Core/ResourcePool.hpp"
 #include "Lettuce/Core/IResource.hpp"
@@ -16,6 +17,19 @@
 #include "Lettuce/Core/Utils.hpp"
 
 using namespace Lettuce::Core;
+
+void ResourcePool::Map(uint32_t offset, uint32_t size)
+{
+    vkMapMemory(_device->_device, _memory, offset, size, 0, &temp);
+}
+void ResourcePool::SetData(void *data, uint32_t offset, uint32_t size)
+{
+    memcpy(temp, data, size);
+}
+void ResourcePool::UnMap()
+{
+    vkUnmapMemory(_device->_device, _memory);
+}
 
 /*
 to measure the required size of a ResourcePool / VkDeviceMemory,
@@ -113,7 +127,7 @@ void ResourcePool::Bind(const std::shared_ptr<Device> &device, VkMemoryPropertyF
     vkGetPhysicalDeviceMemoryProperties(device->_pdevice, &memoryProperties);
 
     std::vector<int> suitableMemoryTypeIndices;
-    suitableMemoryTypeIndices.resize(memoryProperties.memoryTypeCount); // max count of memory types
+    suitableMemoryTypeIndices.reserve(memoryProperties.memoryTypeCount); // max count of memory types
 
     for (int i = 0; i < memoryProperties.memoryTypeCount; i++)
     {
@@ -157,7 +171,7 @@ void ResourcePool::Bind(const std::shared_ptr<Device> &device, VkMemoryPropertyF
         {
             VkBindBufferMemoryInfo bindBufferI = {
                 .sType = VK_STRUCTURE_TYPE_BIND_BUFFER_MEMORY_INFO,
-                .buffer = std::dynamic_pointer_cast<BufferResource>(resourcePtr->GetReference())->_buffer,
+                .buffer = std::dynamic_pointer_cast<BufferResource>(resourcePtr)->_buffer,
                 .memory = _memory,
                 .memoryOffset = offsets[j],
             };
@@ -168,7 +182,7 @@ void ResourcePool::Bind(const std::shared_ptr<Device> &device, VkMemoryPropertyF
         {
             VkBindImageMemoryInfo bindImageI = {
                 .sType = VK_STRUCTURE_TYPE_BIND_IMAGE_MEMORY_INFO,
-                .image = std::dynamic_pointer_cast<ImageResource>(resourcePtr->GetReference())->_image,
+                .image = std::dynamic_pointer_cast<ImageResource>(resourcePtr)->_image,
                 .memory = _memory,
                 .memoryOffset = offsets[j],
             };
