@@ -104,7 +104,6 @@ void Device::createFeaturesChain()
         _enabledFeatures.DynamicRendering = true;
     }
 
-
     gpuFeatures12.bufferDeviceAddress = VK_TRUE;
     gpuFeatures12.drawIndirectCount = VK_TRUE;
     // enables descriptor indexing

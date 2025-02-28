@@ -26,6 +26,7 @@ public:
     std::shared_ptr<Lettuce::Core::ResourcePool> deviceResources;   // device local, memory places in device memory
     std::shared_ptr<Lettuce::Core::ResourcePool> coherentResources; // device local|host coherent, memory placed in device memory able to be mapped
     std::shared_ptr<Lettuce::Core::TransferManager> transfer;
+    uint32_t indicesSize, verticesSize, lineVerticesSize, bufferSize;
     /* sync objects*/
     std::shared_ptr<Lettuce::Core::Semaphore> renderFinished;
     /* rendering objects */
@@ -176,10 +177,10 @@ void main()
         // buffer  blocks layout:
         // |                  buffer                     |
         // |  vertex  |   index  | line1 | line2 | line3 |
-        uint32_t lineVerticesSize = 3 * sizeof(LineVertex);
-        uint32_t indicesSize = indices.size() * sizeof(uint32_t);
-        uint32_t verticesSize = vertices.size() * sizeof(Vertex);
-        uint32_t bufferSize = lineVerticesSize + indicesSize + verticesSize;
+        indicesSize = indices.size() * sizeof(uint32_t);
+        verticesSize = vertices.size() * sizeof(Vertex);
+        lineVerticesSize = 6 * sizeof(LineVertex);
+        bufferSize = lineVerticesSize + indicesSize + verticesSize;
 
         // create buffers
         hostBuffer = std::make_shared<BufferResource>(device, bufferSize, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_SRC_BIT);
@@ -277,7 +278,8 @@ void main()
         linespipeline->AddVertexAttribute(0, 0, 0, VK_FORMAT_R32G32B32_SFLOAT);
         linespipeline->AddShaderStage(vsLineShader);
         linespipeline->AddShaderStage(psLineShader);
-        linespipeline->Assemble(0, {.rasterization = {
+        linespipeline->Assemble(0, {.inputAssembly = {VK_PRIMITIVE_TOPOLOGY_LINE_LIST, VK_FALSE},
+                                    .rasterization = {
                                         .frontFace = VK_FRONT_FACE_CLOCKWISE,
                                     },
                                     .colorBlend = {
@@ -382,39 +384,35 @@ void main()
         vkCmdBeginRenderPass(cmd, &renderPassBI, VkSubpassContents::VK_SUBPASS_CONTENTS_INLINE);
 
         /*render lines X Y Z */ // yellow, purple, green
-        uint32_t baseSize = (vertices.size() * sizeof(Vertex)) + (indices.size() * sizeof(uint32_t));
+        uint32_t baseSize = verticesSize + indicesSize;
         std::vector<std::pair<uint32_t, glm::vec3>> pairs = {
             {baseSize, glm::vec3(1, 0.984, 0)},
-            {baseSize + sizeof(LineVertex), glm::vec3(0.506, 0.024, 0.98)},
-            {baseSize + (2 * sizeof(LineVertex)), glm::vec3(0.024, 0.98, 0.173)},
+            {baseSize + (2 * sizeof(LineVertex)), glm::vec3(0.506, 0.024, 0.98)},
+            {baseSize + (4 * sizeof(LineVertex)), glm::vec3(0.024, 0.98, 0.173)},
         };
         for (auto &[offset, color] : pairs)
         {
             vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, linespipeline->_pipeline);
             VkDeviceSize _offset = offset;
-            VkDeviceSize size = sizeof(LineVertex);
+            VkDeviceSize size = 2 * sizeof(LineVertex);
             vkCmdBindVertexBuffers2(cmd, 0, 1, &(deviceBuffer->_buffer), &_offset, &size, nullptr);
-            // vkCmdBindIndexBuffer(cmd, indexBuffer._buffer, 0, VK_INDEX_TYPE_UINT32);
             vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, linesLayout->_pipelineLayout, 0, 1, descriptor->_descriptorSets.data(), 0, nullptr);
             dataPush.color = color;
             vkCmdPushConstants(cmd, linesLayout->_pipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(DataPush), &dataPush);
             vkCmdSetLineWidth(cmd, 5.0f);
             VkViewport viewport = {0, 0, (float)width, (float)height, 0.0f, 1.0f};
-            // vkCmdSetViewport(cmd, 0, 1, &viewport);
             vkCmdSetViewportWithCount(cmd, 1, &viewport);
             VkRect2D scissor = {{0, 0}, {static_cast<uint32_t>(width), static_cast<uint32_t>(height)}};
-            // vkCmdSetScissor(cmd, 0, 1, &scissor);
             vkCmdSetScissorWithCount(cmd, 1, &scissor);
             vkCmdSetPrimitiveTopology(cmd, VkPrimitiveTopology::VK_PRIMITIVE_TOPOLOGY_LINE_LIST);
             vkCmdDraw(cmd, 2, 1, 0, 0);
-            // vkCmdDrawIndexed(cmd, indices.size(), 1, 0, 0, 0);
         }
         /*render donut*/
         vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->_pipeline);
-        VkDeviceSize size = vertices.size() * sizeof(Vertex);
+        VkDeviceSize size = verticesSize;
         VkDeviceSize offset = 0;
         vkCmdBindVertexBuffers2(cmd, 0, 1, &(deviceBuffer->_buffer), &offset, &size, nullptr);
-        vkCmdBindIndexBuffer2(cmd, deviceBuffer->_buffer, vertices.size() * sizeof(Vertex), indices.size() * sizeof(uint32_t), VK_INDEX_TYPE_UINT32);
+        vkCmdBindIndexBuffer2(cmd, deviceBuffer->_buffer, verticesSize, indicesSize, VK_INDEX_TYPE_UINT32);
         vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, connector->_pipelineLayout, 0, 1, descriptor->_descriptorSets.data(), 0, nullptr);
 
         vkCmdPushConstants(cmd, connector->_pipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(DataPush), &dataPush);
