@@ -1,4 +1,2 @@
-#include "Foundation/RenderGraph.hpp"
-#include "Foundation/Attachment.hpp"
-#include "Foundation/RenderGroup.hpp"
-#include "Foundation/Resource.hpp"
+#include "Foundation/WorkFlowGraph.hpp"
+#include "Foundation/IWorkUnit.hpp"

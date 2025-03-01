@@ -37,8 +37,6 @@ public:
         glm::vec3 color;
     } dataPush;
 
-   
-
     VkCommandPool pool;
     VkCommandBuffer cmd;
 
@@ -254,6 +252,8 @@ public:
 int main()
 {
     GeometrySample app;
+    app.appName = "Geometry Sample";
+    app.title = "Geometry Sample";
     app.features = {
         .FragmentShadingRate = false,
         .PresentWait = false,

@@ -28,7 +28,8 @@ add_compile_definitions(PATCH_VERSION=${PATCH_VERSION})
 file(GLOB LETTUCE_SOURCES Lettuce/Core/*.cpp 
                         Lettuce/Core/Compilers/*.cpp 
                         Lettuce/X3D/*.cpp 
-                        Lettuce/X3D/Materials/*.cpp)
+                        Lettuce/X3D/Materials/*.cpp
+                        Lettuce/Foundation/*.cpp)
                         # Lettuce/X2D/*.cpp 
                         # Lettuce/X2D/Geometries/*.cpp 
                         # Lettuce/X2D/Lights/*.cpp  
