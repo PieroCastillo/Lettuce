@@ -12,7 +12,7 @@
 
 using namespace Lettuce::Core;
 
-bool Device::tryAddFeatureAndExt(const char *extName)
+bool Device::addExt(const char *extName)
 {
     bool found = false;
     for (auto ext : availableExtensionsNames)
@@ -36,7 +36,7 @@ bool Device::tryAddFeatureAndExt(const char *extName)
 
 void Device::createFeaturesChain()
 {
-    if (_features.FragmentShadingRate && tryAddFeatureAndExt(VK_KHR_FRAGMENT_SHADING_RATE_EXTENSION_NAME))
+    if (_features.FragmentShadingRate && addExt(VK_KHR_FRAGMENT_SHADING_RATE_EXTENSION_NAME))
     {
         fragmentShadingRateFeature.pipelineFragmentShadingRate = VK_TRUE;
         fragmentShadingRateFeature.primitiveFragmentShadingRate = VK_TRUE;
@@ -44,7 +44,7 @@ void Device::createFeaturesChain()
         _enabledFeatures.FragmentShadingRate = true;
     }
 
-    if (_features.PresentWait && tryAddFeatureAndExt(VK_KHR_PRESENT_WAIT_EXTENSION_NAME))
+    if (_features.PresentWait && addExt(VK_KHR_PRESENT_WAIT_EXTENSION_NAME))
     {
         presentWaitFeature.presentWait = VK_TRUE;
         _enabledFeatures.PresentWait = true;
@@ -57,7 +57,7 @@ void Device::createFeaturesChain()
     }
 #endif
 
-    if (_features.MeshShading && tryAddFeatureAndExt(VK_EXT_MESH_SHADER_EXTENSION_NAME))
+    if (_features.MeshShading && addExt(VK_EXT_MESH_SHADER_EXTENSION_NAME))
     {
         meshShaderFeature.taskShader = VK_TRUE;
         meshShaderFeature.meshShader = VK_TRUE;
@@ -74,35 +74,22 @@ void Device::createFeaturesChain()
         // nop too
     }
 
-    if (_features.MemoryBudget && tryAddFeatureAndExt(VK_EXT_MEMORY_BUDGET_EXTENSION_NAME))
+    if (_features.MemoryBudget && addExt(VK_EXT_MEMORY_BUDGET_EXTENSION_NAME))
     {
         _enabledFeatures.MemoryBudget = true;
     }
 
-    if (_features.ConditionalRendering && tryAddFeatureAndExt(VK_EXT_CONDITIONAL_RENDERING_EXTENSION_NAME))
+    if (_features.ConditionalRendering && addExt(VK_EXT_CONDITIONAL_RENDERING_EXTENSION_NAME))
     {
         conditionalRenderingFeature.conditionalRendering = VK_TRUE;
         _enabledFeatures.ConditionalRendering = true;
     }
 
-    if (_features.DescriptorBuffer && tryAddFeatureAndExt(VK_EXT_DESCRIPTOR_BUFFER_EXTENSION_NAME))
-    {
-        descriptorBufferFeature.descriptorBuffer = VK_TRUE;
-        descriptorBufferFeature.descriptorBufferPushDescriptors = VK_TRUE;
-        _enabledFeatures.DescriptorBuffer = true;
-    }
-    if (_features.DeviceGeneratedCommands && tryAddFeatureAndExt(VK_EXT_DEVICE_GENERATED_COMMANDS_EXTENSION_NAME))
-    {
-        deviceGeneratedCommandsFeature.deviceGeneratedCommands = true;
-        deviceGeneratedCommandsFeature.dynamicGeneratedPipelineLayout = true;
-        _enabledFeatures.DeviceGeneratedCommands = true;
-    }
-
-    if (_features.DynamicRendering)
-    {
-        gpuFeatures13.dynamicRendering = VK_TRUE;
-        _enabledFeatures.DynamicRendering = true;
-    }
+    // required
+    descriptorBufferFeature.descriptorBuffer = VK_TRUE;
+    descriptorBufferFeature.descriptorBufferPushDescriptors = VK_TRUE;
+    deviceGeneratedCommandsFeature.deviceGeneratedCommands = true;
+    deviceGeneratedCommandsFeature.dynamicGeneratedPipelineLayout = true;
 
     gpuFeatures12.bufferDeviceAddress = VK_TRUE;
     gpuFeatures12.drawIndirectCount = VK_TRUE;
@@ -115,11 +102,15 @@ void Device::createFeaturesChain()
     gpuFeatures12.descriptorBindingStorageBufferUpdateAfterBind = VK_TRUE;
     gpuFeatures12.descriptorBindingStorageImageUpdateAfterBind = VK_TRUE;
     gpuFeatures12.descriptorIndexing = VK_TRUE;
-    // gpuFeatures12.descriptorBindingVariableDescriptorCount = VK_TRUE;
     gpuFeatures12.runtimeDescriptorArray = VK_TRUE;
+
     gpuFeatures12.timelineSemaphore = VK_TRUE;
 
     gpuFeatures13.synchronization2 = VK_TRUE;
+    gpuFeatures13.dynamicRendering = VK_TRUE;
+
+    gpuFeatures14.maintenance5 = VK_TRUE;
+    gpuFeatures14.dynamicRenderingLocalRead = VK_TRUE;
 }
 
 void Device::listExtensions()

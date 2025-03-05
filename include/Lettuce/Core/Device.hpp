@@ -21,9 +21,9 @@ namespace Lettuce::Core
         bool Video;
         bool MemoryBudget;
         bool ConditionalRendering;
-        bool DescriptorBuffer;
-        bool DynamicRendering;
-        bool DeviceGeneratedCommands;
+        // bool DescriptorBuffer;// required
+        // bool DynamicRendering;// required
+        // bool DeviceGeneratedCommands; // required
     };
 
     class Device
@@ -36,6 +36,7 @@ namespace Lettuce::Core
         Features _features;
         Features _enabledFeatures;
 
+        // physical device features structs
         VkPhysicalDeviceVulkan11Features gpuFeatures11 = {
             .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_1_FEATURES,
         };
@@ -43,14 +44,28 @@ namespace Lettuce::Core
             .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES,
             .pNext = &gpuFeatures11,
         };
-
         VkPhysicalDeviceVulkan13Features gpuFeatures13 = {
             .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_3_FEATURES,
             .pNext = &gpuFeatures12,
         };
+        VkPhysicalDeviceVulkan14Features gpuFeatures14 = {
+            .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_4_FEATURES,
+            .pNext = &gpuFeatures13,
+        };
+        // required features structs
+        VkPhysicalDeviceDescriptorBufferFeaturesEXT descriptorBufferFeature = {
+            .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_BUFFER_FEATURES_EXT,
+            .pNext = &gpuFeatures14,
+        };
+        VkPhysicalDeviceDeviceGeneratedCommandsFeaturesEXT deviceGeneratedCommandsFeature = {
+            .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DEVICE_GENERATED_COMMANDS_FEATURES_EXT,
+            .pNext = &descriptorBufferFeature,
+        };
+
+        // optional features structs
         VkPhysicalDeviceFragmentShadingRateFeaturesKHR fragmentShadingRateFeature = {
             .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADING_RATE_FEATURES_KHR,
-            .pNext = &gpuFeatures13,
+            .pNext = &deviceGeneratedCommandsFeature,
         };
         VkPhysicalDevicePresentWaitFeaturesKHR presentWaitFeature = {
             .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PRESENT_WAIT_FEATURES_KHR,
@@ -60,24 +75,12 @@ namespace Lettuce::Core
             .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MESH_SHADER_FEATURES_EXT,
             .pNext = &presentWaitFeature,
         };
-        VkPhysicalDeviceDynamicRenderingFeatures dynamicRenderingFeature = {
-            .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DYNAMIC_RENDERING_FEATURES,
-            .pNext = &meshShaderFeature,
-        };
         VkPhysicalDeviceConditionalRenderingFeaturesEXT conditionalRenderingFeature = {
             .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_CONDITIONAL_RENDERING_FEATURES_EXT,
-            .pNext = &dynamicRenderingFeature,
-        };
-        VkPhysicalDeviceDescriptorBufferFeaturesEXT descriptorBufferFeature = {
-            .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_BUFFER_FEATURES_EXT,
-            .pNext = &conditionalRenderingFeature,
-        };
-        VkPhysicalDeviceDeviceGeneratedCommandsFeaturesEXT deviceGeneratedCommandsFeature = {
-            .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DEVICE_GENERATED_COMMANDS_FEATURES_EXT,
-            .pNext = &descriptorBufferFeature,
+            .pNext = &meshShaderFeature,
         };
 
-        bool tryAddFeatureAndExt(const char *extName);
+        bool addExt(const char *extName);
 
         void createFeaturesChain();
 

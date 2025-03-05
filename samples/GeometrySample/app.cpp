@@ -263,8 +263,6 @@ int main()
         .Video = false,
         .MemoryBudget = false,
         .ConditionalRendering = false,
-        .DescriptorBuffer = false,
-        .DeviceGeneratedCommands = false,
     };
     app.run();
     return 0;

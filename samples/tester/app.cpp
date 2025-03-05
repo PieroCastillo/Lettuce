@@ -141,9 +141,6 @@ void initLettuce()
     }
     // create device
     Features features;
-    features.MeshShading = false;
-    features.ConditionalRendering = false;
-    features.MemoryBudget = false;
     device = std::make_shared<>(instance, gpus.front(), features);
     std::cout << "-------- device created ----------" << std::endl;
     swapchain = std::make_shared<>(device, width, height);

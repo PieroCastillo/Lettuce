@@ -575,7 +575,6 @@ int main()
         .Video = false,
         .MemoryBudget = false,
         .ConditionalRendering = false,
-        .DescriptorBuffer = false,
     };
     app.run();
     return 0;
