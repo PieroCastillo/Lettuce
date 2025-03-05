@@ -84,8 +84,11 @@ void Device::createFeaturesChain()
         conditionalRenderingFeature.conditionalRendering = VK_TRUE;
         _enabledFeatures.ConditionalRendering = true;
     }
-
+    addExt(VK_EXT_SHADER_OBJECT_EXTENSION_NAME);
+    addExt(VK_EXT_DESCRIPTOR_BUFFER_EXTENSION_NAME);
+    addExt(VK_EXT_DEVICE_GENERATED_COMMANDS_EXTENSION_NAME);
     // required
+    shaderObjectFeature.shaderObject = VK_TRUE;
     descriptorBufferFeature.descriptorBuffer = VK_TRUE;
     descriptorBufferFeature.descriptorBufferPushDescriptors = VK_TRUE;
     deviceGeneratedCommandsFeature.deviceGeneratedCommands = true;

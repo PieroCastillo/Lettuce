@@ -53,9 +53,13 @@ namespace Lettuce::Core
             .pNext = &gpuFeatures13,
         };
         // required features structs
+        VkPhysicalDeviceShaderObjectFeaturesEXT shaderObjectFeature = {
+            .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_OBJECT_FEATURES_EXT,
+            .pNext = &gpuFeatures14,
+        };
         VkPhysicalDeviceDescriptorBufferFeaturesEXT descriptorBufferFeature = {
             .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_BUFFER_FEATURES_EXT,
-            .pNext = &gpuFeatures14,
+            .pNext = &shaderObjectFeature,
         };
         VkPhysicalDeviceDeviceGeneratedCommandsFeaturesEXT deviceGeneratedCommandsFeature = {
             .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DEVICE_GENERATED_COMMANDS_FEATURES_EXT,
