@@ -56,7 +56,7 @@ WorkFlowGraph::WorkFlowGraph(const std::shared_ptr<Device> &device, const std::s
 
 WorkFlowGraph::~WorkFlowGraph()
 {
-    for (int i = 0; i < _threads, i++)
+    for (int i = 0; i < _threads; i++)
     {
         vkFreeCommandBuffers(_device->_device, pools[i], 1, &cmds[i]);
         vkDestroyCommandPool(_device->_device, pools[i], nullptr);
@@ -66,23 +66,51 @@ WorkFlowGraph::~WorkFlowGraph()
 // add resources
 void WorkFlowGraph::AddBuffer(const std::shared_ptr<BufferResource> &buffer, uint32_t offset, uint32_t size)
 {
+    if (!canAddResources)
+        return;
 }
 void WorkFlowGraph::AddImage(const std::shared_ptr<ImageResource> &image)
 {
+    if (!canAddResources)
+        return;
 }
 void WorkFlowGraph::AddWorkUnit(const IWorkUnit &workUnit)
 {
+    if (!canAddResources)
+        return;
+}
+
+void WorkFlowGraph::StopAddResources()
+{
+    canAddResources = false;
 }
 
 // add nodes
 void WorkFlowGraph::WorkNode(int nodeSrc, int nodeDst, VkPipelineStageFlags2 srcMask, VkPipelineStageFlags2 dstMask)
 {
+    edges[nodeSrc].push_back({nodeDst, srcMask, dstMask});
 }
 void WorkFlowGraph::UseBuffer(int node, int bufferIndex, ResourceUsage usage)
 {
 }
 void WorkFlowGraph::UseImage(int node, int imageIndex, ResourceUsage usage)
 {
+}
+
+void WorkFlowGraph::Compile()
+{
+    int componentsPerStack = workUnits.size() / _threads;
+    std::vector<bool> visited(workUnits.size(), false);
+    std::vector<int> workUnitSorted(workUnits.size(), 0);
+
+    // topological sort
+    for(int i = 0; i < workUnits.size();i++)
+    {
+        if(visited[i])
+            continue;
+
+        
+    }
 }
 
 // commands
