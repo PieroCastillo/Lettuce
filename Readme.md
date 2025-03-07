@@ -34,8 +34,6 @@ This is the core lib of Lettuce, the main function is provide access to Vulkan a
 |Graphics Pipeline || | 🟢 |
 |Compute Pipeline || | 🟢 |
 |Shader|| | 🟢 |
-|Buffer || (bad, this impl uses 1 allocation per buffer) | 🟢|
-|Textures || | 🟢|
 |Samplers || | 🟢 |
 |Dynamic states || | 🟢|
 |_Memory Allocation System:_ | | | |
@@ -57,8 +55,9 @@ This is the core lib of Lettuce, the main function is provide access to Vulkan a
   |HLSL support| _Not added_| 🚧 |
   |SLang support | _Not added_| 🚧 |
   |Dynamic Rendering |_(1.2 feature)_| 🚧|
-  |Dynamic Rendering Local Read |_(VK_KHR_dynamic_rendering_local_read)_| 🚧|
-  |Buffer Device Address |_(1.3 feature)_|🚧 |
+  |Dynamic Rendering Local Read |_(1.4 feature)_| 🚧|
+  |Buffer Device Address |_(1.2 feature)_|🚧 |
+  |Shader Object |_(VK_EXT_shader_object)_| 🟡|
   |Device Generated Commands |_(VK_EXT_device_generated_commands)_| 🟡|
   | _Optional:_| | |
   |Memory Budget | _(VK_EXT_memory_budget)_| 🚧|

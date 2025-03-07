@@ -91,8 +91,8 @@ void Device::createFeaturesChain()
     shaderObjectFeature.shaderObject = VK_TRUE;
     descriptorBufferFeature.descriptorBuffer = VK_TRUE;
     descriptorBufferFeature.descriptorBufferPushDescriptors = VK_TRUE;
-    deviceGeneratedCommandsFeature.deviceGeneratedCommands = true;
-    deviceGeneratedCommandsFeature.dynamicGeneratedPipelineLayout = true;
+    deviceGeneratedCommandsFeature.deviceGeneratedCommands = VK_TRUE;
+    deviceGeneratedCommandsFeature.dynamicGeneratedPipelineLayout = VK_TRUE;
 
     gpuFeatures12.bufferDeviceAddress = VK_TRUE;
     gpuFeatures12.drawIndirectCount = VK_TRUE;

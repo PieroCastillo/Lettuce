@@ -425,7 +425,6 @@ void main()
         vkCmdSetScissorWithCount(cmd, 1, &scissor);
         vkCmdSetPrimitiveTopology(cmd, VkPrimitiveTopology::VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
         vkCmdDrawIndexed(cmd, indices.size(), 1, 0, 0, 0);
-        vkCmdDraw
         vkCmdEndRenderPass(cmd);
 
         checkResult(vkEndCommandBuffer(cmd));

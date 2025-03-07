@@ -15,7 +15,6 @@
 #include <memory>
 
 using namespace Lettuce::Core;
-using namespace Lettuce::X3D;
 
 class GeometrySample : public LettuceSampleApp
 {
@@ -179,7 +178,7 @@ public:
 
         vkCmdBeginRenderPass(cmd, &renderPassBI, VkSubpassContents::VK_SUBPASS_CONTENTS_INLINE);
 
-        
+
        
         vkCmdEndRenderPass(cmd);
 
@@ -245,8 +244,7 @@ public:
 
     void genScene()
     {
-        /*geometries*/
-        std::vector<Geometries::Sphere> spheres;
+
     }
 
 };
@@ -254,8 +252,8 @@ public:
 int main()
 {
     GeometrySample app;
-    app.appName = "Geometry Sample";
-    app.title = "Geometry Sample";
+    app.appName = "Clear Screen Sample";
+    app.title = "Clear Screen Sample";
     app.features = {
         .FragmentShadingRate = false,
         .PresentWait = false,
