@@ -6,6 +6,7 @@
 #include <iostream>
 #include <set>
 #include <vector>
+#include <string>
 #include "Instance.hpp"
 #include "GPU.hpp"
 
@@ -29,7 +30,7 @@ namespace Lettuce::Core
     class Device
     {
     private:
-        std::vector<char *> availableExtensionsNames;
+        std::vector<std::string> availableExtensionsNames;
         std::vector<char *> availableLayersNames;
         std::vector<const char *> requestedExtensionsNames;
         std::vector<const char *> requestedLayersNames;
@@ -84,7 +85,7 @@ namespace Lettuce::Core
             .pNext = &meshShaderFeature,
         };
 
-        bool addExt(const char *extName);
+        bool addExt(const std::string& extName);
 
         void createFeaturesChain();
 

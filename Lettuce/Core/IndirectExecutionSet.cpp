@@ -34,11 +34,11 @@ void IndirectExecutionSet::Update(const std::vector<std::shared_ptr<Shader>> &sh
     {
         shaderWrites.push_back({
             .sType = VK_STRUCTURE_TYPE_INDIRECT_EXECUTION_SET_SHADER_INFO_EXT,
-            .index = i,
+            .index = (uint32_t)i,
             .shader = shaders[i]->_shader,
         });
     }
-    vkUpdateIndirectExecutionSetShaderEXT(_device->_device, _executionSet, (uint32_t)shaderWrites.size(), shaderWrites.size());
+    vkUpdateIndirectExecutionSetShaderEXT(_device->_device, _executionSet, (uint32_t)shaderWrites.size(), shaderWrites.data());
 }
 
 void IndirectExecutionSet::Release(){

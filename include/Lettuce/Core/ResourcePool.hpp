@@ -23,6 +23,5 @@ namespace Lettuce::Core
         void UnMap();
         void AddResource(const std::shared_ptr<IResource> &resourcePtr);
         void Bind(const std::shared_ptr<Device> &device, VkMemoryPropertyFlags requiredFlags);
-        void Release();
     };
 }

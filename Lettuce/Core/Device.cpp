@@ -12,9 +12,10 @@
 
 using namespace Lettuce::Core;
 
-bool Device::addExt(const char *extName)
+bool Device::addExt(const std::string &extName)
 {
     bool found = false;
+    int i = 0;
     for (auto ext : availableExtensionsNames)
     {
         if (ext == extName)
@@ -22,6 +23,7 @@ bool Device::addExt(const char *extName)
             found = true;
             break;
         }
+        i++;
     }
     if (!found)
     {
@@ -29,7 +31,8 @@ bool Device::addExt(const char *extName)
     }
     else
     {
-        requestedExtensionsNames.emplace_back(extName);
+        // use the same memory of available extensions names list
+        requestedExtensionsNames.push_back(availableExtensionsNames[i].c_str());
         return true;
     }
 }
@@ -125,7 +128,7 @@ void Device::listExtensions()
     vkEnumerateDeviceExtensionProperties(_pdevice, nullptr, &availableExtensionCount, availableExtensions.data());
     for (auto ext : availableExtensions)
     {
-        availableExtensionsNames.push_back(ext.extensionName);
+        availableExtensionsNames.push_back(std::string(ext.extensionName));
         std::cout << "available device extensions :" << ext.extensionName << std::endl;
     }
 }
@@ -147,12 +150,12 @@ void Device::loadExtensionsLayersAndFeatures()
 {
     if (_instance->_debug)
     {
-        requestedLayersNames.emplace_back("VK_LAYER_KHRONOS_validation");
+        requestedLayersNames.push_back("VK_LAYER_KHRONOS_validation");
     }
 
     if (_instance->IsSurfaceCreated())
     {
-        requestedExtensionsNames.emplace_back(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
+        requestedExtensionsNames.push_back(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
     }
 }
 
