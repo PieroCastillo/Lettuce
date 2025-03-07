@@ -7,7 +7,7 @@
 #include "Lettuce/Core/GraphicsPipeline.hpp"
 #include "Lettuce/Core/PipelineLayout.hpp"
 #include "Lettuce/Core/Swapchain.hpp"
-#include "Lettuce/Core/Shader.hpp"
+#include "Lettuce/Core/ShaderModule.hpp"
 #include "Lettuce/Core/RenderPass.hpp"
 
 using namespace Lettuce::Core;
@@ -23,7 +23,7 @@ void GraphicsPipeline::AddVertexAttribute(uint32_t binding, uint32_t location, u
     vertexInputAttributes.emplace_back(attributeDescription);
 }
 
-void GraphicsPipeline::AddShaderStage(const std::shared_ptr<Shader> &shader)
+void GraphicsPipeline::AddShaderStage(const std::shared_ptr<ShaderModule> &shader)
 {
     VkPipelineShaderStageCreateInfo pipelineShaderStageCI = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,

@@ -78,10 +78,10 @@ std::vector<uint32_t> HLSLCompiler::Compile(std::string text, std::string inputF
     std::vector<LPCWSTR> arguments = {
         // (Optional) name of the shader file to be displayed e.g. in an error message
         std::wstring(inputFile.begin(), inputFile.end()).c_str(),
-        // Shader main entry point
+        // ShaderModule main entry point
         L"-E",
         L"main",
-        // Shader target profile
+        // ShaderModule target profile
         L"-T",
         targetProfile,
         // Compile to SPIRV
@@ -114,7 +114,7 @@ std::vector<uint32_t> HLSLCompiler::Compile(std::string text, std::string inputF
         hres = result->GetErrorBuffer(&errorBlob);
         if (SUCCEEDED(hres) && errorBlob)
         {
-            std::cerr << "Shader compilation failed :\n\n"
+            std::cerr << "ShaderModule compilation failed :\n\n"
                       << (const char *)errorBlob->GetBufferPointer();
             throw std::runtime_error("Compilation failed");
         }

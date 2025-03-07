@@ -10,13 +10,13 @@
 
 namespace Lettuce::Core
 {
-    class Shader
+    class IndirectCommandsLayout
     {
     public:
-        VkShaderEXT _executionSet;
+        VkIndirectCommandsLayoutEXT _commandsLayout;
         std::shared_ptr<Device> _device;
 
-        Shader(const std::shared_ptr<Device>& device) : _device(device){}
-        void Assemble(const VkShaderStageFlagBits& stage, const std::shared_ptr<Descriptors>& descriptors);
+        IndirectCommandsLayout(const std::shared_ptr<Device> &device) : _device(device) {}
+        void Assemble();
     };
 }

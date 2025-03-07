@@ -4,7 +4,7 @@
 #include "Lettuce/Core/common.hpp"
 #include "Lettuce/Core/Utils.hpp"
 #include "Lettuce/Core/Device.hpp"
-#include "Lettuce/Core/Shader.hpp"
+#include "Lettuce/Core/ShaderModule.hpp"
 #include "Lettuce/Core/GraphicsPipeline.hpp"
 #include "Lettuce/Core/PipelineLayout.hpp"
 #include "Lettuce/Core/Descriptors.hpp"
@@ -22,7 +22,7 @@ void MaterialBase<T,TPushData>::Load(const std::shared_ptr<Device> &device, Rend
 
     layout.AddPushConstant<TPushData>(0, PipelineStage::Fragment);
     layout = std::make_shared<>(device, *descriptorsPtr);
-    Shader frag, vert;
+    ShaderModule frag, vert;
     frag = std::make_shared<>(device, compiler, material.GetFragmentShaderText(), "main", "fragment.glsl", PipelineStage::Fragment, true);
     vert = std::make_shared<>(device, compiler, material.GetVertexShaderText(), "main", "vertex.glsl", PipelineStage::Vertex, true);
 

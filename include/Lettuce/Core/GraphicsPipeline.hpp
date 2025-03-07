@@ -7,7 +7,7 @@
 #include <vector>
 #include <memory>
 #include "Device.hpp"
-#include "Shader.hpp"
+#include "ShaderModule.hpp"
 #include "RenderPass.hpp"
 #include "Utils.hpp"
 #include "PipelineLayout.hpp"
@@ -104,7 +104,7 @@ namespace Lettuce::Core
 
         void AddVertexAttribute(uint32_t binding, uint32_t location, uint32_t offset, int format);
 
-        void AddShaderStage(const std::shared_ptr<Shader> &shader);
+        void AddShaderStage(const std::shared_ptr<ShaderModule> &shader);
 
         GraphicsPipeline(const std::shared_ptr<Device> &device,
                          const std::shared_ptr<PipelineLayout> &connector,

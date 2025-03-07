@@ -50,8 +50,8 @@ Descriptors descriptor;
 PipelineLayout connector;
 GraphicsPipeline pipeline;
 Compilers::GLSLCompiler compiler;
-Shader fragmentShader;
-Shader vertexShader;
+ShaderModule fragmentShader;
+ShaderModule vertexShader;
 
 struct Vertex
 {

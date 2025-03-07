@@ -37,10 +37,10 @@ public:
     std::shared_ptr<Lettuce::Core::PipelineLayout> connector;
     std::shared_ptr<Lettuce::Core::GraphicsPipeline> pipeline;
     std::shared_ptr<Lettuce::Core::GraphicsPipeline> linespipeline;
-    std::shared_ptr<Lettuce::Core::Shader> fragmentShader;
-    std::shared_ptr<Lettuce::Core::Shader> vertexShader;
-    std::shared_ptr<Lettuce::Core::Shader> psLineShader;
-    std::shared_ptr<Lettuce::Core::Shader> vsLineShader;
+    std::shared_ptr<Lettuce::Core::ShaderModule> fragmentShader;
+    std::shared_ptr<Lettuce::Core::ShaderModule> vertexShader;
+    std::shared_ptr<Lettuce::Core::ShaderModule> psLineShader;
+    std::shared_ptr<Lettuce::Core::ShaderModule> vsLineShader;
     std::shared_ptr<Lettuce::X3D::Scene> scene;
 
     struct LineVertex
@@ -186,8 +186,8 @@ void main()
         connector->AddPushConstant<DataPush>(0, PipelineStage::Fragment);
         connector->Assemble();
         // add pipeline stuff here
-        vertexShader = std::make_shared<Lettuce::Core::Shader>(device, compiler, vertexShaderText, "main", "vertex.glsl", PipelineStage::Vertex, true);
-        fragmentShader = std::make_shared<Lettuce::Core::Shader>(device, compiler, fragmentShaderText, "main", "fragment.glsl", PipelineStage::Fragment, true);
+        vertexShader = std::make_shared<Lettuce::Core::ShaderModule>(device, compiler, vertexShaderText, "main", "vertex.glsl", PipelineStage::Vertex, true);
+        fragmentShader = std::make_shared<Lettuce::Core::ShaderModule>(device, compiler, fragmentShaderText, "main", "fragment.glsl", PipelineStage::Fragment, true);
 
         pipeline = std::make_shared<GraphicsPipeline>(device, connector, renderpass);
         pipeline->AddVertexBindingDescription<Vertex>(0);                                  // binding = 0
@@ -216,8 +216,8 @@ void main()
         LineBuffer3 = Buffer::CreateVertexBuffer<LineVertex>(device, {{glm::vec3(0)}, {glm::vec3(0, 0, 100)}});
 
         /*setup pipeline for lines*/
-        vsLineShader = std::make_shared<Shader>(device, compiler, vsLineShaderText, "main", "vsLine.glsl", PipelineStage::Vertex, true);
-        psLineShader = std::make_shared<Shader>(device, compiler, psLineShaderText, "main", "psLine.glsl", PipelineStage::Fragment, true);
+        vsLineShader = std::make_shared<ShaderModule>(device, compiler, vsLineShaderText, "main", "vsLine.glsl", PipelineStage::Vertex, true);
+        psLineShader = std::make_shared<ShaderModule>(device, compiler, psLineShaderText, "main", "psLine.glsl", PipelineStage::Fragment, true);
 
         linesLayout = std::make_shared<PipelineLayout>(device, descriptor);
         linesLayout->AddPushConstant<DataPush>(0, PipelineStage::Fragment);

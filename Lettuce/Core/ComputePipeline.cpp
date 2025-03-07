@@ -6,12 +6,12 @@
 #include <memory>
 #include "Lettuce/Core/Device.hpp"
 #include "Lettuce/Core/PipelineLayout.hpp"
-#include "Lettuce/Core/Shader.hpp"
+#include "Lettuce/Core/ShaderModule.hpp"
 #include "Lettuce/Core/ComputePipeline.hpp"
 
 using namespace Lettuce::Core;
 
-ComputePipeline::ComputePipeline(const std::shared_ptr<Device> &device, const std::shared_ptr<PipelineLayout> &connector, const std::shared_ptr<Shader> &shader)
+ComputePipeline::ComputePipeline(const std::shared_ptr<Device> &device, const std::shared_ptr<PipelineLayout> &connector, const std::shared_ptr<ShaderModule> &shader)
 {
     _device = device;
     _pipelineLayout = connector->_pipelineLayout;

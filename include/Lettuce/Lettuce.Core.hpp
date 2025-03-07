@@ -28,5 +28,5 @@
 #include "Core/Instance.hpp"
 #include "Core/Sampler.hpp"
 #include "Core/Semaphore.hpp"
-#include "Core/Shader.hpp"
+#include "Core/ShaderModule.hpp"
 #include "Core/Swapchain.hpp"
