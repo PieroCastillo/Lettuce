@@ -98,9 +98,9 @@ protected:
     }
     void destroyLettuce()
     {
-        swapchain.reset();
-        device.reset();
-        instance.reset();
+        swapchain->Release();
+        device->Release();
+        instance->Release();
     }
 
     std::tuple<uint32_t, uint32_t> resizeCall()

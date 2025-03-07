@@ -44,7 +44,7 @@ namespace Lettuce::Core
         std::vector<VkFramebuffer> _framebuffers;
 
         RenderPass(const std::shared_ptr<Device> &device);
-        ~RenderPass();
+        void Release();
         void Assemble();
         void AddAttachment(uint32_t index,
                            AttachmentType type,

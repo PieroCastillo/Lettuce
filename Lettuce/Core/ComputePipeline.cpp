@@ -34,7 +34,7 @@ ComputePipeline::ComputePipeline(const std::shared_ptr<Device> &device, const st
     checkResult(vkCreateComputePipelines(_device->_device, VK_NULL_HANDLE, 1, &computePipelineCI, nullptr, &_pipeline));
 }
 
-ComputePipeline::~ComputePipeline()
+void ComputePipeline::Release()
 {
     vkDestroyPipeline(_device->_device, _pipeline, nullptr);
 }

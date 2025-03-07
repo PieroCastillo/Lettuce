@@ -42,7 +42,7 @@ namespace Lettuce::Core
         bool _debug;
 
         Instance(std::string appName, Version appVersion, std::vector<char *> requestedExtensions, bool debug = false);
-        ~Instance();
+        void Release();
         template <typename T1, typename T2>
         void CreateSurface(T1 window, T2 process)
         {

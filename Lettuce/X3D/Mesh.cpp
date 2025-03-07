@@ -9,7 +9,7 @@ void Lettuce::X3D::Mesh::setup()
     
 }
 
-void Release()
+void Lettuce::X3D::Mesh::Release()
 {
 
 }

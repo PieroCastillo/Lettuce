@@ -12,7 +12,7 @@
 
 using namespace Lettuce::Core;
 
-ShaderModule::~ShaderModule()
+void ShaderModule::Release()
 {
     vkDestroyShaderModule(_device->_device, _shaderModule, nullptr);
 }

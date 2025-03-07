@@ -37,7 +37,7 @@ namespace Lettuce::Core
         uint32_t _queueFamily = 0;
 
         TransferManager(const std::shared_ptr<Device> &device);
-        ~TransferManager();
+        void Release();
 
         void Prepare();
         void AddTransference(const std::shared_ptr<BufferResource> &src, const std::shared_ptr<BufferResource> &dst, TransferType type);

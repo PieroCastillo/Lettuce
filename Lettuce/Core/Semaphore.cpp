@@ -38,7 +38,7 @@ void Semaphore::Wait(uint64_t value)
     checkResult(vkWaitSemaphores(_device->_device, &waitI, (std::numeric_limits<uint64_t>::max)()));
 }
 
-Semaphore::~Semaphore()
+void Semaphore::Release()
 {
     vkDestroySemaphore(_device->_device, _semaphore, nullptr);
 }

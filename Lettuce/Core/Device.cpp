@@ -245,7 +245,7 @@ void Device::Wait()
     checkResult(vkDeviceWaitIdle(_device));
 }
 
-Device::~Device()
+void Device::Release()
 {
     vmaDestroyAllocator(allocator);
     vkDestroyDevice(_device, nullptr);

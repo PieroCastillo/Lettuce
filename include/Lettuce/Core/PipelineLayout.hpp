@@ -31,7 +31,7 @@ namespace Lettuce::Core
 
         PipelineLayout(const std::shared_ptr<Device> &device, const std::shared_ptr<Descriptors> &descriptor);
         PipelineLayout(const std::shared_ptr<Device> &device);
-        ~PipelineLayout();
+        void Release();
 
         void Assemble();
     };

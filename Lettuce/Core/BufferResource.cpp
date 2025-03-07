@@ -46,7 +46,7 @@ BufferResource::BufferResource(const std::shared_ptr<Device> &device, uint32_t s
     checkResult(vkCreateBuffer(device->_device, &bufferCI, nullptr, &_buffer));
 }
 
-BufferResource::~BufferResource()
+void BufferResource::Release()
 {
     vkDestroyBuffer(_device->_device, _buffer, nullptr);
 }

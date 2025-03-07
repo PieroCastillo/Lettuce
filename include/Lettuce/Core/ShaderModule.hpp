@@ -35,6 +35,6 @@ namespace Lettuce::Core
             checkResult(vkCreateShaderModule(_device->_device, &shaderModuleCI, nullptr, &_shaderModule));
         }
 
-        ~ShaderModule();
+        void Release();
     };
 }

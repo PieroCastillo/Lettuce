@@ -35,7 +35,7 @@ Sampler::Sampler(const std::shared_ptr<Device> &device,
     checkResult(vkCreateSampler(_device->_device, &samplerCI, nullptr, &_sampler));
 }
 
-Sampler::~Sampler()
+void Sampler::Release()
 {
     vkDestroySampler(_device->_device, _sampler, nullptr);
 }

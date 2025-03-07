@@ -17,7 +17,7 @@ namespace Lettuce::Core
         std::vector<std::shared_ptr<IResource>> resourcePtrs;
         VkDeviceMemory _memory;
         ResourcePool() {}
-        ~ResourcePool();
+        void Release();
         void Map(uint32_t offset, uint32_t size);
         void SetData(void *data, uint32_t offset, uint32_t size);
         void UnMap();

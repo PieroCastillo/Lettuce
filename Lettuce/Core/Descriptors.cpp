@@ -104,7 +104,7 @@ Descriptors::Descriptors(const std::shared_ptr<Device> &device) : _device(device
 {
 }
 
-Descriptors::~Descriptors()
+void Descriptors::Release()
 {
     checkResult(vkResetDescriptorPool(_device->_device, _pool, 0));
     vkDestroyDescriptorPool(_device->_device, _pool, nullptr);

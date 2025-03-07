@@ -207,8 +207,8 @@ void main()
                                 },
                             }});
 
-        vertexShader.reset();
-        fragmentShader.reset();
+        vertexShader->Release();
+        fragmentShader->Release();
         /*setup line buffers*/
 
         LineBuffer1 = Buffer::CreateVertexBuffer<LineVertex>(device, {{glm::vec3(0)}, {glm::vec3(100, 0, 0)}});
@@ -240,8 +240,8 @@ void main()
                                         },
                                     }});
 
-        psLineShader.reset();
-        vsLineShader.reset();
+        psLineShader->Release();
+        vsLineShader->Release();
         camera = Lettuce::X3D::Camera3D::Camera3D(width, height);
         beforeResize();
     }
@@ -428,24 +428,24 @@ void main()
         vkFreeCommandBuffers(device->_device, pool, 1, &cmd);
         vkDestroyCommandPool(device->_device, pool, nullptr);
 
-        linespipeline.reset();
-        linesLayout.reset();
-        ;
-        LineBuffer1.reset();
-        LineBuffer2.reset();
-        LineBuffer3.reset();
+        linespipeline->Release();
+        linesLayout->Release();
+        
+        LineBuffer1->Release();
+        LineBuffer2->Release();
+        LineBuffer3->Release();
 
-        pipeline.reset();
-        connector.reset();
-        descriptor.reset();
+        pipeline->Release();
+        connector->Release();
+        descriptor->Release();
 
         uniformBuffer->Unmap();
-        uniformBuffer.reset();
-        vertexBuffer.reset();
-        indexBuffer.reset();
-        renderFinished.reset();
+        uniformBuffer->Release();
+        vertexBuffer->Release();
+        indexBuffer->Release();
+        renderFinished->Release();
         renderpass->DestroyFramebuffers();
-        renderpass.reset();
+        renderpass->Release();
     }
 
     void genScene()

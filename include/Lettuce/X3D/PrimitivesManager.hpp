@@ -22,6 +22,6 @@ namespace Lettuce::X3D
     public:
     PrimitiveManager(const std::shared_ptr<Device> &device);
     std::shared_ptr<BufferResource> TransferToDeviceMemory(std::vector<Primitive> primitives);
-    ~PrimitiveManager();
+    void Release();
     };
 }

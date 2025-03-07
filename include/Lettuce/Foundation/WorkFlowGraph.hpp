@@ -61,7 +61,7 @@ namespace Lettuce::Foundation
         std::vector<std::thread> threads;
 
         WorkFlowGraph(const std::shared_ptr<Device> &device, const std::shared_ptr<RenderPass> &renderPass, uint32_t threads);
-        ~WorkFlowGraph();
+        void Release();
 
         // add resources
         void AddBuffer(const std::shared_ptr<BufferResource> &buffer, uint32_t offset, uint32_t size);

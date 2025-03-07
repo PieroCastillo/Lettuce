@@ -43,7 +43,7 @@ namespace Lettuce::Core
         VkFence _fence;
 
         Swapchain(const std::shared_ptr<Device> &device, uint32_t initialWidth, uint32_t initialHeight);
-        ~Swapchain();
+        void Release();
 
         void SetResizeFunc(std::function<std::tuple<uint32_t, uint32_t>(void)> call, std::function<void(void)> postFunc);
 

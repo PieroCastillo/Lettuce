@@ -212,7 +212,7 @@ void ResourcePool::AddResource(const std::shared_ptr<IResource> &resourcePtr)
     resourcePtrs.push_back(resourcePtr);
 }
 
-ResourcePool::~ResourcePool()
+void ResourcePool::Release()
 {
     vkFreeMemory(_device->_device, _memory, nullptr);
 }

@@ -20,6 +20,6 @@ namespace Lettuce::Core
                    SamplerAddressMode addressModeV = SamplerAddressMode::Repeat,
                    SamplerAddressMode addressModeW = SamplerAddressMode::Repeat);
 
-        ~Sampler();
+        void Release();
     };
 }

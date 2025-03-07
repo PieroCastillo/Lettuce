@@ -195,7 +195,7 @@ void Swapchain::Resize(uint32_t newWidth, uint32_t newHeight)
     createImageViews();
 }
 
-Swapchain::~Swapchain()
+void Swapchain::Release()
 {
     for (auto imageView : swapChainImageViews)
     {

@@ -53,7 +53,7 @@ namespace Lettuce::Core
                         uint32_t descriptorCount);
 
         Descriptors(const std::shared_ptr<Device> &device);
-        ~Descriptors();
+        void Release();
 
         void Assemble(uint32_t maxSets = 16);
 

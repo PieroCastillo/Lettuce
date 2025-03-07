@@ -195,7 +195,7 @@ RenderPass::RenderPass(const std::shared_ptr<Device> &device) : _device(device)
 {
 }
 
-RenderPass::~RenderPass()
+void RenderPass::Release()
 {
     vkDestroyRenderPass(_device->_device, _renderPass, nullptr);
     attachments.clear();

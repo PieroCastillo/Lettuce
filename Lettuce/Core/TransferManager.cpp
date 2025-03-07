@@ -32,7 +32,7 @@ TransferManager::TransferManager(const std::shared_ptr<Device> &device) : _devic
 
     transferFinished = std::make_shared<Semaphore>(device, transferFinishedValue);
 }
-TransferManager::~TransferManager()
+void TransferManager::Release()
 {
     vkFreeCommandBuffers(_device->_device, cmdPool, 1, &cmd);
     vkDestroyCommandPool(_device->_device, cmdPool, nullptr);

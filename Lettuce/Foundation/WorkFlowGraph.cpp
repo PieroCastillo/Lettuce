@@ -54,7 +54,7 @@ WorkFlowGraph::WorkFlowGraph(const std::shared_ptr<Device> &device, const std::s
     }
 }
 
-WorkFlowGraph::~WorkFlowGraph()
+void WorkFlowGraph::Release()
 {
     for (int i = 0; i < _threads; i++)
     {

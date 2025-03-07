@@ -42,7 +42,7 @@ ImageViewResource::ImageViewResource(const std::shared_ptr<Device> &device, cons
     checkResult(vkCreateImageView(_device->_device, &imageViewCI, nullptr, &_imageView));
 }
 
-ImageViewResource::~ImageViewResource()
+void ImageViewResource::Release()
 {
     vkDestroyImageView(_device->_device, _imageView, nullptr);
 }

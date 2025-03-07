@@ -166,7 +166,7 @@ GraphicsPipeline::GraphicsPipeline(const std::shared_ptr<Device> &device,
 {
 }
 
-GraphicsPipeline::~GraphicsPipeline()
+void GraphicsPipeline::Release()
 {
     vkDestroyPipeline(_device->_device, _pipeline, nullptr);
 }

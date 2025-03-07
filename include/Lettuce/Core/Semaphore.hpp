@@ -19,7 +19,7 @@ namespace Lettuce::Core
         // uint64_t currentValue;
 
         Semaphore(const std::shared_ptr<Device> &device, uint64_t initialValue);
-        ~Semaphore();
+        void Release();
         void Wait(uint64_t value);
         void Signal(uint64_t signalValue);
         static std::vector<std::shared_ptr<Semaphore>> CreateSemaphores(const std::shared_ptr<Device> &device, uint32_t semaphoresCount);

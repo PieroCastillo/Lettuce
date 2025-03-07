@@ -110,6 +110,6 @@ namespace Lettuce::Core
 
         void Wait();
 
-        ~Device();
+        void Release();
     };
 }

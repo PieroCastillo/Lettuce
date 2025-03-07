@@ -144,7 +144,7 @@ Instance::Instance(std::string appName, Version appVersion, std::vector<char *> 
     }
 }
 
-Instance::~Instance()
+void Instance::Release()
 {
     if (isSurfaceCreated)
     {

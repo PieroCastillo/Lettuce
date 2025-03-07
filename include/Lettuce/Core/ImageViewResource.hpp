@@ -21,6 +21,6 @@ namespace Lettuce::Core
 
         ImageViewResource(const std::shared_ptr<Device> &device, const std::shared_ptr<ImageResource> &image, std::shared_ptr<ImageResource> resource, VkImageViewType viewType = VK_IMAGE_VIEW_TYPE_2D);
 
-        ~ImageViewResource();
+        void Release();
     };
 }

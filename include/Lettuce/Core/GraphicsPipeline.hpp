@@ -111,7 +111,7 @@ namespace Lettuce::Core
                          const std::shared_ptr<RenderPass> &renderpass);
         // maybe a build() or construct() ?
         //  solution: Assemble(...)
-        ~GraphicsPipeline();
+        void Release();
 
         void Assemble(uint32_t subpassIndex, const PipelineBuildData &pipelineData);
     };

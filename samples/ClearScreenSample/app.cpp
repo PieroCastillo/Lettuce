@@ -237,9 +237,9 @@ public:
         vkDestroyCommandPool(device->_device, pool, nullptr);
 
        
-        renderFinished.reset();
+        renderFinished->Release();
         renderpass->DestroyFramebuffers();
-        renderpass.reset();
+        renderpass->Release();
     }
 
     void genScene()

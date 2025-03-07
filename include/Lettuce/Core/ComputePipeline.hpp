@@ -19,6 +19,6 @@ namespace Lettuce::Core
 
         ComputePipeline(const std::shared_ptr<Device> &device, const std::shared_ptr<PipelineLayout> &connector, const std::shared_ptr<ShaderModule> &shader);
 
-        ~ComputePipeline();
+        void Release();
     };
 }

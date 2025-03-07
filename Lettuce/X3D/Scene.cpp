@@ -158,7 +158,7 @@ void Lettuce::X3D::Scene::Release()
 {
     for (auto &buffer : _buffers)
     {
-        buffer.reset(); // delete all references
+        buffer->Release(); // delete all references
     }
-    _buffersPool.reset();
+    _buffersPool->Release();
 }

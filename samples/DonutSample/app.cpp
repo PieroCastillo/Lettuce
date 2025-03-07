@@ -217,8 +217,8 @@ void main()
         transfer->TransferAll();
 
         // release host resources
-        hostBuffer.reset();
-        hostResources.reset();
+        hostBuffer->Release();
+        hostResources->Release();
 
         // create coherent resources
         coherentResources = std::make_shared<ResourcePool>();
@@ -261,8 +261,8 @@ void main()
                                 },
                             }});
 
-        vertexShader.reset();
-        fragmentShader.reset();
+        vertexShader->Release();
+        fragmentShader->Release();
 
         /*setup pipeline for lines*/
         vsLineShader = std::make_shared<ShaderModule>(device, compiler, vsLineShaderText, "main", "vsLine.glsl", PipelineStage::Vertex, true);
@@ -290,8 +290,8 @@ void main()
                                         },
                                     }});
 
-        psLineShader.reset();
-        vsLineShader.reset();
+        psLineShader->Release();
+        vsLineShader->Release();
         camera = Lettuce::X3D::Camera3D::Camera3D(width, height);
         beforeResize();
     }
@@ -481,23 +481,23 @@ void main()
         vkFreeCommandBuffers(device->_device, pool, 1, &cmd);
         vkDestroyCommandPool(device->_device, pool, nullptr);
 
-        linespipeline.reset();
-        linesLayout.reset();
+        linespipeline->Release();
+        linesLayout->Release();
 
-        pipeline.reset();
-        connector.reset();
-        descriptor.reset();
+        pipeline->Release();
+        connector->Release();
+        descriptor->Release();
 
-        deviceBuffer.reset();
-        uniformBuffer.reset();
-        deviceResources.reset();
+        deviceBuffer->Release();
+        uniformBuffer->Release();
+        deviceResources->Release();
         coherentResources->UnMap();
-        coherentResources.reset();
-        transfer.reset();
+        coherentResources->Release();
+        transfer->Release();
 
-        renderFinished.reset();
+        renderFinished->Release();
         renderpass->DestroyFramebuffers();
-        renderpass.reset();
+        renderpass->Release();
     }
 
     void genTorus()

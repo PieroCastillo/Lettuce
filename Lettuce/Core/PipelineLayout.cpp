@@ -23,7 +23,7 @@ PipelineLayout::PipelineLayout(const std::shared_ptr<Device> &device) : _device(
    
 }
 
-PipelineLayout::~PipelineLayout()
+void PipelineLayout::Release()
 {
     vkDestroyPipelineLayout(_device->_device, _pipelineLayout, nullptr);
 }
