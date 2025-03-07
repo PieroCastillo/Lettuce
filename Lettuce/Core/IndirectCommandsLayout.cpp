@@ -13,14 +13,8 @@ using namespace Lettuce::Core;
 
 void IndirectCommandsLayout::Assemble() 
 {
-    // VkStructureType                            sType;
-    //     const void*                                pNext;
-    //     VkIndirectCommandsLayoutUsageFlagsEXT      flags;
-    //     VkShaderStageFlags                         shaderStages;
-    //     uint32_t                                   indirectStride;
-    //     VkPipelineLayout                           pipelineLayout;
-    //     uint32_t                                   tokenCount;
-    //     const VkIndirectCommandsLayoutTokenEXT*    pTokens;
+    // https://registry.khronos.org/vulkan/specs/latest/man/html/VkIndirectCommandsTokenTypeEXT.html token-commands relation
+
     VkIndirectCommandsLayoutCreateInfoEXT layoutCI = {
         .sType = VK_STRUCTURE_TYPE_INDIRECT_COMMANDS_LAYOUT_CREATE_INFO_EXT,
         // .pNext = ,
@@ -31,4 +25,9 @@ void IndirectCommandsLayout::Assemble()
         // .tokenCount = ,
         // .pTokens = ,
     };
+}
+
+void IndirectCommandsLayout::Release()
+{
+    vkDestroyIndirectCommandsLayoutEXT(_device->_device, _commandsLayout, nullptr);
 }

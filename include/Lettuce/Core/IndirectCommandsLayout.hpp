@@ -18,5 +18,6 @@ namespace Lettuce::Core
 
         IndirectCommandsLayout(const std::shared_ptr<Device> &device) : _device(device) {}
         void Assemble();
+        void Release();
     };
 }

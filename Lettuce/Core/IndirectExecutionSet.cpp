@@ -24,3 +24,23 @@ void IndirectExecutionSet::Assemble()
         // .info = ,
     };
 }
+
+void IndirectExecutionSet::Update(const std::vector<std::shared_ptr<Shader>> &shaders)
+{
+    std::vector<VkWriteIndirectExecutionSetShaderEXT> shaderWrites;
+    shaderWrites.reserve(shaders.size());
+
+    for (int i = 0; i < shaderWrites.size(); i++)
+    {
+        shaderWrites.push_back({
+            .sType = VK_STRUCTURE_TYPE_INDIRECT_EXECUTION_SET_SHADER_INFO_EXT,
+            .index = i,
+            .shader = shaders[i]->_shader,
+        });
+    }
+    vkUpdateIndirectExecutionSetShaderEXT(_device->_device, _executionSet, (uint32_t)shaderWrites.size(), shaderWrites.size());
+}
+
+void IndirectExecutionSet::Release(){
+    vkDestroyIndirectExecutionSetEXT(_device->_device, _executionSet, nullptr);
+}

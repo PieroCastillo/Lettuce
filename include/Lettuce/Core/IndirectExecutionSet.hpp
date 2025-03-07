@@ -7,6 +7,7 @@
 #include <memory>
 #include "Device.hpp"
 #include "Utils.hpp"
+#include "Shader.hpp"
 
 namespace Lettuce::Core
 {
@@ -18,5 +19,7 @@ namespace Lettuce::Core
 
         IndirectExecutionSet(const std::shared_ptr<Device>& device) : _device(device){}
         void Assemble();
+        void Update(const std::vector<std::shared_ptr<Shader>>& shaders);
+        void Release();
     };
 }
