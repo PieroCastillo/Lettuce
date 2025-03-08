@@ -27,6 +27,7 @@ namespace Lettuce::Core
         BufferResource(const std::shared_ptr<Device>& device, std::vector<BufferBlock> bufferBlocks);
         BufferResource(const std::shared_ptr<Device>& device, uint32_t size, VkBufferUsageFlags usage);
         void Release();
+        uint64_t GetAddress();
         ResourceType GetResourceType();
         ResourceLinearity GetResourceLinearity();
         VkMemoryRequirements GetResourceMemoryRequirements();

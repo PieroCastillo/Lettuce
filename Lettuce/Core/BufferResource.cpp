@@ -51,6 +51,16 @@ void BufferResource::Release()
     vkDestroyBuffer(_device->_device, _buffer, nullptr);
 }
 
+
+uint64_t BufferResource::GetAddress()
+{
+    VkBufferDeviceAddressInfo addressInfo = {
+        .sType = VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO,
+        .buffer = _buffer,
+    };
+    return (uint64_t)vkGetBufferDeviceAddress(_device->_device, addressInfo);
+}
+
 ResourceType BufferResource::GetResourceType()
 {
     return ResourceType::Buffer;
