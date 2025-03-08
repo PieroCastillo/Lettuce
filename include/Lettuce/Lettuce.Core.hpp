@@ -30,3 +30,5 @@
 #include "Core/Semaphore.hpp"
 #include "Core/ShaderModule.hpp"
 #include "Core/Swapchain.hpp"
+#include "Core/IndirectCommandsLayout.hpp"
+#include "Core/IndirectExecutionSet.hpp"
