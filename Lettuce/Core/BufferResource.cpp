@@ -58,7 +58,7 @@ uint64_t BufferResource::GetAddress()
         .sType = VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO,
         .buffer = _buffer,
     };
-    return (uint64_t)vkGetBufferDeviceAddress(_device->_device, addressInfo);
+    return (uint64_t)vkGetBufferDeviceAddress(_device->_device, &addressInfo);
 }
 
 ResourceType BufferResource::GetResourceType()

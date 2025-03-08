@@ -8,6 +8,7 @@
 #include "Lettuce/Core/Shader.hpp"
 #include "Lettuce/Core/Device.hpp"
 #include "Lettuce/Core/Utils.hpp"
+#include "Lettuce/Core/IndirectCommandsLayout.hpp"
 #include "Lettuce/Core/IndirectExecutionSet.hpp"
 
 using namespace Lettuce::Core;
@@ -33,7 +34,7 @@ void IndirectExecutionSet::Assemble(const std::vector<std::shared_ptr<Shader>> &
         .sType = VK_STRUCTURE_TYPE_INDIRECT_EXECUTION_SET_SHADER_INFO_EXT,
         .shaderCount = (uint32_t)initialShaders.size(),
         .pInitialShaders = shaders.data(),
-        .pSetLayoutInfos = &setLayouts, 
+        .pSetLayoutInfos = &setLayouts,
         .maxShaderCount = (uint32_t)maxShaderCount,
         .pushConstantRangeCount = (uint32_t)_pipelineLayout->pushConstants.size(),
         .pPushConstantRanges = _pipelineLayout->pushConstants.data(),
@@ -69,4 +70,18 @@ void IndirectExecutionSet::Update(const std::vector<std::shared_ptr<Shader>> &sh
 void IndirectExecutionSet::Release()
 {
     vkDestroyIndirectExecutionSetEXT(_device->_device, _executionSet, nullptr);
+}
+
+VkMemoryRequirements IndirectExecutionSet::GetRequirements(std::shared_ptr<IndirectCommandsLayout> layout, uint32_t maxSequenceCount, uint32_t maxDrawCount)
+{
+    VkGeneratedCommandsMemoryRequirementsInfoEXT info = {
+        .sType = VK_STRUCTURE_TYPE_GENERATED_COMMANDS_MEMORY_REQUIREMENTS_INFO_EXT,
+        .indirectExecutionSet = _executionSet,
+        .indirectCommandsLayout = layout->_commandsLayout,
+        .maxSequenceCount = maxSequenceCount,
+        .maxDrawCount = maxDrawCount,
+    };
+    VkMemoryRequirements2 reqs;
+    vkGetGeneratedCommandsMemoryRequirementsEXT(_device->_device, &info, &reqs);
+    return reqs.memoryRequirements;
 }
