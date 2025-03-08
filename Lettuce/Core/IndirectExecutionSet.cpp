@@ -42,11 +42,12 @@ void IndirectExecutionSet::Assemble(const std::vector<std::shared_ptr<Shader>> &
     VkIndirectExecutionSetInfoEXT info;
     info.pShaderInfo = &shadersInfo;
 
-    VkIndirectExecutionSetCreateInfoEXT executionsetCI = {
+    VkIndirectExecutionSetCreateInfoEXT executionSetCI = {
         .sType = VK_STRUCTURE_TYPE_INDIRECT_EXECUTION_SET_CREATE_INFO_EXT,
         .type = VK_INDIRECT_EXECUTION_SET_INFO_TYPE_SHADER_OBJECTS_EXT,
         .info = info,
     };
+    checkResult(vkCreateIndirectExecutionSetEXT(_device->_device, &executionSetCI, nullptr, &_executionSet));
 }
 
 void IndirectExecutionSet::Update(const std::vector<std::shared_ptr<Shader>> &shaders)
