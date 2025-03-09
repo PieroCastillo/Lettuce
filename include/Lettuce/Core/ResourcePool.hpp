@@ -6,10 +6,11 @@
 #include <vector>
 #include "IResource.hpp"
 #include "Device.hpp"
+#include "IReleasable.hpp"
 
 namespace Lettuce::Core
 {
-    class ResourcePool
+    class ResourcePool : public IReleasable
     {
     public:
         void *temp;

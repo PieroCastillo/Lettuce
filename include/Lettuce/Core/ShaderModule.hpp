@@ -6,11 +6,12 @@
 #include <vector>
 #include <string>
 #include "Device.hpp"
+#include "IReleasable.hpp"
 #include "Utils.hpp"
 
 namespace Lettuce::Core
 {
-    class ShaderModule
+    class ShaderModule : public IReleasable
     {
     public:
         std::shared_ptr<Device> _device;

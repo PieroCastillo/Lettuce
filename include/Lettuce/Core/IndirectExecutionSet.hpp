@@ -6,6 +6,7 @@
 #include <vector>
 #include <memory>
 #include "Device.hpp"
+#include "IReleasable.hpp"
 #include "Utils.hpp"
 #include "Shader.hpp"
 #include "PipelineLayout.hpp"
@@ -14,7 +15,7 @@
 
 namespace Lettuce::Core
 {
-    class IndirectExecutionSet
+    class IndirectExecutionSet : public IReleasable
     {
     public:
         VkIndirectExecutionSetEXT _executionSet;

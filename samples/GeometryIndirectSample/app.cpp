@@ -25,7 +25,20 @@ public:
     /* sync objects*/
     std::shared_ptr<Lettuce::Core::Semaphore> renderFinished;
     /* rendering objects */
-
+    std::shared_ptr<Descriptors> descriptors_genCommands;
+    std::shared_ptr<PipelineLayout> layout_genCommands;
+    std::shared_ptr<ComputePipeline> pipeline_genCommands; // generate the commands
+    std::shared_ptr<Descriptors> descriptors_bindable;
+    std::shared_ptr<PipelineLayout> layout_bindable;
+    std::vector<std::shared_ptr<Shader>> shaders_bindable;
+    std::shared_ptr<IndirectCommandsLayout> indirectCommandsLayout;
+    std::shared_ptr<IndirectExecutionSet> indirectExecutionSet;
+    std::shared_ptr<ResourcePool> pool_generatedCommands;
+    std::shared_ptr<ResourcePool> pool_preprocessCommands;
+    std::shared_ptr<BufferResource> buffer_generatedCommands;
+    std::shared_ptr<BufferResource> buffer_preprocessCommands;
+    uint32_t address_generatedCommands;
+    uint32_t address_preprocessCommands;
 
     struct DataUBO
     {
@@ -86,8 +99,16 @@ public:
     void createObjects()
     {
         renderFinished = std::make_shared<Lettuce::Core::Semaphore>(device, 0);
+
         buildCmds();
         genScene();
+
+        indirectCommandsLayout = std::make_shared<IndirectCommandsLayout>(device, layout_bindable);
+        indirectCommandsLayout->AddExecutionSetToken(VK_PIPELINE_STAGE_VERTEX_SHADER_BIT|VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 2); // bound to 2 shaders
+        indirectCommandsLayout->AddVertexBufferToken(0);
+        indirectCommandsLayout->AddIndexBufferToken();
+        indirectCommandsLayout->AddDrawIndexedToken();
+        indirectCommandsLayout->Assemble(VK_PIPELINE_STAGE_VERTEX_SHADER_BIT|VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, false);
 
         camera = Lettuce::X3D::Camera3D::Camera3D(width, height);
         beforeResize();
@@ -120,7 +141,6 @@ public:
         dataUBO.model = glm::mat4(1.0f);
         dataUBO.cameraPos = camera.eye;
         // dataUBO.cameraPos = glm::vec3(30);
-
     }
     void recordCmds()
     {
@@ -179,8 +199,32 @@ public:
 
         vkCmdBeginRenderPass(cmd, &renderPassBI, VkSubpassContents::VK_SUBPASS_CONTENTS_INLINE);
 
-        
-       
+        // gen commands
+        /*
+                vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_COMPUTE, layout_genCommands->_pipelineLayout, 0,
+                                        (uint32_t)descriptors_genCommands->_descriptorSets.size(),
+                                        descriptors_genCommands->_descriptorSets.data(), 0, nullptr);
+                vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_COMPUTE, pipeline_genCommands->_pipeline);
+                vkCmdDispatch(cmd, 1, 1, 0); // workgroup (4,4,0)
+        */
+        // execute commands
+        /*
+                VkGeneratedCommandsInfoEXT genCommandsI = {
+                    .sType = VK_STRUCTURE_TYPE_GENERATED_COMMANDS_INFO_EXT,
+                    .shaderStages = indirectCommandsLayout->_shaderStages,
+                    .indirectExecutionSet = indirectExecutionSet->_executionSet,
+                    .indirectCommandsLayout = indirectCommandsLayout->_commandsLayout,
+                    .indirectAddress = (VkDeviceAddress)address_generatedCommands,
+                    .indirectAddressSize = (VkDeviceSize)buffer_generatedCommands->_size,
+                    .preprocessAddress = (VkDeviceAddress)address_preprocessCommands,
+                    .preprocessSize = (VkDeviceSize)buffer_preprocessCommands->_size,
+                    .maxSequenceCount = 4,
+                    // .sequenceCountAddress;
+                    .maxDrawCount = 4,
+                };
+
+        vkCmdExecuteGeneratedCommandsEXT(cmd, VK_FALSE, &genCommandsI);
+ */
         vkCmdEndRenderPass(cmd);
 
         checkResult(vkEndCommandBuffer(cmd));
@@ -237,7 +281,6 @@ public:
         vkFreeCommandBuffers(device->_device, pool, 1, &cmd);
         vkDestroyCommandPool(device->_device, pool, nullptr);
 
-       
         renderFinished->Release();
         renderpass->DestroyFramebuffers();
         renderpass->Release();
@@ -248,14 +291,13 @@ public:
         /*geometries*/
         std::vector<Geometries::Sphere> spheres;
     }
-
 };
 
 int main()
 {
     GeometrySample app;
-    app.appName = "Geometry Sample";
-    app.title = "Geometry Sample";
+    app.appName = "Geometry Indirect Sample";
+    app.title = "Geometry Indirect Sample";
     app.features = {
         .FragmentShadingRate = false,
         .PresentWait = false,

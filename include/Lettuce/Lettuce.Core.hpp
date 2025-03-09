@@ -1,6 +1,7 @@
 #include "Core/common.hpp"
 #include "Core/Version.hpp"
 #include "Core/Utils.hpp"
+#include "Core/IReleasable.hpp"
 
 // shaders langs compilers
 #include "Core/Compilers/ICompiler.hpp"

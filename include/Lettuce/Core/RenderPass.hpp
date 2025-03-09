@@ -8,6 +8,7 @@
 #include <memory>
 #include <tuple>
 #include "Device.hpp"
+#include "IReleasable.hpp"
 
 namespace Lettuce::Core
 {
@@ -26,7 +27,7 @@ namespace Lettuce::Core
      * renderPass.DestroyFrambuffers()
      * renderPass.Destroy() //destroy and clear internal objects
      */
-    class RenderPass
+    class RenderPass : public IReleasable
     {
     private:
         std::map<uint32_t, std::tuple<AttachmentType, VkAttachmentDescription, VkImageLayout>> attachments;

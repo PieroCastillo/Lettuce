@@ -49,7 +49,7 @@ add_executable(tester
 add_executable(loadModel
                 samples/LoadModel/app.cpp)
 add_executable(geometry
-                samples/GeometrySample/app.cpp)
+                samples/GeometryIndirectSample/app.cpp)
 target_include_directories(DonutSample PUBLIC samples/SampleFramework)
 target_include_directories(loadModel PUBLIC samples/SampleFramework)
 target_include_directories(geometry PUBLIC samples/SampleFramework)

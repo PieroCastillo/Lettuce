@@ -73,3 +73,8 @@ void Shader::Assemble(const VkShaderStageFlagBits &stage, const std::vector<uint
         free(data);
     }
 }
+
+void Shader::Release()
+{
+    vkDestroyShaderEXT(_device->_device, _shader, nullptr);
+}

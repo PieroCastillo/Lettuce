@@ -7,6 +7,7 @@
 #include <vector>
 #include <memory>
 #include "Device.hpp"
+#include "IReleasable.hpp"
 #include "ShaderModule.hpp"
 #include "RenderPass.hpp"
 #include "Utils.hpp"
@@ -15,7 +16,7 @@
 namespace Lettuce::Core
 {
     // TODO: implement PipelineCache, ShaderStages, DynamicState
-    class GraphicsPipeline
+    class GraphicsPipeline : public IReleasable
     {
     public:
         struct PipelineBuildData

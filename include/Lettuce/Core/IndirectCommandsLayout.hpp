@@ -6,17 +6,19 @@
 #include <vector>
 #include <memory>
 #include "Device.hpp"
+#include "IReleasable.hpp"
 #include "Utils.hpp"
 #include "PipelineLayout.hpp"
 
 namespace Lettuce::Core
 {
-    class IndirectCommandsLayout
+    class IndirectCommandsLayout : public IReleasable
     {
         uint32_t currentOffset = 0;
         std::vector<VkIndirectCommandsLayoutTokenEXT> tokens;
 
     public:
+        VkShaderStageFlags _shaderStages;
         VkIndirectCommandsLayoutEXT _commandsLayout;
         std::shared_ptr<Device> _device;
         std::shared_ptr<PipelineLayout> _pipelineLayout;

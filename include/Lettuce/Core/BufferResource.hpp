@@ -7,6 +7,7 @@
 #include <memory>
 #include "IResource.hpp"
 #include "Device.hpp"
+#include "IReleasable.hpp"
 
 namespace Lettuce::Core
 {
@@ -17,7 +18,7 @@ namespace Lettuce::Core
         VkBufferUsageFlagBits usage;
     };
 
-    class BufferResource : public IResource
+    class BufferResource : public IResource, public IReleasable
     {
     public:
         VkBuffer _buffer;

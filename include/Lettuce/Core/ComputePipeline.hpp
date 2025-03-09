@@ -5,12 +5,13 @@
 #include <iostream>
 #include <memory>
 #include "Device.hpp"
+#include "IReleasable.hpp"
 #include "PipelineLayout.hpp"
 #include "ShaderModule.hpp"
 
 namespace Lettuce::Core
 {
-    class ComputePipeline
+    class ComputePipeline : public IReleasable
     {
     public:
         std::shared_ptr<Device> _device;

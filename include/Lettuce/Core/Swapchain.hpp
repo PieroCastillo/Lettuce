@@ -8,11 +8,12 @@
 #include <tuple>
 #include <algorithm>
 #include "Device.hpp"
+#include "IReleasable.hpp"
 #include "Semaphore.hpp"
 
 namespace Lettuce::Core
 {
-    class Swapchain
+    class Swapchain : public IReleasable
     {
     private:
         std::function<std::tuple<uint32_t, uint32_t>(void)> _func;

@@ -6,6 +6,7 @@
 #include <vector>
 #include <memory>
 #include "Device.hpp"
+#include "IReleasable.hpp"
 #include "Utils.hpp"
 
 namespace Lettuce::Core

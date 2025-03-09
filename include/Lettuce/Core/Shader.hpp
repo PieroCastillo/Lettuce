@@ -6,13 +6,14 @@
 #include <vector>
 #include <memory>
 #include "Device.hpp"
+#include "IReleasable.hpp"
 #include "Descriptors.hpp"
 #include "PipelineLayout.hpp"
 #include "Utils.hpp"
 
 namespace Lettuce::Core
 {
-    class Shader
+    class Shader : public IReleasable
     {
     private:
         std::vector<VkSpecializationMapEntry> entries;
@@ -28,6 +29,8 @@ namespace Lettuce::Core
         Shader(const std::shared_ptr<Device> &device, const std::shared_ptr<PipelineLayout> &layout, const std::shared_ptr<Descriptors> &descriptors) : _device(device), _layout(layout), _descriptors(descriptors)
         {
         }
+
+        void Release();
 
         void Assemble(const VkShaderStageFlagBits &stage, const std::vector<uint32_t> &code);
 

@@ -8,10 +8,11 @@
 #include <memory>
 #include <algorithm>
 #include "Device.hpp"
+#include "IReleasable.hpp"
 
 namespace Lettuce::Core
 {
-    class Semaphore
+    class Semaphore : public IReleasable
     {
     public:
         std::shared_ptr<Device> _device;

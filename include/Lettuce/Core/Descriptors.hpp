@@ -9,6 +9,7 @@
 #include <tuple>
 #include <memory>
 #include "Device.hpp"
+#include "IReleasable.hpp"
 #include "Sampler.hpp"
 #include "Utils.hpp"
 #include "BufferResource.hpp"
@@ -25,7 +26,7 @@ namespace Lettuce::Core
         uint32_t descriptorCount;
     };
 
-    class Descriptors
+    class Descriptors : public IReleasable
     {
     private:
         struct WriteFieldsInfo

@@ -6,10 +6,11 @@
 #include <vector>
 #include <string>
 #include "Utils.hpp"
+#include "IReleasable.hpp"
 
 namespace Lettuce::Core
 {
-    class Sampler
+    class Sampler : public IReleasable
     {
     public:
         std::shared_ptr<Device> _device;

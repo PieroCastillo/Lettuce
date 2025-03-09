@@ -5,12 +5,13 @@
 #include <iostream>
 #include <vector>
 #include "Device.hpp"
+#include "IReleasable.hpp"
 #include "Descriptors.hpp"
 #include <memory>
 
 namespace Lettuce::Core
 {
-    class PipelineLayout
+    class PipelineLayout : public IReleasable
     {
     public:
         std::shared_ptr<Device> _device;

@@ -4,6 +4,7 @@
 #pragma once
 #include <memory>
 #include "Device.hpp"
+#include "IReleasable.hpp"
 #include "BufferResource.hpp"
 #include "Semaphore.hpp"
 #include "ResourcePool.hpp"
@@ -26,7 +27,7 @@ namespace Lettuce::Core
     /// are recorded into a Command Buffer using AddTransfer()
     ///
     /// To execute the transferences use TransferAll()
-    class TransferManager
+    class TransferManager : public IReleasable
     {
     public:
         std::shared_ptr<Device> _device;

@@ -9,13 +9,14 @@
 #include <vector>
 #include <cstdint>
 #include <memory>
+#include "IReleasable.hpp"
 #include "GPU.hpp"
 #include "Utils.hpp"
 #include "Version.hpp"
 
 namespace Lettuce::Core
 {
-    class Instance
+    class Instance : public IReleasable
     {
     private:
         bool isSurfaceCreated = false;

@@ -6,10 +6,11 @@
 #include <vector>
 #include "IResource.hpp"
 #include "Device.hpp"
+#include "IReleasable.hpp"
 
 namespace Lettuce::Core
 {
-    class ImageResource : public IResource
+    class ImageResource : public IResource, public IReleasable
     {
     public:
         std::shared_ptr<Device> _device;

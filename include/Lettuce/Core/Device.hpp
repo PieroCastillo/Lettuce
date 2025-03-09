@@ -27,7 +27,7 @@ namespace Lettuce::Core
         // bool DeviceGeneratedCommands; // required
     };
 
-    class Device
+    class Device : public IReleasable
     {
     private:
         std::vector<std::string> availableExtensionsNames;
