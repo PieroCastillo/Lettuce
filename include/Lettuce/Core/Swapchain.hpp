@@ -30,16 +30,12 @@ namespace Lettuce::Core
     public:
         std::shared_ptr<Device> _device;
         VkSwapchainKHR _swapchain = VK_NULL_HANDLE;
-        VkRenderPass _renderPass = VK_NULL_HANDLE;
-        // Texture _depthImage;
-        // TextureView _depthImageView;
         std::vector<VkImage> swapChainImages;
         std::vector<VkImageView> swapChainImageViews;
         uint32_t index;
         uint32_t width;
         uint32_t height;
         VkFormat imageFormat;
-        // VkFormat depthFormat;
         VkExtent2D extent;
         VkFence _fence;
 

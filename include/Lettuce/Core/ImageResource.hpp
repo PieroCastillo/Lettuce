@@ -26,6 +26,7 @@ namespace Lettuce::Core
                     uint32_t layerCount,
                     VkFormat format,
                     VkImageLayout initialLayout);
+        void Release();
                     
         VkFormat GetFormat();
         ResourceType GetResourceType();

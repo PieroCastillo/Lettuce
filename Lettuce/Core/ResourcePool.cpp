@@ -52,7 +52,7 @@ else
 
         measuredSize += resources[n-1].size
 */
-void ResourcePool::Bind(const std::shared_ptr<Device> &device, VkMemoryPropertyFlags requiredFlags)
+void ResourcePool::Bind(const std::shared_ptr<Device> &device, VkMemoryPropertyFlags requiredFlags, uint32_t requiredMemoryTypeBits)
 {
     _device = device;
     uint64_t measuredSize = 0;
@@ -115,7 +115,7 @@ void ResourcePool::Bind(const std::shared_ptr<Device> &device, VkMemoryPropertyF
 
     for (int i = 0; i < resourcePtrs.size(); i++)
     {
-        memTypeBits = memTypeBits & memoryReqs[i].memoryTypeBits;
+        memTypeBits = memTypeBits & memoryReqs[i].memoryTypeBits & requiredMemoryTypeBits;
     }
 
     if (memTypeBits == 0)

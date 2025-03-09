@@ -72,7 +72,7 @@ void IndirectExecutionSet::Release()
     vkDestroyIndirectExecutionSetEXT(_device->_device, _executionSet, nullptr);
 }
 
-VkMemoryRequirements IndirectExecutionSet::GetRequirements(std::shared_ptr<IndirectCommandsLayout> layout, uint32_t maxSequenceCount, uint32_t maxDrawCount)
+VkMemoryRequirements IndirectExecutionSet::GetRequirements(const std::shared_ptr<IndirectCommandsLayout>& layout, uint32_t maxSequenceCount, uint32_t maxDrawCount)
 {
     VkGeneratedCommandsMemoryRequirementsInfoEXT info = {
         .sType = VK_STRUCTURE_TYPE_GENERATED_COMMANDS_MEMORY_REQUIREMENTS_INFO_EXT,

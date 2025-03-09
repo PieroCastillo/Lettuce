@@ -7,6 +7,7 @@
 #include <set>
 #include <vector>
 #include <string>
+#include "IReleasable.hpp"
 #include "Instance.hpp"
 #include "GPU.hpp"
 

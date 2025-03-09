@@ -36,6 +36,7 @@ void TransferManager::Release()
 {
     vkFreeCommandBuffers(_device->_device, cmdPool, 1, &cmd);
     vkDestroyCommandPool(_device->_device, cmdPool, nullptr);
+    transferFinished->Release();
 }
 
 void TransferManager::Prepare()

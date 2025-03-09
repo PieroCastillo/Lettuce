@@ -10,16 +10,16 @@
 using namespace Lettuce::Core;
 
 ImageResource::ImageResource(const std::shared_ptr<Device> &device, uint32_t width, uint32_t height, uint32_t depth,
-              VkImageType type,
-              VkImageUsageFlags imageUsage,
-              uint32_t mipLevels,
-              uint32_t layerCount,
-              VkFormat format,
-              VkImageLayout initialLayout) : _device(device),
-                                             _layout(initialLayout),
-                                             _mipLevels(mipLevels),
-                                             _layerCount(layerCount),
-                                             _format(format)
+                             VkImageType type,
+                             VkImageUsageFlags imageUsage,
+                             uint32_t mipLevels,
+                             uint32_t layerCount,
+                             VkFormat format,
+                             VkImageLayout initialLayout) : _device(device),
+                                                            _layout(initialLayout),
+                                                            _mipLevels(mipLevels),
+                                                            _layerCount(layerCount),
+                                                            _format(format)
 {
 
     VkImageCreateInfo imageCI = {
@@ -38,6 +38,12 @@ ImageResource::ImageResource(const std::shared_ptr<Device> &device, uint32_t wid
 
     checkResult(vkCreateImage(_device->_device, &imageCI, nullptr, &_image));
 }
+
+void ImageResource::Release()
+{
+    vkDestroyImage(_device->_device, _image, nullptr);
+}
+
 ResourceType ImageResource::GetResourceType()
 {
     return ResourceType::Image;

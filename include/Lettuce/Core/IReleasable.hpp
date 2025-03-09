@@ -7,6 +7,7 @@ namespace Lettuce::Core
 {
     class IReleasable
     {
-        virtual void Release();
+    public:
+        virtual void Release() = 0;
     };
 }

@@ -27,6 +27,6 @@ namespace Lettuce::Core
         void Assemble(const std::vector<std::shared_ptr<Shader>> &initialShaders, uint32_t maxShaderCount = 16);
         void Update(const std::vector<std::shared_ptr<Shader>> &shaders);
         void Release();
-        VkMemoryRequirements GetRequirements(std::shared_ptr<IndirectCommandsLayout> layout, uint32_t maxSequenceCount, uint32_t maxDrawCount);
+        VkMemoryRequirements GetRequirements(const std::shared_ptr<IndirectCommandsLayout>& layout, uint32_t maxSequenceCount, uint32_t maxDrawCount);
     };
 }

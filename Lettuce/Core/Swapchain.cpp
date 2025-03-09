@@ -203,7 +203,6 @@ void Swapchain::Release()
     }
     swapChainImageViews.clear();
     swapChainImages.clear();
-    vkDestroyRenderPass(_device->_device, _renderPass, nullptr);
     vkDestroyFence(_device->_device, _fence, nullptr);
     vkDestroySwapchainKHR(_device->_device, _swapchain, nullptr);
 }

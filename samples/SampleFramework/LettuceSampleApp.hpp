@@ -43,6 +43,7 @@ protected:
         std::vector<char *> reqExts = {};
         instance = std::make_shared<Lettuce::Core::Instance>(appName, version, reqExts, true);
         instance->CreateSurface(glfwGetWin32Window(window), GetModuleHandle(nullptr));
+        
         auto gpus = instance->getGPUs();
 
         // create device
@@ -51,10 +52,16 @@ protected:
         features.MemoryBudget = false;
         device = std::make_shared<Lettuce::Core::Device>(instance, gpus.front(), features);
         swapchain = std::make_shared<Lettuce::Core::Swapchain>(device, width, height);
+
+        releaseQueue.Push(instance);
+        releaseQueue.Push(device);
+        releaseQueue.Push(swapchain);
+
         createRenderPass();
         swapchain->SetResizeFunc([this]()
                                  { return resizeCall(); }, [this]()
                                  { onResize(); });
+                                 
     }
 
     virtual void createRenderPass()
@@ -98,9 +105,7 @@ protected:
     }
     void destroyLettuce()
     {
-        swapchain->Release();
-        device->Release();
-        instance->Release();
+        releaseQueue.ReleaseAll();
     }
 
     std::tuple<uint32_t, uint32_t> resizeCall()
@@ -230,6 +235,7 @@ public:
     std::string title = "Windows title";
     std::string appName = "Lettuce App";
     Lettuce::Core::Features features;
+    Lettuce::Core::ReleaseQueue releaseQueue;
     std::shared_ptr<Lettuce::Core::Instance> instance;
     std::shared_ptr<Lettuce::Core::Device> device;
     std::shared_ptr<Lettuce::Core::Swapchain> swapchain;
