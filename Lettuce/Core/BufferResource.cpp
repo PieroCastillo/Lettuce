@@ -51,7 +51,6 @@ void BufferResource::Release()
     vkDestroyBuffer(_device->_device, _buffer, nullptr);
 }
 
-
 uint64_t BufferResource::GetAddress()
 {
     VkBufferDeviceAddressInfo addressInfo = {
@@ -65,10 +64,12 @@ ResourceType BufferResource::GetResourceType()
 {
     return ResourceType::Buffer;
 }
+
 ResourceLinearity BufferResource::GetResourceLinearity()
 {
     return ResourceLinearity::Linear;
 }
+
 VkMemoryRequirements BufferResource::GetResourceMemoryRequirements()
 {
     VkMemoryRequirements memReqs;
