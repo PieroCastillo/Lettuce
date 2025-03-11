@@ -15,6 +15,7 @@ namespace Lettuce::Core
     class IndirectCommandsLayout : public IReleasable
     {
         uint32_t currentOffset = 0;
+        uint32_t size = 0;
         std::vector<VkIndirectCommandsLayoutTokenEXT> tokens;
 
     public:
@@ -27,6 +28,8 @@ namespace Lettuce::Core
             : _device(device), _pipelineLayout(pipelineLayout) {}
         void Assemble(VkShaderStageFlags shaderStages, bool manualPreprocessing);
         void Release();
+
+        uint32_t GetSize() { return size; }
 
         // Common Tokens
         void AddExecutionSetToken(VkShaderStageFlags shaderStages, uint32_t size);                // VK_INDIRECT_COMMANDS_TOKEN_TYPE_EXECUTION_SET_EXT

@@ -7,12 +7,16 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/ext/matrix_clip_space.hpp>
 
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
+
 #include <iostream>
 #include <vector>
 #include <cmath>
 #include <numbers>
 #include <tuple>
 #include <memory>
+#include <string>
 
 using namespace Lettuce::Core;
 using namespace Lettuce::X3D;
@@ -22,23 +26,42 @@ class GeometrySample : public LettuceSampleApp
 public:
     Lettuce::Core::Compilers::GLSLCompiler compiler;
     std::shared_ptr<Lettuce::Core::RenderPass> renderpass;
+    std::shared_ptr<TransferManager> manager;
     /* sync objects*/
     std::shared_ptr<Lettuce::Core::Semaphore> renderFinished;
     /* rendering objects */
-    std::shared_ptr<Descriptors> descriptors_genCommands;
-    std::shared_ptr<PipelineLayout> layout_genCommands;
-    std::shared_ptr<ComputePipeline> pipeline_genCommands; // generate the commands
+    std::shared_ptr<Sampler> sampler;
     std::shared_ptr<Descriptors> descriptors_bindable;
     std::shared_ptr<PipelineLayout> layout_bindable;
     std::vector<std::shared_ptr<Shader>> shaders_bindable;
-    std::shared_ptr<IndirectCommandsLayout> indirectCommandsLayout;
-    std::shared_ptr<IndirectExecutionSet> indirectExecutionSet;
+    std::shared_ptr<ResourcePool> pool_images;
+    std::vector<std::shared_ptr<ImageResource>> images_bindable;
+    /* required stuff to generate commands*/
+    std::shared_ptr<Descriptors> descriptors_genCommands;
+    std::shared_ptr<PipelineLayout> layout_genCommands;
+    std::shared_ptr<ComputePipeline> pipeline_genCommands; // generate the commands
     std::shared_ptr<ResourcePool> pool_generatedCommands;
     std::shared_ptr<ResourcePool> pool_preprocessCommands;
     std::shared_ptr<BufferResource> buffer_generatedCommands;
     std::shared_ptr<BufferResource> buffer_preprocessCommands;
+    std::shared_ptr<IndirectCommandsLayout> indirectCommandsLayout;
+    std::shared_ptr<IndirectExecutionSet> indirectExecutionSet;
+
     uint32_t address_generatedCommands;
     uint32_t address_preprocessCommands;
+    const uint32_t sequences = 16;
+    const uint32_t draws = 16;
+    const std::string compShaderText = "";
+    const std::string vertexShaderText = "";
+    const std::string frag1ShaderText = "";
+    const std::string frag2ShaderText = "";
+    const std::string frag3ShaderText = "";
+    const std::string frag4ShaderText = "";
+    struct imgData
+    {
+        int texWidth, texHeight, texChannels;
+        stbi_uc *pixels;
+    };
 
     struct DataUBO
     {
@@ -96,19 +119,181 @@ public:
         renderpass->BuildFramebuffers();
     }
 
-    void createObjects()
+    void createImages()
     {
-        renderFinished = std::make_shared<Lettuce::Core::Semaphore>(device, 0);
+        /*
+        - load images
+        - copy images to staging images
+        - transfer to device-allocated images
+        */
+        auto pool_temp = std::make_shared<ResourcePool>();
+        pool_images = std::make_shared<ResourcePool>();
+        std::vector<std::string> filenames = {"texture0.jpg", "texture2.jpg", "texture3.jpg", "texture4.jpg"};
+        std::vector<imgData> imgDatas;
+        std::vector<std::shared_ptr<ImageResource>> imgs_temp;
+        std::vector<std::pair<void *, uint32_t>> imgPtrs;
+        for (int i = 0; i < 4; i++)
+        {
+            int texWidth, texHeight, texChannels;
+            stbi_uc *pixels = stbi_load(filenames[i].c_str(), &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
+            imgDatas.push_back({texWidth, texHeight, texChannels, pixels});
+            imgPtrs.push_back({(void *)pixels, 4 * 4 * texHeight * texWidth});
 
-        buildCmds();
-        genScene();
+            auto img_temp = std::make_shared<ImageResource>(device,
+                                                            (uint32_t)texWidth,
+                                                            (uint32_t)texHeight,
+                                                            1, VkImageType::VK_IMAGE_TYPE_2D, VK_IMAGE_USAGE_TRANSFER_SRC_BIT,
+                                                            1, 1, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_PREINITIALIZED);
+
+            std::cout << "temp img #" << i << std::endl;
+
+            auto img_dst = std::make_shared<ImageResource>(device,
+                                                           (uint32_t)texWidth,
+                                                           (uint32_t)texHeight,
+                                                           1, VkImageType::VK_IMAGE_TYPE_2D, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
+                                                           1, 1, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_PREINITIALIZED);
+            std::cout << "bind img #" << i << std::endl;
+            imgs_temp.push_back(img_temp);
+            pool_temp->AddResource(img_temp);
+            pool_images->AddResource(img_dst);
+        }
+        pool_temp->Bind(device, VK_MEMORY_PROPERTY_HOST_CACHED_BIT);
+        pool_images->Bind(device, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+
+        auto size = pool_temp->GetSize();
+        auto [dataPtr, sz] = AllocAllInOne(imgPtrs);
+        pool_temp->Map(0, pool_temp->GetSize());
+        pool_temp->SetData(dataPtr, 0, size);
+        pool_temp->UnMap();
+
+        manager->Prepare();
+        for (int i = 0; i < 4; i++)
+        {
+            VkImageSubresourceLayers srcMask = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0};
+            VkImageSubresourceLayers dstMask = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0};
+            manager->AddTransference(srcMask, dstMask, imgs_temp[i], images_bindable[i], TransferType::HostToDevice);
+        }
+        manager->TransferAll();
+
+        for (auto &img : imgs_temp)
+        {
+            img->Release();
+        }
+        free(dataPtr);
+        for (auto &[ptr, _] : imgPtrs)
+        {
+            free(ptr);
+        }
+        pool_temp->Release();
+
+        releaseQueue.Push(pool_images);
+        for (auto &img : images_bindable)
+        {
+            releaseQueue.Push(img);
+        }
+    }
+
+    void createSampler()
+    {
+        sampler = std::make_shared<Sampler>(device);
+        releaseQueue.Push(sampler);
+    }
+
+    void createIndirectCommandsGenerator()
+    {
+        descriptors_genCommands = std::make_shared<Descriptors>(device);
+        descriptors_genCommands->AddBinding(0, 0, DescriptorType::SampledImage, PipelineStage::Compute, 4);  // four different images
+        descriptors_genCommands->AddBinding(0, 1, DescriptorType::StorageBuffer, PipelineStage::Compute, 1); // indirect buffer
+        descriptors_genCommands->Assemble();
+        // TODO: update descriptors
+        layout_genCommands = std::make_shared<PipelineLayout>(device, descriptors_genCommands);
+        layout_genCommands->Assemble();
+
+        auto compShader = std::make_shared<ShaderModule>(device, compiler, compShaderText, "main", "compute.glsl", PipelineStage::Compute, true);
+        pipeline_genCommands = std::make_shared<ComputePipeline>(device, layout_genCommands, compShader);
+        compShader->Release();
+
+        releaseQueue.Push(descriptors_genCommands);
+        releaseQueue.Push(layout_genCommands);
+        releaseQueue.Push(pipeline_genCommands);
+    }
+
+    void createIndirectObjects()
+    {
+        descriptors_bindable = std::make_shared<Descriptors>(device);
+        descriptors_bindable->AddBinding(0, 0, DescriptorType::UniformBuffer, PipelineStage::Vertex, 1);
+        descriptors_bindable->AddBinding(0, 1, DescriptorType::SampledImage, PipelineStage::Fragment, 1);
+        // TODO: update descriptors
+        layout_bindable = std::make_shared<PipelineLayout>(device, descriptors_bindable);
+        layout_bindable->Assemble();
+
+        const std::vector<std::string> shadersText = {frag1ShaderText, frag2ShaderText, frag3ShaderText, frag4ShaderText};
+        // melocotón pastel, amarillo pastel, rosa suave pastel, salmón claro pastel
+        const std::vector<glm::vec3> shadersConst = {{0.98, 0.75, 0.65}, {0.95, 0.82, 0.60}, {0.99, 0.70, 0.70}, {0.92, 0.68, 0.55}};
+
+        auto vertShader = std::make_shared<Shader>(device, layout_bindable);
+        auto codeV = compiler.Compile(vertexShaderText, "vert.glsl", PipelineStage::Vertex, true);
+        vertShader->Assemble(VK_SHADER_STAGE_VERTEX_BIT, codeV);
+        shaders_bindable.push_back(vertShader);
+
+        for (int i = 1; i <= 4; i++)
+        {
+            auto fragShader = std::make_shared<Shader>(device, layout_bindable);
+            auto code = compiler.Compile(shadersText[i], "frag_" + std::to_string(i), PipelineStage::Fragment, true);
+            fragShader->AddConstant(0, sizeof(glm::vec3), (void *)&shadersConst[i]);
+            fragShader->Assemble(VK_SHADER_STAGE_FRAGMENT_BIT, code);
+            shaders_bindable.push_back(fragShader);
+        }
 
         indirectCommandsLayout = std::make_shared<IndirectCommandsLayout>(device, layout_bindable);
-        indirectCommandsLayout->AddExecutionSetToken(VK_PIPELINE_STAGE_VERTEX_SHADER_BIT|VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 2); // bound to 2 shaders
+        indirectCommandsLayout->AddExecutionSetToken(VK_PIPELINE_STAGE_VERTEX_SHADER_BIT | VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 2); // bound to 2 shaders
         indirectCommandsLayout->AddVertexBufferToken(0);
         indirectCommandsLayout->AddIndexBufferToken();
         indirectCommandsLayout->AddDrawIndexedToken();
-        indirectCommandsLayout->Assemble(VK_PIPELINE_STAGE_VERTEX_SHADER_BIT|VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, false);
+        indirectCommandsLayout->Assemble(VK_PIPELINE_STAGE_VERTEX_SHADER_BIT | VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, false);
+
+        indirectExecutionSet = std::make_shared<IndirectExecutionSet>(device, layout_bindable);
+        indirectExecutionSet->Assemble(shaders_bindable, (uint32_t)shaders_bindable.size());
+        auto reqs = indirectExecutionSet->GetRequirements(indirectCommandsLayout, sequences, draws);
+
+        buffer_preprocessCommands = std::make_shared<BufferResource>(device, reqs.size, VK_BUFFER_USAGE_2_PREPROCESS_BUFFER_BIT_EXT);
+        pool_preprocessCommands = std::make_shared<ResourcePool>();
+        pool_preprocessCommands->AddResource(buffer_preprocessCommands);
+        pool_preprocessCommands->Bind(device, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, reqs.memoryTypeBits);
+        address_preprocessCommands = buffer_preprocessCommands->GetAddress();
+
+        buffer_generatedCommands = std::make_shared<BufferResource>(device, sequences * indirectCommandsLayout->GetSize(), VK_BUFFER_USAGE_INDIRECT_BUFFER_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT);
+        pool_generatedCommands = std::make_shared<ResourcePool>();
+        pool_generatedCommands->AddResource(buffer_generatedCommands);
+        pool_generatedCommands->Bind(device, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+        address_generatedCommands = buffer_generatedCommands->GetAddress();
+
+        releaseQueue.Push(descriptors_bindable);
+        releaseQueue.Push(layout_bindable);
+        for (auto &shader : shaders_bindable)
+        {
+            releaseQueue.Push(shader);
+        }
+        releaseQueue.Push(indirectCommandsLayout);
+        releaseQueue.Push(indirectExecutionSet);
+        releaseQueue.Push(buffer_preprocessCommands);
+        releaseQueue.Push(pool_preprocessCommands);
+        releaseQueue.Push(buffer_generatedCommands);
+        releaseQueue.Push(pool_generatedCommands);
+    }
+    void createObjects()
+    {
+        renderFinished = std::make_shared<Lettuce::Core::Semaphore>(device, 0);
+        releaseQueue.Push(renderFinished);
+
+        manager = std::make_shared<TransferManager>(device);
+        releaseQueue.Push(manager);
+        buildCmds();
+        genScene();
+        createImages();
+        createSampler();
+        // createIndirectCommandsGenerator();
+        // createIndirectObjects();
 
         camera = Lettuce::X3D::Camera3D::Camera3D(width, height);
         beforeResize();
@@ -218,9 +403,9 @@ public:
                     .indirectAddressSize = (VkDeviceSize)buffer_generatedCommands->_size,
                     .preprocessAddress = (VkDeviceAddress)address_preprocessCommands,
                     .preprocessSize = (VkDeviceSize)buffer_preprocessCommands->_size,
-                    .maxSequenceCount = 4,
+                    .maxSequenceCount = 16,
                     // .sequenceCountAddress;
-                    .maxDrawCount = 4,
+                    .maxDrawCount = 16,
                 };
 
         vkCmdExecuteGeneratedCommandsEXT(cmd, VK_FALSE, &genCommandsI);

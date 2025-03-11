@@ -157,6 +157,7 @@ void ResourcePool::Bind(const std::shared_ptr<Device> &device, VkMemoryPropertyF
         .allocationSize = measuredSize,
         .memoryTypeIndex = memoryTypeIndex,
     };
+    poolSize = measuredSize; // set size for read only
 
     checkResult(vkAllocateMemory(device->_device, &memoryAI, nullptr, &_memory));
 

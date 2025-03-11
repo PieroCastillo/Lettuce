@@ -27,18 +27,20 @@ void Shader::AddConstant(uint32_t constantId, uint32_t size, void *data)
     currentOffset += size;
 }
 
-void Shader::Assemble(const VkShaderStageFlagBits &stage, const std::vector<uint32_t> &code)
+void Shader::Assemble(const VkShaderStageFlagBits &stage, const std::vector<uint32_t> &code, const VkShaderCreateFlagsEXT& flags)
 {
     VkShaderCreateInfoEXT shaderCI = {
         .sType = VK_STRUCTURE_TYPE_SHADER_CREATE_INFO_EXT,
+        .flags = flags,
         .stage = stage,
         .codeType = VK_SHADER_CODE_TYPE_SPIRV_EXT, // this is the most common format
         .codeSize = sizeof(uint32_t) * code.size(),
         .pCode = (void *)code.data(),
-        .setLayoutCount = (uint32_t)_descriptors->_layouts.size(),
-        .pSetLayouts = _descriptors->_layouts.data(),
+        .setLayoutCount = (uint32_t)_layout->_descriptors->_layouts.size(),
+        .pSetLayouts = _layout->_descriptors->_layouts.data(),
         .pushConstantRangeCount = (uint32_t)_layout->pushConstants.size(),
-        .pPushConstantRanges = _layout->pushConstants.data()};
+        .pPushConstantRanges = _layout->pushConstants.data(),
+    };
 
     // here we add the specialization constants
     void *data;

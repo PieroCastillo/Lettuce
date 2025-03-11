@@ -24,15 +24,14 @@ namespace Lettuce::Core
         VkShaderEXT _shader;
         std::shared_ptr<Device> _device;
         std::shared_ptr<PipelineLayout> _layout;
-        std::shared_ptr<Descriptors> _descriptors;
 
-        Shader(const std::shared_ptr<Device> &device, const std::shared_ptr<PipelineLayout> &layout, const std::shared_ptr<Descriptors> &descriptors) : _device(device), _layout(layout), _descriptors(descriptors)
+        Shader(const std::shared_ptr<Device> &device, const std::shared_ptr<PipelineLayout> &layout) : _device(device), _layout(layout)
         {
         }
 
         void Release();
 
-        void Assemble(const VkShaderStageFlagBits &stage, const std::vector<uint32_t> &code);
+        void Assemble(const VkShaderStageFlagBits &stage, const std::vector<uint32_t> &code, const VkShaderCreateFlagsEXT& flags = VK_SHADER_CREATE_INDIRECT_BINDABLE_BIT_EXT);
 
         void AddConstant(uint32_t constantId, uint32_t size, void *data);
     };

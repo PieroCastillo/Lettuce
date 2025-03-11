@@ -167,6 +167,7 @@ void main()
     void createObjects()
     {
         renderFinished = std::make_shared<Lettuce::Core::Semaphore>(device, 0);
+
         buildCmds();
         genTorus();
 
@@ -292,6 +293,38 @@ void main()
 
         psLineShader->Release();
         vsLineShader->Release();
+
+        // linespipeline->Release();
+        // linesLayout->Release();
+
+        // pipeline->Release();
+        // connector->Release();
+        // descriptor->Release();
+
+        // deviceBuffer->Release();
+        // uniformBuffer->Release();
+        // deviceResources->Release();
+        // coherentResources->UnMap();
+        // coherentResources->Release();
+        // transfer->Release();
+
+        // renderFinished->Release();
+        // renderpass->DestroyFramebuffers();
+        // renderpass->Release();
+
+        releaseQueue.PushWithBefore(renderpass, [&renderpass = this->renderpass]() { renderpass->DestroyFramebuffers(); });
+        releaseQueue.Push(renderFinished);
+        releaseQueue.Push(transfer);
+        releaseQueue.PushWithBefore(coherentResources, [&coherentResources = this->coherentResources]() { coherentResources->UnMap(); });
+        releaseQueue.Push(deviceResources);
+        releaseQueue.Push(uniformBuffer);
+        releaseQueue.Push(deviceBuffer);
+        releaseQueue.Push(descriptor);
+        releaseQueue.Push(connector);
+        releaseQueue.Push(pipeline);
+        releaseQueue.Push(linesLayout);
+        releaseQueue.Push(linespipeline);
+
         camera = Lettuce::X3D::Camera3D::Camera3D(width, height);
         beforeResize();
     }
@@ -480,24 +513,6 @@ void main()
     {
         vkFreeCommandBuffers(device->_device, pool, 1, &cmd);
         vkDestroyCommandPool(device->_device, pool, nullptr);
-
-        linespipeline->Release();
-        linesLayout->Release();
-
-        pipeline->Release();
-        connector->Release();
-        descriptor->Release();
-
-        deviceBuffer->Release();
-        uniformBuffer->Release();
-        deviceResources->Release();
-        coherentResources->UnMap();
-        coherentResources->Release();
-        transfer->Release();
-
-        renderFinished->Release();
-        renderpass->DestroyFramebuffers();
-        renderpass->Release();
     }
 
     void genTorus()

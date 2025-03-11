@@ -37,7 +37,7 @@ file(GLOB LETTUCE_SOURCES Lettuce/Core/*.cpp
 
 add_library(Lettuce)
 target_sources(Lettuce PRIVATE ${LETTUCE_SOURCES})
-target_include_directories(Lettuce PUBLIC include)
+target_include_directories(Lettuce PUBLIC include external/stb)
 # add_executable(ClearScreenSample
 #         samples/ClearScreenSample/app.cpp)
 add_executable(DonutSample

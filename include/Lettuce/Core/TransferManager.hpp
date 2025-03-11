@@ -6,6 +6,7 @@
 #include "Device.hpp"
 #include "IReleasable.hpp"
 #include "BufferResource.hpp"
+#include "ImageResource.hpp"
 #include "Semaphore.hpp"
 #include "ResourcePool.hpp"
 
@@ -23,7 +24,7 @@ namespace Lettuce::Core
     /// The transferences from host to host memory are done immediatly.
     ///
     /// First, call Prepare(), to set up the Command Buffer.
-    /// the HostToDevice, DeviceToDevice and DeviceToHost transferences 
+    /// the HostToDevice, DeviceToDevice and DeviceToHost transferences
     /// are recorded into a Command Buffer using AddTransfer()
     ///
     /// To execute the transferences use TransferAll()
@@ -42,6 +43,7 @@ namespace Lettuce::Core
 
         void Prepare();
         void AddTransference(const std::shared_ptr<BufferResource> &src, const std::shared_ptr<BufferResource> &dst, TransferType type);
+        void AddTransference(VkImageSubresourceLayers srcSubresource, VkImageSubresourceLayers dstSubresource, const std::shared_ptr<ImageResource> &src, const std::shared_ptr<ImageResource> &dst, TransferType type);
         void TransferAll();
     };
 }

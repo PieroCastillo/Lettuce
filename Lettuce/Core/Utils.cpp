@@ -59,3 +59,21 @@ void Lettuce::Core::DestroyDebugUtilsMessengerEXT(VkInstance instance, VkDebugUt
         func(instance, debugMessenger, pAllocator);
     }
 }
+
+std::pair<void *, uint32_t> Lettuce::Core::AllocAllInOne(const std::vector<std::pair<void *, uint32_t>> &ptrs)
+{
+    uint32_t fullSize = 0;
+    for (auto &[_, size] : ptrs)
+    {
+        fullSize += size;
+    }
+
+    void *dst = malloc(fullSize);
+    char *iter = (char *)dst;
+    for (auto &[ptr, size] : ptrs)
+    {
+        memcpy((void *)iter, ptr, size);
+        iter += size;
+    }
+    return {dst, fullSize};
+}

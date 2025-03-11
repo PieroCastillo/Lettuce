@@ -6,6 +6,7 @@
 #include "Lettuce/Core/Device.hpp"
 #include "Lettuce/Core/IResource.hpp"
 #include "Lettuce/Core/BufferResource.hpp"
+#include "Lettuce/Core/ImageResource.hpp"
 #include "Lettuce/Core/ResourcePool.hpp"
 #include "Lettuce/Core/Semaphore.hpp"
 #include "Lettuce/Core/Utils.hpp"
@@ -67,6 +68,35 @@ void TransferManager::AddTransference(const std::shared_ptr<BufferResource> &src
         };
 
         vkCmdCopyBuffer(cmd, src->_buffer, dst->_buffer, 1, &copy);
+    }
+    break;
+
+    default:
+        break;
+    }
+}
+
+void TransferManager::AddTransference(VkImageSubresourceLayers srcSubresource, VkImageSubresourceLayers dstSubresource, const std::shared_ptr<ImageResource> &src, const std::shared_ptr<ImageResource> &dst, TransferType type)
+{
+    // if (src->_size != dst->_size)
+    // {
+    //     throw std::runtime_error("sizes of srd and dst images must be equal.");
+    //     return;
+    // }
+
+    switch (type)
+    {
+    case TransferType::HostToDevice:
+    {
+        VkImageCopy copy = {
+            .srcSubresource = srcSubresource,
+            .srcOffset = {0, 0, 0},
+            .dstSubresource = dstSubresource,
+            .dstOffset = {0, 0, 0},
+            .extent = {src->_width, src->_height, src->_depth},
+        };
+
+        vkCmdCopyImage(cmd, src->_image, src->_layout, dst->_image, dst->_layout, 1, &copy);
     }
     break;
 

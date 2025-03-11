@@ -17,6 +17,7 @@ void IndirectCommandsLayout::Assemble(VkShaderStageFlags shaderStages, bool manu
     // https://registry.khronos.org/vulkan/specs/latest/man/html/VkIndirectCommandsTokenTypeEXT.html token-command relation
 
     _shaderStages = shaderStages;
+    size = currentOffset;
     VkIndirectCommandsLayoutCreateInfoEXT layoutCI = {
         .sType = VK_STRUCTURE_TYPE_INDIRECT_COMMANDS_LAYOUT_CREATE_INFO_EXT,
         .flags = manualPreprocessing ? VK_INDIRECT_COMMANDS_LAYOUT_USAGE_EXPLICIT_PREPROCESS_BIT_EXT : (VkIndirectCommandsLayoutUsageFlagsEXT)0,

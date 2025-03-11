@@ -19,7 +19,10 @@ ImageResource::ImageResource(const std::shared_ptr<Device> &device, uint32_t wid
                                                             _layout(initialLayout),
                                                             _mipLevels(mipLevels),
                                                             _layerCount(layerCount),
-                                                            _format(format)
+                                                            _format(format),
+                                                            _width(width),
+                                                            _height(height),
+                                                            _depth(depth)
 {
 
     VkImageCreateInfo imageCI = {
