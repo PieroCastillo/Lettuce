@@ -50,6 +50,22 @@ add_executable(loadModel
                 samples/LoadModel/app.cpp)
 add_executable(geometry
                 samples/GeometryIndirectSample/app.cpp)
+
+message(STATUS "all ok")
+
+# Definir el directorio de origen
+set(SRC_DIR "${CMAKE_SOURCE_DIR}/samples/assets")
+
+# Crear un comando personalizado para copiar los archivos
+add_custom_command(
+    TARGET geometry  # Reemplaza con el nombre de tu target
+    POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+            ${SRC_DIR}
+            "$<TARGET_FILE_DIR:geometry>/assets"
+    COMMENT "Copiando assets a $<TARGET_FILE_DIR:geometry>/assets"
+)
+
 target_include_directories(DonutSample PUBLIC samples/SampleFramework)
 target_include_directories(loadModel PUBLIC samples/SampleFramework)
 target_include_directories(geometry PUBLIC samples/SampleFramework)

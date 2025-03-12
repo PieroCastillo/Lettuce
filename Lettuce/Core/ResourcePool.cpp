@@ -73,12 +73,11 @@ void ResourcePool::Bind(const std::shared_ptr<Device> &device, VkMemoryPropertyF
         memoryReqs.push_back(resourcePtrs[i]->GetResourceMemoryRequirements());
     }
     offsets.push_back(0);
+
+    measuredSize = memoryReqs[0].size;
+    resourcePtrs[0]->offset = 0;
+
     if (resourcePtrs.size() > 1)
-    {
-        measuredSize = memoryReqs[0].size;
-        resourcePtrs[0]->offset = 0;
-    }
-    else
     {
         uint32_t granularity = 1;
         uint32_t mod = 0;

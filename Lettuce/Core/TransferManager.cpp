@@ -49,6 +49,38 @@ void TransferManager::Prepare()
     checkResult(vkBeginCommandBuffer(cmd, &cmdBI));
 }
 
+void TransferManager::AddTransference(const std::shared_ptr<BufferResource> &src, const std::shared_ptr<ImageResource> &dst, uint32_t mipLevel, TransferType type)
+{
+    switch (type)
+    {
+    case TransferType::HostToDevice:
+    {
+        // VkBufferCopy copy = {
+        //     .srcOffset = 0,
+        //     .dstOffset = 0,
+        //     .size = src->_size,
+        // };
+
+        // vkCmdCopyBuffer(cmd, src->_buffer, dst->_buffer, 1, &copy);
+
+        VkBufferImageCopy copy = {
+            .bufferOffset = 0,
+            .bufferRowLength = 0,
+            .bufferImageHeight = 0,
+            .imageSubresource = {VK_IMAGE_ASPECT_COLOR_BIT, mipLevel, 0, dst->_layerCount},
+            .imageOffset = {0, 0, 0},
+            .imageExtent = {dst->_width, dst->_height, dst->_depth},
+        };
+
+        vkCmdCopyBufferToImage(cmd, src->_buffer, dst->_image, dst->_layout, 1, &copy);
+    }
+    break;
+
+    default:
+        break;
+    }
+}
+
 void TransferManager::AddTransference(const std::shared_ptr<BufferResource> &src, const std::shared_ptr<BufferResource> &dst, TransferType type)
 {
     if (src->_size != dst->_size)

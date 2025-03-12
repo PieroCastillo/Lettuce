@@ -42,6 +42,7 @@ namespace Lettuce::Core
         void Release();
 
         void Prepare();
+        void AddTransference(const std::shared_ptr<BufferResource> &src, const std::shared_ptr<ImageResource> &dst, uint32_t mipLevel, TransferType type);
         void AddTransference(const std::shared_ptr<BufferResource> &src, const std::shared_ptr<BufferResource> &dst, TransferType type);
         void AddTransference(VkImageSubresourceLayers srcSubresource, VkImageSubresourceLayers dstSubresource, const std::shared_ptr<ImageResource> &src, const std::shared_ptr<ImageResource> &dst, TransferType type);
         void TransferAll();

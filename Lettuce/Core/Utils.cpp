@@ -69,11 +69,16 @@ std::pair<void *, uint32_t> Lettuce::Core::AllocAllInOne(const std::vector<std::
     }
 
     void *dst = malloc(fullSize);
-    char *iter = (char *)dst;
-    for (auto &[ptr, size] : ptrs)
+    char *offset = (char *)dst;
+    int i = 0;
+    for (const auto &[ptr, size] : ptrs)
     {
-        memcpy((void *)iter, ptr, size);
-        iter += size;
+        std::cout << ptr << std::endl;
+        std::cout << (void*)offset << std::endl;
+        memcpy(offset, ptr, size);
+        offset += size;
+        std::cout << "copied #" << i << std::endl;
+        i++; 
     }
     return {dst, fullSize};
 }
