@@ -55,13 +55,30 @@ void TransferManager::AddTransference(const std::shared_ptr<BufferResource> &src
     {
     case TransferType::HostToDevice:
     {
-        // VkBufferCopy copy = {
-        //     .srcOffset = 0,
-        //     .dstOffset = 0,
-        //     .size = src->_size,
-        // };
+        // copy all layers from a mip level
+        VkImageSubresourceRange range = {VK_IMAGE_ASPECT_COLOR_BIT, mipLevel, 1, 0, dst->_layerCount};
+        VkImageMemoryBarrier2 barrier = {
+            .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2,
+            .srcStageMask = VK_PIPELINE_STAGE_2_NONE,
+            .srcAccessMask = VK_ACCESS_2_MEMORY_READ_BIT,
+            .dstStageMask = VK_PIPELINE_STAGE_2_COPY_BIT,
+            .dstAccessMask = VK_ACCESS_2_MEMORY_WRITE_BIT,
+            .oldLayout = dst->_layout,
+            .newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+            .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+            .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+            .image = dst->_image,
+            .subresourceRange = range,
+        };
 
-        // vkCmdCopyBuffer(cmd, src->_buffer, dst->_buffer, 1, &copy);
+        VkDependencyInfo dependency = {
+            .sType = VK_STRUCTURE_TYPE_DEPENDENCY_INFO,
+            .dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT,
+            .imageMemoryBarrierCount = 1,
+            .pImageMemoryBarriers = &barrier,
+        };
+
+        vkCmdPipelineBarrier2(cmd, &dependency);
 
         VkBufferImageCopy copy = {
             .bufferOffset = 0,
@@ -72,7 +89,16 @@ void TransferManager::AddTransference(const std::shared_ptr<BufferResource> &src
             .imageExtent = {dst->_width, dst->_height, dst->_depth},
         };
 
-        vkCmdCopyBufferToImage(cmd, src->_buffer, dst->_image, dst->_layout, 1, &copy);
+        vkCmdCopyBufferToImage(cmd, src->_buffer, dst->_image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copy);
+
+        barrier.srcStageMask = VK_PIPELINE_STAGE_2_COPY_BIT;
+        barrier.srcAccessMask = VK_ACCESS_2_MEMORY_WRITE_BIT;
+        barrier.dstStageMask = VK_PIPELINE_STAGE_2_NONE;
+        barrier.dstAccessMask = VK_ACCESS_2_NONE;
+        barrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+        barrier.newLayout = VK_IMAGE_LAYOUT_GENERAL;
+        dst->_layout = VK_IMAGE_LAYOUT_GENERAL;
+        vkCmdPipelineBarrier2(cmd, &dependency);
     }
     break;
 

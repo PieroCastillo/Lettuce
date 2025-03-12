@@ -492,7 +492,6 @@ public:
         vkFreeCommandBuffers(device->_device, pool, 1, &cmd);
         vkDestroyCommandPool(device->_device, pool, nullptr);
 
-        renderFinished->Release();
         renderpass->DestroyFramebuffers();
         renderpass->Release();
     }
