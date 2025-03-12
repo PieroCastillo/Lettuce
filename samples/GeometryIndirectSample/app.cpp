@@ -36,14 +36,17 @@ public:
     std::vector<std::shared_ptr<Shader>> shaders_bindable;
     std::shared_ptr<ResourcePool> pool_images;
     std::vector<std::shared_ptr<ImageResource>> images_bindable;
+    std::vector<std::shared_ptr<ImageViewResource>> imgVw_bindable;
     /* required stuff to generate commands*/
     std::shared_ptr<Descriptors> descriptors_genCommands;
     std::shared_ptr<PipelineLayout> layout_genCommands;
     std::shared_ptr<ComputePipeline> pipeline_genCommands; // generate the commands
     std::shared_ptr<ResourcePool> pool_generatedCommands;
     std::shared_ptr<ResourcePool> pool_preprocessCommands;
+    std::shared_ptr<ResourcePool> pool_ubo;
     std::shared_ptr<BufferResource> buffer_generatedCommands;
     std::shared_ptr<BufferResource> buffer_preprocessCommands;
+    std::shared_ptr<BufferResource> buffer_ubo;
     std::shared_ptr<IndirectCommandsLayout> indirectCommandsLayout;
     std::shared_ptr<IndirectExecutionSet> indirectExecutionSet;
 
@@ -176,11 +179,15 @@ public:
         manager->Prepare();
         for (int i = 0; i < 4; i++)
         {
-            std::cout << "iter " << std::endl;
             manager->AddTransference(imgs_temp[i], images_bindable[i], 0, TransferType::HostToDevice);
         }
         manager->TransferAll();
         std::cout << "images transfered" << std::endl;
+        for (auto &img : images_bindable)
+        {
+            auto vw = std::make_shared<ImageViewResource>(device, img);
+            imgVw_bindable.push_back(vw);
+        }
 
         free(dataPtr);
         for (auto &[ptr, _] : imgPtrs)
@@ -198,6 +205,10 @@ public:
         {
             releaseQueue.Push(img);
         }
+        for (auto &imgVw : imgVw_bindable)
+        {
+            releaseQueue.Push(imgVw);
+        }
     }
 
     void createSampler()
@@ -209,10 +220,10 @@ public:
     void createIndirectCommandsGenerator()
     {
         descriptors_genCommands = std::make_shared<Descriptors>(device);
-        descriptors_genCommands->AddBinding(0, 0, DescriptorType::SampledImage, PipelineStage::Compute, 4);  // four different images
-        descriptors_genCommands->AddBinding(0, 1, DescriptorType::StorageBuffer, PipelineStage::Compute, 1); // indirect buffer
+        descriptors_genCommands->AddBinding(0, 0, DescriptorType::StorageBuffer, PipelineStage::Compute, 1); // indirect buffer
         descriptors_genCommands->Assemble();
-        // TODO: update descriptors
+        descriptors_genCommands->AddUpdateInfo(0, 0, {{buffer_generatedCommands->_size, buffer_generatedCommands}});
+        descriptors_genCommands->Update();
         layout_genCommands = std::make_shared<PipelineLayout>(device, descriptors_genCommands);
         layout_genCommands->Assemble();
 
@@ -230,7 +241,15 @@ public:
         descriptors_bindable = std::make_shared<Descriptors>(device);
         descriptors_bindable->AddBinding(0, 0, DescriptorType::UniformBuffer, PipelineStage::Vertex, 1);
         descriptors_bindable->AddBinding(0, 1, DescriptorType::SampledImage, PipelineStage::Fragment, 1);
-        // TODO: update descriptors
+        descriptors_bindable->Assemble();
+        descriptors_bindable->AddUpdateInfo(0, 0, {{buffer_ubo->_size, buffer_ubo}});
+        descriptors_bindable->AddUpdateInfo(0, 1, {
+                                                      {sampler, imgVw_bindable[0]},
+                                                      {sampler, imgVw_bindable[1]},
+                                                      {sampler, imgVw_bindable[2]},
+                                                      {sampler, imgVw_bindable[3]},
+                                                  });
+        descriptors_bindable->Update();
         layout_bindable = std::make_shared<PipelineLayout>(device, descriptors_bindable);
         layout_bindable->Assemble();
 

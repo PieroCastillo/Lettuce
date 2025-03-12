@@ -20,7 +20,7 @@ namespace Lettuce::Core
         VkImageViewType _viewType;
         VkImageSubresourceRange _subresourceRange;
 
-        ImageViewResource(const std::shared_ptr<Device> &device, const std::shared_ptr<ImageResource> &image, std::shared_ptr<ImageResource> resource, VkImageViewType viewType = VK_IMAGE_VIEW_TYPE_2D);
+        ImageViewResource(const std::shared_ptr<Device> &device, const std::shared_ptr<ImageResource> &image, VkImageViewType viewType = VK_IMAGE_VIEW_TYPE_2D);
 
         void Release();
     };
