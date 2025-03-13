@@ -43,6 +43,11 @@ BufferResource::BufferResource(const std::shared_ptr<Device> &device, uint32_t s
         .usage = usage,
         .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
     };
+
+    if (usage & VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT)
+    {
+        supportBufferAddress = true;
+    }
     checkResult(vkCreateBuffer(device->_device, &bufferCI, nullptr, &_buffer));
 }
 
@@ -53,11 +58,21 @@ void BufferResource::Release()
 
 uint64_t BufferResource::GetAddress()
 {
+    if (!supportBufferAddress)
+    {
+        throw std::exception("this buffer does not support GetAddress() | requires VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT");
+    }
+
     VkBufferDeviceAddressInfo addressInfo = {
         .sType = VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO,
         .buffer = _buffer,
     };
     return (uint64_t)vkGetBufferDeviceAddress(_device->_device, &addressInfo);
+}
+
+bool BufferResource::SupportsGetAddress()
+{
+    return supportBufferAddress;
 }
 
 ResourceType BufferResource::GetResourceType()

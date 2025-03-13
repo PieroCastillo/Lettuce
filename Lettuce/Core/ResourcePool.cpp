@@ -105,6 +105,28 @@ void ResourcePool::Bind(const std::shared_ptr<Device> &device, VkMemoryPropertyF
         measuredSize += memoryReqs[resourcePtrs.size() - 1].size;
     }
 
+    bool hasDeviceAddressFlags = false;
+
+    int i = 0;
+    do
+    {
+        switch (resourcePtrs[i]->GetResourceType())
+        {
+        case ResourceType::Buffer:
+        {
+            hasDeviceAddressFlags = std::dynamic_pointer_cast<BufferResource>(resourcePtrs[i])->SupportsGetAddress();
+            break;
+        }
+        case ResourceType::Image:
+        {
+            continue;
+        }
+        default:
+            break;
+        }
+        i++;
+    } while (i < resourcePtrs.size() & !hasDeviceAddressFlags);
+
     // find memory type
     // here we are going to execute an "and" operator for every memory type bits in memory reqs
     // if result == 0, throws error
@@ -151,11 +173,22 @@ void ResourcePool::Bind(const std::shared_ptr<Device> &device, VkMemoryPropertyF
         throw std::runtime_error("Memory Bind Error: There's no memory type with the required flags.");
 
     // create allocation
+
     VkMemoryAllocateInfo memoryAI = {
         .sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
         .allocationSize = measuredSize,
         .memoryTypeIndex = memoryTypeIndex,
     };
+
+    if (hasDeviceAddressFlags)
+    {
+        VkMemoryAllocateFlagsInfo flags = {
+            .sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_FLAGS_INFO,
+            .flags = VK_MEMORY_ALLOCATE_DEVICE_ADDRESS_BIT,
+        };
+        memoryAI.pNext = &flags;
+    }
+
     poolSize = measuredSize; // set size for read only
 
     checkResult(vkAllocateMemory(device->_device, &memoryAI, nullptr, &_memory));

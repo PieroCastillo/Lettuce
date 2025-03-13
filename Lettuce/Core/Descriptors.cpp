@@ -174,13 +174,16 @@ void Descriptors::AddUpdateInfo(uint32_t set, uint32_t binding, const std::vecto
 {
     std::vector<VkDescriptorImageInfo> imageInfos(samplerViewsPairs.size());
 
+    int i = 0;
     for (auto &[sampler, view] : samplerViewsPairs)
     {
-        imageInfos.push_back({
+        VkDescriptorImageInfo imageInfo = {
             .sampler = sampler->_sampler,
             .imageView = view->_imageView,
             .imageLayout = view->_image->_layout,
-        });
+        };
+        imageInfos[i] = imageInfo;
+        i++;
     }
     writesFieldsMap[{set, binding}].imageInfos = imageInfos;
     VkWriteDescriptorSet write = {
@@ -188,9 +191,9 @@ void Descriptors::AddUpdateInfo(uint32_t set, uint32_t binding, const std::vecto
         .dstSet = _descriptorSets[(int)set],
         .dstBinding = binding,
         .dstArrayElement = 0,
-        .descriptorCount = 1,
+        .descriptorCount = (uint32_t)samplerViewsPairs.size(),
         .descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
-        .pImageInfo = imageInfos.data(),
+        .pImageInfo = writesFieldsMap[{set, binding}].imageInfos.data(),
     };
     writes.push_back(write);
 }
