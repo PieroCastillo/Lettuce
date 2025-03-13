@@ -15,11 +15,17 @@ namespace Lettuce::X3D
         BufferBlock indexBlock;
     };
 
+    struct Vertex
+    {
+        glm::vec3 coord;
+        glm::vec2 texCoord;
+    };
+
     class Primitive
     {
     public:
         PrimitiveInfo info;
-        std::vector<glm::vec3> points;
+        std::vector<Vertex> points;
         std::vector<uint32_t> indices;
         void Clear()
         {

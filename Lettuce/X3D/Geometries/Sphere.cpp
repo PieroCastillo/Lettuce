@@ -5,17 +5,13 @@
 #include <vector>
 #include <numbers>
 #include "Lettuce/Core/BufferResource.hpp"
-#include "Lettuce/X3D/Geometries/Prism.hpp"
+#include "Lettuce/X3D/Geometries/Sphere.hpp"
 
 using namespace Lettuce::X3D;
 using namespace Lettuce::Core;
 
 Geometries::Sphere::Sphere(glm::vec3 origin, float radius, int sectorCount, int stackCount)
 {
-    indices = {
-        0, 1, 2, 0, 2, 3, 4, 5, 6, 4, 6, 7, 0, 1, 5, 0, 4, 5, 2, 3, 6, 3, 6, 7, 1, 2, 5, 2, 5, 6, 0, 3, 4, 3, 4, 7};
-    points.reserve(8);
-
     float x, y, z, xy; // vertex position
     float s, t;
 
@@ -25,9 +21,9 @@ Geometries::Sphere::Sphere(glm::vec3 origin, float radius, int sectorCount, int 
 
     for (int i = 0; i <= stackCount; ++i)
     {
-        stackAngle = PI / 2 - i * stackStep; // starting from pi/2 to -pi/2
-        xy = radius * cosf(stackAngle);      // r * cos(u)
-        z = radius * sinf(stackAngle);       // r * sin(u)
+        stackAngle = std::numbers::pi / 2 - i * stackStep; // starting from pi/2 to -pi/2
+        xy = radius * cosf(stackAngle);                    // r * cos(u)
+        z = radius * sinf(stackAngle);                     // r * sin(u)
 
         // add (sectorCount+1) vertices per stack
         // first and last vertices have same position and normal, but different tex coords
@@ -38,7 +34,12 @@ Geometries::Sphere::Sphere(glm::vec3 origin, float radius, int sectorCount, int 
             // vertex position (x, y, z)
             x = xy * cosf(sectorAngle); // r * cos(u) * cos(v)
             y = xy * sinf(sectorAngle); // r * cos(u) * sin(v)
-            points.push_back({x + origin.x, y + origin.y, z + origin.z});
+
+            // vertex tex coord (s, t) range between [0, 1]
+            s = (float)j / sectorCount;
+            t = (float)i / stackCount;
+
+            points.push_back({{x + origin.x, y + origin.y, z + origin.z}, {s, t}});
         }
     }
 
@@ -69,7 +70,7 @@ Geometries::Sphere::Sphere(glm::vec3 origin, float radius, int sectorCount, int 
         }
     }
 
-    info.vertBlock.size = points.size() * sizeof(glm::vec3);
+    info.vertBlock.size = points.size() * sizeof(Vertex);
     info.vertBlock.usage = VkBufferUsageFlagBits::VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
 
     info.indexBlock.size = indices.size() * sizeof(uint32_t);

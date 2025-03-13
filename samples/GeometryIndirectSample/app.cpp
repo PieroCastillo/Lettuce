@@ -44,9 +44,11 @@ public:
     std::shared_ptr<ResourcePool> pool_generatedCommands;
     std::shared_ptr<ResourcePool> pool_preprocessCommands;
     std::shared_ptr<ResourcePool> pool_ubo;
+    std::shared_ptr<ResourcePool> pool_geometry;
     std::shared_ptr<BufferResource> buffer_generatedCommands;
     std::shared_ptr<BufferResource> buffer_preprocessCommands;
     std::shared_ptr<BufferResource> buffer_ubo;
+    std::shared_ptr<BufferResource> buffer_geometry;
     std::shared_ptr<IndirectCommandsLayout> indirectCommandsLayout;
     std::shared_ptr<IndirectExecutionSet> indirectExecutionSet;
 
@@ -120,6 +122,42 @@ public:
             renderpass->AddFramebuffer(width, height, {view});
         }
         renderpass->BuildFramebuffers();
+    }
+
+    void genScene()
+    {
+        /*geometries*/
+        Geometries::Sphere sphere({0, 0, 0}, 10.0f, 5, 5);
+
+        auto poolTemp = std::make_shared<ResourcePool>();
+        pool_geometry = std::make_shared<ResourcePool>();
+
+        auto fullSize = sphere.info.indexBlock.size + sphere.info.vertBlock.size;
+        auto bufferTemp = std::make_shared<BufferResource>(device, fullSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT);
+        buffer_geometry = std::make_shared<BufferResource>(device, fullSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT);
+
+        poolTemp->AddResource(bufferTemp);
+        pool_geometry->AddResource(buffer_geometry);
+
+        poolTemp->Bind(device, VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+        pool_geometry->Bind(device, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, VK_MEMORY_ALLOCATE_DEVICE_ADDRESS_BIT);
+
+        auto [alloc, sz] = AllocAllInOne({{(void *)sphere.points.data(), sphere.info.vertBlock.size},
+                                          {(void *)sphere.indices.data(), sphere.info.indexBlock.size}});
+
+        poolTemp->Map(0, fullSize);
+        poolTemp->SetData(alloc, 0, fullSize);
+        poolTemp->UnMap();
+
+        manager->Prepare();
+        manager->AddTransference(bufferTemp, buffer_geometry, TransferType::HostToDevice);
+        manager->TransferAll();
+
+        bufferTemp->Release();
+        poolTemp->Release();
+
+        releaseQueue.Push(buffer_geometry);
+        releaseQueue.Push(pool_geometry);
     }
 
     void createImages()
@@ -514,12 +552,6 @@ public:
 
         renderpass->DestroyFramebuffers();
         renderpass->Release();
-    }
-
-    void genScene()
-    {
-        /*geometries*/
-        std::vector<Geometries::Sphere> spheres;
     }
 };
 
