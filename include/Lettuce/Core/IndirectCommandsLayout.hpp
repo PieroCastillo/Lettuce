@@ -17,6 +17,11 @@ namespace Lettuce::Core
         uint32_t currentOffset = 0;
         uint32_t size = 0;
         std::vector<VkIndirectCommandsLayoutTokenEXT> tokens;
+        //spec allows one executionSetToken and one IndexBufferToken only
+        VkIndirectCommandsExecutionSetTokenEXT executionSetData;
+        VkIndirectCommandsIndexBufferTokenEXT indexData;
+        std::vector<VkIndirectCommandsPushConstantTokenEXT> pushConstantDatas;
+        std::vector<VkIndirectCommandsVertexBufferTokenEXT> vertexDatas;
 
     public:
         VkShaderStageFlags _shaderStages;

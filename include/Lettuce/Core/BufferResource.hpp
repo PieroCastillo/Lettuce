@@ -20,9 +20,6 @@ namespace Lettuce::Core
 
     class BufferResource : public IResource, public IReleasable
     {
-    private:
-        bool supportBufferAddress;
-
     public:
         VkBuffer _buffer;
         uint32_t _size;
@@ -32,7 +29,6 @@ namespace Lettuce::Core
         BufferResource(const std::shared_ptr<Device> &device, uint32_t size, VkBufferUsageFlags usage);
         void Release();
         uint64_t GetAddress();
-        bool SupportsGetAddress();
         ResourceType GetResourceType();
         ResourceLinearity GetResourceLinearity();
         VkMemoryRequirements GetResourceMemoryRequirements();

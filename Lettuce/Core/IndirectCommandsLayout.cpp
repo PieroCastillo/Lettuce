@@ -38,25 +38,25 @@ void IndirectCommandsLayout::Release()
 
 void IndirectCommandsLayout::AddExecutionSetToken(VkShaderStageFlags shaderStages, uint32_t size)
 {
-    VkIndirectCommandsExecutionSetTokenEXT info = {VK_INDIRECT_EXECUTION_SET_INFO_TYPE_SHADER_OBJECTS_EXT, shaderStages};
+    executionSetData = {VK_INDIRECT_EXECUTION_SET_INFO_TYPE_SHADER_OBJECTS_EXT, shaderStages};
+
     VkIndirectCommandsTokenDataEXT data;
-    data.pExecutionSet = &info;
+    data.pExecutionSet = &executionSetData;
 
     tokens.push_back({
         .sType = VK_STRUCTURE_TYPE_INDIRECT_COMMANDS_LAYOUT_TOKEN_EXT,
-        .type = VK_INDIRECT_COMMANDS_TOKEN_TYPE_VERTEX_BUFFER_EXT,
+        .type = VK_INDIRECT_COMMANDS_TOKEN_TYPE_EXECUTION_SET_EXT,
         .data = data,
         .offset = currentOffset,
     });
-    currentOffset += (4+size)&~3;
+    currentOffset += (4 + size) & ~3;
 }
 
 void IndirectCommandsLayout::AddPushConstantToken(VkShaderStageFlags stageFlags, uint32_t offset, uint32_t size)
 {
-    VkIndirectCommandsPushConstantTokenEXT pushConstant = {{stageFlags, offset, size}};
-
+    pushConstantDatas.push_back({stageFlags, offset, size});
     VkIndirectCommandsTokenDataEXT data;
-    data.pPushConstant = &pushConstant;
+    data.pPushConstant = &(pushConstantDatas.data()[pushConstantDatas.size() - 1]);
 
     tokens.push_back({
         .sType = VK_STRUCTURE_TYPE_INDIRECT_COMMANDS_LAYOUT_TOKEN_EXT,
@@ -64,7 +64,7 @@ void IndirectCommandsLayout::AddPushConstantToken(VkShaderStageFlags stageFlags,
         .data = data,
         .offset = currentOffset,
     });
-    currentOffset += (4+size)&~3;
+    currentOffset += (4 + size) & ~3;
 }
 
 void IndirectCommandsLayout::AddSequenceToken(uint32_t size)
@@ -74,7 +74,7 @@ void IndirectCommandsLayout::AddSequenceToken(uint32_t size)
         .type = VK_INDIRECT_COMMANDS_TOKEN_TYPE_SEQUENCE_INDEX_EXT,
         .offset = currentOffset,
     });
-    currentOffset += (4+size)&~3;
+    currentOffset += (4 + size) & ~3;
 }
 
 void IndirectCommandsLayout::AddDispatchToken()
@@ -84,30 +84,30 @@ void IndirectCommandsLayout::AddDispatchToken()
         .type = VK_INDIRECT_COMMANDS_TOKEN_TYPE_DISPATCH_EXT,
         .offset = currentOffset,
     });
-    currentOffset += (4+sizeof(VkDispatchIndirectCommand))&~3;
+    currentOffset += (4 + sizeof(VkDispatchIndirectCommand)) & ~3;
 }
 
 void IndirectCommandsLayout::AddIndexBufferToken()
 {
-    VkIndirectCommandsIndexBufferTokenEXT info = {VK_INDIRECT_COMMANDS_INPUT_MODE_VULKAN_INDEX_BUFFER_EXT};
+    indexData = {VK_INDIRECT_COMMANDS_INPUT_MODE_VULKAN_INDEX_BUFFER_EXT};
     VkIndirectCommandsTokenDataEXT data;
-    data.pIndexBuffer = &info;
+    data.pIndexBuffer = &indexData;
 
     tokens.push_back({
         .sType = VK_STRUCTURE_TYPE_INDIRECT_COMMANDS_LAYOUT_TOKEN_EXT,
-        .type = VK_INDIRECT_COMMANDS_TOKEN_TYPE_VERTEX_BUFFER_EXT,
+        .type = VK_INDIRECT_COMMANDS_TOKEN_TYPE_INDEX_BUFFER_EXT,
         .data = data,
         .offset = currentOffset,
     });
-    currentOffset += (4+sizeof(VkBindIndexBufferIndirectCommandEXT))&~3;
+    currentOffset += (4 + sizeof(VkBindIndexBufferIndirectCommandEXT)) & ~3;
 }
 
 void IndirectCommandsLayout::AddVertexBufferToken(uint32_t vertexBinding)
 {
-    VkIndirectCommandsVertexBufferTokenEXT info = {vertexBinding};
+    vertexDatas.push_back({vertexBinding});
 
     VkIndirectCommandsTokenDataEXT data;
-    data.pVertexBuffer = &info;
+    data.pVertexBuffer = &(vertexDatas.data()[vertexDatas.size() - 1]);
 
     tokens.push_back({
         .sType = VK_STRUCTURE_TYPE_INDIRECT_COMMANDS_LAYOUT_TOKEN_EXT,
@@ -115,7 +115,7 @@ void IndirectCommandsLayout::AddVertexBufferToken(uint32_t vertexBinding)
         .data = data,
         .offset = currentOffset,
     });
-    currentOffset += (4+sizeof(VkBindVertexBufferIndirectCommandEXT)&~(4-1));//minimum multiple of 4 major than ...
+    currentOffset += (4 + sizeof(VkBindVertexBufferIndirectCommandEXT) & ~(4 - 1)); // minimum multiple of 4 major than ...
 }
 
 void IndirectCommandsLayout::AddDrawIndexedToken()
@@ -125,7 +125,7 @@ void IndirectCommandsLayout::AddDrawIndexedToken()
         .type = VK_INDIRECT_COMMANDS_TOKEN_TYPE_DRAW_INDEXED_COUNT_EXT,
         .offset = currentOffset,
     });
-    currentOffset += (4+sizeof(VkDrawIndexedIndirectCommand))&~3;
+    currentOffset += (4 + sizeof(VkDrawIndexedIndirectCommand)) & ~3;
 }
 
 void IndirectCommandsLayout::AddDrawToken()
@@ -135,7 +135,7 @@ void IndirectCommandsLayout::AddDrawToken()
         .type = VK_INDIRECT_COMMANDS_TOKEN_TYPE_DRAW_INDEXED_COUNT_EXT,
         .offset = currentOffset,
     });
-    currentOffset += (4+sizeof(VkDrawIndirectCommand))&~3;
+    currentOffset += (4 + sizeof(VkDrawIndirectCommand)) & ~3;
 }
 
 void IndirectCommandsLayout::AddDrawMeshTasksToken()
@@ -145,7 +145,7 @@ void IndirectCommandsLayout::AddDrawMeshTasksToken()
         .type = VK_INDIRECT_COMMANDS_TOKEN_TYPE_DRAW_MESH_TASKS_COUNT_EXT,
         .offset = currentOffset,
     });
-    currentOffset += (4+sizeof(VkDrawMeshTasksIndirectCommandEXT))&~3;
+    currentOffset += (4 + sizeof(VkDrawMeshTasksIndirectCommandEXT)) & ~3;
 }
 
 void IndirectCommandsLayout::AddDrawIndexedCountToken()
@@ -155,7 +155,7 @@ void IndirectCommandsLayout::AddDrawIndexedCountToken()
         .type = VK_INDIRECT_COMMANDS_TOKEN_TYPE_DRAW_INDEXED_COUNT_EXT,
         .offset = currentOffset,
     });
-    currentOffset += (4+sizeof(VkDrawIndirectCountIndirectCommandEXT) + sizeof(VkDrawIndexedIndirectCommand))&~3;
+    currentOffset += (4 + sizeof(VkDrawIndirectCountIndirectCommandEXT) + sizeof(VkDrawIndexedIndirectCommand)) & ~3;
 }
 
 void IndirectCommandsLayout::AddDrawCountToken()
@@ -165,7 +165,7 @@ void IndirectCommandsLayout::AddDrawCountToken()
         .type = VK_INDIRECT_COMMANDS_TOKEN_TYPE_DRAW_INDEXED_COUNT_EXT,
         .offset = currentOffset,
     });
-    currentOffset += (4+sizeof(VkDrawIndirectCountIndirectCommandEXT) + sizeof(VkDrawIndirectCommand))&~3;
+    currentOffset += (4 + sizeof(VkDrawIndirectCountIndirectCommandEXT) + sizeof(VkDrawIndirectCommand)) & ~3;
 }
 
 void IndirectCommandsLayout::AddDrawMeshTasksCountToken()
@@ -175,5 +175,5 @@ void IndirectCommandsLayout::AddDrawMeshTasksCountToken()
         .type = VK_INDIRECT_COMMANDS_TOKEN_TYPE_DRAW_MESH_TASKS_COUNT_EXT,
         .offset = currentOffset,
     });
-    currentOffset += (4+sizeof(VkDrawIndirectCountIndirectCommandEXT) + sizeof(VkDrawMeshTasksIndirectCommandEXT))&~3;
+    currentOffset += (4 + sizeof(VkDrawIndirectCountIndirectCommandEXT) + sizeof(VkDrawMeshTasksIndirectCommandEXT)) & ~3;
 }

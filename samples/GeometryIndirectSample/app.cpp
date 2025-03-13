@@ -217,6 +217,94 @@ public:
         releaseQueue.Push(sampler);
     }
 
+    void createUbo()
+    {
+        buffer_ubo = std::make_shared<BufferResource>(device, sizeof(DataUBO), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT);
+        pool_ubo = std::make_shared<ResourcePool>();
+        pool_ubo->AddResource(buffer_ubo);
+        pool_ubo->Bind(device, VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+
+        pool_ubo->Map(0, sizeof(DataUBO));
+        pool_ubo->SetData((void *)&dataUBO, 0, sizeof(DataUBO));
+
+        releaseQueue.Push(buffer_ubo);
+        releaseQueue.Push(pool_ubo);
+    }
+
+    void createIndirectObjects()
+    {
+        descriptors_bindable = std::make_shared<Descriptors>(device);
+        descriptors_bindable->AddBinding(0, 0, DescriptorType::UniformBuffer, PipelineStage::Vertex, 1);
+        descriptors_bindable->AddBinding(0, 1, DescriptorType::CombinedImageSampler, PipelineStage::Fragment, 4);
+        descriptors_bindable->Assemble();
+        descriptors_bindable->AddUpdateInfo(0, 0, {{buffer_ubo->_size, buffer_ubo}});
+        descriptors_bindable->AddUpdateInfo(0, 1, {
+                                                      {sampler, imgVw_bindable[0]},
+                                                      {sampler, imgVw_bindable[1]},
+                                                      {sampler, imgVw_bindable[2]},
+                                                      {sampler, imgVw_bindable[3]},
+                                                  });
+        descriptors_bindable->Update();
+        std::cout << "descriptors bindable updated" << std::endl;
+        layout_bindable = std::make_shared<PipelineLayout>(device, descriptors_bindable);
+        layout_bindable->Assemble();
+
+        indirectCommandsLayout = std::make_shared<IndirectCommandsLayout>(device, layout_bindable);
+        indirectCommandsLayout->AddExecutionSetToken(VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 2); // bound to 2 shaders
+        indirectCommandsLayout->AddVertexBufferToken(0);
+        indirectCommandsLayout->AddIndexBufferToken();
+        indirectCommandsLayout->AddDrawIndexedToken();
+        indirectCommandsLayout->Assemble(VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, false);
+        std::cout << "indirect commands layout created" << std::endl;
+
+        // const std::vector<std::string> shadersText = {frag1ShaderText, frag2ShaderText, frag3ShaderText, frag4ShaderText};
+        // // melocotón pastel, amarillo pastel, rosa suave pastel, salmón claro pastel
+        // const std::vector<glm::vec3> shadersConst = {{0.98, 0.75, 0.65}, {0.95, 0.82, 0.60}, {0.99, 0.70, 0.70}, {0.92, 0.68, 0.55}};
+
+        // auto vertShader = std::make_shared<Shader>(device, layout_bindable);
+        // auto codeV = compiler.Compile(vertexShaderText, "vert.glsl", PipelineStage::Vertex, true);
+        // vertShader->Assemble(VK_SHADER_STAGE_VERTEX_BIT, codeV);
+        // shaders_bindable.push_back(vertShader);
+
+        // for (int i = 1; i <= 4; i++)
+        // {
+        //     auto fragShader = std::make_shared<Shader>(device, layout_bindable);
+        //     auto code = compiler.Compile(shadersText[i], "frag_" + std::to_string(i), PipelineStage::Fragment, true);
+        //     fragShader->AddConstant(0, sizeof(glm::vec3), (void *)&shadersConst[i]);
+        //     fragShader->Assemble(VK_SHADER_STAGE_FRAGMENT_BIT, code);
+        //     shaders_bindable.push_back(fragShader);
+        // }
+
+        // indirectExecutionSet = std::make_shared<IndirectExecutionSet>(device, layout_bindable);
+        // indirectExecutionSet->Assemble(shaders_bindable, (uint32_t)shaders_bindable.size());
+        // auto reqs = indirectExecutionSet->GetRequirements(indirectCommandsLayout, sequences, draws);
+
+        // buffer_preprocessCommands = std::make_shared<BufferResource>(device, reqs.size, VK_BUFFER_USAGE_2_PREPROCESS_BUFFER_BIT_EXT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT);
+        // pool_preprocessCommands = std::make_shared<ResourcePool>();
+        // pool_preprocessCommands->AddResource(buffer_preprocessCommands);
+        // pool_preprocessCommands->Bind(device, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, VK_MEMORY_ALLOCATE_DEVICE_ADDRESS_BIT, reqs.memoryTypeBits);
+        // address_preprocessCommands = buffer_preprocessCommands->GetAddress();
+
+        buffer_generatedCommands = std::make_shared<BufferResource>(device, sequences * indirectCommandsLayout->GetSize(), VK_BUFFER_USAGE_INDIRECT_BUFFER_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT);
+        pool_generatedCommands = std::make_shared<ResourcePool>();
+        pool_generatedCommands->AddResource(buffer_generatedCommands);
+        pool_generatedCommands->Bind(device, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, VK_MEMORY_ALLOCATE_DEVICE_ADDRESS_BIT);
+        address_generatedCommands = buffer_generatedCommands->GetAddress();
+
+        releaseQueue.Push(descriptors_bindable);
+        releaseQueue.Push(layout_bindable);
+        releaseQueue.Push(indirectCommandsLayout);
+        // for (auto &shader : shaders_bindable)
+        // {
+        //     releaseQueue.Push(shader);
+        // }
+        // releaseQueue.Push(indirectExecutionSet);
+        // releaseQueue.Push(buffer_preprocessCommands);
+        // releaseQueue.Push(pool_preprocessCommands);
+        releaseQueue.Push(buffer_generatedCommands);
+        releaseQueue.Push(pool_generatedCommands);
+    }
+
     void createIndirectCommandsGenerator()
     {
         descriptors_genCommands = std::make_shared<Descriptors>(device);
@@ -227,86 +315,15 @@ public:
         layout_genCommands = std::make_shared<PipelineLayout>(device, descriptors_genCommands);
         layout_genCommands->Assemble();
 
-        auto compShader = std::make_shared<ShaderModule>(device, compiler, compShaderText, "main", "compute.glsl", PipelineStage::Compute, true);
-        pipeline_genCommands = std::make_shared<ComputePipeline>(device, layout_genCommands, compShader);
-        compShader->Release();
+        // auto compShader = std::make_shared<ShaderModule>(device, compiler, compShaderText, "main", "compute.glsl", PipelineStage::Compute, true);
+        // pipeline_genCommands = std::make_shared<ComputePipeline>(device, layout_genCommands, compShader);
+        // compShader->Release();
 
         releaseQueue.Push(descriptors_genCommands);
         releaseQueue.Push(layout_genCommands);
-        releaseQueue.Push(pipeline_genCommands);
+        // releaseQueue.Push(pipeline_genCommands);
     }
 
-    void createIndirectObjects()
-    {
-        descriptors_bindable = std::make_shared<Descriptors>(device);
-        descriptors_bindable->AddBinding(0, 0, DescriptorType::UniformBuffer, PipelineStage::Vertex, 1);
-        descriptors_bindable->AddBinding(0, 1, DescriptorType::SampledImage, PipelineStage::Fragment, 1);
-        descriptors_bindable->Assemble();
-        descriptors_bindable->AddUpdateInfo(0, 0, {{buffer_ubo->_size, buffer_ubo}});
-        descriptors_bindable->AddUpdateInfo(0, 1, {
-                                                      {sampler, imgVw_bindable[0]},
-                                                      {sampler, imgVw_bindable[1]},
-                                                      {sampler, imgVw_bindable[2]},
-                                                      {sampler, imgVw_bindable[3]},
-                                                  });
-        descriptors_bindable->Update();
-        layout_bindable = std::make_shared<PipelineLayout>(device, descriptors_bindable);
-        layout_bindable->Assemble();
-
-        const std::vector<std::string> shadersText = {frag1ShaderText, frag2ShaderText, frag3ShaderText, frag4ShaderText};
-        // melocotón pastel, amarillo pastel, rosa suave pastel, salmón claro pastel
-        const std::vector<glm::vec3> shadersConst = {{0.98, 0.75, 0.65}, {0.95, 0.82, 0.60}, {0.99, 0.70, 0.70}, {0.92, 0.68, 0.55}};
-
-        auto vertShader = std::make_shared<Shader>(device, layout_bindable);
-        auto codeV = compiler.Compile(vertexShaderText, "vert.glsl", PipelineStage::Vertex, true);
-        vertShader->Assemble(VK_SHADER_STAGE_VERTEX_BIT, codeV);
-        shaders_bindable.push_back(vertShader);
-
-        for (int i = 1; i <= 4; i++)
-        {
-            auto fragShader = std::make_shared<Shader>(device, layout_bindable);
-            auto code = compiler.Compile(shadersText[i], "frag_" + std::to_string(i), PipelineStage::Fragment, true);
-            fragShader->AddConstant(0, sizeof(glm::vec3), (void *)&shadersConst[i]);
-            fragShader->Assemble(VK_SHADER_STAGE_FRAGMENT_BIT, code);
-            shaders_bindable.push_back(fragShader);
-        }
-
-        indirectCommandsLayout = std::make_shared<IndirectCommandsLayout>(device, layout_bindable);
-        indirectCommandsLayout->AddExecutionSetToken(VK_PIPELINE_STAGE_VERTEX_SHADER_BIT | VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 2); // bound to 2 shaders
-        indirectCommandsLayout->AddVertexBufferToken(0);
-        indirectCommandsLayout->AddIndexBufferToken();
-        indirectCommandsLayout->AddDrawIndexedToken();
-        indirectCommandsLayout->Assemble(VK_PIPELINE_STAGE_VERTEX_SHADER_BIT | VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, false);
-
-        indirectExecutionSet = std::make_shared<IndirectExecutionSet>(device, layout_bindable);
-        indirectExecutionSet->Assemble(shaders_bindable, (uint32_t)shaders_bindable.size());
-        auto reqs = indirectExecutionSet->GetRequirements(indirectCommandsLayout, sequences, draws);
-
-        buffer_preprocessCommands = std::make_shared<BufferResource>(device, reqs.size, VK_BUFFER_USAGE_2_PREPROCESS_BUFFER_BIT_EXT);
-        pool_preprocessCommands = std::make_shared<ResourcePool>();
-        pool_preprocessCommands->AddResource(buffer_preprocessCommands);
-        pool_preprocessCommands->Bind(device, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, reqs.memoryTypeBits);
-        address_preprocessCommands = buffer_preprocessCommands->GetAddress();
-
-        buffer_generatedCommands = std::make_shared<BufferResource>(device, sequences * indirectCommandsLayout->GetSize(), VK_BUFFER_USAGE_INDIRECT_BUFFER_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT);
-        pool_generatedCommands = std::make_shared<ResourcePool>();
-        pool_generatedCommands->AddResource(buffer_generatedCommands);
-        pool_generatedCommands->Bind(device, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-        address_generatedCommands = buffer_generatedCommands->GetAddress();
-
-        releaseQueue.Push(descriptors_bindable);
-        releaseQueue.Push(layout_bindable);
-        for (auto &shader : shaders_bindable)
-        {
-            releaseQueue.Push(shader);
-        }
-        releaseQueue.Push(indirectCommandsLayout);
-        releaseQueue.Push(indirectExecutionSet);
-        releaseQueue.Push(buffer_preprocessCommands);
-        releaseQueue.Push(pool_preprocessCommands);
-        releaseQueue.Push(buffer_generatedCommands);
-        releaseQueue.Push(pool_generatedCommands);
-    }
     void createObjects()
     {
         renderFinished = std::make_shared<Lettuce::Core::Semaphore>(device, 0);
@@ -318,8 +335,9 @@ public:
         genScene();
         createImages();
         createSampler();
-        // createIndirectCommandsGenerator();
-        // createIndirectObjects();
+        createUbo();
+        createIndirectObjects();
+        createIndirectCommandsGenerator();
 
         camera = Lettuce::X3D::Camera3D::Camera3D(width, height);
         beforeResize();
@@ -491,6 +509,8 @@ public:
     {
         vkFreeCommandBuffers(device->_device, pool, 1, &cmd);
         vkDestroyCommandPool(device->_device, pool, nullptr);
+
+        pool_ubo->UnMap();
 
         renderpass->DestroyFramebuffers();
         renderpass->Release();
