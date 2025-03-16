@@ -57,11 +57,40 @@ public:
     const uint32_t sequences = 16;
     const uint32_t draws = 16;
     const std::string compShaderText = "";
-    const std::string vertexShaderText = "";
-    const std::string frag1ShaderText = "";
-    const std::string frag2ShaderText = "";
-    const std::string frag3ShaderText = "";
-    const std::string frag4ShaderText = "";
+    const std::string vertexShaderText = R"(#version 450
+layout (location=0) in vec3 pos;
+layout (location=1) in vec2 tex;
+
+layout (location=0) out vec2 fragTexCoord;
+
+layout (set = 0, binding = 0) uniform DataUBO {
+    mat4 projectionView;
+    mat4 model;
+    vec3 cameraPos;
+} ubo;
+
+void main()
+{
+    fragTexCoord = tex;
+    gl_Position = ubo.projectionView * ubo.model * vec4(pos,1.0);
+})";
+
+    const std::string fragShaderText = R"(#version 450  
+layout (location = 0) in vec2 fragTexCoord;
+layout (location = 0) out vec4 outColor;
+
+layout (set = 0, binding = 1) uniform sampler2D texSampler;
+
+layout (constant_id = 0) const double importantColorR = .5;
+layout (constant_id = 1) const double importantColorG = .5;
+layout (constant_id = 2) const double importantColorB = .5;
+
+void main()
+{
+    vec3 importantColor = vec3(importantColorR, importantColorG, importantColorB);
+    outColor = vec4(importantColor  * texture(texSampler, fragTexCoord).rgb, 1.0);
+})";
+
     struct imgData
     {
         int texWidth, texHeight, texChannels;
@@ -84,44 +113,44 @@ public:
 
     void createRenderPass()
     {
-        renderpass = std::make_shared<RenderPass>(device);
-        renderpass->AddAttachment(0, AttachmentType::Color,
-                                  swapchain->imageFormat,
-                                  LoadOp::Clear,
-                                  StoreOp::Store,
-                                  LoadOp::DontCare,
-                                  StoreOp::DontCare,
-                                  ImageLayout::Undefined,
-                                  ImageLayout::PresentSrc,
-                                  ImageLayout::ColorAttachmentOptimal);
-        renderpass->AddSubpass(0, BindPoint::Graphics, {0});
-        renderpass->AddDependency(VK_SUBPASS_EXTERNAL, 0,
-                                  AccessStage::ColorAttachmentOutput,
-                                  AccessStage::ColorAttachmentOutput,
-                                  AccessBehavior::None,
-                                  AccessBehavior::ColorAttachmentWrite);
+        // renderpass = std::make_shared<RenderPass>(device);
+        // renderpass->AddAttachment(0, AttachmentType::Color,
+        //                           swapchain->imageFormat,
+        //                           LoadOp::Clear,
+        //                           StoreOp::Store,
+        //                           LoadOp::DontCare,
+        //                           StoreOp::DontCare,
+        //                           ImageLayout::Undefined,
+        //                           ImageLayout::PresentSrc,
+        //                           ImageLayout::ColorAttachmentOptimal);
+        // renderpass->AddSubpass(0, BindPoint::Graphics, {0});
+        // renderpass->AddDependency(VK_SUBPASS_EXTERNAL, 0,
+        //                           AccessStage::ColorAttachmentOutput,
+        //                           AccessStage::ColorAttachmentOutput,
+        //                           AccessBehavior::None,
+        //                           AccessBehavior::ColorAttachmentWrite);
 
-        renderpass->AddDependency(0, VK_SUBPASS_EXTERNAL,
-                                  AccessStage::ColorAttachmentOutput,
-                                  AccessStage::ColorAttachmentOutput,
-                                  AccessBehavior::ColorAttachmentWrite,
-                                  AccessBehavior::None);
-        renderpass->Assemble();
-        for (auto &view : swapchain->swapChainImageViews)
-        {
-            renderpass->AddFramebuffer(width, height, {view});
-        }
-        renderpass->BuildFramebuffers();
+        // renderpass->AddDependency(0, VK_SUBPASS_EXTERNAL,
+        //                           AccessStage::ColorAttachmentOutput,
+        //                           AccessStage::ColorAttachmentOutput,
+        //                           AccessBehavior::ColorAttachmentWrite,
+        //                           AccessBehavior::None);
+        // renderpass->Assemble();
+        // for (auto &view : swapchain->swapChainImageViews)
+        // {
+        //     renderpass->AddFramebuffer(width, height, {view});
+        // }
+        // renderpass->BuildFramebuffers();
     }
 
     void onResize()
     {
-        renderpass->DestroyFramebuffers();
-        for (auto &view : swapchain->swapChainImageViews)
-        {
-            renderpass->AddFramebuffer(width, height, {view});
-        }
-        renderpass->BuildFramebuffers();
+        // renderpass->DestroyFramebuffers();
+        // for (auto &view : swapchain->swapChainImageViews)
+        // {
+        //     renderpass->AddFramebuffer(width, height, {view});
+        // }
+        // renderpass->BuildFramebuffers();
     }
 
     void genScene()
@@ -133,8 +162,8 @@ public:
         pool_geometry = std::make_shared<ResourcePool>();
 
         auto fullSize = sphere.info.indexBlock.size + sphere.info.vertBlock.size;
-        auto bufferTemp = std::make_shared<BufferResource>(device, fullSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT);
-        buffer_geometry = std::make_shared<BufferResource>(device, fullSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT);
+        auto bufferTemp = std::make_shared<BufferResource>(device, fullSize, VK_BUFFER_USAGE_2_TRANSFER_SRC_BIT);
+        buffer_geometry = std::make_shared<BufferResource>(device, fullSize, VK_BUFFER_USAGE_2_TRANSFER_DST_BIT | VK_BUFFER_USAGE_2_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_2_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_2_SHADER_DEVICE_ADDRESS_BIT);
 
         poolTemp->AddResource(bufferTemp);
         pool_geometry->AddResource(buffer_geometry);
@@ -190,7 +219,7 @@ public:
             // imgDatas.push_back({texWidth, texHeight, texChannels, pixels});
             imgPtrs.push_back({(void *)pixels, 4 * texHeight * texWidth});
 
-            auto img_temp = std::make_shared<BufferResource>(device, 4 * texHeight * texWidth, VK_BUFFER_USAGE_TRANSFER_SRC_BIT);
+            auto img_temp = std::make_shared<BufferResource>(device, 4 * texHeight * texWidth, VK_BUFFER_USAGE_2_TRANSFER_SRC_BIT);
 
             auto img_dst = std::make_shared<ImageResource>(device,
                                                            (uint32_t)texWidth,
@@ -257,7 +286,7 @@ public:
 
     void createUbo()
     {
-        buffer_ubo = std::make_shared<BufferResource>(device, sizeof(DataUBO), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT);
+        buffer_ubo = std::make_shared<BufferResource>(device, sizeof(DataUBO), VK_BUFFER_USAGE_2_UNIFORM_BUFFER_BIT);
         pool_ubo = std::make_shared<ResourcePool>();
         pool_ubo->AddResource(buffer_ubo);
         pool_ubo->Bind(device, VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
@@ -295,35 +324,40 @@ public:
         indirectCommandsLayout->Assemble(VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, false);
         std::cout << "indirect commands layout created" << std::endl;
 
-        // const std::vector<std::string> shadersText = {frag1ShaderText, frag2ShaderText, frag3ShaderText, frag4ShaderText};
-        // // melocotón pastel, amarillo pastel, rosa suave pastel, salmón claro pastel
-        // const std::vector<glm::vec3> shadersConst = {{0.98, 0.75, 0.65}, {0.95, 0.82, 0.60}, {0.99, 0.70, 0.70}, {0.92, 0.68, 0.55}};
+        // melocotón pastel, amarillo pastel, rosa suave pastel, salmón claro pastel
+        const std::vector<glm::vec3> shadersConst = {{0.98, 0.75, 0.65}, {0.95, 0.82, 0.60}, {0.99, 0.70, 0.70}, {0.92, 0.68, 0.55}};
 
-        // auto vertShader = std::make_shared<Shader>(device, layout_bindable);
-        // auto codeV = compiler.Compile(vertexShaderText, "vert.glsl", PipelineStage::Vertex, true);
-        // vertShader->Assemble(VK_SHADER_STAGE_VERTEX_BIT, codeV);
-        // shaders_bindable.push_back(vertShader);
+        auto vertShader = std::make_shared<Shader>(device, layout_bindable);
+        auto codeV = compiler.Compile(vertexShaderText, "vert.glsl", PipelineStage::Vertex, true);
+        vertShader->Assemble(VK_SHADER_STAGE_VERTEX_BIT, "main", codeV);
+        shaders_bindable.push_back(vertShader);
 
-        // for (int i = 1; i <= 4; i++)
-        // {
-        //     auto fragShader = std::make_shared<Shader>(device, layout_bindable);
-        //     auto code = compiler.Compile(shadersText[i], "frag_" + std::to_string(i), PipelineStage::Fragment, true);
-        //     fragShader->AddConstant(0, sizeof(glm::vec3), (void *)&shadersConst[i]);
-        //     fragShader->Assemble(VK_SHADER_STAGE_FRAGMENT_BIT, code);
-        //     shaders_bindable.push_back(fragShader);
-        // }
+        for (int i = 0; i < 4; i++)
+        {
+            auto fragShader = std::make_shared<Shader>(device, layout_bindable);
+            auto code = compiler.Compile(fragShaderText, "frag_" + std::to_string(i), PipelineStage::Fragment, true);
+            fragShader->AddConstant(0, sizeof(double), (void *)&shadersConst[i].r);
+            fragShader->AddConstant(1, sizeof(double), (void *)&shadersConst[i].g);
+            fragShader->AddConstant(2, sizeof(double), (void *)&shadersConst[i].b);
+            fragShader->Assemble(VK_SHADER_STAGE_FRAGMENT_BIT, "main", code);
+            shaders_bindable.push_back(fragShader);
+        }
 
-        // indirectExecutionSet = std::make_shared<IndirectExecutionSet>(device, layout_bindable);
-        // indirectExecutionSet->Assemble(shaders_bindable, (uint32_t)shaders_bindable.size());
-        // auto reqs = indirectExecutionSet->GetRequirements(indirectCommandsLayout, sequences, draws);
+        indirectExecutionSet = std::make_shared<IndirectExecutionSet>(device, layout_bindable);
+        indirectExecutionSet->Assemble({shaders_bindable[0], shaders_bindable[1]}, 5);
+        indirectExecutionSet->Update(shaders_bindable);
 
-        // buffer_preprocessCommands = std::make_shared<BufferResource>(device, reqs.size, VK_BUFFER_USAGE_2_PREPROCESS_BUFFER_BIT_EXT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT);
-        // pool_preprocessCommands = std::make_shared<ResourcePool>();
-        // pool_preprocessCommands->AddResource(buffer_preprocessCommands);
-        // pool_preprocessCommands->Bind(device, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, VK_MEMORY_ALLOCATE_DEVICE_ADDRESS_BIT, reqs.memoryTypeBits);
-        // address_preprocessCommands = buffer_preprocessCommands->GetAddress();
+        std::cout << "indirect execution set created & updated" << std::endl;
 
-        buffer_generatedCommands = std::make_shared<BufferResource>(device, sequences * indirectCommandsLayout->GetSize(), VK_BUFFER_USAGE_INDIRECT_BUFFER_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT);
+        auto reqs = indirectExecutionSet->GetRequirements(indirectCommandsLayout, sequences, draws);
+
+        buffer_preprocessCommands = std::make_shared<BufferResource>(device, reqs.size, VK_BUFFER_USAGE_2_PREPROCESS_BUFFER_BIT_EXT | VK_BUFFER_USAGE_2_SHADER_DEVICE_ADDRESS_BIT);
+        pool_preprocessCommands = std::make_shared<ResourcePool>();
+        pool_preprocessCommands->AddResource(buffer_preprocessCommands);
+        pool_preprocessCommands->Bind(device, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, VK_MEMORY_ALLOCATE_DEVICE_ADDRESS_BIT, reqs.memoryTypeBits);
+        address_preprocessCommands = buffer_preprocessCommands->GetAddress();
+
+        buffer_generatedCommands = std::make_shared<BufferResource>(device, sequences * indirectCommandsLayout->GetSize(), VK_BUFFER_USAGE_2_INDIRECT_BUFFER_BIT | VK_BUFFER_USAGE_2_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_2_SHADER_DEVICE_ADDRESS_BIT);
         pool_generatedCommands = std::make_shared<ResourcePool>();
         pool_generatedCommands->AddResource(buffer_generatedCommands);
         pool_generatedCommands->Bind(device, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, VK_MEMORY_ALLOCATE_DEVICE_ADDRESS_BIT);
@@ -332,13 +366,13 @@ public:
         releaseQueue.Push(descriptors_bindable);
         releaseQueue.Push(layout_bindable);
         releaseQueue.Push(indirectCommandsLayout);
-        // for (auto &shader : shaders_bindable)
-        // {
-        //     releaseQueue.Push(shader);
-        // }
-        // releaseQueue.Push(indirectExecutionSet);
-        // releaseQueue.Push(buffer_preprocessCommands);
-        // releaseQueue.Push(pool_preprocessCommands);
+        for (auto &shader : shaders_bindable)
+        {
+            releaseQueue.Push(shader);
+        }
+        releaseQueue.Push(indirectExecutionSet);
+        releaseQueue.Push(buffer_preprocessCommands);
+        releaseQueue.Push(pool_preprocessCommands);
         releaseQueue.Push(buffer_generatedCommands);
         releaseQueue.Push(pool_generatedCommands);
     }
@@ -416,9 +450,7 @@ public:
         VkImageSubresourceRange imgSubresourceRange = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1};
 
         checkResult(vkResetCommandBuffer(cmd, 0));
-        //    VkClearValue clearValues[2];
-        //    clearValues[0].color = {{0.5f, 0.5f, 0.5f, 1.0f}};
-        //    clearValues[1].depthStencil = {1, 0};
+        
         VkClearValue clearValue;
         clearValue.color = {{0.5f, 0.5f, 0.5f, 1.0f}};
 
@@ -455,16 +487,37 @@ public:
         renderArea.offset.x = 0;
         renderArea.offset.y = 0;
 
-        VkRenderPassBeginInfo renderPassBI = {
-            .sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
-            .renderPass = renderpass->_renderPass,
-            .framebuffer = renderpass->_framebuffers[(int)swapchain->index],
-            .renderArea = renderArea,
-            .clearValueCount = 1,
-            .pClearValues = &clearValue,
+        // VkRenderPassBeginInfo renderPassBI = {
+        //     .sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
+        //     .renderPass = renderpass->_renderPass,
+        //     .framebuffer = renderpass->_framebuffers[(int)swapchain->index],
+        //     .renderArea = renderArea,
+        //     .clearValueCount = 1,
+        //     .pClearValues = &clearValue,
+        // };
+
+        // vkCmdBeginRenderPass(cmd, &renderPassBI, VkSubpassContents::VK_SUBPASS_CONTENTS_INLINE);
+
+        VkRenderingAttachmentInfo colorAttachment = {
+            .sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
+            .imageView = swapchain->swapChainImageViews[(int)swapchain->index],
+            .imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+            .resolveMode = VK_RESOLVE_MODE_NONE,
+            .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
+            .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
+            .clearValue = clearValue,
         };
 
-        vkCmdBeginRenderPass(cmd, &renderPassBI, VkSubpassContents::VK_SUBPASS_CONTENTS_INLINE);
+        VkRenderingInfo renderingInfo = {
+            .sType = VK_STRUCTURE_TYPE_RENDERING_INFO,
+            .renderArea = renderArea,
+            .layerCount = 1,
+            .viewMask = 0,
+            .colorAttachmentCount = 1,
+            .pColorAttachments = &colorAttachment,
+        };
+
+        vkCmdBeginRendering(cmd, &renderingInfo);
 
         // gen commands
         /*
@@ -492,7 +545,12 @@ public:
 
         vkCmdExecuteGeneratedCommandsEXT(cmd, VK_FALSE, &genCommandsI);
  */
-        vkCmdEndRenderPass(cmd);
+        vkCmdEndRendering(cmd);
+        // vkCmdEndRenderPass(cmd);
+
+        imageBarrier2.oldLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+        imageBarrier2.newLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+        vkCmdPipelineBarrier2(cmd, &dependencyI);
 
         checkResult(vkEndCommandBuffer(cmd));
     }
@@ -550,8 +608,8 @@ public:
 
         pool_ubo->UnMap();
 
-        renderpass->DestroyFramebuffers();
-        renderpass->Release();
+        // renderpass->DestroyFramebuffers();
+        // renderpass->Release();
     }
 };
 

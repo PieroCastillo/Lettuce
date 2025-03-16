@@ -13,7 +13,6 @@
 #include "Lettuce/Core/ImageResource.hpp"
 #include "Lettuce/Core/Device.hpp"
 #include "Lettuce/Core/Semaphore.hpp"
-#include "Lettuce/Core/RenderPass.hpp"
 
 #include "Lettuce/Core/GraphicsPipeline.hpp"
 #include "Lettuce/Core/ComputePipeline.hpp"
@@ -27,8 +26,8 @@ using namespace Lettuce::Core;
 
 using namespace Lettuce::Foundation;
 
-WorkFlowGraph::WorkFlowGraph(const std::shared_ptr<Device> &device, const std::shared_ptr<RenderPass> &renderPass, uint32_t threads)
-    : _device(device), _renderPass(renderPass), _threads(threads)
+WorkFlowGraph::WorkFlowGraph(const std::shared_ptr<Device> &device, uint32_t threads)
+    : _device(device), _threads(threads)
 {
     pools = std::vector<VkCommandPool>(threads, VK_NULL_HANDLE);
     cmds = std::vector<VkCommandBuffer>(threads, VK_NULL_HANDLE);

@@ -20,7 +20,6 @@ class DonutSample : public LettuceSampleApp
 {
 public:
     Lettuce::Core::Compilers::GLSLCompiler compiler;
-    std::shared_ptr<Lettuce::Core::RenderPass> renderpass;
     /*memory objects*/
     std::shared_ptr<Lettuce::Core::ResourcePool> hostResources;     // host cached, memory placed in host memory
     std::shared_ptr<Lettuce::Core::ResourcePool> deviceResources;   // device local, memory places in device memory
@@ -122,46 +121,9 @@ void main()
     VkCommandPool pool;
     VkCommandBuffer cmd;
 
-    void createRenderPass()
-    {
-        renderpass = std::make_shared<RenderPass>(device);
-        renderpass->AddAttachment(0, AttachmentType::Color,
-                                  swapchain->imageFormat,
-                                  LoadOp::Clear,
-                                  StoreOp::Store,
-                                  LoadOp::DontCare,
-                                  StoreOp::DontCare,
-                                  ImageLayout::Undefined,
-                                  ImageLayout::PresentSrc,
-                                  ImageLayout::ColorAttachmentOptimal);
-        renderpass->AddSubpass(0, BindPoint::Graphics, {0});
-        renderpass->AddDependency(VK_SUBPASS_EXTERNAL, 0,
-                                  AccessStage::ColorAttachmentOutput,
-                                  AccessStage::ColorAttachmentOutput,
-                                  AccessBehavior::None,
-                                  AccessBehavior::ColorAttachmentWrite);
-
-        renderpass->AddDependency(0, VK_SUBPASS_EXTERNAL,
-                                  AccessStage::ColorAttachmentOutput,
-                                  AccessStage::ColorAttachmentOutput,
-                                  AccessBehavior::ColorAttachmentWrite,
-                                  AccessBehavior::None);
-        renderpass->Assemble();
-        for (auto &view : swapchain->swapChainImageViews)
-        {
-            renderpass->AddFramebuffer(width, height, {view});
-        }
-        renderpass->BuildFramebuffers();
-    }
-
     void onResize()
     {
-        renderpass->DestroyFramebuffers();
-        for (auto &view : swapchain->swapChainImageViews)
-        {
-            renderpass->AddFramebuffer(width, height, {view});
-        }
-        renderpass->BuildFramebuffers();
+
     }
 
     void createObjects()
@@ -244,13 +206,13 @@ void main()
         vertexShader = std::make_shared<Lettuce::Core::ShaderModule>(device, compiler, vertexShaderText, "main", "vertex.glsl", PipelineStage::Vertex, true);
         fragmentShader = std::make_shared<Lettuce::Core::ShaderModule>(device, compiler, fragmentShaderText, "main", "fragment.glsl", PipelineStage::Fragment, true);
 
-        pipeline = std::make_shared<GraphicsPipeline>(device, connector, renderpass);
+        pipeline = std::make_shared<GraphicsPipeline>(device, connector);
         pipeline->AddVertexBindingDescription<Vertex>(0);                                  // binding = 0
         pipeline->AddVertexAttribute(0, 0, 0, VK_FORMAT_R32G32B32_SFLOAT);                 // layout(location = 0) in vec3 pos;
         pipeline->AddVertexAttribute(0, 1, sizeof(glm::vec3), VK_FORMAT_R32G32B32_SFLOAT); // layout(location = 1) in vec3 normal;
         pipeline->AddShaderStage(vertexShader);
         pipeline->AddShaderStage(fragmentShader);
-        pipeline->Assemble(0,
+        pipeline->Assemble({swapchain->imageFormat}, VK_FORMAT_UNDEFINED, VK_FORMAT_UNDEFINED,
                            {.rasterization = {
                                 .frontFace = VK_FRONT_FACE_CLOCKWISE,
                             },
@@ -273,49 +235,32 @@ void main()
         linesLayout->AddPushConstant<DataPush>(0, PipelineStage::Fragment);
         linesLayout->Assemble();
 
-        linespipeline = std::make_shared<GraphicsPipeline>(device, linesLayout, renderpass);
+        linespipeline = std::make_shared<GraphicsPipeline>(device, linesLayout);
 
         linespipeline->AddVertexBindingDescription<LineVertex>(0);
         linespipeline->AddVertexAttribute(0, 0, 0, VK_FORMAT_R32G32B32_SFLOAT);
         linespipeline->AddShaderStage(vsLineShader);
         linespipeline->AddShaderStage(psLineShader);
-        linespipeline->Assemble(0, {.inputAssembly = {VK_PRIMITIVE_TOPOLOGY_LINE_LIST, VK_FALSE},
-                                    .rasterization = {
-                                        .frontFace = VK_FRONT_FACE_CLOCKWISE,
-                                    },
-                                    .colorBlend = {
-                                        .attachments = {
-                                            {
-                                                .colorWriteMask = VK_COMPONENT_SWIZZLE_R | VK_COMPONENT_SWIZZLE_G | VK_COMPONENT_SWIZZLE_B | VK_COMPONENT_SWIZZLE_A,
-                                            },
-                                        },
-                                    }});
+        linespipeline->Assemble({swapchain->imageFormat}, VK_FORMAT_UNDEFINED, VK_FORMAT_UNDEFINED,
+                                {.inputAssembly = {VK_PRIMITIVE_TOPOLOGY_LINE_LIST, VK_FALSE},
+                                 .rasterization = {
+                                     .frontFace = VK_FRONT_FACE_CLOCKWISE,
+                                 },
+                                 .colorBlend = {
+                                     .attachments = {
+                                         {
+                                             .colorWriteMask = VK_COMPONENT_SWIZZLE_R | VK_COMPONENT_SWIZZLE_G | VK_COMPONENT_SWIZZLE_B | VK_COMPONENT_SWIZZLE_A,
+                                         },
+                                     },
+                                 }});
 
         psLineShader->Release();
         vsLineShader->Release();
 
-        // linespipeline->Release();
-        // linesLayout->Release();
-
-        // pipeline->Release();
-        // connector->Release();
-        // descriptor->Release();
-
-        // deviceBuffer->Release();
-        // uniformBuffer->Release();
-        // deviceResources->Release();
-        // coherentResources->UnMap();
-        // coherentResources->Release();
-        // transfer->Release();
-
-        // renderFinished->Release();
-        // renderpass->DestroyFramebuffers();
-        // renderpass->Release();
-
-        releaseQueue.PushWithBefore(renderpass, [&renderpass = this->renderpass]() { renderpass->DestroyFramebuffers(); });
         releaseQueue.Push(renderFinished);
         releaseQueue.Push(transfer);
-        releaseQueue.PushWithBefore(coherentResources, [&coherentResources = this->coherentResources]() { coherentResources->UnMap(); });
+        releaseQueue.PushWithBefore(coherentResources, [&coherentResources = this->coherentResources]()
+                                    { coherentResources->UnMap(); });
         releaseQueue.Push(deviceResources);
         releaseQueue.Push(uniformBuffer);
         releaseQueue.Push(deviceBuffer);
@@ -366,9 +311,7 @@ void main()
         VkImageSubresourceRange imgSubresourceRange = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1};
 
         checkResult(vkResetCommandBuffer(cmd, 0));
-        //    VkClearValue clearValues[2];
-        //    clearValues[0].color = {{0.5f, 0.5f, 0.5f, 1.0f}};
-        //    clearValues[1].depthStencil = {1, 0};
+
         VkClearValue clearValue;
         clearValue.color = {{0.5f, 0.5f, 0.5f, 1.0f}};
 
@@ -405,16 +348,26 @@ void main()
         renderArea.offset.x = 0;
         renderArea.offset.y = 0;
 
-        VkRenderPassBeginInfo renderPassBI = {
-            .sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
-            .renderPass = renderpass->_renderPass,
-            .framebuffer = renderpass->_framebuffers[(int)swapchain->index],
-            .renderArea = renderArea,
-            .clearValueCount = 1,
-            .pClearValues = &clearValue,
+        VkRenderingAttachmentInfo colorAttachment = {
+            .sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
+            .imageView = swapchain->swapChainImageViews[(int)swapchain->index],
+            .imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+            .resolveMode = VK_RESOLVE_MODE_NONE,
+            .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
+            .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
+            .clearValue = clearValue,
         };
 
-        vkCmdBeginRenderPass(cmd, &renderPassBI, VkSubpassContents::VK_SUBPASS_CONTENTS_INLINE);
+        VkRenderingInfo renderingInfo = {
+            .sType = VK_STRUCTURE_TYPE_RENDERING_INFO,
+            .renderArea = renderArea,
+            .layerCount = 1,
+            .viewMask = 0,
+            .colorAttachmentCount = 1,
+            .pColorAttachments = &colorAttachment,
+        };
+
+        vkCmdBeginRendering(cmd, &renderingInfo);
 
         /*render lines X Y Z */ // yellow, purple, green
         uint32_t baseSize = verticesSize + indicesSize;
@@ -458,7 +411,12 @@ void main()
         vkCmdSetScissorWithCount(cmd, 1, &scissor);
         vkCmdSetPrimitiveTopology(cmd, VkPrimitiveTopology::VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
         vkCmdDrawIndexed(cmd, indices.size(), 1, 0, 0, 0);
-        vkCmdEndRenderPass(cmd);
+   
+        vkCmdEndRendering(cmd);
+
+        imageBarrier2.oldLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+        imageBarrier2.newLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+        vkCmdPipelineBarrier2(cmd, &dependencyI);
 
         checkResult(vkEndCommandBuffer(cmd));
     }

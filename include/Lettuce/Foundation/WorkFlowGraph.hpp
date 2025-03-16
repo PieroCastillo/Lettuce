@@ -15,7 +15,6 @@
 #include "Lettuce/Core/ImageResource.hpp"
 #include "Lettuce/Core/Device.hpp"
 #include "Lettuce/Core/Semaphore.hpp"
-#include "Lettuce/Core/RenderPass.hpp"
 
 #include "Lettuce/Core/GraphicsPipeline.hpp"
 #include "Lettuce/Core/ComputePipeline.hpp"
@@ -54,13 +53,12 @@ namespace Lettuce::Foundation
     public:
         const uint32_t _threads;
         std::shared_ptr<Device> _device;
-        std::shared_ptr<RenderPass> _renderPass;
         // internal objects
         std::vector<VkCommandPool> pools;
         std::vector<VkCommandBuffer> cmds;
         std::vector<std::thread> threads;
 
-        WorkFlowGraph(const std::shared_ptr<Device> &device, const std::shared_ptr<RenderPass> &renderPass, uint32_t threads);
+        WorkFlowGraph(const std::shared_ptr<Device> &device, uint32_t threads);
         void Release();
 
         // add resources

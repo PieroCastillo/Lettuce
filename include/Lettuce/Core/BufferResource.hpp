@@ -26,7 +26,7 @@ namespace Lettuce::Core
         std::shared_ptr<Device> _device;
         std::vector<BufferBlock> _blocks;
         BufferResource(const std::shared_ptr<Device> &device, std::vector<BufferBlock> bufferBlocks);
-        BufferResource(const std::shared_ptr<Device> &device, uint32_t size, VkBufferUsageFlags usage);
+        BufferResource(const std::shared_ptr<Device> &device, uint32_t size, VkBufferUsageFlags2 usage);
         void Release();
         uint64_t GetAddress();
         ResourceType GetResourceType();

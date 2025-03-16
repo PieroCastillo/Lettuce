@@ -8,7 +8,6 @@
 #include "Lettuce/Core/PipelineLayout.hpp"
 #include "Lettuce/Core/Swapchain.hpp"
 #include "Lettuce/Core/ShaderModule.hpp"
-#include "Lettuce/Core/RenderPass.hpp"
 
 using namespace Lettuce::Core;
 
@@ -34,10 +33,8 @@ void GraphicsPipeline::AddShaderStage(const std::shared_ptr<ShaderModule> &shade
     stages.emplace_back(pipelineShaderStageCI);
 }
 
-void GraphicsPipeline::Assemble(uint32_t subpassIndex, const PipelineBuildData &pipelineData)
+void GraphicsPipeline::Assemble(std::vector<VkFormat> colorFormats, VkFormat depthFormat, VkFormat stencilFormat, const PipelineBuildData &pipelineData)
 {
-    _subpassIndex = subpassIndex;
-
     VkPipelineVertexInputStateCreateInfo vertexInputStateCI = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO,
         .vertexBindingDescriptionCount = 0,
@@ -133,8 +130,18 @@ void GraphicsPipeline::Assemble(uint32_t subpassIndex, const PipelineBuildData &
         .pDynamicStates = pipelineData.dynamic.dynamicStates.data(),
     };
 
+    VkPipelineRenderingCreateInfo renderingCI = {
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO,
+        .viewMask = 0,
+        .colorAttachmentCount = (int)colorFormats.size(),
+        .pColorAttachmentFormats = colorFormats.data(),
+        .depthAttachmentFormat = depthFormat,
+        .stencilAttachmentFormat = stencilFormat,
+    };
+
     VkGraphicsPipelineCreateInfo graphicsPipelineCI = {
         .sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
+        .pNext = &renderingCI,
         //                 VkPipelineCreateFlags                            flags;
         .stageCount = (uint32_t)stages.size(),
         .pStages = stages.data(),
@@ -148,22 +155,11 @@ void GraphicsPipeline::Assemble(uint32_t subpassIndex, const PipelineBuildData &
         .pColorBlendState = &colorBlendStateCI,
         .pDynamicState = &dynamicStateCI,
         .layout = _layout->_pipelineLayout,
-        .renderPass = _renderpass->_renderPass,
-        .subpass = _subpassIndex,
         // VkPipeline                                       basePipelineHandle;
         // int32_t                                          basePipelineIndex;
     };
 
     checkResult(vkCreateGraphicsPipelines(_device->_device, VK_NULL_HANDLE, 1, &graphicsPipelineCI, nullptr, &_pipeline));
-}
-
-GraphicsPipeline::GraphicsPipeline(const std::shared_ptr<Device> &device,
-                                   const std::shared_ptr<PipelineLayout> &connector,
-                                   const std::shared_ptr<RenderPass> &renderpass)
-    : _device(device),
-      _layout(connector),
-      _renderpass(renderpass)
-{
 }
 
 void GraphicsPipeline::Release()

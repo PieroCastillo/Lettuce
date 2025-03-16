@@ -17,7 +17,7 @@ namespace Lettuce::Core
     {
     private:
         std::vector<VkSpecializationMapEntry> entries;
-        std::vector<void*> datas; 
+        std::vector<void *> datas;
         uint32_t currentOffset = 0;
 
     public:
@@ -31,7 +31,7 @@ namespace Lettuce::Core
 
         void Release();
 
-        void Assemble(const VkShaderStageFlagBits &stage, const std::vector<uint32_t> &code, const VkShaderCreateFlagsEXT& flags = VK_SHADER_CREATE_INDIRECT_BINDABLE_BIT_EXT);
+        void Assemble(const VkShaderStageFlagBits &stage, const std::string &entryPoint, const std::vector<uint32_t> &code, const VkShaderCreateFlagsEXT &flags = VK_SHADER_CREATE_INDIRECT_BINDABLE_BIT_EXT);
 
         void AddConstant(uint32_t constantId, uint32_t size, void *data);
     };

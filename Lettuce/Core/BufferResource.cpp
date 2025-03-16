@@ -34,16 +34,22 @@ BufferResource::BufferResource(const std::shared_ptr<Device> &device, std::vecto
     _size = size;
 }
 
-BufferResource::BufferResource(const std::shared_ptr<Device> &device, uint32_t size, VkBufferUsageFlags usage) : _device(device)
+BufferResource::BufferResource(const std::shared_ptr<Device> &device, uint32_t size, VkBufferUsageFlags2 usage) : _device(device)
 {
     _size = size;
+
+    VkBufferUsageFlags2CreateInfo flags = {
+        .sType = VK_STRUCTURE_TYPE_BUFFER_USAGE_FLAGS_2_CREATE_INFO,
+        .usage = usage,
+    };
+
     VkBufferCreateInfo bufferCI = {
         .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
+        .pNext = &flags,
         .size = size,
-        .usage = usage,
         .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
     };
-    
+
     checkResult(vkCreateBuffer(device->_device, &bufferCI, nullptr, &_buffer));
 }
 

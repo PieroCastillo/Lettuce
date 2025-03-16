@@ -9,7 +9,6 @@
 #include "Device.hpp"
 #include "IReleasable.hpp"
 #include "ShaderModule.hpp"
-#include "RenderPass.hpp"
 #include "Utils.hpp"
 #include "PipelineLayout.hpp"
 
@@ -84,10 +83,8 @@ namespace Lettuce::Core
         };
 
         std::shared_ptr<Device> _device;
-        std::shared_ptr<RenderPass> _renderpass;
         std::shared_ptr<PipelineLayout> _layout;
         VkPipeline _pipeline;
-        uint32_t _subpassIndex;
         std::vector<VkPipelineShaderStageCreateInfo> stages;
         std::vector<VkVertexInputBindingDescription> vertexInputBindings;
         std::vector<VkVertexInputAttributeDescription> vertexInputAttributes;
@@ -108,12 +105,13 @@ namespace Lettuce::Core
         void AddShaderStage(const std::shared_ptr<ShaderModule> &shader);
 
         GraphicsPipeline(const std::shared_ptr<Device> &device,
-                         const std::shared_ptr<PipelineLayout> &connector,
-                         const std::shared_ptr<RenderPass> &renderpass);
-        // maybe a build() or construct() ?
-        //  solution: Assemble(...)
+                         const std::shared_ptr<PipelineLayout> &connector) : _device(device),
+                                                                             _layout(connector)
+        {
+        }
+
         void Release();
 
-        void Assemble(uint32_t subpassIndex, const PipelineBuildData &pipelineData);
+        void Assemble(std::vector<VkFormat> colorFormats, VkFormat depthFormat, VkFormat stencilFormat, const PipelineBuildData &pipelineData);
     };
 }
