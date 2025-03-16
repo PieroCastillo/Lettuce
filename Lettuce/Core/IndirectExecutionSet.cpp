@@ -15,11 +15,11 @@ using namespace Lettuce::Core;
 
 void IndirectExecutionSet::Assemble(const std::vector<std::shared_ptr<Shader>> &initialShaders, uint32_t maxShaderCount)
 {
-    VkIndirectExecutionSetShaderLayoutInfoEXT setLayouts = {
+    std::vector<VkIndirectExecutionSetShaderLayoutInfoEXT> setLayouts(initialShaders.size(), {
         .sType = VK_STRUCTURE_TYPE_INDIRECT_EXECUTION_SET_SHADER_LAYOUT_INFO_EXT,
         .setLayoutCount = (uint32_t)_pipelineLayout->_descriptors->_layouts.size(),
         .pSetLayouts = _pipelineLayout->_descriptors->_layouts.data(),
-    };
+    });
 
     // get shaders
     std::vector<VkShaderEXT> shaders;
@@ -34,7 +34,7 @@ void IndirectExecutionSet::Assemble(const std::vector<std::shared_ptr<Shader>> &
         .sType = VK_STRUCTURE_TYPE_INDIRECT_EXECUTION_SET_SHADER_INFO_EXT,
         .shaderCount = (uint32_t)initialShaders.size(),
         .pInitialShaders = shaders.data(),
-        .pSetLayoutInfos = &setLayouts,
+        .pSetLayoutInfos = setLayouts.data(),
         .maxShaderCount = (uint32_t)maxShaderCount,
         .pushConstantRangeCount = (uint32_t)_pipelineLayout->pushConstants.size(),
         .pPushConstantRanges = _pipelineLayout->pushConstants.data(),
@@ -54,15 +54,15 @@ void IndirectExecutionSet::Assemble(const std::vector<std::shared_ptr<Shader>> &
 void IndirectExecutionSet::Update(const std::vector<std::shared_ptr<Shader>> &shaders)
 {
     std::vector<VkWriteIndirectExecutionSetShaderEXT> shaderWrites;
-    shaderWrites.reserve(shaders.size());
+    shaderWrites.resize(shaders.size());
 
     for (int i = 0; i < shaderWrites.size(); i++)
     {
-        shaderWrites.push_back({
-            .sType = VK_STRUCTURE_TYPE_INDIRECT_EXECUTION_SET_SHADER_INFO_EXT,
+        shaderWrites[i] ={
+            .sType = VK_STRUCTURE_TYPE_WRITE_INDIRECT_EXECUTION_SET_SHADER_EXT,
             .index = (uint32_t)i,
             .shader = shaders[i]->_shader,
-        });
+        };
     }
     vkUpdateIndirectExecutionSetShaderEXT(_device->_device, _executionSet, (uint32_t)shaderWrites.size(), shaderWrites.data());
 }
@@ -81,7 +81,9 @@ VkMemoryRequirements IndirectExecutionSet::GetRequirements(const std::shared_ptr
         .maxSequenceCount = maxSequenceCount,
         .maxDrawCount = maxDrawCount,
     };
-    VkMemoryRequirements2 reqs;
+    VkMemoryRequirements2 reqs = {
+        .sType = VK_STRUCTURE_TYPE_MEMORY_REQUIREMENTS_2,
+    };
     vkGetGeneratedCommandsMemoryRequirementsEXT(_device->_device, &info, &reqs);
     return reqs.memoryRequirements;
 }

@@ -25,7 +25,6 @@ class GeometrySample : public LettuceSampleApp
 {
 public:
     Lettuce::Core::Compilers::GLSLCompiler compiler;
-    std::shared_ptr<Lettuce::Core::RenderPass> renderpass;
     std::shared_ptr<TransferManager> manager;
     /* sync objects*/
     std::shared_ptr<Lettuce::Core::Semaphore> renderFinished;
@@ -111,46 +110,9 @@ void main()
     VkCommandPool pool;
     VkCommandBuffer cmd;
 
-    void createRenderPass()
-    {
-        // renderpass = std::make_shared<RenderPass>(device);
-        // renderpass->AddAttachment(0, AttachmentType::Color,
-        //                           swapchain->imageFormat,
-        //                           LoadOp::Clear,
-        //                           StoreOp::Store,
-        //                           LoadOp::DontCare,
-        //                           StoreOp::DontCare,
-        //                           ImageLayout::Undefined,
-        //                           ImageLayout::PresentSrc,
-        //                           ImageLayout::ColorAttachmentOptimal);
-        // renderpass->AddSubpass(0, BindPoint::Graphics, {0});
-        // renderpass->AddDependency(VK_SUBPASS_EXTERNAL, 0,
-        //                           AccessStage::ColorAttachmentOutput,
-        //                           AccessStage::ColorAttachmentOutput,
-        //                           AccessBehavior::None,
-        //                           AccessBehavior::ColorAttachmentWrite);
-
-        // renderpass->AddDependency(0, VK_SUBPASS_EXTERNAL,
-        //                           AccessStage::ColorAttachmentOutput,
-        //                           AccessStage::ColorAttachmentOutput,
-        //                           AccessBehavior::ColorAttachmentWrite,
-        //                           AccessBehavior::None);
-        // renderpass->Assemble();
-        // for (auto &view : swapchain->swapChainImageViews)
-        // {
-        //     renderpass->AddFramebuffer(width, height, {view});
-        // }
-        // renderpass->BuildFramebuffers();
-    }
-
     void onResize()
     {
-        // renderpass->DestroyFramebuffers();
-        // for (auto &view : swapchain->swapChainImageViews)
-        // {
-        //     renderpass->AddFramebuffer(width, height, {view});
-        // }
-        // renderpass->BuildFramebuffers();
+        
     }
 
     void genScene()
@@ -487,17 +449,6 @@ void main()
         renderArea.offset.x = 0;
         renderArea.offset.y = 0;
 
-        // VkRenderPassBeginInfo renderPassBI = {
-        //     .sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
-        //     .renderPass = renderpass->_renderPass,
-        //     .framebuffer = renderpass->_framebuffers[(int)swapchain->index],
-        //     .renderArea = renderArea,
-        //     .clearValueCount = 1,
-        //     .pClearValues = &clearValue,
-        // };
-
-        // vkCmdBeginRenderPass(cmd, &renderPassBI, VkSubpassContents::VK_SUBPASS_CONTENTS_INLINE);
-
         VkRenderingAttachmentInfo colorAttachment = {
             .sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
             .imageView = swapchain->swapChainImageViews[(int)swapchain->index],
@@ -546,7 +497,6 @@ void main()
         vkCmdExecuteGeneratedCommandsEXT(cmd, VK_FALSE, &genCommandsI);
  */
         vkCmdEndRendering(cmd);
-        // vkCmdEndRenderPass(cmd);
 
         imageBarrier2.oldLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
         imageBarrier2.newLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
