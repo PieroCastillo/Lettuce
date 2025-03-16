@@ -133,7 +133,7 @@ void GraphicsPipeline::Assemble(std::vector<VkFormat> colorFormats, VkFormat dep
     VkPipelineRenderingCreateInfo renderingCI = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO,
         .viewMask = 0,
-        .colorAttachmentCount = (int)colorFormats.size(),
+        .colorAttachmentCount = (uint32_t)colorFormats.size(),
         .pColorAttachmentFormats = colorFormats.data(),
         .depthAttachmentFormat = depthFormat,
         .stencilAttachmentFormat = stencilFormat,

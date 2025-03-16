@@ -42,7 +42,7 @@ void Descriptors::Assemble(uint32_t maxSets)
         int j = 0;
         for (auto binding : bindings)
         {
-            typesMap[binding.descriptorType] += 1;
+            typesMap[binding.descriptorType] += binding.descriptorCount;
             j++;
         }
 
