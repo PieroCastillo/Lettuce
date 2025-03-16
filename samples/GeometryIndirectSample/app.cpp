@@ -53,6 +53,12 @@ public:
 
     uint32_t address_generatedCommands;
     uint32_t address_preprocessCommands;
+    struct PushConstantData_Gen
+    {
+        uint32_t address_geometry;
+        int vertexCount;
+        int indexCount;
+    } pcData_gen;
     const uint32_t sequences = 16;
     const uint32_t draws = 16;
     const std::string compShaderText = R"(#version 460
@@ -227,6 +233,10 @@ void main()
 
         bufferTemp->Release();
         poolTemp->Release();
+
+        pcData_gen.address_geometry = buffer_geometry->GetAddress();
+        pcData_gen.indexCount = sphere.indices.size();
+        pcData_gen.vertexCount = sphere.points.size();
 
         releaseQueue.Push(buffer_geometry);
         releaseQueue.Push(pool_geometry);
@@ -500,18 +510,44 @@ void main()
 
         checkResult(vkResetCommandBuffer(cmd, 0));
 
-        VkClearValue clearValue;
-        clearValue.color = {{0.5f, 0.5f, 0.5f, 1.0f}};
-
         VkCommandBufferBeginInfo cmdBI = {
             .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
             .flags = VK_COMMAND_BUFFER_USAGE_RENDER_PASS_CONTINUE_BIT,
         };
         checkResult(vkBeginCommandBuffer(cmd, &cmdBI));
 
+        // gen commands
+        vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_COMPUTE, layout_genCommands->_pipelineLayout, 0,
+                                (uint32_t)descriptors_genCommands->_descriptorSets.size(),
+                                descriptors_genCommands->_descriptorSets.data(), 0, nullptr);
+        vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_COMPUTE, pipeline_genCommands->_pipeline);
+
+        uint32_t pcFullSize = sizeof(uint64_t) + sizeof(int) + sizeof(int);
+        vkCmdPushConstants(cmd, layout_genCommands->_pipelineLayout, VK_SHADER_STAGE_COMPUTE_BIT, 0, pcFullSize, (void *)&pcData_gen);
+        vkCmdDispatch(cmd, 1, 1, 1); // workgroup (4,4,0)
+
+        // VkMemoryBarrier2 memBarrier1 = {
+        //     .sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER_2,
+        //     .srcStageMask = VK_PIPELINE_STAGE_2_COMPUTE_SHADER_BIT,
+        //     .dstStageMask = VK_PIPELINE_STAGE_2_ALL_GRAPHICS_BIT,
+        // };
+
+        VkBufferMemoryBarrier2 bufferBarrier = {
+            .sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER_2,
+            .srcStageMask = VK_PIPELINE_STAGE_2_COMPUTE_SHADER_BIT,
+            .srcAccessMask = VK_ACCESS_2_SHADER_WRITE_BIT,
+            .dstStageMask = VK_PIPELINE_STAGE_2_COMMAND_PREPROCESS_BIT_EXT,
+            .dstAccessMask = VK_ACCESS_2_MEMORY_READ_BIT,
+            .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+            .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+            .buffer = buffer_generatedCommands->_buffer,
+            .offset = 0,
+            .size = buffer_generatedCommands->_size,
+        };
+
         VkImageMemoryBarrier2 imageBarrier2 = {
             .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2,
-            .srcStageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT,
+            .srcStageMask = VK_PIPELINE_STAGE_2_NONE,
             .dstStageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT,
             .dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
             .oldLayout = VK_IMAGE_LAYOUT_UNDEFINED,
@@ -522,8 +558,12 @@ void main()
             .subresourceRange = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1},
         };
 
+        // VkMemoryBarrier2 memBarriers[] = {memBarrier1, memBarrier2};
+
         VkDependencyInfo dependencyI = {
             .sType = VK_STRUCTURE_TYPE_DEPENDENCY_INFO,
+            .bufferMemoryBarrierCount = 1,
+            .pBufferMemoryBarriers = &bufferBarrier,
             .imageMemoryBarrierCount = 1,
             .pImageMemoryBarriers = &imageBarrier2,
         };
@@ -535,6 +575,9 @@ void main()
         renderArea.extent.width = swapchain->width;
         renderArea.offset.x = 0;
         renderArea.offset.y = 0;
+
+        VkClearValue clearValue;
+        clearValue.color = {{0.5f, 0.5f, 0.5f, 1.0f}};
 
         VkRenderingAttachmentInfo colorAttachment = {
             .sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
@@ -557,36 +600,38 @@ void main()
 
         vkCmdBeginRendering(cmd, &renderingInfo);
 
-        // gen commands
-        /*
-                vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_COMPUTE, layout_genCommands->_pipelineLayout, 0,
-                                        (uint32_t)descriptors_genCommands->_descriptorSets.size(),
-                                        descriptors_genCommands->_descriptorSets.data(), 0, nullptr);
-                vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_COMPUTE, pipeline_genCommands->_pipeline);
-                vkCmdDispatch(cmd, 1, 1, 0); // workgroup (4,4,0)
-        */
         // execute commands
-        /*
-                VkGeneratedCommandsInfoEXT genCommandsI = {
-                    .sType = VK_STRUCTURE_TYPE_GENERATED_COMMANDS_INFO_EXT,
-                    .shaderStages = indirectCommandsLayout->_shaderStages,
-                    .indirectExecutionSet = indirectExecutionSet->_executionSet,
-                    .indirectCommandsLayout = indirectCommandsLayout->_commandsLayout,
-                    .indirectAddress = (VkDeviceAddress)address_generatedCommands,
-                    .indirectAddressSize = (VkDeviceSize)buffer_generatedCommands->_size,
-                    .preprocessAddress = (VkDeviceAddress)address_preprocessCommands,
-                    .preprocessSize = (VkDeviceSize)buffer_preprocessCommands->_size,
-                    .maxSequenceCount = 16,
-                    // .sequenceCountAddress;
-                    .maxDrawCount = 16,
-                };
+
+        VkGeneratedCommandsInfoEXT genCommandsI = {
+            .sType = VK_STRUCTURE_TYPE_GENERATED_COMMANDS_INFO_EXT,
+            .shaderStages = indirectCommandsLayout->_shaderStages,
+            .indirectExecutionSet = indirectExecutionSet->_executionSet,
+            .indirectCommandsLayout = indirectCommandsLayout->_commandsLayout,
+            .indirectAddress = (VkDeviceAddress)address_generatedCommands,
+            .indirectAddressSize = (VkDeviceSize)buffer_generatedCommands->_size,
+            .preprocessAddress = (VkDeviceAddress)address_preprocessCommands,
+            .preprocessSize = (VkDeviceSize)buffer_preprocessCommands->_size,
+            .maxSequenceCount = 16,
+            // .sequenceCountAddress;
+            .maxDrawCount = 16,
+        };
+
+        VkShaderStageFlagBits stages[] = {VK_SHADER_STAGE_VERTEX_BIT, VK_SHADER_STAGE_FRAGMENT_BIT};
+        VkShaderEXT shaders[] = {shaders_bindable[0]->_shader, shaders_bindable[1]->_shader};
+
+        vkCmdBindShadersEXT(cmd, 2, stages, shaders);
+        vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, layout_bindable->_pipelineLayout, 0,
+                                (uint32_t)descriptors_bindable->_descriptorSets.size(),
+                                descriptors_bindable->_descriptorSets.data(), 0, nullptr);
 
         vkCmdExecuteGeneratedCommandsEXT(cmd, VK_FALSE, &genCommandsI);
- */
+
         vkCmdEndRendering(cmd);
 
         imageBarrier2.oldLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
         imageBarrier2.newLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+        dependencyI.bufferMemoryBarrierCount = 0;
+        dependencyI.pBufferMemoryBarriers = 0;
         vkCmdPipelineBarrier2(cmd, &dependencyI);
 
         checkResult(vkEndCommandBuffer(cmd));

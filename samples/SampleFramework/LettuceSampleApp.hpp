@@ -41,7 +41,7 @@ protected:
     {
         Lettuce::Core::Version version = {0, 1, 0, 0};
         std::vector<char *> reqExts = {};
-        instance = std::make_shared<Lettuce::Core::Instance>(appName, version, reqExts, true);
+        instance = std::make_shared<Lettuce::Core::Instance>(appName, version, reqExts, false);
         instance->CreateSurface(glfwGetWin32Window(window), GetModuleHandle(nullptr));
         
         auto gpus = instance->getGPUs();
