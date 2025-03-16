@@ -28,6 +28,17 @@ void PipelineLayout::Release()
     vkDestroyPipelineLayout(_device->_device, _pipelineLayout, nullptr);
 }
 
+void PipelineLayout::AddPushConstant(uint32_t size, VkShaderStageFlags stages)
+{
+    VkPushConstantRange pushConstantRange = {
+        .stageFlags = stages,
+        .offset = currentOffset,
+        .size = size,
+    };
+    currentOffset += size;
+    pushConstants.emplace_back(pushConstantRange);
+}
+
 void PipelineLayout::Assemble()
 {
      VkPipelineLayoutCreateInfo pipelineLayoutCI = {

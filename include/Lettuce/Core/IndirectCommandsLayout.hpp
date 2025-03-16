@@ -15,9 +15,10 @@ namespace Lettuce::Core
     class IndirectCommandsLayout : public IReleasable
     {
         uint32_t currentOffset = 0;
+        uint32_t pushCurrentOffset = 0;
         uint32_t size = 0;
         std::vector<VkIndirectCommandsLayoutTokenEXT> tokens;
-        //spec allows one executionSetToken and one IndexBufferToken only
+        // spec allows one executionSetToken and one IndexBufferToken only
         VkIndirectCommandsExecutionSetTokenEXT executionSetData;
         VkIndirectCommandsIndexBufferTokenEXT indexData;
         std::vector<VkIndirectCommandsPushConstantTokenEXT> pushConstantDatas;
@@ -37,9 +38,9 @@ namespace Lettuce::Core
         uint32_t GetSize() { return size; }
 
         // Common Tokens
-        void AddExecutionSetToken(VkShaderStageFlags shaderStages, uint32_t size);                // VK_INDIRECT_COMMANDS_TOKEN_TYPE_EXECUTION_SET_EXT
-        void AddPushConstantToken(VkShaderStageFlags stageFlags, uint32_t offset, uint32_t size); // VK_INDIRECT_COMMANDS_TOKEN_TYPE_PUSH_CONSTANT_EXT
-        void AddSequenceToken(uint32_t size);                                                     // VK_INDIRECT_COMMANDS_TOKEN_TYPE_SEQUENCE_INDEX_EXT
+        void AddExecutionSetToken(VkShaderStageFlags shaderStages, uint32_t size); // VK_INDIRECT_COMMANDS_TOKEN_TYPE_EXECUTION_SET_EXT
+        void AddPushConstantToken(VkShaderStageFlags stageFlags, uint32_t size);   // VK_INDIRECT_COMMANDS_TOKEN_TYPE_PUSH_CONSTANT_EXT
+        void AddSequenceToken(uint32_t size);                                      // VK_INDIRECT_COMMANDS_TOKEN_TYPE_SEQUENCE_INDEX_EXT
         // Compute Tokens
         void AddDispatchToken(); // VK_INDIRECT_COMMANDS_TOKEN_TYPE_DISPATCH_EXT
         // Graphics State Tokens

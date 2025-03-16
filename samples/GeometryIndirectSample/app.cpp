@@ -55,7 +55,79 @@ public:
     uint32_t address_preprocessCommands;
     const uint32_t sequences = 16;
     const uint32_t draws = 16;
-    const std::string compShaderText = "";
+    const std::string compShaderText = R"(#version 460
+#extension GL_EXT_shader_explicit_arithmetic_types_int64 : require
+        
+struct VkBindVertexBufferIndirectCommandEXT {
+        uint64_t bufferAddress;
+        uint size;
+        uint stride;
+};
+
+struct VkBindIndexBufferIndirectCommandEXT {
+        uint64_t bufferAddress;
+        uint size;
+        uint indexType; // 32-bit uint
+};
+
+struct VkDrawIndexedIndirectCommand {
+        uint indexCount;
+        uint instanceCount;
+        uint firstIndex;
+        int vertexOffset;
+        uint firstInstance;
+};
+
+struct Sequence {
+        uint shaderIndex1;
+        uint shaderIndex2;
+        int pushValue; // texture index
+        VkBindVertexBufferIndirectCommandEXT vertex0;
+        VkBindVertexBufferIndirectCommandEXT vertex1;
+        VkBindIndexBufferIndirectCommandEXT index;
+        VkDrawIndexedIndirectCommand draw;
+};
+
+layout(local_size_x = 4, local_size_y = 4, local_size_z = 1) in;
+
+layout(push_constant) uniform constants {
+    uint64_t address;
+    int indexCount;
+    int vertexCount;
+} consts;
+
+layout(std140, set = 0, binding = 0) writeonly buffer IndirectBuffer {
+    Sequence sequence;
+} ind;
+
+void main(){        
+    Sequence seq;
+    seq.shaderIndex1 = 0; // selects first shader always
+    seq.shaderIndex2 = gl_LocalInvocationID.x; // selects fragment shader
+
+    seq.pushValue = int(gl_LocalInvocationID.y); // selects image
+
+    seq.vertex0.bufferAddress = consts.address;
+    seq.vertex0.size = 12; // sizeof(vec3) 
+    seq.vertex0.stride = 12+8;
+
+    seq.vertex1.bufferAddress = consts.address;
+    seq.vertex1.size = 8; // sizeof(vec2) 
+    seq.vertex1.stride = 12+8;
+
+    seq.index.bufferAddress = consts.address + ((12+8)*consts.vertexCount);
+    seq.index.size = 4; //sizeof(uint32)
+    seq.index.indexType = 1;
+
+    seq.draw.indexCount = consts.indexCount;
+    seq.draw.instanceCount = 1;
+    seq.draw.firstIndex = 0;
+    seq.draw.vertexOffset = 0;
+    seq.draw.firstInstance = 0;
+    
+    ind.sequence = seq;
+})";
+
     const std::string vertexShaderText = R"(#version 450
 layout (location=0) in vec3 pos;
 layout (location=1) in vec2 tex;
@@ -75,10 +147,15 @@ void main()
 })";
 
     const std::string fragShaderText = R"(#version 450  
+#extension GL_EXT_nonuniform_qualifier : require
 layout (location = 0) in vec2 fragTexCoord;
 layout (location = 0) out vec4 outColor;
 
-layout (set = 0, binding = 1) uniform sampler2D texSampler;
+layout (set = 0, binding = 1) uniform sampler2D texSampler[];
+
+layout (push_constant) uniform constants {
+    int index;
+} consts;
 
 layout (constant_id = 0) const double importantColorR = .5;
 layout (constant_id = 1) const double importantColorG = .5;
@@ -87,7 +164,7 @@ layout (constant_id = 2) const double importantColorB = .5;
 void main()
 {
     vec3 importantColor = vec3(importantColorR, importantColorG, importantColorB);
-    outColor = vec4(importantColor  * texture(texSampler, fragTexCoord).rgb, 1.0);
+    outColor = vec4(importantColor  * texture(texSampler[consts.index], fragTexCoord).rgb, 1.0);
 })";
 
     struct imgData
@@ -112,11 +189,15 @@ void main()
 
     void onResize()
     {
-        
     }
 
     void genScene()
     {
+        /* buffer with geometry info:
+            || vec3 | vec2  || ... || uint32 || uint32 ||
+            first vertices, next indices
+        */
+
         /*geometries*/
         Geometries::Sphere sphere({0, 0, 0}, 10.0f, 5, 5);
 
@@ -276,11 +357,14 @@ void main()
         descriptors_bindable->Update();
         std::cout << "descriptors bindable updated" << std::endl;
         layout_bindable = std::make_shared<PipelineLayout>(device, descriptors_bindable);
+        layout_bindable->AddPushConstant<int>(VK_SHADER_STAGE_FRAGMENT_BIT); // int index;
         layout_bindable->Assemble();
 
         indirectCommandsLayout = std::make_shared<IndirectCommandsLayout>(device, layout_bindable);
         indirectCommandsLayout->AddExecutionSetToken(VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 2); // bound to 2 shaders
+        indirectCommandsLayout->AddPushConstantToken(VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(uint32_t));
         indirectCommandsLayout->AddVertexBufferToken(0);
+        indirectCommandsLayout->AddVertexBufferToken(1);
         indirectCommandsLayout->AddIndexBufferToken();
         indirectCommandsLayout->AddDrawIndexedToken();
         indirectCommandsLayout->Assemble(VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, false);
@@ -347,15 +431,18 @@ void main()
         descriptors_genCommands->AddUpdateInfo(0, 0, {{buffer_generatedCommands->_size, buffer_generatedCommands}});
         descriptors_genCommands->Update();
         layout_genCommands = std::make_shared<PipelineLayout>(device, descriptors_genCommands);
+        layout_genCommands->AddPushConstant(sizeof(uint64_t) + sizeof(int) + sizeof(int), VK_SHADER_STAGE_COMPUTE_BIT); // uint64_t address;
+                                                                                                                        // int indexCount;
+                                                                                                                        // int vertexCount;
         layout_genCommands->Assemble();
 
-        // auto compShader = std::make_shared<ShaderModule>(device, compiler, compShaderText, "main", "compute.glsl", PipelineStage::Compute, true);
-        // pipeline_genCommands = std::make_shared<ComputePipeline>(device, layout_genCommands, compShader);
-        // compShader->Release();
+        auto compShader = std::make_shared<ShaderModule>(device, compiler, compShaderText, "main", "compute.glsl", PipelineStage::Compute, true);
+        pipeline_genCommands = std::make_shared<ComputePipeline>(device, layout_genCommands, compShader);
+        compShader->Release();
 
         releaseQueue.Push(descriptors_genCommands);
         releaseQueue.Push(layout_genCommands);
-        // releaseQueue.Push(pipeline_genCommands);
+        releaseQueue.Push(pipeline_genCommands);
     }
 
     void createObjects()
@@ -412,7 +499,7 @@ void main()
         VkImageSubresourceRange imgSubresourceRange = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1};
 
         checkResult(vkResetCommandBuffer(cmd, 0));
-        
+
         VkClearValue clearValue;
         clearValue.color = {{0.5f, 0.5f, 0.5f, 1.0f}};
 

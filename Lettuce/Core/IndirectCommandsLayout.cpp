@@ -52,9 +52,10 @@ void IndirectCommandsLayout::AddExecutionSetToken(VkShaderStageFlags shaderStage
     currentOffset += (4 + size) & ~3;
 }
 
-void IndirectCommandsLayout::AddPushConstantToken(VkShaderStageFlags stageFlags, uint32_t offset, uint32_t size)
+void IndirectCommandsLayout::AddPushConstantToken(VkShaderStageFlags stageFlags, uint32_t size)
 {
-    pushConstantDatas.push_back({stageFlags, offset, size});
+    pushConstantDatas.push_back({stageFlags, pushCurrentOffset, size});
+    pushCurrentOffset += size;
     VkIndirectCommandsTokenDataEXT data;
     data.pPushConstant = &(pushConstantDatas.data()[pushConstantDatas.size() - 1]);
 
