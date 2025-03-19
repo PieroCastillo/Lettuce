@@ -23,6 +23,7 @@ protected:
         glfwInit();
         glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
         glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
+        glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
         window = glfwCreateWindow(width, height, title.c_str(), nullptr, nullptr);
         glfwSetWindowUserPointer(window, this);
         glfwSetKeyCallback(window, keyCallback);
@@ -94,6 +95,7 @@ protected:
 
     void mainLoop()
     {
+        glfwShowWindow(window);
         while (!glfwWindowShouldClose(window))
         {
             std::cout << "-------------- frame ---------------" << std::endl;

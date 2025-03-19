@@ -29,13 +29,15 @@ void Shader::AddConstant(uint32_t constantId, uint32_t size, void *data)
 
 void Shader::Assemble(const VkShaderStageFlagBits &stage,
                       const std::string &entryPoint,
-                      const std::vector<uint32_t> &code,
+                      const std::vector<uint32_t> &code, 
+                      const VkShaderStageFlags &nextStage,
                       const VkShaderCreateFlagsEXT &flags)
 {
     VkShaderCreateInfoEXT shaderCI = {
         .sType = VK_STRUCTURE_TYPE_SHADER_CREATE_INFO_EXT,
         .flags = flags,
         .stage = stage,
+        .nextStage = nextStage,
         .codeType = VK_SHADER_CODE_TYPE_SPIRV_EXT, // this is the most common format
         .codeSize = sizeof(uint32_t) * code.size(),
         .pCode = (void *)code.data(),

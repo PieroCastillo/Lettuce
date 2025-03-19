@@ -51,11 +51,11 @@ public:
     std::shared_ptr<IndirectCommandsLayout> indirectCommandsLayout;
     std::shared_ptr<IndirectExecutionSet> indirectExecutionSet;
 
-    uint32_t address_generatedCommands;
-    uint32_t address_preprocessCommands;
+    uint64_t address_generatedCommands;
+    uint64_t address_preprocessCommands;
     struct PushConstantData_Gen
     {
-        uint32_t address_geometry;
+        uint64_t address_geometry;
         int vertexCount;
         int indexCount;
     } pcData_gen;
@@ -63,6 +63,7 @@ public:
     const uint32_t draws = 16;
     const std::string compShaderText = R"(#version 460
 #extension GL_EXT_shader_explicit_arithmetic_types_int64 : require
+#extension GL_EXT_scalar_block_layout : enable
         
 struct VkBindVertexBufferIndirectCommandEXT {
         uint64_t bufferAddress;
@@ -96,14 +97,14 @@ struct Sequence {
 
 layout(local_size_x = 4, local_size_y = 4, local_size_z = 1) in;
 
-layout(push_constant) uniform constants {
+layout(scalar, push_constant) uniform constants {
     uint64_t address;
     int indexCount;
     int vertexCount;
 } consts;
 
-layout(std140, set = 0, binding = 0) writeonly buffer IndirectBuffer {
-    Sequence sequence;
+layout(scalar, set = 0, binding = 0) buffer writeonly IndirectBuffer {
+    Sequence sequences[];
 } ind;
 
 void main(){        
@@ -131,16 +132,18 @@ void main(){
     seq.draw.vertexOffset = 0;
     seq.draw.firstInstance = 0;
     
-    ind.sequence = seq;
+    uint index = (4 * gl_LocalInvocationID.y) + gl_LocalInvocationID.x - 1;
+    ind.sequences[index] = seq;
 })";
 
     const std::string vertexShaderText = R"(#version 450
+#extension GL_EXT_scalar_block_layout : enable
 layout (location=0) in vec3 pos;
 layout (location=1) in vec2 tex;
 
 layout (location=0) out vec2 fragTexCoord;
 
-layout (set = 0, binding = 0) uniform DataUBO {
+layout (std430, set = 0, binding = 0) uniform DataUBO {
     mat4 projectionView;
     mat4 model;
     vec3 cameraPos;
@@ -170,7 +173,8 @@ layout (constant_id = 2) const double importantColorB = .5;
 void main()
 {
     vec3 importantColor = vec3(importantColorR, importantColorG, importantColorB);
-    outColor = vec4(importantColor  * texture(texSampler[consts.index], fragTexCoord).rgb, 1.0);
+    // outColor = vec4(importantColor  * texture(texSampler[consts.index], fragTexCoord).rgb, 1.0);
+    outColor = vec4(1.0,1.0,1.0,1.0);
 })";
 
     struct imgData
@@ -385,7 +389,7 @@ void main()
 
         auto vertShader = std::make_shared<Shader>(device, layout_bindable);
         auto codeV = compiler.Compile(vertexShaderText, "vert.glsl", PipelineStage::Vertex, true);
-        vertShader->Assemble(VK_SHADER_STAGE_VERTEX_BIT, "main", codeV);
+        vertShader->Assemble(VK_SHADER_STAGE_VERTEX_BIT, "main", codeV, VK_SHADER_STAGE_FRAGMENT_BIT);
         shaders_bindable.push_back(vertShader);
 
         for (int i = 0; i < 4; i++)
@@ -413,7 +417,7 @@ void main()
         pool_preprocessCommands->Bind(device, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, VK_MEMORY_ALLOCATE_DEVICE_ADDRESS_BIT, reqs.memoryTypeBits);
         address_preprocessCommands = buffer_preprocessCommands->GetAddress();
 
-        buffer_generatedCommands = std::make_shared<BufferResource>(device, sequences * indirectCommandsLayout->GetSize(), VK_BUFFER_USAGE_2_INDIRECT_BUFFER_BIT | VK_BUFFER_USAGE_2_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_2_SHADER_DEVICE_ADDRESS_BIT);
+        buffer_generatedCommands = std::make_shared<BufferResource>(device, sequences * indirectCommandsLayout->GetSize(), VK_BUFFER_USAGE_2_TRANSFER_DST_BIT | VK_BUFFER_USAGE_2_INDIRECT_BUFFER_BIT | VK_BUFFER_USAGE_2_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_2_SHADER_DEVICE_ADDRESS_BIT);
         pool_generatedCommands = std::make_shared<ResourcePool>();
         pool_generatedCommands->AddResource(buffer_generatedCommands);
         pool_generatedCommands->Bind(device, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, VK_MEMORY_ALLOCATE_DEVICE_ADDRESS_BIT);
@@ -455,6 +459,74 @@ void main()
         releaseQueue.Push(pipeline_genCommands);
     }
 
+    struct Sequence
+    {
+        uint32_t shaderIndex1;
+        uint32_t shaderIndex2;
+        int pushValue; // texture index
+        VkBindVertexBufferIndirectCommandEXT vertex0;
+        VkBindVertexBufferIndirectCommandEXT vertex1;
+        VkBindIndexBufferIndirectCommandEXT index;
+        VkDrawIndexedIndirectCommand draw;
+    };
+    void genCommandsCPU()
+    {
+        std::vector<Sequence> sequences;
+        for (uint32_t i = 0; i < 4; i++)
+        {
+            for (uint32_t j = 0; j < 4; j++)
+            {
+                Sequence seq;
+                seq.shaderIndex1 = 0; // selects first shader always
+                seq.shaderIndex2 = i; // selects fragment shader
+
+                seq.pushValue = j; // selects image
+
+                seq.vertex0.bufferAddress = pcData_gen.address_geometry;
+                seq.vertex0.size = 12; // sizeof(vec3)
+                seq.vertex0.stride = 12 + 8;
+
+                seq.vertex1.bufferAddress = pcData_gen.address_geometry;
+                seq.vertex1.size = 8; // sizeof(vec2)
+                seq.vertex1.stride = 12 + 8;
+
+                seq.index.bufferAddress = pcData_gen.address_geometry + ((12 + 8) * pcData_gen.vertexCount);
+                seq.index.size = 4; // sizeof(uint32)
+                seq.index.indexType = VK_INDEX_TYPE_UINT32;
+
+                seq.draw.indexCount = pcData_gen.indexCount;
+                seq.draw.instanceCount = 1;
+                seq.draw.firstIndex = 0;
+                seq.draw.vertexOffset = 0;
+                seq.draw.firstInstance = 0;
+
+                // uint32_t index = (4 * j) + i;
+                // ind.sequences[index] = seq;
+                sequences.push_back(seq);
+            }
+        }
+
+        auto poolTemp = std::make_shared<ResourcePool>();
+
+        auto fullSize = buffer_generatedCommands->_size;
+        auto bufferTemp = std::make_shared<BufferResource>(device, fullSize, VK_BUFFER_USAGE_2_TRANSFER_SRC_BIT);
+
+        poolTemp->AddResource(bufferTemp);
+
+        poolTemp->Bind(device, VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+
+        poolTemp->Map(0, fullSize);
+        poolTemp->SetData((void *)sequences.data(), 0, fullSize);
+        poolTemp->UnMap();
+
+        manager->Prepare();
+        manager->AddTransference(bufferTemp, buffer_generatedCommands, TransferType::HostToDevice);
+        manager->TransferAll();
+
+        bufferTemp->Release();
+        poolTemp->Release();
+    }
+
     void createObjects()
     {
         renderFinished = std::make_shared<Lettuce::Core::Semaphore>(device, 0);
@@ -469,6 +541,7 @@ void main()
         createUbo();
         createIndirectObjects();
         createIndirectCommandsGenerator();
+        //genCommandsCPU();
 
         camera = Lettuce::X3D::Camera3D::Camera3D(width, height);
         beforeResize();
@@ -486,7 +559,7 @@ void main()
         VkCommandBufferAllocateInfo cmdAI = {
             .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
             .commandPool = pool,
-            .level = VkCommandBufferLevel::VK_COMMAND_BUFFER_LEVEL_PRIMARY,
+            .level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
             .commandBufferCount = 1,
         };
         checkResult(vkAllocateCommandBuffers(device->_device, &cmdAI, &cmd));
@@ -502,6 +575,57 @@ void main()
         dataUBO.cameraPos = camera.eye;
         // dataUBO.cameraPos = glm::vec3(30);
     }
+
+    void recordShaderRenderingData(VkCommandBuffer cmd)
+    {
+        VkVertexInputAttributeDescription2EXT attributes[2];
+        attributes[0] = {
+            .sType = VK_STRUCTURE_TYPE_VERTEX_INPUT_ATTRIBUTE_DESCRIPTION_2_EXT,
+            .location = 0,
+            .binding = 0,
+            .format = VK_FORMAT_R32G32B32_SFLOAT,
+            .offset = 0,
+        };
+        attributes[1] = {
+            .sType = VK_STRUCTURE_TYPE_VERTEX_INPUT_ATTRIBUTE_DESCRIPTION_2_EXT,
+            .location = 1,
+            .binding = 0,
+            .format = VK_FORMAT_R32G32_SFLOAT,
+            .offset = sizeof(glm::vec3),
+        };
+
+        VkVertexInputBindingDescription2EXT binding = {
+            .sType = VK_STRUCTURE_TYPE_VERTEX_INPUT_BINDING_DESCRIPTION_2_EXT,
+            .binding = 0,
+            .stride = sizeof(glm::vec3) + sizeof(glm::vec2),
+            .inputRate = VK_VERTEX_INPUT_RATE_VERTEX,
+            .divisor = 1,
+        };
+
+        vkCmdSetVertexInputEXT(cmd, 1, &binding, 2, attributes);
+
+        vkCmdSetLineWidth(cmd, 1.0f);
+
+        VkViewport viewport = {0, 0, (float)width, (float)height, 0.0f, 1.0f};
+        vkCmdSetViewportWithCountEXT(cmd, 1, &viewport);
+
+        VkRect2D scissor = {{0, 0}, {static_cast<uint32_t>(width), static_cast<uint32_t>(height)}};
+        vkCmdSetScissorWithCountEXT(cmd, 1, &scissor);
+
+        vkCmdSetPrimitiveTopologyEXT(cmd, VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
+
+        vkCmdSetFrontFaceEXT(cmd, VK_FRONT_FACE_COUNTER_CLOCKWISE);
+
+        VkColorComponentFlags colorFlags = VK_COMPONENT_SWIZZLE_R | VK_COMPONENT_SWIZZLE_G | VK_COMPONENT_SWIZZLE_B | VK_COMPONENT_SWIZZLE_A;
+        vkCmdSetColorWriteMaskEXT(cmd, 0, 1, &colorFlags);
+
+        vkCmdSetPrimitiveRestartEnableEXT(cmd, VK_FALSE);
+
+        vkCmdSetCullModeEXT(cmd, VK_CULL_MODE_BACK_BIT);
+
+        vkCmdSetRasterizationSamplesEXT(cmd, VK_SAMPLE_COUNT_1_BIT);
+    }
+
     void recordCmds()
     {
         // rendering cmd
@@ -547,9 +671,9 @@ void main()
 
         VkImageMemoryBarrier2 imageBarrier2 = {
             .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2,
-            .srcStageMask = VK_PIPELINE_STAGE_2_NONE,
+            .srcStageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT,
             .dstStageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT,
-            .dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+            .dstAccessMask = VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT,
             .oldLayout = VK_IMAGE_LAYOUT_UNDEFINED,
             .newLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
             .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
@@ -615,19 +739,25 @@ void main()
             // .sequenceCountAddress;
             .maxDrawCount = 16,
         };
+        vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, layout_bindable->_pipelineLayout, 0,
+                                (uint32_t)descriptors_bindable->_descriptorSets.size(),
+                                descriptors_bindable->_descriptorSets.data(), 0, nullptr);
+
+        recordShaderRenderingData(cmd);
 
         VkShaderStageFlagBits stages[] = {VK_SHADER_STAGE_VERTEX_BIT, VK_SHADER_STAGE_FRAGMENT_BIT};
         VkShaderEXT shaders[] = {shaders_bindable[0]->_shader, shaders_bindable[1]->_shader};
 
         vkCmdBindShadersEXT(cmd, 2, stages, shaders);
-        vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, layout_bindable->_pipelineLayout, 0,
-                                (uint32_t)descriptors_bindable->_descriptorSets.size(),
-                                descriptors_bindable->_descriptorSets.data(), 0, nullptr);
 
         vkCmdExecuteGeneratedCommandsEXT(cmd, VK_FALSE, &genCommandsI);
 
         vkCmdEndRendering(cmd);
 
+        imageBarrier2.srcStageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT;
+        imageBarrier2.dstStageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT;
+        imageBarrier2.srcAccessMask = VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT;
+        imageBarrier2.dstAccessMask = VK_ACCESS_2_COLOR_ATTACHMENT_READ_BIT;
         imageBarrier2.oldLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
         imageBarrier2.newLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
         dependencyI.bufferMemoryBarrierCount = 0;
@@ -661,8 +791,6 @@ void main()
 
         VkSubmitInfo2 submit2I = {
             .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO_2,
-            // .waitSemaphoreInfoCount = 1,
-            // .pWaitSemaphoreInfos = &waitSI,
             .commandBufferInfoCount = 1,
             .pCommandBufferInfos = &cmdSI,
             .signalSemaphoreInfoCount = 1,
@@ -689,9 +817,6 @@ void main()
         vkDestroyCommandPool(device->_device, pool, nullptr);
 
         pool_ubo->UnMap();
-
-        // renderpass->DestroyFramebuffers();
-        // renderpass->Release();
     }
 };
 

@@ -97,6 +97,7 @@ void Device::createFeaturesChain()
     deviceGeneratedCommandsFeature.deviceGeneratedCommands = VK_TRUE;
     deviceGeneratedCommandsFeature.dynamicGeneratedPipelineLayout = VK_TRUE;
 
+    gpuFeatures12.scalarBlockLayout = VK_TRUE; // enables  GL_EXT_scalar_block_layout
     gpuFeatures12.bufferDeviceAddress = VK_TRUE;
     gpuFeatures12.drawIndirectCount = VK_TRUE;
     // enables descriptor indexing

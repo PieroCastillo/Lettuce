@@ -200,7 +200,7 @@ void main()
         descriptor->Update();
 
         connector = std::make_shared<Lettuce::Core::PipelineLayout>(device, descriptor);
-        connector->AddPushConstant<DataPush>(0, PipelineStage::Fragment);
+        connector->AddPushConstant<DataPush>(VK_SHADER_STAGE_FRAGMENT_BIT);
         connector->Assemble();
         // add pipeline stuff here
         vertexShader = std::make_shared<Lettuce::Core::ShaderModule>(device, compiler, vertexShaderText, "main", "vertex.glsl", PipelineStage::Vertex, true);
@@ -232,7 +232,7 @@ void main()
         psLineShader = std::make_shared<ShaderModule>(device, compiler, psLineShaderText, "main", "psLine.glsl", PipelineStage::Fragment, true);
 
         linesLayout = std::make_shared<PipelineLayout>(device, descriptor);
-        linesLayout->AddPushConstant<DataPush>(0, PipelineStage::Fragment);
+        linesLayout->AddPushConstant<DataPush>(VK_SHADER_STAGE_FRAGMENT_BIT);
         linesLayout->Assemble();
 
         linespipeline = std::make_shared<GraphicsPipeline>(device, linesLayout);
@@ -325,7 +325,7 @@ void main()
             .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2,
             .srcStageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT,
             .dstStageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT,
-            .dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+            .dstAccessMask = VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT,
             .oldLayout = VK_IMAGE_LAYOUT_UNDEFINED,
             .newLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
             .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
@@ -414,6 +414,10 @@ void main()
    
         vkCmdEndRendering(cmd);
 
+        imageBarrier2.srcStageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT;
+        imageBarrier2.dstStageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT;
+        imageBarrier2.srcAccessMask = VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT;
+        imageBarrier2.dstAccessMask = VK_ACCESS_2_COLOR_ATTACHMENT_READ_BIT;
         imageBarrier2.oldLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
         imageBarrier2.newLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
         vkCmdPipelineBarrier2(cmd, &dependencyI);
