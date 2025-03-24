@@ -10,6 +10,7 @@
 #include <memory>
 #include <thread>
 #include <vector>
+#include <variant>
 #include "IWorkUnit.hpp"
 #include "Lettuce/Core/BufferResource.hpp"
 #include "Lettuce/Core/ImageResource.hpp"
@@ -31,6 +32,35 @@ namespace Lettuce::Foundation
         Write,
         ReadWrite,
     };
+    struct BufferAsResourceInfo
+    {
+        std::shared_ptr<BufferResource> bufferPtr;
+        VkPipelineStageFlagBits2 stageBit;
+        ResourceUsage usage;
+    };
+
+    struct ImageAsResourceInfo
+    {
+        std::shared_ptr<ImageResource> imgPtr;
+        VkPipelineStageFlagBits2 stageBit;
+        VkImageLayout layout;
+        ResourceUsage usage;
+    };
+
+    struct ImageViewAsResourceInfo
+    {
+        std::shared_ptr<ImageViewResource> imgVwPtr;
+        VkPipelineStageFlagBits2 stageBit;
+        VkImageLayout layout;
+        ResourceUsage usage;
+    };
+
+    struct PassCompileInfo
+    {
+        std::vector<IWorkUnit> workUnits;
+        std::vector<VkBufferMemoryBarrier2> bufferBarriers;
+        std::vector<VkImageMemoryBarrier2> imageBarriers;
+    };
 
     /// @brief Organizes Work to be submmitted to GPU
     ///
@@ -44,11 +74,9 @@ namespace Lettuce::Foundation
     class WorkFlowGraph
     {
     private:
-        using WorkEdges = std::vector<std::tuple<uint32_t, VkPipelineStageFlags2, VkPipelineStageFlags2>>;
         bool canAddResources = true;
-        // compilation objects
-        std::vector<IWorkUnit> workUnits;
-        std::vector<WorkEdges> edges; // dst,srcMask,dstMask
+
+        std::vector<std::vector<std::function<void(VkCommandBuffer)>>> funcs;
 
     public:
         const uint32_t _threads;
@@ -61,23 +89,13 @@ namespace Lettuce::Foundation
         WorkFlowGraph(const std::shared_ptr<Device> &device, uint32_t threads);
         void Release();
 
-        // add resources
-        void AddBuffer(const std::shared_ptr<BufferResource> &buffer, uint32_t offset, uint32_t size);
-        void AddImage(const std::shared_ptr<ImageResource> &image);
-        void AddWorkUnit(const IWorkUnit &workUnit);
-        void StopAddResources();
-
-        // add nodes
-        void WorkNode(int nodeSrc, int nodeDst, VkPipelineStageFlags2 srcMask, VkPipelineStageFlags2 dstMask);
-        void UseBuffer(int node, int bufferIndex, ResourceUsage usage);
-        void UseImage(int node, int imageIndex, ResourceUsage usage);
+        std::shared_ptr<WorkNode> CreateNode();
+        std::shared_ptr<ExecutableWorkNode> CreateNode();
 
         // compile stacks
         void Compile();
 
         // commands
-        void StartRecording(VkCommandBuffer cmd);
-        void Record();
-        void EndRecording(VkCommandBuffer cmd);
+        void Record(VkCommandBuffer cmd);
     };
 }
