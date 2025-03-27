@@ -49,8 +49,6 @@ protected:
 
         // create device
         features.MeshShading = false;
-        features.ConditionalRendering = false;
-        features.MemoryBudget = false;
         device = std::make_shared<Lettuce::Core::Device>(instance, gpus.front(), features);
         swapchain = std::make_shared<Lettuce::Core::Swapchain>(device, width, height);
 

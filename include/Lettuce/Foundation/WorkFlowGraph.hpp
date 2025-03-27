@@ -11,7 +11,6 @@
 #include <thread>
 #include <vector>
 #include <variant>
-#include "IWorkUnit.hpp"
 #include "Lettuce/Core/BufferResource.hpp"
 #include "Lettuce/Core/ImageResource.hpp"
 #include "Lettuce/Core/Device.hpp"
@@ -55,13 +54,6 @@ namespace Lettuce::Foundation
         ResourceUsage usage;
     };
 
-    struct PassCompileInfo
-    {
-        std::vector<IWorkUnit> workUnits;
-        std::vector<VkBufferMemoryBarrier2> bufferBarriers;
-        std::vector<VkImageMemoryBarrier2> imageBarriers;
-    };
-
     /// @brief Organizes Work to be submmitted to GPU
     ///
     /// @brief has 3 stages:
@@ -89,8 +81,8 @@ namespace Lettuce::Foundation
         WorkFlowGraph(const std::shared_ptr<Device> &device, uint32_t threads);
         void Release();
 
-        std::shared_ptr<WorkNode> CreateNode();
-        std::shared_ptr<ExecutableWorkNode> CreateNode();
+        // std::shared_ptr<WorkNode> CreateNode();
+        // std::shared_ptr<ExecutableWorkNode> CreateNode();
 
         // compile stacks
         void Compile();

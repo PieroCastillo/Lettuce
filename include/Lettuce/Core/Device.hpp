@@ -92,7 +92,7 @@ namespace Lettuce::Core
             .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MESH_SHADER_FEATURES_EXT,
         };
 
-        bool addExt(const std::string &extName);
+        void addExt(const std::string &extName);
 
         bool checkExtIfExists(const std::string &extName);
 

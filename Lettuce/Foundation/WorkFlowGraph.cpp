@@ -19,7 +19,6 @@
 #include "Lettuce/Core/PipelineLayout.hpp"
 #include "Lettuce/Core/Descriptors.hpp"
 
-#include "Lettuce/Foundation/IWorkUnit.hpp"
 #include "Lettuce/Foundation/WorkFlowGraph.hpp"
 
 using namespace Lettuce::Core;

@@ -544,13 +544,10 @@ int main()
     app.title = "Donut Sample";
     app.features = {
         .FragmentShadingRate = false,
-        .PresentWait = false,
         .ExecutionGraphs = false,
         .MeshShading = false,
         .RayTracing = false,
         .Video = false,
-        .MemoryBudget = false,
-        .ConditionalRendering = false,
     };
     app.run();
     return 0;

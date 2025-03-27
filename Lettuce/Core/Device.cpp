@@ -12,29 +12,20 @@
 
 using namespace Lettuce::Core;
 
-bool Device::addExt(const std::string &extName)
+void Device::addExt(const std::string &extName)
 {
-    bool found = false;
     int i = 0;
     for (auto ext : availableExtensionsNames)
     {
         if (ext == extName)
         {
-            found = true;
             break;
         }
         i++;
     }
-    if (!found)
-    {
-        return false;
-    }
-    else
-    {
-        // use the same memory of available extensions names list
-        requestedExtensionsNames.push_back(availableExtensionsNames[i].c_str());
-        return true;
-    }
+
+    // use the same memory of available extensions names list
+    requestedExtensionsNames.push_back(availableExtensionsNames[i].c_str());
 }
 
 bool Device::checkExtIfExists(const std::string &extName)
@@ -84,7 +75,7 @@ void Device::addRecommendedFeatures()
 
         addExt(VK_EXT_SHADER_OBJECT_EXTENSION_NAME);
         shaderObjectFeature.shaderObject = VK_TRUE;
-        shaderObjectFeature.pNext = next;
+        shaderObjectFeature.pNext = *next;
         next = (void **)&shaderObjectFeature;
     }
 
@@ -95,7 +86,7 @@ void Device::addRecommendedFeatures()
         addExt(VK_EXT_DEVICE_GENERATED_COMMANDS_EXTENSION_NAME);
         deviceGeneratedCommandsFeature.deviceGeneratedCommands = VK_TRUE;
         deviceGeneratedCommandsFeature.dynamicGeneratedPipelineLayout = VK_TRUE;
-        deviceGeneratedCommandsFeature.pNext = next;
+        deviceGeneratedCommandsFeature.pNext = *next;
         next = (void **)&deviceGeneratedCommandsFeature;
     }
 
@@ -105,17 +96,17 @@ void Device::addRecommendedFeatures()
 
         addExt(VK_EXT_GRAPHICS_PIPELINE_LIBRARY_EXTENSION_NAME);
         graphicsPipelineLibraryFeature.graphicsPipelineLibrary = VK_TRUE;
-        graphicsPipelineLibraryFeature.pNext = next;
+        graphicsPipelineLibraryFeature.pNext = *next;
         next = (void **)&graphicsPipelineLibraryFeature;
     }
 
     if (checkExtIfExists(VK_KHR_DYNAMIC_RENDERING_LOCAL_READ_EXTENSION_NAME))
     {
         enabledRecommendedFeatures.dynamicRenderingLocalRead = true;
-        
+
         addExt(VK_KHR_DYNAMIC_RENDERING_LOCAL_READ_EXTENSION_NAME);
         dynamicRenderingLocalReadFeature.dynamicRenderingLocalRead = VK_TRUE;
-        dynamicRenderingLocalReadFeature.pNext = next;
+        dynamicRenderingLocalReadFeature.pNext = *next;
         next = (void **)&dynamicRenderingLocalReadFeature;
     }
 }
@@ -135,7 +126,7 @@ void Device::addOptionalFeatures()
         meshShaderFeature.taskShader = VK_TRUE;
         meshShaderFeature.meshShader = VK_TRUE;
         _enabledFeatures.MeshShading = true;
-        meshShaderFeature.pNext = next;
+        meshShaderFeature.pNext = *next;
         next = (void **)&meshShaderFeature;
     }
     if (_features.FragmentShadingRate && checkExtIfExists(VK_KHR_FRAGMENT_SHADING_RATE_EXTENSION_NAME))
@@ -145,7 +136,7 @@ void Device::addOptionalFeatures()
         fragmentShadingRateFeature.primitiveFragmentShadingRate = VK_TRUE;
         fragmentShadingRateFeature.attachmentFragmentShadingRate = VK_TRUE;
         _enabledFeatures.FragmentShadingRate = true;
-        fragmentShadingRateFeature.pNext = next;
+        fragmentShadingRateFeature.pNext = *next;
         next = (void **)&fragmentShadingRateFeature;
     }
 }
