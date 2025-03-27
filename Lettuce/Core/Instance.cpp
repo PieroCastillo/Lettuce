@@ -106,7 +106,7 @@ Instance::Instance(std::string appName, Version appVersion, std::vector<char *> 
         .applicationVersion = VK_MAKE_API_VERSION(appVersion.variant, appVersion.major, appVersion.minor, appVersion.patch),
         .pEngineName = "Lettuce Rendering Engine",
         .engineVersion = VK_MAKE_API_VERSION(VARIANT_VERSION, MAJOR_VERSION, MINOR_VERSION, PATCH_VERSION),
-        .apiVersion = VK_MAKE_VERSION(1, 4, 0),
+        .apiVersion = VK_MAKE_VERSION(1, 3, 0),
     };
     listExtensions();
     loadPlatformAndFeatures();
