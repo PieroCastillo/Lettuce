@@ -16,16 +16,21 @@ namespace Lettuce::Core
     struct Features
     {
         bool FragmentShadingRate;
-        bool PresentWait;
         bool ExecutionGraphs;
         bool MeshShading;
         bool RayTracing;
         bool Video;
-        bool MemoryBudget;
-        bool ConditionalRendering;
         // bool DescriptorBuffer;// required
         // bool DynamicRendering;// required
         // bool DeviceGeneratedCommands; // required
+    };
+
+    struct EnabledRecommendedFeatures
+    {
+        bool shaderObject = false;
+        bool deviceGeneratedCommands = false;
+        bool graphicPipelineLibrary = false;
+        bool dynamicRenderingLocalRead = false;
     };
 
     class Device : public IReleasable
@@ -35,10 +40,13 @@ namespace Lettuce::Core
         std::vector<char *> availableLayersNames;
         std::vector<const char *> requestedExtensionsNames;
         std::vector<const char *> requestedLayersNames;
+        void **next;
         Features _features;
         Features _enabledFeatures;
+        EnabledRecommendedFeatures enabledRecommendedFeatures;
 
         // physical device features structs
+        // required features/extensions
         VkPhysicalDeviceVulkan11Features gpuFeatures11 = {
             .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_1_FEATURES,
         };
@@ -50,45 +58,45 @@ namespace Lettuce::Core
             .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_3_FEATURES,
             .pNext = &gpuFeatures12,
         };
-        VkPhysicalDeviceVulkan14Features gpuFeatures14 = {
-            .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_4_FEATURES,
-            .pNext = &gpuFeatures13,
-        };
-        // required features structs
-        VkPhysicalDeviceShaderObjectFeaturesEXT shaderObjectFeature = {
-            .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_OBJECT_FEATURES_EXT,
-            .pNext = &gpuFeatures14,
-        };
         VkPhysicalDeviceDescriptorBufferFeaturesEXT descriptorBufferFeature = {
             .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_BUFFER_FEATURES_EXT,
-            .pNext = &shaderObjectFeature,
+            .pNext = &gpuFeatures13,
         };
+        // recommended features/extensions
+        VkPhysicalDeviceShaderObjectFeaturesEXT shaderObjectFeature = {
+            .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_OBJECT_FEATURES_EXT,
+        };
+
         VkPhysicalDeviceDeviceGeneratedCommandsFeaturesEXT deviceGeneratedCommandsFeature = {
             .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DEVICE_GENERATED_COMMANDS_FEATURES_EXT,
-            .pNext = &descriptorBufferFeature,
         };
 
-        // optional features structs
+        VkPhysicalDeviceGraphicsPipelineLibraryFeaturesEXT graphicsPipelineLibraryFeature = {
+            .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_GRAPHICS_PIPELINE_LIBRARY_FEATURES_EXT,
+        };
+
+        VkPhysicalDeviceDynamicRenderingLocalReadFeaturesKHR dynamicRenderingLocalReadFeature = {
+            .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DYNAMIC_RENDERING_LOCAL_READ_FEATURES_KHR,
+        };
+
+        // optional features/extensions
         VkPhysicalDeviceFragmentShadingRateFeaturesKHR fragmentShadingRateFeature = {
             .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADING_RATE_FEATURES_KHR,
-            .pNext = &deviceGeneratedCommandsFeature,
         };
-        VkPhysicalDevicePresentWaitFeaturesKHR presentWaitFeature = {
-            .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PRESENT_WAIT_FEATURES_KHR,
-            .pNext = &fragmentShadingRateFeature,
-        };
+
         VkPhysicalDeviceMeshShaderFeaturesEXT meshShaderFeature = {
             .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MESH_SHADER_FEATURES_EXT,
-            .pNext = &presentWaitFeature,
-        };
-        VkPhysicalDeviceConditionalRenderingFeaturesEXT conditionalRenderingFeature = {
-            .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_CONDITIONAL_RENDERING_FEATURES_EXT,
-            .pNext = &meshShaderFeature,
         };
 
-        bool addExt(const std::string& extName);
+        bool addExt(const std::string &extName);
 
-        void createFeaturesChain();
+        bool checkExtIfExists(const std::string &extName);
+
+        void addRequiredFeatures();
+
+        void addRecommendedFeatures();
+
+        void addOptionalFeatures();
 
         void listExtensions();
 
@@ -110,7 +118,13 @@ namespace Lettuce::Core
 
         Device(const std::shared_ptr<Instance> &instance, GPU &gpu, Features features, uint32_t graphicsQueuesCount = 1);
 
-        void Wait();
+        EnabledRecommendedFeatures GetEnabledRecommendedFeatures()
+        {
+            return enabledRecommendedFeatures;
+        }
+
+        void
+        Wait();
 
         void Release();
     };
