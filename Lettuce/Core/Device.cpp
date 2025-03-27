@@ -37,65 +37,18 @@ bool Device::addExt(const std::string &extName)
     }
 }
 
-void Device::createFeaturesChain()
+bool Device::checkExtIfExists(const std::string &extName)
 {
-    if (_features.FragmentShadingRate && addExt(VK_KHR_FRAGMENT_SHADING_RATE_EXTENSION_NAME))
-    {
-        fragmentShadingRateFeature.pipelineFragmentShadingRate = VK_TRUE;
-        fragmentShadingRateFeature.primitiveFragmentShadingRate = VK_TRUE;
-        fragmentShadingRateFeature.attachmentFragmentShadingRate = VK_TRUE;
-        _enabledFeatures.FragmentShadingRate = true;
-    }
+    int val = std::count(availableExtensionsNames.begin(),
+                         availableExtensionsNames.end(),
+                         extName);
 
-    if (_features.PresentWait && addExt(VK_KHR_PRESENT_WAIT_EXTENSION_NAME))
-    {
-        presentWaitFeature.presentWait = VK_TRUE;
-        _enabledFeatures.PresentWait = true;
-    }
+    return val > 0 ? true : false;
+}
 
-#ifdef LETTUCE_EXPERIMENTAL
-    if (_features.ExecutionGraphs)
-    {
-        // not yet
-    }
-#endif
-
-    if (_features.MeshShading && addExt(VK_EXT_MESH_SHADER_EXTENSION_NAME))
-    {
-        meshShaderFeature.taskShader = VK_TRUE;
-        meshShaderFeature.meshShader = VK_TRUE;
-        _enabledFeatures.MeshShading = true;
-    }
-
-    if (_features.RayTracing)
-    {
-        // nop
-    }
-
-    if (_features.Video)
-    {
-        // nop too
-    }
-
-    if (_features.MemoryBudget && addExt(VK_EXT_MEMORY_BUDGET_EXTENSION_NAME))
-    {
-        _enabledFeatures.MemoryBudget = true;
-    }
-
-    if (_features.ConditionalRendering && addExt(VK_EXT_CONDITIONAL_RENDERING_EXTENSION_NAME))
-    {
-        conditionalRenderingFeature.conditionalRendering = VK_TRUE;
-        _enabledFeatures.ConditionalRendering = true;
-    }
-    addExt(VK_EXT_SHADER_OBJECT_EXTENSION_NAME);
+void Device::addRequiredFeatures()
+{
     addExt(VK_EXT_DESCRIPTOR_BUFFER_EXTENSION_NAME);
-    addExt(VK_EXT_DEVICE_GENERATED_COMMANDS_EXTENSION_NAME);
-    // required
-    shaderObjectFeature.shaderObject = VK_TRUE;
-    descriptorBufferFeature.descriptorBuffer = VK_TRUE;
-    descriptorBufferFeature.descriptorBufferPushDescriptors = VK_TRUE;
-    deviceGeneratedCommandsFeature.deviceGeneratedCommands = VK_TRUE;
-    deviceGeneratedCommandsFeature.dynamicGeneratedPipelineLayout = VK_TRUE;
 
     gpuFeatures12.scalarBlockLayout = VK_TRUE; // enables  GL_EXT_scalar_block_layout
     gpuFeatures12.bufferDeviceAddress = VK_TRUE;
@@ -116,8 +69,82 @@ void Device::createFeaturesChain()
     gpuFeatures13.synchronization2 = VK_TRUE;
     gpuFeatures13.dynamicRendering = VK_TRUE;
 
-    gpuFeatures14.maintenance5 = VK_TRUE;
-    gpuFeatures14.dynamicRenderingLocalRead = VK_TRUE;
+    descriptorBufferFeature.descriptorBuffer = VK_TRUE;
+    next = (void **)&descriptorBufferFeature;
+}
+
+void Device::addRecommendedFeatures()
+{
+    if (checkExtIfExists(VK_EXT_SHADER_OBJECT_EXTENSION_NAME))
+    {
+        enabledRecommendedFeatures.shaderObject = true;
+
+        addExt(VK_EXT_SHADER_OBJECT_EXTENSION_NAME);
+        shaderObjectFeature.shaderObject = VK_TRUE;
+        shaderObjectFeature.pNext = next;
+        next = (void **)&shaderObjectFeature;
+    }
+
+    if (checkExtIfExists(VK_EXT_DEVICE_GENERATED_COMMANDS_EXTENSION_NAME))
+    {
+        enabledRecommendedFeatures.deviceGeneratedCommands = true;
+
+        addExt(VK_EXT_DEVICE_GENERATED_COMMANDS_EXTENSION_NAME);
+        deviceGeneratedCommandsFeature.deviceGeneratedCommands = VK_TRUE;
+        deviceGeneratedCommandsFeature.dynamicGeneratedPipelineLayout = VK_TRUE;
+        deviceGeneratedCommandsFeature.pNext = next;
+        next = (void **)&deviceGeneratedCommandsFeature;
+    }
+
+    if (checkExtIfExists(VK_EXT_GRAPHICS_PIPELINE_LIBRARY_EXTENSION_NAME))
+    {
+        enabledRecommendedFeatures.graphicPipelineLibrary = true;
+
+        addExt(VK_EXT_GRAPHICS_PIPELINE_LIBRARY_EXTENSION_NAME);
+        graphicsPipelineLibraryFeature.graphicsPipelineLibrary = VK_TRUE;
+        graphicsPipelineLibraryFeature.pNext = next;
+        next = (void **)&graphicsPipelineLibraryFeature;
+    }
+
+    if (checkExtIfExists(VK_KHR_DYNAMIC_RENDERING_LOCAL_READ_EXTENSION_NAME))
+    {
+        enabledRecommendedFeatures.dynamicRenderingLocalRead = true;
+        
+        addExt(VK_KHR_DYNAMIC_RENDERING_LOCAL_READ_EXTENSION_NAME);
+        dynamicRenderingLocalReadFeature.dynamicRenderingLocalRead = VK_TRUE;
+        dynamicRenderingLocalReadFeature.pNext = next;
+        next = (void **)&dynamicRenderingLocalReadFeature;
+    }
+}
+
+void Device::addOptionalFeatures()
+{
+    /*
+        - Video Extensions
+        - Execution Graphs
+        - Ray Tracing
+        - Mesh Shading
+        - Fragment Shading Rate
+    */
+    if (_features.MeshShading && checkExtIfExists(VK_EXT_MESH_SHADER_EXTENSION_NAME))
+    {
+        addExt(VK_EXT_MESH_SHADER_EXTENSION_NAME);
+        meshShaderFeature.taskShader = VK_TRUE;
+        meshShaderFeature.meshShader = VK_TRUE;
+        _enabledFeatures.MeshShading = true;
+        meshShaderFeature.pNext = next;
+        next = (void **)&meshShaderFeature;
+    }
+    if (_features.FragmentShadingRate && checkExtIfExists(VK_KHR_FRAGMENT_SHADING_RATE_EXTENSION_NAME))
+    {
+        addExt(VK_KHR_FRAGMENT_SHADING_RATE_EXTENSION_NAME);
+        fragmentShadingRateFeature.pipelineFragmentShadingRate = VK_TRUE;
+        fragmentShadingRateFeature.primitiveFragmentShadingRate = VK_TRUE;
+        fragmentShadingRateFeature.attachmentFragmentShadingRate = VK_TRUE;
+        _enabledFeatures.FragmentShadingRate = true;
+        fragmentShadingRateFeature.pNext = next;
+        next = (void **)&fragmentShadingRateFeature;
+    }
 }
 
 void Device::listExtensions()
@@ -197,11 +224,14 @@ Device::Device(const std::shared_ptr<Instance> &instance, GPU &gpu, Features gpu
     vkGetPhysicalDeviceFeatures(_pdevice, &features);
 
     // here we enable device features, like Buffer Device Address, Timeline Semaphores, etc
-    createFeaturesChain();
+
+    addRequiredFeatures();
+    addRecommendedFeatures();
+    addOptionalFeatures();
 
     VkDeviceCreateInfo deviceCI = {
         .sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
-        .pNext = &deviceGeneratedCommandsFeature,
+        .pNext = *next,
         .queueCreateInfoCount = (uint32_t)queueCreateInfos.size(),
         .pQueueCreateInfos = queueCreateInfos.data(),
         .enabledLayerCount = 0,
