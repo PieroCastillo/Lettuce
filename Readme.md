@@ -54,14 +54,14 @@ This is the core lib of Lettuce, the main function is provide access to Vulkan a
   |Synchronization2 |_(1.3 feature)_|🟢 |
   |HLSL support| _Not added_| 🚧 |
   |SLang support | _Not added_| 🚧 |
-  |Dynamic Rendering |_(1.2 feature)_| 🚧|
-  |Dynamic Rendering Local Read |_(1.4 feature)_| 🚧|
-  |Buffer Device Address |_(1.2 feature)_|🚧 |
+  |Dynamic Rendering |_(1.2 feature)_| 🟢|
+  |Buffer Device Address |_(1.2 feature)_|🟢 |
+  | _Recommended:_| | |
   |Shader Object |_(VK_EXT_shader_object)_| 🟡|
   |Device Generated Commands |_(VK_EXT_device_generated_commands)_| 🟡|
+  |Graphics Pipeline Library |_(VK_EXT_graphics_pipeline_library)_| 🚧|
+  |Dynamic Rendering Local Read |_(VK_KHR_dynamic_rendering_local_read)_| 🚧|
   | _Optional:_| | |
-  |Memory Budget | _(VK_EXT_memory_budget)_| 🚧|
-  |Conservative Rasterization |_(VK_EXT_conservative_rasterization)_|🚧 |
   |Mesh shading |_(VK_EXT_mesh_shader)_|🟡 |
   |Fragment Shading Rate| _(VK_KHR_fragment_shading_rate)_|🚧 |
   |Raytracing | _VK_KHR_acceleration_structure_ <br> _VK_KHR_ray_tracing_pipeline_ <br> _VK_KHR_ray_query_ <br> _VK_KHR_pipeline_library_ <br> _VK_KHR_deferred_host_operations_| 🚧|

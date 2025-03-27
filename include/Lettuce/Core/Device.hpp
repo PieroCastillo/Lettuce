@@ -62,6 +62,10 @@ namespace Lettuce::Core
             .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_BUFFER_FEATURES_EXT,
             .pNext = &gpuFeatures13,
         };
+        VkPhysicalDeviceDynamicRenderingUnusedAttachmentsFeaturesEXT dynamicRenderingUnusedAttachmentsFeature = {
+            .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DYNAMIC_RENDERING_UNUSED_ATTACHMENTS_FEATURES_EXT,
+            .pNext = &descriptorBufferFeature,
+        };
         // recommended features/extensions
         VkPhysicalDeviceShaderObjectFeaturesEXT shaderObjectFeature = {
             .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_OBJECT_FEATURES_EXT,

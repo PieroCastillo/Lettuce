@@ -49,6 +49,7 @@ bool Device::checkExtIfExists(const std::string &extName)
 void Device::addRequiredFeatures()
 {
     addExt(VK_EXT_DESCRIPTOR_BUFFER_EXTENSION_NAME);
+    addExt(VK_EXT_DYNAMIC_RENDERING_UNUSED_ATTACHMENTS_EXTENSION_NAME);
 
     gpuFeatures12.scalarBlockLayout = VK_TRUE; // enables  GL_EXT_scalar_block_layout
     gpuFeatures12.bufferDeviceAddress = VK_TRUE;
@@ -70,7 +71,9 @@ void Device::addRequiredFeatures()
     gpuFeatures13.dynamicRendering = VK_TRUE;
 
     descriptorBufferFeature.descriptorBuffer = VK_TRUE;
-    next = (void **)&descriptorBufferFeature;
+
+    dynamicRenderingUnusedAttachmentsFeature.dynamicRenderingUnusedAttachments = VK_TRUE;
+    next = (void **)&dynamicRenderingUnusedAttachmentsFeature;
 }
 
 void Device::addRecommendedFeatures()
