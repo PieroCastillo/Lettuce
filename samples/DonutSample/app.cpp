@@ -123,7 +123,6 @@ void main()
 
     void onResize()
     {
-
     }
 
     void createObjects()
@@ -256,6 +255,8 @@ void main()
 
         psLineShader->Release();
         vsLineShader->Release();
+
+        std::cout << "objects created successfully" << std::endl;
 
         releaseQueue.Push(renderFinished);
         releaseQueue.Push(transfer);
@@ -411,7 +412,7 @@ void main()
         vkCmdSetScissorWithCount(cmd, 1, &scissor);
         vkCmdSetPrimitiveTopology(cmd, VkPrimitiveTopology::VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
         vkCmdDrawIndexed(cmd, indices.size(), 1, 0, 0, 0);
-   
+
         vkCmdEndRendering(cmd);
 
         imageBarrier2.srcStageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT;

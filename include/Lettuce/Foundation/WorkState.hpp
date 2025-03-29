@@ -25,10 +25,8 @@ namespace Lettuce::Foundation
 
     struct ShaderState
     {
-        uint32_t viewportCount;
-        VkViewport *pViewports;
-        uint32_t scissorCount;
-        VkRect2D *pScissors;
+        std::vector<VkViewport> viewports;
+        std::vector<VkRect2D> scissors;
         VkBool32 rasterizerDiscardEnable;
         VkSampleCountFlagBits rasterizationSamples;
         VkSampleCountFlagBits samples;
@@ -74,10 +72,8 @@ namespace Lettuce::Foundation
     // vertex
     struct VertexShaderState
     {
-        uint32_t vertexBindingDescriptionCount;
-        VkVertexInputBindingDescription2EXT *pVertexBindingDescriptions;
-        uint32_t vertexAttributeDescriptionCount;
-        VkVertexInputAttributeDescription2EXT *pVertexAttributeDescriptions;
+        std::vector<VkVertexInputBindingDescription2EXT> vertexBindingDescriptions;
+        std::vector<VkVertexInputAttributeDescription2EXT> vertexAttributeDescriptions;
         VkPrimitiveTopology primitiveTopology;
         VkBool32 primitiveRestartEnable;
     };

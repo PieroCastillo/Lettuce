@@ -64,7 +64,7 @@ void Device::addRequiredFeatures()
     descriptorBufferFeature.descriptorBuffer = VK_TRUE;
 
     dynamicRenderingUnusedAttachmentsFeature.dynamicRenderingUnusedAttachments = VK_TRUE;
-    next = (void **)&dynamicRenderingUnusedAttachmentsFeature;
+    next = (void *)&dynamicRenderingUnusedAttachmentsFeature;
 }
 
 void Device::addRecommendedFeatures()
@@ -75,8 +75,8 @@ void Device::addRecommendedFeatures()
 
         addExt(VK_EXT_SHADER_OBJECT_EXTENSION_NAME);
         shaderObjectFeature.shaderObject = VK_TRUE;
-        shaderObjectFeature.pNext = *next;
-        next = (void **)&shaderObjectFeature;
+        shaderObjectFeature.pNext = next;
+        next = (void *)&shaderObjectFeature;
     }
 
     if (checkExtIfExists(VK_EXT_DEVICE_GENERATED_COMMANDS_EXTENSION_NAME))
@@ -86,8 +86,8 @@ void Device::addRecommendedFeatures()
         addExt(VK_EXT_DEVICE_GENERATED_COMMANDS_EXTENSION_NAME);
         deviceGeneratedCommandsFeature.deviceGeneratedCommands = VK_TRUE;
         deviceGeneratedCommandsFeature.dynamicGeneratedPipelineLayout = VK_TRUE;
-        deviceGeneratedCommandsFeature.pNext = *next;
-        next = (void **)&deviceGeneratedCommandsFeature;
+        deviceGeneratedCommandsFeature.pNext = next;
+        next = (void *)&deviceGeneratedCommandsFeature;
     }
 
     if (checkExtIfExists(VK_EXT_GRAPHICS_PIPELINE_LIBRARY_EXTENSION_NAME))
@@ -96,8 +96,8 @@ void Device::addRecommendedFeatures()
 
         addExt(VK_EXT_GRAPHICS_PIPELINE_LIBRARY_EXTENSION_NAME);
         graphicsPipelineLibraryFeature.graphicsPipelineLibrary = VK_TRUE;
-        graphicsPipelineLibraryFeature.pNext = *next;
-        next = (void **)&graphicsPipelineLibraryFeature;
+        graphicsPipelineLibraryFeature.pNext = next;
+        next = (void *)&graphicsPipelineLibraryFeature;
     }
 
     if (checkExtIfExists(VK_KHR_DYNAMIC_RENDERING_LOCAL_READ_EXTENSION_NAME))
@@ -106,8 +106,8 @@ void Device::addRecommendedFeatures()
 
         addExt(VK_KHR_DYNAMIC_RENDERING_LOCAL_READ_EXTENSION_NAME);
         dynamicRenderingLocalReadFeature.dynamicRenderingLocalRead = VK_TRUE;
-        dynamicRenderingLocalReadFeature.pNext = *next;
-        next = (void **)&dynamicRenderingLocalReadFeature;
+        dynamicRenderingLocalReadFeature.pNext = next;
+        next = (void *)&dynamicRenderingLocalReadFeature;
     }
 }
 
@@ -126,8 +126,8 @@ void Device::addOptionalFeatures()
         meshShaderFeature.taskShader = VK_TRUE;
         meshShaderFeature.meshShader = VK_TRUE;
         _enabledFeatures.MeshShading = true;
-        meshShaderFeature.pNext = *next;
-        next = (void **)&meshShaderFeature;
+        meshShaderFeature.pNext = next;
+        next = (void *)&meshShaderFeature;
     }
     if (_features.FragmentShadingRate && checkExtIfExists(VK_KHR_FRAGMENT_SHADING_RATE_EXTENSION_NAME))
     {
@@ -136,8 +136,8 @@ void Device::addOptionalFeatures()
         fragmentShadingRateFeature.primitiveFragmentShadingRate = VK_TRUE;
         fragmentShadingRateFeature.attachmentFragmentShadingRate = VK_TRUE;
         _enabledFeatures.FragmentShadingRate = true;
-        fragmentShadingRateFeature.pNext = *next;
-        next = (void **)&fragmentShadingRateFeature;
+        fragmentShadingRateFeature.pNext = next;
+        next = (void *)&fragmentShadingRateFeature;
     }
 }
 
@@ -225,7 +225,7 @@ Device::Device(const std::shared_ptr<Instance> &instance, GPU &gpu, Features gpu
 
     VkDeviceCreateInfo deviceCI = {
         .sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
-        .pNext = *next,
+        .pNext = next,
         .queueCreateInfoCount = (uint32_t)queueCreateInfos.size(),
         .pQueueCreateInfos = queueCreateInfos.data(),
         .enabledLayerCount = 0,

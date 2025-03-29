@@ -94,7 +94,7 @@ void Descriptors::Assemble(uint32_t maxSets)
     VkDescriptorSetAllocateInfo descriptorSetAI = {
         .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
         .descriptorPool = _pool,
-        .descriptorSetCount = (uint32_t)_descriptorSets.size(),
+        .descriptorSetCount = (uint32_t)_layouts.size(),
         .pSetLayouts = _layouts.data(),
     };
     checkResult(vkAllocateDescriptorSets(_device->_device, &descriptorSetAI, _descriptorSets.data()));

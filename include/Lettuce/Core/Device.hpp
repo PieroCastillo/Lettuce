@@ -40,7 +40,7 @@ namespace Lettuce::Core
         std::vector<char *> availableLayersNames;
         std::vector<const char *> requestedExtensionsNames;
         std::vector<const char *> requestedLayersNames;
-        void **next;
+        void *next;
         Features _features;
         Features _enabledFeatures;
         EnabledRecommendedFeatures enabledRecommendedFeatures;
