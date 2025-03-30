@@ -20,9 +20,6 @@ namespace Lettuce::Core
         bool MeshShading;
         bool RayTracing;
         bool Video;
-        // bool DescriptorBuffer;// required
-        // bool DynamicRendering;// required
-        // bool DeviceGeneratedCommands; // required
     };
 
     struct EnabledRecommendedFeatures
