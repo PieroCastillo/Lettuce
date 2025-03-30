@@ -2,95 +2,35 @@
 // Created by piero on 17/11/2024.
 //
 #include "LettuceSampleApp.hpp"
-#include "Lettuce/Lettuce.X3D.hpp"
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/ext/matrix_clip_space.hpp>
-
 #include <iostream>
 #include <vector>
-#include <cmath>
 #include <numbers>
 #include <tuple>
 #include <memory>
+#include <string>
 
 using namespace Lettuce::Core;
 
-class GeometrySample : public LettuceSampleApp
+class ClearScreenSample : public LettuceSampleApp
 {
 public:
     Lettuce::Core::Compilers::GLSLCompiler compiler;
-    std::shared_ptr<Lettuce::Core::RenderPass> renderpass;
     /* sync objects*/
     std::shared_ptr<Lettuce::Core::Semaphore> renderFinished;
-    /* rendering objects */
-
-
-    struct DataUBO
-    {
-        glm::mat4 projectionView;
-        glm::mat4 model;
-        glm::vec3 cameraPos;
-    } dataUBO;
-    struct DataPush
-    {
-        glm::vec3 color;
-    } dataPush;
 
     VkCommandPool pool;
     VkCommandBuffer cmd;
 
-    void createRenderPass()
-    {
-        renderpass = std::make_shared<RenderPass>(device);
-        renderpass->AddAttachment(0, AttachmentType::Color,
-                                  swapchain->imageFormat,
-                                  LoadOp::Clear,
-                                  StoreOp::Store,
-                                  LoadOp::DontCare,
-                                  StoreOp::DontCare,
-                                  ImageLayout::Undefined,
-                                  ImageLayout::PresentSrc,
-                                  ImageLayout::ColorAttachmentOptimal);
-        renderpass->AddSubpass(0, BindPoint::Graphics, {0});
-        renderpass->AddDependency(VK_SUBPASS_EXTERNAL, 0,
-                                  AccessStage::ColorAttachmentOutput,
-                                  AccessStage::ColorAttachmentOutput,
-                                  AccessBehavior::None,
-                                  AccessBehavior::ColorAttachmentWrite);
-
-        renderpass->AddDependency(0, VK_SUBPASS_EXTERNAL,
-                                  AccessStage::ColorAttachmentOutput,
-                                  AccessStage::ColorAttachmentOutput,
-                                  AccessBehavior::ColorAttachmentWrite,
-                                  AccessBehavior::None);
-        renderpass->Assemble();
-        for (auto &view : swapchain->swapChainImageViews)
-        {
-            renderpass->AddFramebuffer(width, height, {view});
-        }
-        renderpass->BuildFramebuffers();
-    }
-
-    void onResize()
-    {
-        renderpass->DestroyFramebuffers();
-        for (auto &view : swapchain->swapChainImageViews)
-        {
-            renderpass->AddFramebuffer(width, height, {view});
-        }
-        renderpass->BuildFramebuffers();
-    }
-
     void createObjects()
     {
         renderFinished = std::make_shared<Lettuce::Core::Semaphore>(device, 0);
-        buildCmds();
-        genScene();
+        releaseQueue.Push(renderFinished);
 
-        camera = Lettuce::X3D::Camera3D::Camera3D(width, height);
+        buildCmds();
+
         beforeResize();
     }
+
     void buildCmds()
     {
         // rendering
@@ -104,23 +44,12 @@ public:
         VkCommandBufferAllocateInfo cmdAI = {
             .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
             .commandPool = pool,
-            .level = VkCommandBufferLevel::VK_COMMAND_BUFFER_LEVEL_PRIMARY,
+            .level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
             .commandBufferCount = 1,
         };
         checkResult(vkAllocateCommandBuffers(device->_device, &cmdAI, &cmd));
     }
 
-    void updateData()
-    {
-        dataPush.color = glm::vec3(1.0f, 0.5f, 0.31f);
-        // camera.SetPosition(glm::vec3(20, 20, 30));
-        camera.Update();
-        dataUBO.projectionView = camera.GetProjectionView();
-        dataUBO.model = glm::mat4(1.0f);
-        dataUBO.cameraPos = camera.eye;
-        // dataUBO.cameraPos = glm::vec3(30);
-
-    }
     void recordCmds()
     {
         // rendering cmd
@@ -128,11 +57,6 @@ public:
         VkImageSubresourceRange imgSubresourceRange = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1};
 
         checkResult(vkResetCommandBuffer(cmd, 0));
-        //    VkClearValue clearValues[2];
-        //    clearValues[0].color = {{0.5f, 0.5f, 0.5f, 1.0f}};
-        //    clearValues[1].depthStencil = {1, 0};
-        VkClearValue clearValue;
-        clearValue.color = {{0.5f, 0.5f, 0.5f, 1.0f}};
 
         VkCommandBufferBeginInfo cmdBI = {
             .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
@@ -144,7 +68,7 @@ public:
             .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2,
             .srcStageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT,
             .dstStageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT,
-            .dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+            .dstAccessMask = VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT,
             .oldLayout = VK_IMAGE_LAYOUT_UNDEFINED,
             .newLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
             .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
@@ -152,6 +76,8 @@ public:
             .image = swapchain->swapChainImages[(int)swapchain->index],
             .subresourceRange = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1},
         };
+
+        // VkMemoryBarrier2 memBarriers[] = {memBarrier1, memBarrier2};
 
         VkDependencyInfo dependencyI = {
             .sType = VK_STRUCTURE_TYPE_DEPENDENCY_INFO,
@@ -167,23 +93,45 @@ public:
         renderArea.offset.x = 0;
         renderArea.offset.y = 0;
 
-        VkRenderPassBeginInfo renderPassBI = {
-            .sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
-            .renderPass = renderpass->_renderPass,
-            .framebuffer = renderpass->_framebuffers[(int)swapchain->index],
-            .renderArea = renderArea,
-            .clearValueCount = 1,
-            .pClearValues = &clearValue,
+        VkClearValue clearValue;
+        clearValue.color = {{0.5f, 0.5f, 0.5f, 1.0f}};
+
+        VkRenderingAttachmentInfo colorAttachment = {
+            .sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
+            .imageView = swapchain->swapChainImageViews[(int)swapchain->index],
+            .imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+            .resolveMode = VK_RESOLVE_MODE_NONE,
+            .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
+            .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
+            .clearValue = clearValue,
         };
 
-        vkCmdBeginRenderPass(cmd, &renderPassBI, VkSubpassContents::VK_SUBPASS_CONTENTS_INLINE);
+        VkRenderingInfo renderingInfo = {
+            .sType = VK_STRUCTURE_TYPE_RENDERING_INFO,
+            .renderArea = renderArea,
+            .layerCount = 1,
+            .viewMask = 0,
+            .colorAttachmentCount = 1,
+            .pColorAttachments = &colorAttachment,
+        };
 
+        vkCmdBeginRendering(cmd, &renderingInfo);
 
-       
-        vkCmdEndRenderPass(cmd);
+        vkCmdEndRendering(cmd);
+
+        imageBarrier2.srcStageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT;
+        imageBarrier2.dstStageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT;
+        imageBarrier2.srcAccessMask = VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT;
+        imageBarrier2.dstAccessMask = VK_ACCESS_2_COLOR_ATTACHMENT_READ_BIT;
+        imageBarrier2.oldLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+        imageBarrier2.newLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+        dependencyI.bufferMemoryBarrierCount = 0;
+        dependencyI.pBufferMemoryBarriers = 0;
+        vkCmdPipelineBarrier2(cmd, &dependencyI);
 
         checkResult(vkEndCommandBuffer(cmd));
     }
+
     uint64_t renderFinishedValue = 0;
     void draw()
     {
@@ -209,8 +157,6 @@ public:
 
         VkSubmitInfo2 submit2I = {
             .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO_2,
-            // .waitSemaphoreInfoCount = 1,
-            // .pWaitSemaphoreInfos = &waitSI,
             .commandBufferInfoCount = 1,
             .pCommandBufferInfos = &cmdSI,
             .signalSemaphoreInfoCount = 1,
@@ -225,45 +171,19 @@ public:
         renderFinishedValue++;
     }
 
-    void beforeResize()
-    {
-        camera = Lettuce::X3D::Camera3D::Camera3D(width, height);
-        camera.Reset(glm::vec3(20, 20, 30), glm::vec3(0.0f), glm::vec3(0.57735026919)); // 1 / sqrt(3)
-    }
 
     void destroyObjects()
     {
         vkFreeCommandBuffers(device->_device, pool, 1, &cmd);
         vkDestroyCommandPool(device->_device, pool, nullptr);
-
-       
-        renderFinished->Release();
-        renderpass->DestroyFramebuffers();
-        renderpass->Release();
     }
-
-    void genScene()
-    {
-
-    }
-
 };
 
 int main()
 {
-    GeometrySample app;
+    ClearScreenSample app;
     app.appName = "Clear Screen Sample";
     app.title = "Clear Screen Sample";
-    app.features = {
-        .FragmentShadingRate = false,
-        .PresentWait = false,
-        .ExecutionGraphs = false,
-        .MeshShading = false,
-        .RayTracing = false,
-        .Video = false,
-        .MemoryBudget = false,
-        .ConditionalRendering = false,
-    };
     app.run();
     return 0;
 }
