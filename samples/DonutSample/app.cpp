@@ -394,24 +394,25 @@ void main()
             vkCmdSetPrimitiveTopology(cmd, VkPrimitiveTopology::VK_PRIMITIVE_TOPOLOGY_LINE_LIST);
             vkCmdDraw(cmd, 2, 1, 0, 0);
         }
-        /*render donut*/
-        vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->_pipeline);
-        VkDeviceSize size = verticesSize;
-        VkDeviceSize offset = 0;
-        vkCmdBindVertexBuffers2(cmd, 0, 1, &(deviceBuffer->_buffer), &offset, &size, nullptr);
-        vkCmdBindIndexBuffer2(cmd, deviceBuffer->_buffer, verticesSize, indicesSize, VK_INDEX_TYPE_UINT32);
-        vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, connector->_pipelineLayout, 0, 1, descriptor->_descriptorSets.data(), 0, nullptr);
+        /*render donut*/ 
+        // TODO: find error
+        // vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->_pipeline);
+        // VkDeviceSize size = verticesSize;
+        // VkDeviceSize offset = 0;
+        // vkCmdBindVertexBuffers2(cmd, 0, 1, &(deviceBuffer->_buffer), &offset, &size, nullptr);
+        // vkCmdBindIndexBuffer2(cmd, deviceBuffer->_buffer, verticesSize, indicesSize, VK_INDEX_TYPE_UINT32);
+        // vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, connector->_pipelineLayout, 0, 1, descriptor->_descriptorSets.data(), 0, nullptr);
 
-        vkCmdPushConstants(cmd, connector->_pipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(DataPush), &dataPush);
-        vkCmdSetLineWidth(cmd, 1.0f);
-        VkViewport viewport = {0, 0, (float)width, (float)height, 0.0f, 1.0f};
-        // vkCmdSetViewport(cmd, 0, 1, &viewport);
-        vkCmdSetViewportWithCount(cmd, 1, &viewport);
-        VkRect2D scissor = {{0, 0}, {static_cast<uint32_t>(width), static_cast<uint32_t>(height)}};
-        // vkCmdSetScissor(cmd, 0, 1, &scissor);
-        vkCmdSetScissorWithCount(cmd, 1, &scissor);
-        vkCmdSetPrimitiveTopology(cmd, VkPrimitiveTopology::VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
-        vkCmdDrawIndexed(cmd, indices.size(), 1, 0, 0, 0);
+        // vkCmdPushConstants(cmd, connector->_pipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(DataPush), &dataPush);
+        // vkCmdSetLineWidth(cmd, 1.0f);
+        // VkViewport viewport = {0, 0, (float)width, (float)height, 0.0f, 1.0f};
+        // // vkCmdSetViewport(cmd, 0, 1, &viewport);
+        // vkCmdSetViewportWithCount(cmd, 1, &viewport);
+        // VkRect2D scissor = {{0, 0}, {static_cast<uint32_t>(width), static_cast<uint32_t>(height)}};
+        // // vkCmdSetScissor(cmd, 0, 1, &scissor);
+        // vkCmdSetScissorWithCount(cmd, 1, &scissor);
+        // vkCmdSetPrimitiveTopology(cmd, VkPrimitiveTopology::VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
+        // vkCmdDrawIndexed(cmd, indices.size(), 1, 0, 0, 0);
 
         vkCmdEndRendering(cmd);
 
