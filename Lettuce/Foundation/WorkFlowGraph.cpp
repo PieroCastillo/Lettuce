@@ -9,6 +9,7 @@
 #include <memory>
 #include <thread>
 #include <vector>
+#include <algorithm>
 #include "Lettuce/Core/BufferResource.hpp"
 #include "Lettuce/Core/ImageResource.hpp"
 #include "Lettuce/Core/Device.hpp"
@@ -62,13 +63,57 @@ void WorkFlowGraph::Release()
     }
 }
 
+void WorkFlowGraph::setLevels(std::vector<WorkNode::Edge> &edges)
+{
+    for (auto &[node, res] : edges)
+    {
+        node->level += 1;
+    }
+
+    for (auto &[node, res] : edges)
+    {
+        maxLevel = (std::max)(maxLevel, node->level);
+        setLevels(node->children);
+    }
+}
+
 void WorkFlowGraph::Compile()
 {
+    /*
+    > set levels of all nodes recursively
+    */
+
+    // reset all levels
+    for(auto & node : nodes)
+    {
+        node->level = 0;
+    }
+    // set levels
+    for(auto & node : roots)
+    {
+        setLevels(node->children);
+    }
+
+    // get work node commands 
+
+    std::vector<std::vector<WorkNodeData>> commands;
+    
+    for(uint32_t currentLevel = 0; currentLevel <= maxLevel; currentLevel++)
+    {
+        for(auto&& node : nodes)
+        {
+            if(node->level == currentLevel)
+            {
+                commands[currentLevel].push_back(node->data);
+            }
+        }
+    }
+
+    // TODO:  EDGES 2 BARRIERS
 }
 
 // commands
 void WorkFlowGraph::Record(VkCommandBuffer cmd)
 {
-
     vkCmdExecuteCommands(cmd, (uint32_t)cmds.size(), cmds.data());
 }

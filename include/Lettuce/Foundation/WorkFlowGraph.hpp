@@ -21,54 +21,21 @@
 #include "Lettuce/Core/PipelineLayout.hpp"
 #include "Lettuce/Core/Descriptors.hpp"
 
+#include "WorkNode.hpp"
+#include "ImageHandle.hpp"
+#include "BufferHandle.hpp"
+
 using namespace Lettuce::Core;
 
 namespace Lettuce::Foundation
 {
-    enum class ResourceUsage
-    {
-        Read,
-        Write,
-        ReadWrite,
-    };
-    struct BufferAsResourceInfo
-    {
-        std::shared_ptr<BufferResource> bufferPtr;
-        VkPipelineStageFlagBits2 stageBit;
-        ResourceUsage usage;
-    };
-
-    struct ImageAsResourceInfo
-    {
-        std::shared_ptr<ImageResource> imgPtr;
-        VkPipelineStageFlagBits2 stageBit;
-        VkImageLayout layout;
-        ResourceUsage usage;
-    };
-
-    struct ImageViewAsResourceInfo
-    {
-        std::shared_ptr<ImageViewResource> imgVwPtr;
-        VkPipelineStageFlagBits2 stageBit;
-        VkImageLayout layout;
-        ResourceUsage usage;
-    };
-
-    /// @brief Organizes Work to be submmitted to GPU
-    ///
-    /// @brief has 3 stages:
-    ///
-    /// 1. Add Stuff (WorkNodes and Resources)
-    ///
-    /// 2. Add Nodes
-    ///
-    /// 3. Compile
     class WorkFlowGraph
     {
     private:
-        bool canAddResources = true;
-
-        std::vector<std::vector<std::function<void(VkCommandBuffer)>>> funcs;
+        uint32_t maxLevel = 0;
+        std::vector<std::shared_ptr<WorkNode>> roots;
+        std::vector<std::shared_ptr<WorkNode>> nodes;
+        void setLevels(std::vector<WorkNode::Edge> &edges);
 
     public:
         const uint32_t _threads;
@@ -81,8 +48,25 @@ namespace Lettuce::Foundation
         WorkFlowGraph(const std::shared_ptr<Device> &device, uint32_t threads);
         void Release();
 
-        // std::shared_ptr<WorkNode> CreateNode();
-        // std::shared_ptr<ExecutableWorkNode> CreateNode();
+        template <CommandData T>
+        std::shared_ptr<WorkNode> CreateRootNode(const std::string &name, const std::vector<T> &commands, const std::vector<CommandState> &states)
+        {
+            auto newRoot = std::make_shared<WorkNode>(name, commands, states);
+            roots.push_back(newRoot);
+            nodes.push_back(newRoot);
+            return newRoot;
+        }
+
+        template <CommandData T>
+        std::shared_ptr<WorkNode> CreateNode(const std::string &name, const std::vector<T> &commands, const std::vector<CommandState> &states)
+        {
+            auto node = std::make_shared<WorkNode>(name, commands, states);
+            nodes.push_back(node);
+            return node;
+        }
+
+        BufferHandle AddResource(const std::shared_ptr<BufferResource> &buffer, uint32_t size, uint32_t offset);
+        ImageHandle AddResource(const std::shared_ptr<ImageResource> &image, VkImageSubresourceRange range);
 
         // compile stacks
         void Compile();

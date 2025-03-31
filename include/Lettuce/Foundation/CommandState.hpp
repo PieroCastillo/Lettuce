@@ -4,22 +4,36 @@
 #pragma once
 #include <vector>
 #include <memory>
+#include <variant>
+
+#include "Lettuce/Core/GraphicsPipeline.hpp"
+#include "Lettuce/Core/ComputePipeline.hpp"
+#include "Lettuce/Core/PipelineLayout.hpp"
+#include "Lettuce/Core/Descriptors.hpp"
+
+#include "Lettuce/Core/BufferResource.hpp"
+#include "Lettuce/Core/ImageResource.hpp"
 
 namespace Lettuce::Foundation
 {
-    // NEEDS REVIEW
-
-    struct WorkState
+    struct BindPipeline
     {
-        virtual void resordState(VkCommandBuffer cmd) = 0;
     };
-
-    struct BindPipeline;
-    struct BindShaders;
-    struct BindDescriptorSets;
-    struct BindDescriptorBuffers;
-    struct BindVertexBuffers;
-    struct BindIndexBuffer;
+    struct BindShaders
+    {
+    };
+    struct BindDescriptorSets
+    {
+    };
+    struct BindDescriptorBuffers
+    {
+    };
+    struct BindVertexBuffers
+    {
+    };
+    struct BindIndexBuffer
+    {
+    };
 
     // required
 
@@ -81,7 +95,7 @@ namespace Lettuce::Foundation
     // tessellation eval
     struct TessellationEvaluationShaderState
     {
-        uint32_t patchControlPoints
+        uint32_t patchControlPoints;
     };
 
     // tesellation control
@@ -116,4 +130,18 @@ namespace Lettuce::Foundation
     {
         uint32_t rasterizationStream;
     };
+
+    using CommandState = std::variant<BindPipeline,
+                                      BindShaders,
+                                      BindDescriptorSets,
+                                      BindDescriptorBuffers,
+                                      BindVertexBuffers,
+                                      BindIndexBuffer,
+                                      ShaderState,
+                                      VertexShaderState,
+                                      TessellationEvaluationShaderState,
+                                      TessellationControlShaderState,
+                                      FragmentShaderState,
+                                      FragmentShadingRateState,
+                                      GeometryShaderState>;
 }

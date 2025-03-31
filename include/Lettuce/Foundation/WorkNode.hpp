@@ -2,37 +2,69 @@
 // Created by piero on 22/03/2025.
 //
 #pragma once
-#include <string>
 #include <vector>
 #include <memory>
 #include <variant>
-#include "WorkState.hpp"
-#include "CommandDatas.hpp"
-#include "Lettuce/Core/BufferResource.hpp"
-#include "Lettuce/Core/ImageResource.hpp"
+#include <string>
+#include <utility>
+#include <vector>
+#include "CommandState.hpp"
+#include "CommandData.hpp"
+#include "BufferHandle.hpp"
+#include "ImageHandle.hpp"
 
 namespace Lettuce::Foundation
 {
-    // NEEDS REVIEW
+    class WorkFlowGraph;
 
-    struct WorkNode
+    template <CommandData T>
+    struct WorkNodeDataT
     {
-        std::vector<WorkState> states;
-        std::vector<std::weak_ptr<WorkNode>> nextNodes;
+        std::string _name;
+        std::vector<T> _commands;
+        std::vector<CommandState> _states;
+    };
 
-        WorkNode(const std::string& name, CommandData data)
+    using WorkNodeData = std::variant<WorkNodeDataT<DrawCommandData>,
+                                      WorkNodeDataT<DrawIndexedCommandData>,
+                                      WorkNodeDataT<DrawIndirectCommandData>,
+                                      WorkNodeDataT<DrawIndexedIndirectCommandData>,
+                                      WorkNodeDataT<DrawIndirectCountCommandData>,
+                                      WorkNodeDataT<DrawIndexedIndirectCountCommandData>,
+                                      WorkNodeDataT<DrawMeshTasksCommandData>,
+                                      WorkNodeDataT<DrawMeshTasksIndirectCommandData>,
+                                      WorkNodeDataT<DrawMeshTasksIndirectCountCommandData>,
+                                      WorkNodeDataT<DispatchCommandData>,
+                                      WorkNodeDataT<DispatchIndirectCommandData>>;
+
+    class WorkNode
+    {
+    private:
+        friend class WorkFlowGraph;
+
+        struct Edge
         {
+            std::shared_ptr<WorkNode> child;
+            std::variant<BufferHandle, ImageHandle> resourceHandle;
+        };
+        std::vector<Edge> children;
+        uint32_t level = 0;
+        WorkNodeData data;
 
+        template <CommandData T>
+        explicit WorkNode(const std::string &name,
+                          const std::vector<T> &commands,
+                          const std::vector<CommandState> &states)
+        {
+            data = {name, commands, states};
         }
 
-        void WritesTo(const std::shared_ptr<WorkNode> &node, const std::shared_ptr<BufferResource> &buffer)
+    public:
+        virtual ~WorkNode() = default;
+
+        void LinkTo(const std::shared_ptr<WorkNode> &dst, std::variant<BufferHandle, ImageHandle> resourceHandle)
         {
-
-        }
-
-        void WritesTo(const std::shared_ptr<WorkNode> &node, const std::shared_ptr<ImageResource> &image)
-        {
-
+            children.push_back(Edge{dst, resourceHandle});
         }
     };
 }

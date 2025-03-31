@@ -1,4 +1,6 @@
 #include "Foundation/WorkFlowGraph.hpp"
 #include "Foundation/WorkNode.hpp"
-#include "Foundation/WorkState.hpp"
-#include "Foundation/CommandDatas.hpp"
+#include "Foundation/CommandState.hpp"
+#include "Foundation/CommandData.hpp"
+#include "Foundation/BufferHandle.hpp"
+#include "Foundation/ImageHandle.hpp"
