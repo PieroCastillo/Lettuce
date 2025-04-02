@@ -14,25 +14,6 @@
 
 using namespace Lettuce::Core;
 
-VKAPI_ATTR VkBool32 VKAPI_CALL Instance::debugCallback(
-    VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
-    VkDebugUtilsMessageTypeFlagsEXT messageType,
-    const VkDebugUtilsMessengerCallbackDataEXT *pCallbackData,
-    void *pUserData)
-{
-    // false positives
-    switch (pCallbackData->messageIdNumber)
-    {
-    case -1876993556:
-        break;
-    default:
-        std::cerr << "validation layer says: " << "[" << pCallbackData->messageIdNumber << "] " << pCallbackData->pMessage << std::endl;
-        break;
-    }
-
-    return VK_FALSE;
-}
-
 void Instance::listExtensions()
 {
     uint32_t availableExtensionCount = 0;
@@ -65,22 +46,14 @@ void Instance::loadPlatformAndFeatures()
     std::cout << "surface ext name: " << name << std::endl;
     // all needed vk extensions here
     requestedExtensionsNames.emplace_back(VK_KHR_SURFACE_EXTENSION_NAME);
-    if (_debug)
-    {
-        requestedExtensionsNames.emplace_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
-    }
     requestedExtensionsNames.emplace_back(name);
 }
 
-Instance::Instance(std::string appName, Version appVersion, std::vector<char *> requestedExtensions, bool debug) : _debug(debug)
+Instance::Instance(std::string appName, Version appVersion, std::vector<char *> requestedExtensions)
 {
     for (auto ext : requestedExtensions)
     {
         requestedExtensionsNames.emplace_back(ext);
-    }
-    if (_debug)
-    {
-        requestedLayersNames.emplace_back("VK_LAYER_KHRONOS_validation");
     }
 
     // Lettuce::Core::VulkanFunctions vf;
@@ -92,13 +65,6 @@ Instance::Instance(std::string appName, Version appVersion, std::vector<char *> 
     //     return;
     // }
     checkResult(volkInitialize());
-    VkDebugUtilsMessengerCreateInfoEXT debugUtilsCI = {
-        .sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT,
-        .messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT,
-        .messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT | VkDebugUtilsMessageTypeFlagBitsEXT::VK_DEBUG_UTILS_MESSAGE_TYPE_DEVICE_ADDRESS_BINDING_BIT_EXT,
-        .pfnUserCallback = debugCallback,
-        .pUserData = nullptr, // Optional
-    };
 
     VkApplicationInfo appI = {
         .sType = VK_STRUCTURE_TYPE_APPLICATION_INFO,
@@ -131,17 +97,8 @@ Instance::Instance(std::string appName, Version appVersion, std::vector<char *> 
         instanceCI.ppEnabledExtensionNames = requestedExtensionsNames.data();
     }
 
-    if (_debug)
-    {
-        instanceCI.pNext = &debugUtilsCI;
-    }
-
     checkResult(vkCreateInstance(&instanceCI, nullptr, &_instance));
     volkLoadInstance(_instance);
-    if (_debug)
-    {
-        checkResult(CreateDebugUtilsMessengerEXT(_instance, &debugUtilsCI, nullptr, &debugMessenger));
-    }
 }
 
 void Instance::Release()
@@ -149,10 +106,6 @@ void Instance::Release()
     if (isSurfaceCreated)
     {
         vkDestroySurfaceKHR(_instance, _surface, nullptr);
-    }
-    if (_debug)
-    {
-        DestroyDebugUtilsMessengerEXT(_instance, debugMessenger, nullptr);
     }
     vkDestroyInstance(_instance, nullptr);
     volkFinalize();

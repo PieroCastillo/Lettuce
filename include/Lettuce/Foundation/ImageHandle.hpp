@@ -16,5 +16,15 @@ namespace Lettuce::Foundation
         std::string name;
         std::shared_ptr<ImageResource> image;
         VkImageSubresourceRange range;
+
+        explicit ImageHandle(
+            std::string &_name,
+            std::shared_ptr<ImageResource> &_image,
+            VkImageSubresourceRange _range)
+            : name(_name),
+              image(_image),
+              range(_range)
+        {
+        }
     };
 }

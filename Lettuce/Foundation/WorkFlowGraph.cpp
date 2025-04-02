@@ -65,12 +65,12 @@ void WorkFlowGraph::Release()
 
 void WorkFlowGraph::setLevels(std::vector<WorkNode::Edge> &edges)
 {
-    for (auto &[node, res] : edges)
+    for (auto &[node, res, srcS, dstS, srcA, dstA] : edges)
     {
         node->level += 1;
     }
 
-    for (auto &[node, res] : edges)
+    for (auto &[node, res, srcS, dstS, srcA, dstA] : edges)
     {
         maxLevel = (std::max)(maxLevel, node->level);
         setLevels(node->children);
@@ -84,27 +84,105 @@ void WorkFlowGraph::Compile()
     */
 
     // reset all levels
-    for(auto & node : nodes)
+    for (auto &node : nodes)
     {
         node->level = 0;
     }
     // set levels
-    for(auto & node : roots)
+    for (auto &node : roots)
     {
         setLevels(node->children);
     }
 
-    // get work node commands 
+    // get work node commands
+
+    /*
+    WorkCommand 1 | Barrier 1 || WorkCommand 2 | Barrier 2 || ... 
+    */
 
     std::vector<std::vector<WorkNodeData>> commands;
-    
-    for(uint32_t currentLevel = 0; currentLevel <= maxLevel; currentLevel++)
+    std::vector<std::vector<VkBufferMemoryBarrier2>> bufferBarriers;
+    std::vector<std::vector<VkImageMemoryBarrier2>> imageBarriers;
+
+    for(auto&& node : nodes)
     {
-        for(auto&& node : nodes)
+        for (auto &&edge : node->children)
         {
-            if(node->level == currentLevel)
+            if (std::holds_alternative<BufferHandle>(edge.resourceHandle))
+            {
+                auto bufferHandle = std::get<BufferHandle>(edge.resourceHandle);
+                bufferBarriers[node].push_back(VkBufferMemoryBarrier2{
+                    .sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER_2,
+                    .srcStageMask = edge.srcStage,
+                    .srcAccessMask = edge.srcAccess,
+                    .dstStageMask = edge.dstStage,
+                    .dstAccessMask = edge.dstAccess,
+                    .srcQueueFamilyIndex = VK_QUEUE_FAMILY_EXTERNAL,
+                    .dstQueueFamilyIndex = VK_QUEUE_FAMILY_EXTERNAL,
+                    .buffer = bufferHandle.buffer->_buffer,
+                    .offset = bufferHandle.offset,
+                    .size = bufferHandle.size,
+                });
+            }
+            else if (std::holds_alternative<ImageHandle>(edge.resourceHandle))
+            {
+                auto imageHandle = std::get<ImageHandle>(edge.resourceHandle);
+                imageBarriers[currentLevel].push_back(VkImageMemoryBarrier2{
+                    .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2,
+                    .srcStageMask = edge.srcStage,
+                    .srcAccessMask = edge.srcAccess,
+                    .dstStageMask = edge.dstStage,
+                    .dstAccessMask = edge.dstAccess,
+                    .srcQueueFamilyIndex = VK_QUEUE_FAMILY_EXTERNAL,
+                    .dstQueueFamilyIndex = VK_QUEUE_FAMILY_EXTERNAL,
+                    .image = imageHandle.image->_image,
+                    .subresourceRange = imageHandle.range,
+                });
+            }
+        }
+    }
+
+    for (uint32_t currentLevel = 0; currentLevel <= maxLevel; currentLevel++)
+    {
+        for (auto &&node : nodes)
+        {
+            if (node->level == currentLevel)
             {
                 commands[currentLevel].push_back(node->data);
+                for (auto &&edge : node->children)
+                {
+                    if (std::holds_alternative<BufferHandle>(edge.resourceHandle))
+                    {
+                        auto bufferHandle = std::get<BufferHandle>(edge.resourceHandle);
+                        bufferBarriers[currentLevel].push_back(VkBufferMemoryBarrier2{
+                            .sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER_2,
+                            .srcStageMask = edge.srcStage,
+                            .srcAccessMask = edge.srcAccess,
+                            .dstStageMask = edge.dstStage,
+                            .dstAccessMask = edge.dstAccess,
+                            .srcQueueFamilyIndex = VK_QUEUE_FAMILY_EXTERNAL,
+                            .dstQueueFamilyIndex = VK_QUEUE_FAMILY_EXTERNAL,
+                            .buffer = bufferHandle.buffer->_buffer,
+                            .offset = bufferHandle.offset,
+                            .size = bufferHandle.size,
+                        });
+                    }
+                    else if (std::holds_alternative<ImageHandle>(edge.resourceHandle))
+                    {
+                        auto imageHandle = std::get<ImageHandle>(edge.resourceHandle);
+                        imageBarriers[currentLevel].push_back(VkImageMemoryBarrier2{
+                            .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2,
+                            .srcStageMask = edge.srcStage,
+                            .srcAccessMask = edge.srcAccess,
+                            .dstStageMask = edge.dstStage,
+                            .dstAccessMask = edge.dstAccess,
+                            .srcQueueFamilyIndex = VK_QUEUE_FAMILY_EXTERNAL,
+                            .dstQueueFamilyIndex = VK_QUEUE_FAMILY_EXTERNAL,
+                            .image = imageHandle.image->_image,
+                            .subresourceRange = imageHandle.range,
+                        });
+                    }
+                }
             }
         }
     }

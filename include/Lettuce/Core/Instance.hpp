@@ -24,13 +24,6 @@ namespace Lettuce::Core
         std::vector<char *> availableLayersNames;
         std::vector<const char *> requestedExtensionsNames;
         std::vector<const char *> requestedLayersNames;
-        VkDebugUtilsMessengerEXT debugMessenger;
-
-        static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
-            VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
-            VkDebugUtilsMessageTypeFlagsEXT messageType,
-            const VkDebugUtilsMessengerCallbackDataEXT *pCallbackData,
-            void *pUserData);
 
         void listExtensions();
         void listLayers();
@@ -42,7 +35,7 @@ namespace Lettuce::Core
         VkSurfaceKHR _surface;
         bool _debug;
 
-        Instance(std::string appName, Version appVersion, std::vector<char *> requestedExtensions, bool debug = false);
+        Instance(std::string appName, Version appVersion, std::vector<char *> requestedExtensions);
         void Release();
         template <typename T1, typename T2>
         void CreateSurface(T1 window, T2 process)
