@@ -54,8 +54,6 @@ namespace Lettuce::Foundation
 
         RenderTaskGroup CreateGroup(std::string &groupName, VkPipelineBindPoint bindPoint);
 
-        
-
         void Barrier(RenderTaskGroup &srcGroup, RenderTaskGroup &dstGroup,
                      BufferHandle buffer,
                      VkPipelineStageFlags2 srcStage,

@@ -17,8 +17,8 @@ namespace Lettuce::Foundation
     enum class RenderTargetViewType
     {
         Color,
-        DepthStencil,
-        Input,
+        Depth,
+        Stencil,
     };
 
     class RenderTargetView

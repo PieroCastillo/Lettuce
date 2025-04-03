@@ -9,16 +9,19 @@
 #include <functional>
 #include <utility>
 #include <vector>
+
 #include "CommandList.hpp"
 #include "CommandState.hpp"
 #include "CommandData.hpp"
+#include "RenderTargetView.hpp"
 
 namespace Lettuce::Foundation
 {
-   class RenderTaskGroup
-   {
+    class RenderTaskGroup
+    {
     private:
     public:
-    void Record(std::function<void(CommandList)> func);
-   };
+        void RenderTo(RenderTargetView &target, VkAttachmentLoadOp loadOp, VkAttachmentStoreOp storeOp);
+        void Record(std::function<void(CommandList)> func);
+    };
 }
