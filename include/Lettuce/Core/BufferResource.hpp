@@ -20,6 +20,8 @@ namespace Lettuce::Core
 
     class BufferResource : public IResource, public IReleasable
     {
+    private:
+        uint64_t address = 0;
     public:
         VkBuffer _buffer;
         uint32_t _size;

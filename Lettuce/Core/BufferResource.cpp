@@ -32,6 +32,12 @@ BufferResource::BufferResource(const std::shared_ptr<Device> &device, std::vecto
     };
     checkResult(vkCreateBuffer(device->_device, &bufferCI, nullptr, &_buffer));
     _size = size;
+
+    VkBufferDeviceAddressInfo addressInfo = {
+        .sType = VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO,
+        .buffer = _buffer,
+    };
+    address = (uint64_t)vkGetBufferDeviceAddress(_device->_device, &addressInfo);
 }
 
 BufferResource::BufferResource(const std::shared_ptr<Device> &device, uint32_t size, VkBufferUsageFlags2 usage) : _device(device)
@@ -60,11 +66,7 @@ void BufferResource::Release()
 
 uint64_t BufferResource::GetAddress()
 {
-    VkBufferDeviceAddressInfo addressInfo = {
-        .sType = VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO,
-        .buffer = _buffer,
-    };
-    return (uint64_t)vkGetBufferDeviceAddress(_device->_device, &addressInfo);
+    return address;
 }
 
 ResourceType BufferResource::GetResourceType()

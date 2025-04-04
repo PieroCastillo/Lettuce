@@ -33,6 +33,7 @@ using namespace Lettuce::Core;
 
 namespace Lettuce::Foundation
 {
+    /// @brief Organizes rendering work into the GPU
     class RenderDispatcher
     {
     private:
@@ -48,9 +49,9 @@ namespace Lettuce::Foundation
         void Release();
 
         // add resource methods
-        RenderTargetView AddRenderTargetView(RenderTargetView&& renderTargetView);
-        BufferHandle AddResource(BufferHandle&& buffer);
-        ImageHandle AddResource(ImageHandle&& image);
+        RenderTargetView AddRenderTargetView(RenderTargetView &&renderTargetView);
+        BufferHandle AddResource(BufferHandle &&buffer);
+        ImageHandle AddResource(ImageHandle &&image);
 
         RenderTaskGroup CreateGroup(std::string &groupName, VkPipelineBindPoint bindPoint);
 
@@ -63,6 +64,14 @@ namespace Lettuce::Foundation
 
         void Barrier(RenderTaskGroup &srcGroup, RenderTaskGroup &dstGroup,
                      ImageHandle image,
+                     VkImageLayout layout,
+                     VkPipelineStageFlags2 srcStage,
+                     VkPipelineStageFlags2 dstStage,
+                     VkAccessFlags2 srcAccess,
+                     VkAccessFlags2 dstAccess);
+
+        void Barrier(RenderTaskGroup &srcGroup, RenderTaskGroup &dstGroup,
+                     RenderTargetView renderTargetView,
                      VkImageLayout layout,
                      VkPipelineStageFlags2 srcStage,
                      VkPipelineStageFlags2 dstStage,

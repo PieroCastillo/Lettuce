@@ -4,9 +4,16 @@
 #pragma once
 #include <string>
 #include <vector>
+#include <memory>
 #include <type_traits>
+
+#include "Lettuce/Core/IndirectCommandsLayout.hpp"
+#include "Lettuce/Core/IndirectExecutionSet.hpp"
+
 #include "BufferHandle.hpp"
 #include "ImageHandle.hpp"
+
+using namespace Lettuce::Core;
 
 namespace Lettuce::Foundation
 {
@@ -157,6 +164,7 @@ namespace Lettuce::Foundation
             vkCmdDispatch(cmd, groupCountX, groupCountY, groupCountZ);
         }
     };
+
     struct DispatchIndirectCommandData : BaseCommandData
     {
         uint32_t baseGroupX;
@@ -171,6 +179,42 @@ namespace Lettuce::Foundation
             vkCmdDispatchBase(cmd, baseGroupX, baseGroupY, baseGroupZ, groupCountX, groupCountY, groupCountZ);
         }
     };
+
+    struct ExecuteGeneratedCommands : BaseCommandData
+    {
+        bool isPreprocessed;
+        VkShaderStageFlags shaderStages;
+        std::shared_ptr<IndirectExecutionSet> indirectExecutionSet;
+        std::shared_ptr<IndirectCommandsLayout> indirectCommandsLayout;
+        // VkDeviceAddress                indirectAddress;
+        // VkDeviceSize                   indirectAddressSize;
+        // VkDeviceAddress                preprocessAddress;
+        // VkDeviceSize                   preprocessSize;
+        std::shared_ptr<BufferResource> indirectBuffer;
+        std::shared_ptr<BufferResource> preprocessBuffer;
+        uint32_t maxSequenceCount;
+        VkDeviceAddress sequenceCountAddress;
+        uint32_t maxDrawCount;
+
+        void record(VkCommandBuffer cmd) override
+        {
+            VkGeneratedCommandsInfoEXT genCommandsInfo = {
+                .sType = VK_STRUCTURE_TYPE_GENERATED_COMMANDS_INFO_EXT,
+                .shaderStages = shaderStages,
+                .indirectExecutionSet = indirectExecutionSet->_executionSet,
+                .indirectCommandsLayout = indirectCommandsLayout->_commandsLayout,
+                .indirectAddress = indirectBuffer->GetAddress(),
+                .indirectAddress = indirectBuffer->_size,
+                .preprocessAddress = preprocessBuffer->GetAddress(),
+                .preprocessSize = preprocessBuffer->_size,
+                .maxSequenceCount = maxSequenceCount,
+                .sequenceCountAddress = sequenceCountAddress,
+                .maxDrawCount = maxDrawCount,
+            };
+
+            vkCmdExecuteGeneratedCommandsEXT(cmd, isPreprocessed, &genCommandsInfo);
+        }
+    }
 
     template <typename T>
     concept CommandData =

@@ -18,12 +18,12 @@ namespace Lettuce::Foundation
     class CommandList
     {
     private:
-        std::vector<RenderTask> task;
+        std::vector<RenderTask> tasks;
 
     public:
         void AddTask(RenderTask &&renderTask)
         {
-            task.emplace_back(std::forward<RenderTask>(renderTask));
+            tasks.emplace_back(std::forward<RenderTask>(renderTask));
         }
     };
 }

@@ -21,7 +21,7 @@ namespace Lettuce::Foundation
     {
     private:
     public:
-        void RenderTo(RenderTargetView &target, VkAttachmentLoadOp loadOp, VkAttachmentStoreOp storeOp);
+        void RenderTo(RenderTargetView &target, VkAttachmentLoadOp loadOp, VkAttachmentStoreOp storeOp, VkClearValue clearValue);
         void Record(std::function<void(CommandList)> func);
     };
 }
