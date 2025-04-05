@@ -9,7 +9,10 @@
 #include <memory>
 #include <string>
 
+#include "Lettuce/Lettuce.X3D.hpp"
+
 using namespace Lettuce::Core;
+using namespace Lettuce::X3D;
 
 class LoadModelSample : public LettuceSampleApp
 {

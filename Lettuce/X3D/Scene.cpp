@@ -126,6 +126,8 @@ void Lettuce::X3D::Scene::LoadFromFile(const std::shared_ptr<Lettuce::Core::Devi
     // vkBeginCommandBuffer(cmd, )
     uint32_t offset = 0;
     void *bufferData;
+    
+    // map all memory to one lettuce buffer
     for (auto &buffer : asset->buffers)
     {
         // copy raw data to temp buffer
@@ -135,23 +137,34 @@ void Lettuce::X3D::Scene::LoadFromFile(const std::shared_ptr<Lettuce::Core::Devi
         vkUnmapMemory(_device->_device, tempBuffersPool._memory);
     }
 
-    for (auto &accessor : asset->accessors)
-    {
-    }
-
     for (auto &img : asset->images)
     {
+        
     }
 
+    for (auto &sampler : asset->samplers)
+    {
+
+    }
+    
     for (auto &texture : asset->textures)
     {
+
     }
 
     for (auto &mesh : asset->meshes)
     {
+
     }
 
-    // for(auto& : asset.get(). )
+    // create virtual buffer (blocks) for recornized types
+    // note: accessor.componenType : uint, int, ...
+    //       accessor.accessorType : vec2, scalar, ...
+    for (auto &accessor : asset->accessors)
+    {
+        
+    }
+
 }
 
 void Lettuce::X3D::Scene::Release()
