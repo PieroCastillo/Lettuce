@@ -1,5 +1,5 @@
 //
-// Created by piero on 4/04/2024.
+// Created by piero on 17/11/2024.
 //
 #include "LettuceSampleApp.hpp"
 #include <iostream>
@@ -11,7 +11,7 @@
 
 using namespace Lettuce::Core;
 
-class LoadModelSample : public LettuceSampleApp
+class ShadowMapsSample : public LettuceSampleApp
 {
 public:
     Lettuce::Core::Compilers::GLSLCompiler compiler;
@@ -181,9 +181,9 @@ public:
 
 int main()
 {
-    LoadModelSample app;
-    app.appName = "Load Model Sample";
-    app.title = "Load Model Sample";
+    ShadowMapsSample app;
+    app.appName = "Shadow Maps";
+    app.title = "Shadow Maps";
     app.run();
     return 0;
 }

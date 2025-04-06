@@ -17,5 +17,17 @@ namespace Lettuce::Foundation
         std::shared_ptr<BufferResource> buffer;
         uint32_t offset;
         uint32_t size;
+
+        explicit BufferHandle(
+            std::string &_name,
+            std::shared_ptr<BufferResource> &_buffer,
+            uint32_t _offset,
+            uint32_t _size
+            ) : name(_name),
+                buffer(_buffer),
+                offset(_offset),
+                size(_size)
+        {
+        }
     };
 }

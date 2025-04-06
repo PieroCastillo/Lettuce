@@ -15,6 +15,12 @@ using namespace Lettuce::Core;
 
 void IndirectExecutionSet::Assemble(const std::vector<std::shared_ptr<Shader>> &initialShaders, uint32_t maxShaderCount)
 {
+    if(!_device->GetEnabledRecommendedFeatures().deviceGeneratedCommands)
+    {
+        throw std::runtime_error("Device Generated Commands MUST be supported to use IndirectExecutionSet");
+        std::abort();
+    }
+
     std::vector<VkIndirectExecutionSetShaderLayoutInfoEXT> setLayouts(initialShaders.size(), {
         .sType = VK_STRUCTURE_TYPE_INDIRECT_EXECUTION_SET_SHADER_LAYOUT_INFO_EXT,
         .setLayoutCount = (uint32_t)_pipelineLayout->_descriptors->_layouts.size(),

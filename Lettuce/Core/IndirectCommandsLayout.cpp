@@ -16,6 +16,12 @@ void IndirectCommandsLayout::Assemble(VkShaderStageFlags shaderStages, bool manu
 {
     // https://registry.khronos.org/vulkan/specs/latest/man/html/VkIndirectCommandsTokenTypeEXT.html token-command relation
 
+    if(!_device->GetEnabledRecommendedFeatures().deviceGeneratedCommands)
+    {
+        throw std::runtime_error("Device Generated Commands MUST be supported to use IndirectCommandsLayout");
+        std::abort();
+    }
+
     _shaderStages = shaderStages;
     size = currentOffset;
     VkIndirectCommandsLayoutCreateInfoEXT layoutCI = {
