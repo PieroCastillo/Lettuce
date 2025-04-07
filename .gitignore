@@ -3,4 +3,6 @@ cmake-build-debug
 out
 .idea
 .vscode
+.xmake
+vcpkg_installed
 *.nupkg
