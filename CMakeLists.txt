@@ -1,8 +1,17 @@
 cmake_minimum_required(VERSION 3.30)
 
 project(LettuceV2 LANGUAGES CXX VERSION 0.0.1.0)
-set(CMAKE_CXX_STANDARD 20)
-set(CMAKE_CXX_SCAN_FOR_MODULES false)
+set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_CXX_SCAN_FOR_MODULES true)   
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)       #
+
+if (CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
+    add_compile_options(/experimental:module /std:c++latest)
+elseif (CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
+    add_compile_options(-fmodules-ts -std=c++23)
+endif()
+
 
 find_package(Vulkan REQUIRED COMPONENTS shaderc_combined dxc)
 find_package(VulkanMemoryAllocator CONFIG REQUIRED)
