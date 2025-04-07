@@ -54,7 +54,7 @@ This is the core lib of Lettuce, the main function is provide access to Vulkan a
   |Synchronization2 |_(1.3 feature)_|🟢 |
   |HLSL support| _Not added_| 🚧 |
   |SLang support | _Not added_| 🚧 |
-  |Dynamic Rendering |_(1.2 feature)_| 🟢|
+  |Dynamic Rendering |_(1.3 feature)_| 🟢|
   |Buffer Device Address |_(1.2 feature)_|🟢 |
   | _Recommended:_| | |
   |Shader Object |_(VK_EXT_shader_object)_| 🟡|
@@ -76,6 +76,7 @@ This is the core lib of Lettuce, the main function is provide access to Vulkan a
 - [ ] Render Graph
 - [ ] Multi-thread Rendering
 - [ ] Async compute
+
 ### Lettuce X2D
 
 - [ ] Lights & Shadows
