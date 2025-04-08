@@ -1,7 +1,7 @@
 //
 // Created by piero on 14/02/2024.
 //
-#include "Lettuce/Core/common.hpp"
+#include "Lettuce/Core/Common.hpp"
 #include <iostream>
 #include <vector>
 #include "Lettuce/Core/GraphicsPipeline.hpp"

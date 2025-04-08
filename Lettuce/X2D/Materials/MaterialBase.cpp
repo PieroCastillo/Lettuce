@@ -1,7 +1,7 @@
 //
 // Created by piero on 2/11/2024.
 //
-#include "Lettuce/Core/common.hpp"
+#include "Lettuce/Core/Common.hpp"
 #include "Lettuce/Core/Utils.hpp"
 #include "Lettuce/Core/Device.hpp"
 #include "Lettuce/Core/ShaderModule.hpp"

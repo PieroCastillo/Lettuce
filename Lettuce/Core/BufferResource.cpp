@@ -1,9 +1,10 @@
 //
 // Created by piero on 29/12/2024.
 //
-#include "Lettuce/Core/common.hpp"
+#include "Lettuce/Core/Common.hpp"
 #include <iostream>
 #include <vector>
+#include "Lettuce/Core/Device.hpp"
 #include "Lettuce/Core/IResource.hpp"
 #include "Lettuce/Core/BufferResource.hpp"
 

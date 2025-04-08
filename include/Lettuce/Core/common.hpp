@@ -1,5 +1,8 @@
 #pragma once 
 
+#define VMA_IMPLEMENTATION
+#define VOLK_IMPLEMENTATION
+
 #define NOMINMAX
 #include <volk.h>
 #include <vma/vk_mem_alloc.h>

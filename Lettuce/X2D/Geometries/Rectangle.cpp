@@ -3,7 +3,7 @@
 //
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
-#include "Lettuce/Core/common.hpp"
+#include "Lettuce/Core/Common.hpp"
 #include "Lettuce/X2D/Geometries/Rectangle.hpp"
 #include "Lettuce/X2D/Geometries/Vertex.hpp"
 
