@@ -14,6 +14,7 @@ add_requires("glfw")
 add_requires("glm")
 add_requires("fastgltf")
 add_requires("directxshadercompiler")
+add_requires("imgui")
 
 local v = ("0.0.1.0"):split("%.")
 add_defines("VARIANT_VERSION=" .. (v[1] or 0),
@@ -61,5 +62,5 @@ for _, name in ipairs(samples) do
         add_includedirs("samples/SampleFramework", "external/stb","include")
         add_files("samples/" .. name .. "/app.cpp")
         add_deps("Lettuce")
-        add_packages("volk", "glfw", "glm")
+        add_packages("volk", "glfw", "glm", "imgui")
 end
