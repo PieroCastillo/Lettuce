@@ -22,6 +22,7 @@
 #include "Core/ComputePipeline.hpp"
 #include "Core/GraphicsPipeline.hpp"
 #include "Core/PipelineLayout.hpp"
+#include "Core/GraphicsPipelineLibrary.hpp"
 
 // other Lettuce objects
 #include "Core/Descriptors.hpp"
