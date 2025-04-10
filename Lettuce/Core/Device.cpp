@@ -92,7 +92,7 @@ void Device::addRecommendedFeatures()
 
     if (checkExtIfExists(VK_EXT_GRAPHICS_PIPELINE_LIBRARY_EXTENSION_NAME))
     {
-        enabledRecommendedFeatures.graphicPipelineLibrary = true;
+        enabledRecommendedFeatures.graphicsPipelineLibrary = true;
 
         addExt(VK_EXT_GRAPHICS_PIPELINE_LIBRARY_EXTENSION_NAME);
         graphicsPipelineLibraryFeature.graphicsPipelineLibrary = VK_TRUE;

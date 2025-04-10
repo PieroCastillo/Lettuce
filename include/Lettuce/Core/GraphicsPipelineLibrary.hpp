@@ -7,6 +7,7 @@
 #include <string>
 #include <memory>
 #include <map>
+#include "Common.hpp"
 #include "Device.hpp"
 #include "IReleasable.hpp"
 #include "ShaderModule.hpp"

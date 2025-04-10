@@ -19,7 +19,7 @@ using namespace Lettuce::Core;
 
 void GraphicsPipelineLibrary::AddVertexInput(std::string name)
 {
-    if (_device->GetEnabledRecommendedFeatures().graphicPipelineLibrary)
+    if (_device->GetEnabledRecommendedFeatures().graphicsPipelineLibrary)
     {
         VkGraphicsPipelineLibraryCreateInfoEXT libraryCI = {
             .sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_LIBRARY_CREATE_INFO_EXT,
@@ -49,7 +49,7 @@ void GraphicsPipelineLibrary::AddVertexInput(std::string name)
 
 void GraphicsPipelineLibrary::AddPreRasterizationShaders(std::string name)
 {
-    if (_device->GetEnabledRecommendedFeatures().graphicPipelineLibrary)
+    if (_device->GetEnabledRecommendedFeatures().graphicsPipelineLibrary)
     {
         VkGraphicsPipelineLibraryCreateInfoEXT libraryCI = {
             .sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_LIBRARY_CREATE_INFO_EXT,
@@ -70,7 +70,7 @@ void GraphicsPipelineLibrary::AddPreRasterizationShaders(std::string name)
 }
 void GraphicsPipelineLibrary::AddFragmentShader(std::string name)
 {
-    if (_device->GetEnabledRecommendedFeatures().graphicPipelineLibrary)
+    if (_device->GetEnabledRecommendedFeatures().graphicsPipelineLibrary)
     {
         VkGraphicsPipelineLibraryCreateInfoEXT libraryCI = {
             .sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_LIBRARY_CREATE_INFO_EXT,
@@ -91,7 +91,7 @@ void GraphicsPipelineLibrary::AddFragmentShader(std::string name)
 }
 void GraphicsPipelineLibrary::AddFragmentOutput(std::string name)
 {
-    if (_device->GetEnabledRecommendedFeatures().graphicPipelineLibrary)
+    if (_device->GetEnabledRecommendedFeatures().graphicsPipelineLibrary)
     {
         VkGraphicsPipelineLibraryCreateInfoEXT libraryCI = {
             .sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_LIBRARY_CREATE_INFO_EXT,
@@ -113,6 +113,27 @@ void GraphicsPipelineLibrary::AddFragmentOutput(std::string name)
 
 void GraphicsPipelineLibrary::Release()
 {
+    if (_device->GetEnabledRecommendedFeatures().graphicsPipelineLibrary)
+    {
+        for (auto &pl : vertexInputLibraries)
+        {
+            vkDestroyPipeline(_device->_device, pl, nullptr);
+        }
+        for (auto &pl : preRasterizationShadersLibraries)
+        {
+            vkDestroyPipeline(_device->_device, pl, nullptr);
+        }
+        for (auto &pl : fragmentShaderLibraries)
+        {
+            vkDestroyPipeline(_device->_device, pl, nullptr);
+        }
+        for (auto &pl : fragmentOutputLibraries)
+        {
+            vkDestroyPipeline(_device->_device, pl, nullptr);
+        }
+        return;
+    }
+
 }
 
 VkPipeline GraphicsPipelineLibrary::AssemblyPipeline(std::string vertexInputName,
@@ -121,7 +142,7 @@ VkPipeline GraphicsPipelineLibrary::AssemblyPipeline(std::string vertexInputName
                                                      std::string fragmentOutputName,
                                                      const std::shared_ptr<PipelineLayout> &layout)
 {
-    if (_device->GetEnabledRecommendedFeatures().graphicPipelineLibrary)
+    if (_device->GetEnabledRecommendedFeatures().graphicsPipelineLibrary)
     {
         VkPipeline libraries[] = {
             vertexInputLibraries[vertexInputName],
@@ -140,6 +161,7 @@ VkPipeline GraphicsPipelineLibrary::AssemblyPipeline(std::string vertexInputName
             .sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
             .pNext = &libraryCI,
             .flags = VK_PIPELINE_CREATE_LINK_TIME_OPTIMIZATION_BIT_EXT,
+            .layout =layout->
         };
 
         VkPipeline pipeline = VK_NULL_HANDLE;

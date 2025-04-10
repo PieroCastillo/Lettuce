@@ -26,7 +26,7 @@ namespace Lettuce::Core
     {
         bool shaderObject = false;
         bool deviceGeneratedCommands = false;
-        bool graphicPipelineLibrary = false;
+        bool graphicsPipelineLibrary = false;
         bool dynamicRenderingLocalRead = false;
     };
 
