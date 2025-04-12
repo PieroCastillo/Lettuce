@@ -52,7 +52,7 @@ local samples = {
     "DonutSample",
     "GeometryIndirectSample",
     "LoadModel",
-    "SampleX2D",
+--    "SampleX2D",
     "ShadowMaps"
 }
 
@@ -64,3 +64,11 @@ for _, name in ipairs(samples) do
         add_deps("Lettuce")
         add_packages("volk", "glfw", "glm", "imgui")
 end
+
+-- renderer
+target("renderer")
+    set_kind("binary")
+    add_includedirs("external/stb","include")
+    add_files("renderer/*.cpp", "renderer/core/*.ixx")
+    add_deps("Lettuce")
+    add_packages("volk", "glfw", "glm", "imgui")

@@ -39,42 +39,40 @@ void Lettuce::X3D::Scene::setup()
     // model.meshes[0].primitives[0].attributes
 }
 
-void *getPointerFromRawBuffer(fastgltf::DataSource dataSrc)
+void Lettuce::X3D::Scene::loadMesh(fastgltf::Asset &asset, fastgltf::Mesh &mesh)
 {
-    void *ptr;
+    std::vector<VerticesInfo> infos;
+    std::vector<VerticesData> datas;
+    // access to all primitives
+    for (auto it = mesh.primitives.begin(); it != mesh.primitives.end(); ++it)
+    {
+        std::vector<VkFormat> formats = {VK_FORMAT_R32G32B32_SFLOAT};
 
-    if (std::holds_alternative<fastgltf::sources::URI>(dataSrc))
-    {
-        auto value = std::get<fastgltf::sources::URI>(dataSrc);
+        auto *positionIt = it->findAttribute("POSITION");
+        auto &positionAccessor = asset.accessors[positionIt->accessorIndex];
+
+        if (!positionAccessor.bufferViewIndex.has_value())
+            continue;
+
+        // here continue adding accessors
+
+        int size = 4 * 3 * positionAccessor.count; // vec3 float
+        int stride = 4 * 3;                        // fvec3
+        int elementSize = 4 * 3;                   // fvec3
+        // WARNING: here you are creating unsafe pointers,  you SHOULD FREE these after
+        void *bufferPtr = malloc(size);
+        fastgltf::iterateAccessorWithIndex<fastgltf::math::fvec3>(asset, positionAccessor, [&](fastgltf::math::fvec3 pos, size_t idx)
+                                                                  {
+            char* bufferIdx = (char*)bufferPtr + idx;
+            memcpy((void*)bufferIdx, (void*)pos.data(), elementSize); });
+
+        infos.push_back({(uint32_t)positionAccessor.count, formats});
+        datas.push_back({(uint32_t)size, bufferPtr});
+
+        geometryBufferSize += size;
     }
-    else if (std::holds_alternative<fastgltf::sources::Array>(dataSrc))
-    {
-        auto value = std::get<fastgltf::sources::Array>(dataSrc);
-        ptr = (void *)value.bytes.data();
-    }
-    else if (std::holds_alternative<fastgltf::sources::Vector>(dataSrc))
-    {
-        auto value = std::get<fastgltf::sources::Vector>(dataSrc);
-        ptr = (void *)value.bytes.data();
-    }
-    else if (std::holds_alternative<fastgltf::sources::ByteView>(dataSrc))
-    {
-        auto value = std::get<fastgltf::sources::ByteView>(dataSrc);
-        ptr = (void *)value.bytes.data();
-    }
-    else if (std::holds_alternative<fastgltf::sources::BufferView>(dataSrc))
-    {
-        auto value = std::get<fastgltf::sources::BufferView>(dataSrc);
-    }
-    else if (std::holds_alternative<fastgltf::sources::CustomBuffer>(dataSrc))
-    {
-        auto value = std::get<fastgltf::sources::CustomBuffer>(dataSrc);
-    }
-    else if (std::holds_alternative<fastgltf::sources::Fallback>(dataSrc))
-    {
-        auto value = std::get<fastgltf::sources::Fallback>(dataSrc);
-    }
-    return ptr;
+    sceneVerticesInfos.push_back(infos);
+    sceneVerticesDatas.push_back(datas);
 }
 
 void Lettuce::X3D::Scene::LoadFromFile(const std::shared_ptr<Lettuce::Core::Device> &device, std::filesystem::path path)
@@ -92,86 +90,52 @@ void Lettuce::X3D::Scene::LoadFromFile(const std::shared_ptr<Lettuce::Core::Devi
     {
         return;
     }
-    /*
-    - gltf buffer: contains info of length, name and the data itself
-    - gltf bufferview: info of index, length, offset, stride, name and target
-    */
-    // here we load the buffers of the scene
-    // and create temporal buffers (located in host memory)
-    _buffers.reserve(asset->buffers.size());
-    ResourcePool tempBuffersPool;
-    std::vector<std::shared_ptr<BufferResource>> tempBuffers; // create temporal buffer, flags: src
-    tempBuffers.reserve(_buffers.size());
-    for (auto &buffer : asset->buffers)
-    {
-        auto Lbuffer = std::make_shared<Lettuce::Core::BufferResource>(_device, buffer.byteLength,
-                                                                       VkBufferUsageFlagBits::VK_BUFFER_USAGE_INDEX_BUFFER_BIT |
-                                                                           VkBufferUsageFlagBits::VK_BUFFER_USAGE_VERTEX_BUFFER_BIT |
-                                                                           VkBufferUsageFlagBits::VK_BUFFER_USAGE_TRANSFER_DST_BIT);
-        _buffers.push_back(Lbuffer);
-        _buffersPool->AddResource(Lbuffer);
 
-        auto temp = std::make_shared<BufferResource>(_device, buffer.byteLength, VkBufferUsageFlagBits::VK_BUFFER_USAGE_TRANSFER_SRC_BIT);
-        tempBuffers.push_back(temp);
-        tempBuffersPool.AddResource(temp);
-    }
-    // we use device local memory because we don't need to read this memory from host
-    _buffersPool->Bind(device, VkMemoryPropertyFlagBits::VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-    tempBuffersPool.Bind(device, VkMemoryPropertyFlagBits::VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
-
-    // we created the buffers and we've allocated the memory
-    // now, we need to tranfers the resources from the temporal to the device-memory foreach buffer
-    VkCommandPool cmdPool;
-    VkCommandBuffer cmd;
-    // vkBeginCommandBuffer(cmd, )
-    uint32_t offset = 0;
-    void *bufferData;
-    
-    // map all memory to one lettuce buffer
-    for (auto &buffer : asset->buffers)
+    // load all meshes
+    // retrieve info of vertices
+    // alloc all in one big pool
+    // FREE pointers
     {
-        // copy raw data to temp buffer
-        vkMapMemory(_device->_device, tempBuffersPool._memory, offset, buffer.byteLength, 0, &bufferData);
-        memcpy(bufferData, getPointerFromRawBuffer(buffer.data), buffer.byteLength);
-        // memccpy(data, buffer.data)
-        vkUnmapMemory(_device->_device, tempBuffersPool._memory);
+
+        for (auto &mesh : asset->meshes)
+        {
+            loadMesh(asset.get(), mesh);
+        }
+
+        // create tmp pool    / geometry pool
+
+        // create tmp buffer / geometry buffer
+
+
+
+        // copy data
+        // transfer
+
+        // release pointers
+        for (auto &datas : sceneVerticesDatas)
+        {
+            for (auto &data : datas)
+            {
+                free(data.data);
+            }
+        }
     }
 
     for (auto &img : asset->images)
     {
-        
     }
 
     for (auto &sampler : asset->samplers)
     {
-
     }
-    
+
     for (auto &texture : asset->textures)
     {
-
     }
-
-    for (auto &mesh : asset->meshes)
-    {
-
-    }
-
-    // create virtual buffer (blocks) for recornized types
-    // note: accessor.componenType : uint, int, ...
-    //       accessor.accessorType : vec2, scalar, ...
-    for (auto &accessor : asset->accessors)
-    {
-        
-    }
-
 }
 
 void Lettuce::X3D::Scene::Release()
 {
-    for (auto &buffer : _buffers)
-    {
-        buffer->Release(); // delete all references
-    }
-    _buffersPool->Release();
+    geometryBufferPool->Release();
+    geometryBuffer->Release();
 }

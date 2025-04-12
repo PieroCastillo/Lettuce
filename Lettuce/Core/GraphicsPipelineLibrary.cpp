@@ -19,6 +19,14 @@ using namespace Lettuce::Core;
 
 void GraphicsPipelineLibrary::AddVertexInput(std::string name)
 {
+    VkPipelineInputAssemblyStateCreateInfo inputAssemblyCI = {
+
+    };
+
+    VkPipelineVertexInputStateCreateInfo vertexInputCI = {
+
+    };
+
     if (_device->GetEnabledRecommendedFeatures().graphicsPipelineLibrary)
     {
         VkGraphicsPipelineLibraryCreateInfoEXT libraryCI = {
@@ -26,18 +34,12 @@ void GraphicsPipelineLibrary::AddVertexInput(std::string name)
             .flags = VK_GRAPHICS_PIPELINE_LIBRARY_VERTEX_INPUT_INTERFACE_BIT_EXT,
         };
 
-        VkPipelineInputAssemblyStateCreateInfo inputAssemblyCI = {
-
-        };
-
-        VkPipelineVertexInputStateCreateInfo vertexInputCI = {
-
-        };
-
         VkGraphicsPipelineCreateInfo pipelineLibraryCI = {
             .sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
             .pNext = &libraryCI,
             .flags = VK_PIPELINE_CREATE_LIBRARY_BIT_KHR | VK_PIPELINE_CREATE_RETAIN_LINK_TIME_OPTIMIZATION_INFO_BIT_EXT,
+            .pVertexInputState = &vertexInputCI,
+            .pInputAssemblyState = &inputAssemblyCI,
         };
 
         VkPipeline pipeline = VK_NULL_HANDLE;
@@ -49,6 +51,16 @@ void GraphicsPipelineLibrary::AddVertexInput(std::string name)
 
 void GraphicsPipelineLibrary::AddPreRasterizationShaders(std::string name)
 {
+    // VkPipelineShaderStageCreateInfo
+    // VkPipelineViewportStateCreateInfo , dynamic
+    std::vector<VkPipelineShaderStageCreateInfo> shaders;
+    VkPipelineRasterizationStateCreateInfo rasterizationState = {
+
+    };
+    VkPipelineTessellationStateCreateInfo tessState = {
+
+    };
+
     if (_device->GetEnabledRecommendedFeatures().graphicsPipelineLibrary)
     {
         VkGraphicsPipelineLibraryCreateInfoEXT libraryCI = {
@@ -60,6 +72,10 @@ void GraphicsPipelineLibrary::AddPreRasterizationShaders(std::string name)
             .sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
             .pNext = &libraryCI,
             .flags = VK_PIPELINE_CREATE_LIBRARY_BIT_KHR | VK_PIPELINE_CREATE_RETAIN_LINK_TIME_OPTIMIZATION_INFO_BIT_EXT,
+            .stageCount = (uint32_t)shaders.size(),
+            .pStages = shaders.data(),
+            .pTessellationState = &tessState,
+            .pRasterizationState = &rasterizationState,
         };
 
         VkPipeline pipeline = VK_NULL_HANDLE;
@@ -77,10 +93,24 @@ void GraphicsPipelineLibrary::AddFragmentShader(std::string name)
             .flags = VK_GRAPHICS_PIPELINE_LIBRARY_FRAGMENT_SHADER_BIT_EXT,
         };
 
+        VkPipelineShaderStageCreateInfo stage = {
+
+        };
+        VkPipelineMultisampleStateCreateInfo multisampleState = {
+
+        };
+        VkPipelineDepthStencilStateCreateInfo depthStencilState = {
+
+        };
+
         VkGraphicsPipelineCreateInfo pipelineLibraryCI = {
             .sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
             .pNext = &libraryCI,
             .flags = VK_PIPELINE_CREATE_LIBRARY_BIT_KHR | VK_PIPELINE_CREATE_RETAIN_LINK_TIME_OPTIMIZATION_INFO_BIT_EXT,
+            .stageCount = 1,
+            .pStages = &stage,
+            .pMultisampleState = &multisampleState,
+            .pDepthStencilState = &depthStencilState,
         };
 
         VkPipeline pipeline = VK_NULL_HANDLE;
@@ -98,10 +128,17 @@ void GraphicsPipelineLibrary::AddFragmentOutput(std::string name)
             .flags = VK_GRAPHICS_PIPELINE_LIBRARY_FRAGMENT_OUTPUT_INTERFACE_BIT_EXT,
         };
 
+        VkPipelineColorBlendStateCreateInfo colorBlendState = {
+
+        };
+        // VkPipelineMultisampleStateCreateInfo
+        // VkPipelineRenderingCreateInfo
+
         VkGraphicsPipelineCreateInfo pipelineLibraryCI = {
             .sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
             .pNext = &libraryCI,
             .flags = VK_PIPELINE_CREATE_LIBRARY_BIT_KHR | VK_PIPELINE_CREATE_RETAIN_LINK_TIME_OPTIMIZATION_INFO_BIT_EXT,
+            .pColorBlendState = &colorBlendState,
         };
 
         VkPipeline pipeline = VK_NULL_HANDLE;
@@ -115,25 +152,24 @@ void GraphicsPipelineLibrary::Release()
 {
     if (_device->GetEnabledRecommendedFeatures().graphicsPipelineLibrary)
     {
-        for (auto &pl : vertexInputLibraries)
+        for (auto &[_, pl] : vertexInputLibraries)
         {
             vkDestroyPipeline(_device->_device, pl, nullptr);
         }
-        for (auto &pl : preRasterizationShadersLibraries)
+        for (auto &[_, pl] : preRasterizationShadersLibraries)
         {
             vkDestroyPipeline(_device->_device, pl, nullptr);
         }
-        for (auto &pl : fragmentShaderLibraries)
+        for (auto &[_, pl] : fragmentShaderLibraries)
         {
             vkDestroyPipeline(_device->_device, pl, nullptr);
         }
-        for (auto &pl : fragmentOutputLibraries)
+        for (auto &[_, pl] : fragmentOutputLibraries)
         {
             vkDestroyPipeline(_device->_device, pl, nullptr);
         }
         return;
     }
-
 }
 
 VkPipeline GraphicsPipelineLibrary::AssemblyPipeline(std::string vertexInputName,
@@ -161,7 +197,7 @@ VkPipeline GraphicsPipelineLibrary::AssemblyPipeline(std::string vertexInputName
             .sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
             .pNext = &libraryCI,
             .flags = VK_PIPELINE_CREATE_LINK_TIME_OPTIMIZATION_BIT_EXT,
-            .layout =layout->
+            .layout = layout->_pipelineLayout,
         };
 
         VkPipeline pipeline = VK_NULL_HANDLE;

@@ -11,6 +11,19 @@
 
 namespace Lettuce::X3D
 {
+
+    struct VerticesInfo
+    {
+        uint32_t count;
+        std::vector<VkFormat> format;
+    };
+
+    struct VerticesData
+    {
+        uint32_t size;
+        void *data;
+    };
+
     class Scene
     {
     private:
@@ -19,15 +32,22 @@ namespace Lettuce::X3D
         std::string err;
         std::string warn;
         // main data
-        std::shared_ptr<Lettuce::Core::ResourcePool> _buffersPool;
+        std::shared_ptr<Lettuce::Core::ResourcePool> geometryBufferPool;
+        std::shared_ptr<Lettuce::Core::BufferResource> geometryBuffer;
         std::shared_ptr<Lettuce::Core::Device> _device;
-        std::vector<std::shared_ptr<Lettuce::Core::BufferResource>> _buffers;  
+
+        std::vector<std::vector<VerticesInfo>> sceneVerticesInfos;
+        std::vector<std::vector<VerticesData>> sceneVerticesDatas;
+        uint32_t geometryBufferSize = 0;
+
         void check();
         void setup();
 
+        void loadMesh(fastgltf::Asset &asset, fastgltf::Mesh &mesh);
+
     public:
         Scene() {}
-        void LoadFromFile(const std::shared_ptr<Lettuce::Core::Device>& device, std::filesystem::path path);
+        void LoadFromFile(const std::shared_ptr<Lettuce::Core::Device> &device, std::filesystem::path path);
 
         void Release();
     };

@@ -8,7 +8,7 @@ module;
 
 export module Renderer:Module;
 
-namespace Lettuce::Renderer::Core
+export namespace Lettuce::Renderer::Core
 {
     class Module
     {

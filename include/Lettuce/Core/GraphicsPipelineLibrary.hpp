@@ -16,6 +16,8 @@
 
 namespace Lettuce::Core
 {
+    
+
     class GraphicsPipelineLibrary : public IReleasable
     {
     private:
