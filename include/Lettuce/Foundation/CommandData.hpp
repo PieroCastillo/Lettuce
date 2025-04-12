@@ -17,21 +17,6 @@ using namespace Lettuce::Core;
 
 namespace Lettuce::Foundation
 {
-    enum class ExecutionMode
-    {
-        Draw,
-        DrawIndexed,
-        DrawIndexedIndirect,
-        DrawIndexedIndirectCount,
-        DrawIndirect,
-        DrawIndirectCount,
-        DrawMeshTasks,
-        DrawMeshTasksIndirect,
-        DrawMeshTasksIndirectCount,
-
-        Dispatch,
-        DispatchIndirect,
-    };
 
     struct BaseCommandData
     {
@@ -204,7 +189,7 @@ namespace Lettuce::Foundation
                 .indirectExecutionSet = indirectExecutionSet->_executionSet,
                 .indirectCommandsLayout = indirectCommandsLayout->_commandsLayout,
                 .indirectAddress = indirectBuffer->GetAddress(),
-                .indirectAddress = indirectBuffer->_size,
+                .indirectAddressSize = indirectBuffer->_size,
                 .preprocessAddress = preprocessBuffer->GetAddress(),
                 .preprocessSize = preprocessBuffer->_size,
                 .maxSequenceCount = maxSequenceCount,
@@ -214,7 +199,7 @@ namespace Lettuce::Foundation
 
             vkCmdExecuteGeneratedCommandsEXT(cmd, isPreprocessed, &genCommandsInfo);
         }
-    }
+    };
 
     template <typename T>
     concept CommandData =

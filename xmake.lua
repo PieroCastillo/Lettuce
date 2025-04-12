@@ -15,6 +15,7 @@ add_requires("glm")
 add_requires("fastgltf")
 add_requires("directxshadercompiler")
 add_requires("imgui")
+add_requires("taskflow")
 
 local v = ("0.0.1.0"):split("%.")
 add_defines("VARIANT_VERSION=" .. (v[1] or 0),
@@ -68,7 +69,7 @@ end
 -- renderer
 target("renderer")
     set_kind("binary")
-    add_includedirs("external/stb","include")
-    add_files("renderer/*.cpp", "renderer/core/*.ixx")
+    add_includedirs("external/stb","include", "renderer/include")
+    add_files("renderer/*.cpp", "renderer/core/*.cpp")
     add_deps("Lettuce")
-    add_packages("volk", "glfw", "glm", "imgui")
+    add_packages("volk", "glfw", "glm", "imgui", "taskflow")
