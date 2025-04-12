@@ -4,6 +4,10 @@
 #include <iostream>
 #include "Lettuce/X3D/Scene.hpp"
 
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/ext/matrix_clip_space.hpp>
+
 using namespace Lettuce::Core;
 
 void Lettuce::X3D::Scene::check()
@@ -41,38 +45,52 @@ void Lettuce::X3D::Scene::setup()
 
 void Lettuce::X3D::Scene::loadMesh(fastgltf::Asset &asset, fastgltf::Mesh &mesh)
 {
-    std::vector<VerticesInfo> infos;
-    std::vector<VerticesData> datas;
+    Mesh mesh;
+
     // access to all primitives
     for (auto it = mesh.primitives.begin(); it != mesh.primitives.end(); ++it)
     {
-        std::vector<VkFormat> formats = {VK_FORMAT_R32G32B32_SFLOAT};
-
+        // Position Accessor
         auto *positionIt = it->findAttribute("POSITION");
         auto &positionAccessor = asset.accessors[positionIt->accessorIndex];
 
         if (!positionAccessor.bufferViewIndex.has_value())
             continue;
 
-        // here continue adding accessors
-
-        int size = 4 * 3 * positionAccessor.count; // vec3 float
-        int stride = 4 * 3;                        // fvec3
-        int elementSize = 4 * 3;                   // fvec3
-        // WARNING: here you are creating unsafe pointers,  you SHOULD FREE these after
-        void *bufferPtr = malloc(size);
         fastgltf::iterateAccessorWithIndex<fastgltf::math::fvec3>(asset, positionAccessor, [&](fastgltf::math::fvec3 pos, size_t idx)
-                                                                  {
-            char* bufferIdx = (char*)bufferPtr + idx;
-            memcpy((void*)bufferIdx, (void*)pos.data(), elementSize); });
+                                                                  { mesh.positions.push_back({pos.x, pos.y, pos.z}); });
 
-        infos.push_back({(uint32_t)positionAccessor.count, formats});
-        datas.push_back({(uint32_t)size, bufferPtr});
+        // Normal Accessor
+        auto *normalIt = it->findAttribute("NORMAL");
+        auto &normalAccessor = asset.accessors[normalIt->accessorIndex];
 
-        geometryBufferSize += size;
+        if (!normalAccessor.bufferViewIndex.has_value())
+            continue;
+
+        fastgltf::iterateAccessorWithIndex<fastgltf::math::fvec3>(asset, normalAccessor, [&](fastgltf::math::fvec3 nor, size_t idx)
+                                                                  { mesh.normals.push_back({nor.x, nor.y, nor.z}); });
+
+        // Tangent Accessor
+        auto *tangentIt = it->findAttribute("TANGENT");
+        auto &tangentAccessor = asset.accessors[tangentIt->accessorIndex];
+
+        if (!tangentAccessor.bufferViewIndex.has_value())
+            continue;
+
+        fastgltf::iterateAccessorWithIndex<fastgltf::math::fvec4>(asset, tangentAccessor, [&](fastgltf::math::fvec4 tang, size_t idx)
+                                                                  { mesh.tangents.push_back({tang.x, tang.y, tang.z, tang.w}); });
+
+        // Indices Accessor
+
+        auto &indexAccessor = asset.accessors[it->indicesAccessor.value()];
+        if (!indexAccessor.bufferViewIndex.has_value())
+            continue;
+
+        fastgltf::iterateAccessorWithIndex<std::uint32_t *>(asset, indexAccessor, [&](std::uint32_t *index, size_t idx)
+                                                            { mesh.indices.push_back(*index); });
     }
-    sceneVerticesInfos.push_back(infos);
-    sceneVerticesDatas.push_back(datas);
+
+    meshes.push_back(mesh);
 }
 
 void Lettuce::X3D::Scene::LoadFromFile(const std::shared_ptr<Lettuce::Core::Device> &device, std::filesystem::path path)
@@ -104,21 +122,29 @@ void Lettuce::X3D::Scene::LoadFromFile(const std::shared_ptr<Lettuce::Core::Devi
 
         // create tmp pool    / geometry pool
 
+        auto tmpPool = std::make_shared<Lettuce::Core::ResourcePool>();
+        geometryBufferPool = std::make_shared<Lettuce::Core::ResourcePool>();
+        auto transfer = std::make_shared<TransferManager>(device);
+
         // create tmp buffer / geometry buffer
 
+        auto tmpBuffer = std::make_shared<BufferResource>(device, geometryBufferSize, VK_BUFFER_USAGE_2_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_2_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_2_TRANSFER_SRC_BIT);
+        geometryBuffer = std::make_shared<BufferResource>(device, geometryBufferSize, VK_BUFFER_USAGE_2_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_2_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_2_TRANSFER_DST_BIT);
 
+        // add buffers to their respectives pools
+        tmpPool->AddResource(tmpBuffer);
+        geometryBufferPool->AddResource(geometryBuffer);
+
+        // bind resources
+        tmpPool->Bind(device, VK_MEMORY_PROPERTY_HOST_CACHED_BIT);             // create pool in host memory
+        geometryBufferPool->Bind(device, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT); // create pool in device memory
 
         // copy data
+
+        
+
         // transfer
 
-        // release pointers
-        for (auto &datas : sceneVerticesDatas)
-        {
-            for (auto &data : datas)
-            {
-                free(data.data);
-            }
-        }
     }
 
     for (auto &img : asset->images)

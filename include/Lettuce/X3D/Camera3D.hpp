@@ -3,7 +3,8 @@
 //
 #pragma once
 #include <vector>
-#include <glm/glm.hpp>
+
+#include "commonX3D.hpp"
 
 namespace Lettuce::X3D
 {

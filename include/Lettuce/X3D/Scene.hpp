@@ -4,26 +4,16 @@
 #pragma once
 #include <vector>
 #include <memory>
+
 #include "commonX3D.hpp"
+#include "Mesh.hpp"
+
 #include "Lettuce/Core/ResourcePool.hpp"
 #include "Lettuce/Core/BufferResource.hpp"
 #include "Lettuce/Core/Device.hpp"
 
 namespace Lettuce::X3D
 {
-
-    struct VerticesInfo
-    {
-        uint32_t count;
-        std::vector<VkFormat> format;
-    };
-
-    struct VerticesData
-    {
-        uint32_t size;
-        void *data;
-    };
-
     class Scene
     {
     private:
@@ -36,9 +26,7 @@ namespace Lettuce::X3D
         std::shared_ptr<Lettuce::Core::BufferResource> geometryBuffer;
         std::shared_ptr<Lettuce::Core::Device> _device;
 
-        std::vector<std::vector<VerticesInfo>> sceneVerticesInfos;
-        std::vector<std::vector<VerticesData>> sceneVerticesDatas;
-        uint32_t geometryBufferSize = 0;
+        std::vector<Mesh> meshes;
 
         void check();
         void setup();
