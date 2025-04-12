@@ -124,7 +124,17 @@ std::vector<uint32_t> HLSLCompiler::Compile(std::string text, std::string inputF
     CComPtr<IDxcBlob> code;
     result->GetResult(&code);
 
-    return {};
+    std::vector<uint32_t> codeVec;
+    codeVec.reserve((code->GetBufferSize() / sizeof(uint32_t)));
+    uint32_t* ptr = (uint32_t*)code->GetBufferPointer();
+
+    // copy data from vector to pointer
+    for (int i = 0; i < (code->GetBufferSize() / sizeof(uint32_t)); i++)
+    {
+        codeVec.push_back(*(ptr+i));
+    }
+
+    return codeVec;
 }
 
 void HLSLCompiler::Destroy()
