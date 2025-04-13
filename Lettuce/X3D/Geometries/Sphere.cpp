@@ -6,6 +6,7 @@
 #include <numbers>
 #include "Lettuce/Core/BufferResource.hpp"
 #include "Lettuce/X3D/Geometries/Sphere.hpp"
+#include "Lettuce/X3D/Geometries/Primitive.hpp"
 
 using namespace Lettuce::X3D;
 using namespace Lettuce::Core;

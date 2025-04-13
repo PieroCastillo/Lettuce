@@ -43,12 +43,12 @@ void Lettuce::X3D::Scene::setup()
     // model.meshes[0].primitives[0].attributes
 }
 
-void Lettuce::X3D::Scene::loadMesh(fastgltf::Asset &asset, fastgltf::Mesh &mesh)
+void Lettuce::X3D::Scene::loadMesh(fastgltf::Asset &asset, fastgltf::Mesh &meshData)
 {
     Mesh mesh;
 
     // access to all primitives
-    for (auto it = mesh.primitives.begin(); it != mesh.primitives.end(); ++it)
+    for (auto it = meshData.primitives.begin(); it != meshData.primitives.end(); ++it)
     {
         // Position Accessor
         auto *positionIt = it->findAttribute("POSITION");
@@ -58,7 +58,7 @@ void Lettuce::X3D::Scene::loadMesh(fastgltf::Asset &asset, fastgltf::Mesh &mesh)
             continue;
 
         fastgltf::iterateAccessorWithIndex<fastgltf::math::fvec3>(asset, positionAccessor, [&](fastgltf::math::fvec3 pos, size_t idx)
-                                                                  { mesh.positions.push_back({pos.x, pos.y, pos.z}); });
+                                                                  { mesh.positions.push_back({pos.x(), pos.y(), pos.z()}); });
 
         // Normal Accessor
         auto *normalIt = it->findAttribute("NORMAL");
@@ -68,7 +68,7 @@ void Lettuce::X3D::Scene::loadMesh(fastgltf::Asset &asset, fastgltf::Mesh &mesh)
             continue;
 
         fastgltf::iterateAccessorWithIndex<fastgltf::math::fvec3>(asset, normalAccessor, [&](fastgltf::math::fvec3 nor, size_t idx)
-                                                                  { mesh.normals.push_back({nor.x, nor.y, nor.z}); });
+                                                                  { mesh.normals.push_back({nor.x(), nor.y(), nor.z()}); });
 
         // Tangent Accessor
         auto *tangentIt = it->findAttribute("TANGENT");
@@ -78,7 +78,7 @@ void Lettuce::X3D::Scene::loadMesh(fastgltf::Asset &asset, fastgltf::Mesh &mesh)
             continue;
 
         fastgltf::iterateAccessorWithIndex<fastgltf::math::fvec4>(asset, tangentAccessor, [&](fastgltf::math::fvec4 tang, size_t idx)
-                                                                  { mesh.tangents.push_back({tang.x, tang.y, tang.z, tang.w}); });
+                                                                  { mesh.tangents.push_back({tang.x(), tang.y(), tang.z(), tang.w()}); });
 
         // Indices Accessor
 
@@ -86,8 +86,8 @@ void Lettuce::X3D::Scene::loadMesh(fastgltf::Asset &asset, fastgltf::Mesh &mesh)
         if (!indexAccessor.bufferViewIndex.has_value())
             continue;
 
-        fastgltf::iterateAccessorWithIndex<std::uint32_t *>(asset, indexAccessor, [&](std::uint32_t *index, size_t idx)
-                                                            { mesh.indices.push_back(*index); });
+        fastgltf::iterateAccessorWithIndex<std::uint32_t>(asset, indexAccessor, [&](std::uint32_t index, size_t idx)
+                                                          { mesh.indices.push_back(index); });
     }
 
     meshes.push_back(mesh);
@@ -123,7 +123,7 @@ void Lettuce::X3D::Scene::LoadFromFile(const std::shared_ptr<Lettuce::Core::Devi
 
             // create memory blocks
 
-            uint32_t size = sizeof(glm::vec3) * (meshes[i].positions.size() + meshes[i].normals.size()) + sizeof(glm::vec4)(meshes[i].tangents.size());
+            uint32_t size = (sizeof(glm::vec3) * (meshes[i].positions.size() + meshes[i].normals.size())) + (sizeof(glm::vec4) * meshes[i].tangents.size());
 
             char *alloc = (char *)malloc(size); // WARNING : it's creating a raw pointer
             char *allocIdx = alloc;
@@ -137,16 +137,33 @@ void Lettuce::X3D::Scene::LoadFromFile(const std::shared_ptr<Lettuce::Core::Devi
 
             datas.push_back({alloc, size});
 
+            // set vertex offsets
+
+            meshes[i].vertexBufferSize = size;
+            meshes[i].vertexBufferOffset = vertexBufferSize;
+
             vertexBufferSize += size;
             // add index count
             indexCount += meshes[i].indices.size();
 
             i++;
         }
+
+        // set index offsets
+        uint32_t indexBufferOffset = vertexBufferSize;
+        int j = 0;
+        for (auto &mesh : asset->meshes)
+        {
+            meshes[j].indexBufferSize = sizeof(uint32_t) * meshes[j].indices.size();
+            meshes[j].indexBufferOffset = indexBufferOffset;
+            indexBufferOffset += sizeof(uint32_t) * meshes[j].indices.size();
+            j++;
+        }
+
         uint32_t indexBufferSize = sizeof(uint32_t) * indexCount;
         uint32_t bufferMemorySize = vertexBufferSize + indexBufferSize;
 
-        char *bufferMemory = malloc(bufferMemorySize); // WARNING : it's creating a raw pointer
+        char *bufferMemory = (char *)malloc(bufferMemorySize); // WARNING : it's creating a raw pointer
         char *bufferMemoryIdx = bufferMemory;
 
         /*
@@ -197,8 +214,8 @@ void Lettuce::X3D::Scene::LoadFromFile(const std::shared_ptr<Lettuce::Core::Devi
 
         // transfer
         transfer->Prepare();
-        transfer->AddTransference(tmpBuffer, geometryBufferPool, TransferType::HostToDevice);
-        transfer->TransferAll();    
+        transfer->AddTransference(tmpBuffer, geometryBuffer, TransferType::HostToDevice);
+        transfer->TransferAll();
 
         tmpBuffer->Release();
         tmpPool->Release();

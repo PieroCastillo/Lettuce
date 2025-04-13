@@ -10,6 +10,7 @@
 
 #include "Lettuce/Core/ResourcePool.hpp"
 #include "Lettuce/Core/BufferResource.hpp"
+#include "Lettuce/Core/TransferManager.hpp"
 #include "Lettuce/Core/Device.hpp"
 
 namespace Lettuce::X3D
