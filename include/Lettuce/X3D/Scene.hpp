@@ -29,6 +29,7 @@ namespace Lettuce::X3D
         std::shared_ptr<Lettuce::Core::Device> _device;
 
         std::vector<Mesh> meshes;
+        std::vector<MeshInfo> meshInfos;
 
         void check();
         void setup();
@@ -38,6 +39,8 @@ namespace Lettuce::X3D
     public:
         Scene() {}
         void LoadFromFile(const std::shared_ptr<Lettuce::Core::Device> &device, std::filesystem::path path);
+
+        void DrawIndexed(VkCommandBuffer cmd);
 
         void Release();
     };

@@ -32,15 +32,7 @@ void Lettuce::X3D::Scene::check()
 void Lettuce::X3D::Scene::setup()
 {
     check();
-    // buffers->resize(model.buffers.size()); //reserve space to access to this memory more faster
-    // int bufferIndex = 0;
-    // for(auto bufferGltf : model.buffers)
-    // {
-    //     //bufferGltf.
-    //     // buffers[bufferIndex].
-    //     //bufferIndex++;
-    // }
-    // model.meshes[0].primitives[0].attributes
+
 }
 
 void Lettuce::X3D::Scene::loadMesh(fastgltf::Asset &asset, fastgltf::Mesh &meshData)
@@ -139,8 +131,8 @@ void Lettuce::X3D::Scene::LoadFromFile(const std::shared_ptr<Lettuce::Core::Devi
 
             // set vertex offsets
 
-            meshes[i].vertexBufferSize = size;
-            meshes[i].vertexBufferOffset = vertexBufferSize;
+            meshInfos[i].vertexBufferSize = size;
+            meshInfos[i].vertexBufferOffset = vertexBufferSize;
 
             vertexBufferSize += size;
             // add index count
@@ -154,11 +146,16 @@ void Lettuce::X3D::Scene::LoadFromFile(const std::shared_ptr<Lettuce::Core::Devi
         int j = 0;
         for (auto &mesh : asset->meshes)
         {
-            meshes[j].indexBufferSize = sizeof(uint32_t) * meshes[j].indices.size();
-            meshes[j].indexBufferOffset = indexBufferOffset;
+            meshInfos[j].indexBufferSize = sizeof(uint32_t) * meshes[j].indices.size();
+            meshInfos[j].indexBufferOffset = indexBufferOffset;
             indexBufferOffset += sizeof(uint32_t) * meshes[j].indices.size();
+
             j++;
         }
+
+        // release memory used by mesh vector
+        meshes.clear();
+        meshes.shrink_to_fit();
 
         uint32_t indexBufferSize = sizeof(uint32_t) * indexCount;
         uint32_t bufferMemorySize = vertexBufferSize + indexBufferSize;
@@ -231,6 +228,15 @@ void Lettuce::X3D::Scene::LoadFromFile(const std::shared_ptr<Lettuce::Core::Devi
 
     for (auto &texture : asset->textures)
     {
+    }
+}
+
+void Lettuce::X3D::Scene::DrawIndexed(VkCommandBuffer cmd)
+{
+    for(auto &mesh : meshInfos)
+    {
+        vkCmdBindVertexBuffers2(cmd, 0, 1, &(geometryBuffer->_buffer),(VkDeviceSize*) &(mesh.vertexBufferOffset),(VkDeviceSize*) &(mesh.vertexBufferSize), nullptr);
+        vkCmdBindIndexBuffer(cmd, geometryBuffer->_buffer, (VkDeviceSize)mesh.indexBufferOffset, VK_INDEX_TYPE_UINT32);
     }
 }
 

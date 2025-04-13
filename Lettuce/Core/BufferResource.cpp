@@ -45,17 +45,24 @@ BufferResource::BufferResource(const std::shared_ptr<Device> &device, uint32_t s
 {
     _size = size;
 
-    VkBufferUsageFlags2CreateInfo flags = {
-        .sType = VK_STRUCTURE_TYPE_BUFFER_USAGE_FLAGS_2_CREATE_INFO,
-        .usage = usage,
-    };
-
     VkBufferCreateInfo bufferCI = {
         .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
-        .pNext = &flags,
         .size = size,
         .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
     };
+
+    if (device->GetEnabledRecommendedFeatures().maintenance5)
+    {
+        VkBufferUsageFlags2CreateInfo flags = {
+            .sType = VK_STRUCTURE_TYPE_BUFFER_USAGE_FLAGS_2_CREATE_INFO,
+            .usage = usage,
+        };
+        bufferCI.pNext = &flags;
+    }
+    else
+    {
+        bufferCI.usage = (VkBufferUsageFlags)usage;
+    }
 
     checkResult(vkCreateBuffer(device->_device, &bufferCI, nullptr, &_buffer));
 }

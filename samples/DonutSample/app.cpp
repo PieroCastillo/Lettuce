@@ -145,7 +145,7 @@ void main()
         bufferSize = lineVerticesSize + indicesSize + verticesSize;
 
         // create buffers
-        hostBuffer = std::make_shared<BufferResource>(device, bufferSize, VK_BUFFER_USAGE_2_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_2_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_2_TRANSFER_SRC_BIT);
+        hostBuffer = std::make_shared<BufferResource>(device, bufferSize, VK_BUFFER_USAGE_2_TRANSFER_SRC_BIT);
         deviceBuffer = std::make_shared<BufferResource>(device, bufferSize, VK_BUFFER_USAGE_2_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_2_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_2_TRANSFER_DST_BIT);
 
         // add buffers to their respectives pools
@@ -174,7 +174,9 @@ void main()
         free(data); // release the temporal pointer
 
         // transfer resources from host to device memory
-
+        transfer->Prepare();
+        transfer->AddTransference(hostBuffer, deviceBuffer, TransferType::HostToDevice);
+        transfer->TransferAll();
 
         // release host resources
         hostBuffer->Release();
@@ -182,7 +184,7 @@ void main()
 
         // create coherent resources
         coherentResources = std::make_shared<ResourcePool>();
-        uniformBuffer = std::make_shared<BufferResource>(device, sizeof(DataUBO), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT);
+        uniformBuffer = std::make_shared<BufferResource>(device, sizeof(DataUBO), VK_BUFFER_USAGE_2_UNIFORM_BUFFER_BIT);
         coherentResources->AddResource(uniformBuffer);
         coherentResources->Bind(device, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 

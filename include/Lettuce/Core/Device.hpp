@@ -28,6 +28,7 @@ namespace Lettuce::Core
         bool deviceGeneratedCommands = false;
         bool graphicsPipelineLibrary = false;
         bool dynamicRenderingLocalRead = false;
+        bool maintenance5 = false;
     };
 
     class Device : public IReleasable
@@ -71,13 +72,17 @@ namespace Lettuce::Core
         VkPhysicalDeviceDeviceGeneratedCommandsFeaturesEXT deviceGeneratedCommandsFeature = {
             .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DEVICE_GENERATED_COMMANDS_FEATURES_EXT,
         };
-
+        
         VkPhysicalDeviceGraphicsPipelineLibraryFeaturesEXT graphicsPipelineLibraryFeature = {
             .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_GRAPHICS_PIPELINE_LIBRARY_FEATURES_EXT,
         };
 
         VkPhysicalDeviceDynamicRenderingLocalReadFeaturesKHR dynamicRenderingLocalReadFeature = {
             .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DYNAMIC_RENDERING_LOCAL_READ_FEATURES_KHR,
+        };
+        
+        VkPhysicalDeviceMaintenance5FeaturesKHR maintenance5Feature = {
+            .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MAINTENANCE_5_FEATURES_KHR,
         };
 
         // optional features/extensions

@@ -94,6 +94,7 @@ void Device::addRecommendedFeatures()
     {
         enabledRecommendedFeatures.graphicsPipelineLibrary = true;
 
+        addExt(VK_KHR_PIPELINE_LIBRARY_EXTENSION_NAME);
         addExt(VK_EXT_GRAPHICS_PIPELINE_LIBRARY_EXTENSION_NAME);
         graphicsPipelineLibraryFeature.graphicsPipelineLibrary = VK_TRUE;
         graphicsPipelineLibraryFeature.pNext = next;
@@ -108,6 +109,16 @@ void Device::addRecommendedFeatures()
         dynamicRenderingLocalReadFeature.dynamicRenderingLocalRead = VK_TRUE;
         dynamicRenderingLocalReadFeature.pNext = next;
         next = (void *)&dynamicRenderingLocalReadFeature;
+    }
+
+    if (checkExtIfExists(VK_KHR_MAINTENANCE_5_EXTENSION_NAME))
+    {
+        enabledRecommendedFeatures.maintenance5 = true;
+
+        addExt(VK_KHR_MAINTENANCE_5_EXTENSION_NAME);
+        maintenance5Feature.maintenance5 = VK_TRUE;
+        maintenance5Feature.pNext = next;
+        next = (void *)&maintenance5Feature;
     }
 }
 
