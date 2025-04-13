@@ -24,6 +24,7 @@ namespace Lettuce::X3D
         // main data
         std::shared_ptr<Lettuce::Core::ResourcePool> geometryBufferPool;
         std::shared_ptr<Lettuce::Core::BufferResource> geometryBuffer;
+        std::shared_ptr<Lettuce::Core::TransferManager> transfer;
         std::shared_ptr<Lettuce::Core::Device> _device;
 
         std::vector<Mesh> meshes;

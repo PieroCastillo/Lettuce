@@ -110,26 +110,75 @@ void Lettuce::X3D::Scene::LoadFromFile(const std::shared_ptr<Lettuce::Core::Devi
     }
 
     // load all meshes
-    // retrieve info of vertices
     // alloc all in one big pool
     // FREE pointers
     {
-
+        std::vector<std::tuple<char *, uint32_t>> datas; // ptr, size
+        uint32_t indexCount = 0;
+        uint32_t vertexBufferSize = 0;
+        int i = 0;
         for (auto &mesh : asset->meshes)
         {
             loadMesh(asset.get(), mesh);
+
+            // create memory blocks
+
+            uint32_t size = sizeof(glm::vec3) * (meshes[i].positions.size() + meshes[i].normals.size()) + sizeof(glm::vec4)(meshes[i].tangents.size());
+
+            char *alloc = (char *)malloc(size); // WARNING : it's creating a raw pointer
+            char *allocIdx = alloc;
+            memcpy((void *)allocIdx, (void *)meshes[i].positions.data(), sizeof(glm::vec3) * meshes[i].positions.size());
+            allocIdx += sizeof(glm::vec3) * meshes[i].positions.size();
+
+            memcpy((void *)allocIdx, (void *)meshes[i].normals.data(), sizeof(glm::vec3) * meshes[i].normals.size());
+            allocIdx += sizeof(glm::vec3) * meshes[i].normals.size();
+
+            memcpy((void *)allocIdx, (void *)meshes[i].tangents.data(), sizeof(glm::vec3) * meshes[i].tangents.size());
+
+            datas.push_back({alloc, size});
+
+            vertexBufferSize += size;
+            // add index count
+            indexCount += meshes[i].indices.size();
+
+            i++;
+        }
+        uint32_t indexBufferSize = sizeof(uint32_t) * indexCount;
+        uint32_t bufferMemorySize = vertexBufferSize + indexBufferSize;
+
+        char *bufferMemory = malloc(bufferMemorySize); // WARNING : it's creating a raw pointer
+        char *bufferMemoryIdx = bufferMemory;
+
+        /*
+        The structure of the geometry buffer is:
+        |  vertices block  |   indices block    |
+        | P | N | T | .... | i | ...            |
+        */
+
+        for (auto &[ptr, size] : datas)
+        {
+            memcpy((void *)bufferMemoryIdx, (void *)ptr, size);
+            bufferMemoryIdx += size;
+            free((void *)ptr); // WARNING : here we are deleting memory
+        }
+        // here the only non-released pointer must be bufferMemory
+
+        for (auto &mesh : meshes)
+        {
+            memcpy((void *)bufferMemoryIdx, (void *)mesh.indices.data(), mesh.indices.size());
+            bufferMemoryIdx += mesh.indices.size();
         }
 
         // create tmp pool    / geometry pool
 
         auto tmpPool = std::make_shared<Lettuce::Core::ResourcePool>();
         geometryBufferPool = std::make_shared<Lettuce::Core::ResourcePool>();
-        auto transfer = std::make_shared<TransferManager>(device);
+        transfer = std::make_shared<TransferManager>(device);
 
         // create tmp buffer / geometry buffer
 
-        auto tmpBuffer = std::make_shared<BufferResource>(device, geometryBufferSize, VK_BUFFER_USAGE_2_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_2_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_2_TRANSFER_SRC_BIT);
-        geometryBuffer = std::make_shared<BufferResource>(device, geometryBufferSize, VK_BUFFER_USAGE_2_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_2_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_2_TRANSFER_DST_BIT);
+        auto tmpBuffer = std::make_shared<BufferResource>(device, bufferMemorySize, VK_BUFFER_USAGE_2_TRANSFER_SRC_BIT);
+        geometryBuffer = std::make_shared<BufferResource>(device, bufferMemorySize, VK_BUFFER_USAGE_2_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_2_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_2_TRANSFER_DST_BIT);
 
         // add buffers to their respectives pools
         tmpPool->AddResource(tmpBuffer);
@@ -141,10 +190,18 @@ void Lettuce::X3D::Scene::LoadFromFile(const std::shared_ptr<Lettuce::Core::Devi
 
         // copy data
 
-        
+        tmpPool->Map(0, bufferMemorySize);
+        tmpPool->SetData((void *)bufferMemory, 0, bufferMemorySize);
+        tmpPool->UnMap();
+        free((void *)bufferMemory); // WARNING : here we are deleting memory
 
         // transfer
+        transfer->Prepare();
+        transfer->AddTransference(tmpBuffer, geometryBufferPool, TransferType::HostToDevice);
+        transfer->TransferAll();    
 
+        tmpBuffer->Release();
+        tmpPool->Release();
     }
 
     for (auto &img : asset->images)

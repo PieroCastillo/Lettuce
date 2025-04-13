@@ -174,9 +174,7 @@ void main()
         free(data); // release the temporal pointer
 
         // transfer resources from host to device memory
-        transfer->Prepare();
-        transfer->AddTransference(hostBuffer, deviceBuffer, TransferType::HostToDevice);
-        transfer->TransferAll();
+
 
         // release host resources
         hostBuffer->Release();
