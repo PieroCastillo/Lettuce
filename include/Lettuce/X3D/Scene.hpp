@@ -20,7 +20,7 @@ namespace Lettuce::X3D
         std::vector<uint32_t> children; 
         uint32_t meshIndex;
         glm::mat4 transform;
-    }
+    };
 
     class Scene
     {
