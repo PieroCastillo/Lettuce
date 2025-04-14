@@ -5,6 +5,7 @@
 #include <vector>
 #include <memory>
 #include <string>
+#include <chrono>
 
 #include <taskflow/taskflow.hpp>
 #include <GLFW/glfw3.h>

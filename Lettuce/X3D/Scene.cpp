@@ -2,6 +2,7 @@
 // Created by piero on 18/11/2024.
 //
 #include <iostream>
+#include "Lettuce/X3D/commonX3D.hpp"
 #include "Lettuce/X3D/Scene.hpp"
 
 #include <glm/glm.hpp>
@@ -220,10 +221,16 @@ void Lettuce::X3D::Scene::LoadFromFile(const std::shared_ptr<Lettuce::Core::Devi
     }
 
     // TODO: add node system
-    for(auto & node: asset->nodes)
+    for (auto &node : asset->nodes)
     {
-        // nodes.push_back({
-        //     node.children,
+        std::vector<uint32_t> children;
+        children.resize(node.children.size());
+        for (int i = 0; i < node.children.size(); i++)
+        {
+            children[i] = node.children[i];
+        }
+        // nodes.push_back(Node {
+        //     children,
         //     node.meshIndex.value(),
         //     node.transform,
         // });
