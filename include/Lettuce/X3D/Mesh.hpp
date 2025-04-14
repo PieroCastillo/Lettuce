@@ -15,6 +15,7 @@ namespace Lettuce::X3D
         uint32_t vertexBufferOffset;       
         uint32_t indexBufferSize;
         uint32_t indexBufferOffset;
+        uint32_t vertexCount;
     };
 
     struct Mesh

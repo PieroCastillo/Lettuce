@@ -15,6 +15,13 @@
 
 namespace Lettuce::X3D
 {
+    class Node
+    {
+        std::vector<uint32_t> children; 
+        uint32_t meshIndex;
+        glm::mat4 transform;
+    }
+
     class Scene
     {
     private:
@@ -30,9 +37,11 @@ namespace Lettuce::X3D
 
         std::vector<Mesh> meshes;
         std::vector<MeshInfo> meshInfos;
+        std::vector<Node> nodes;
 
         void check();
         void setup();
+        void loadNode();
 
         void loadMesh(fastgltf::Asset &asset, fastgltf::Mesh &mesh);
 

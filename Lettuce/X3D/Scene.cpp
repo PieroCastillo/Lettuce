@@ -32,7 +32,6 @@ void Lettuce::X3D::Scene::check()
 void Lettuce::X3D::Scene::setup()
 {
     check();
-
 }
 
 void Lettuce::X3D::Scene::loadMesh(fastgltf::Asset &asset, fastgltf::Mesh &meshData)
@@ -42,44 +41,33 @@ void Lettuce::X3D::Scene::loadMesh(fastgltf::Asset &asset, fastgltf::Mesh &meshD
     // access to all primitives
     for (auto it = meshData.primitives.begin(); it != meshData.primitives.end(); ++it)
     {
-        // Position Accessor
+        // get attributes
         auto *positionIt = it->findAttribute("POSITION");
-        auto &positionAccessor = asset.accessors[positionIt->accessorIndex];
+        auto *normalIt = it->findAttribute("NORMAL");
+        auto *tangentIt = it->findAttribute("TANGENT");
 
-        if (!positionAccessor.bufferViewIndex.has_value())
+        // get accessors
+        auto &positionAccessor = asset.accessors[positionIt->accessorIndex]; // Position Accessor
+        auto &normalAccessor = asset.accessors[normalIt->accessorIndex];     // Normal Accessor
+        auto &tangentAccessor = asset.accessors[tangentIt->accessorIndex];   // Tangent Accessor
+        auto &indexAccessor = asset.accessors[it->indicesAccessor.value()];  // Indices Accessor
+
+        // check if accesors have values
+        if (!positionAccessor.bufferViewIndex.has_value() &&
+            !normalAccessor.bufferViewIndex.has_value() &&
+            !tangentAccessor.bufferViewIndex.has_value() &&
+            !indexAccessor.bufferViewIndex.has_value())
             continue;
 
+        // get values
         fastgltf::iterateAccessorWithIndex<fastgltf::math::fvec3>(asset, positionAccessor, [&](fastgltf::math::fvec3 pos, size_t idx)
                                                                   { mesh.positions.push_back({pos.x(), pos.y(), pos.z()}); });
-
-        // Normal Accessor
-        auto *normalIt = it->findAttribute("NORMAL");
-        auto &normalAccessor = asset.accessors[normalIt->accessorIndex];
-
-        if (!normalAccessor.bufferViewIndex.has_value())
-            continue;
-
         fastgltf::iterateAccessorWithIndex<fastgltf::math::fvec3>(asset, normalAccessor, [&](fastgltf::math::fvec3 nor, size_t idx)
                                                                   { mesh.normals.push_back({nor.x(), nor.y(), nor.z()}); });
-
-        // Tangent Accessor
-        auto *tangentIt = it->findAttribute("TANGENT");
-        auto &tangentAccessor = asset.accessors[tangentIt->accessorIndex];
-
-        if (!tangentAccessor.bufferViewIndex.has_value())
-            continue;
-
         fastgltf::iterateAccessorWithIndex<fastgltf::math::fvec4>(asset, tangentAccessor, [&](fastgltf::math::fvec4 tang, size_t idx)
                                                                   { mesh.tangents.push_back({tang.x(), tang.y(), tang.z(), tang.w()}); });
-
-        // Indices Accessor
-
-        auto &indexAccessor = asset.accessors[it->indicesAccessor.value()];
-        if (!indexAccessor.bufferViewIndex.has_value())
-            continue;
-
-        fastgltf::iterateAccessorWithIndex<std::uint32_t>(asset, indexAccessor, [&](std::uint32_t index, size_t idx)
-                                                          { mesh.indices.push_back(index); });
+        fastgltf::iterateAccessorWithIndex<uint32_t>(asset, indexAccessor, [&](uint32_t index, size_t idx)
+                                                     { mesh.indices.push_back(index); });
     }
 
     meshes.push_back(mesh);
@@ -133,6 +121,7 @@ void Lettuce::X3D::Scene::LoadFromFile(const std::shared_ptr<Lettuce::Core::Devi
 
             meshInfos[i].vertexBufferSize = size;
             meshInfos[i].vertexBufferOffset = vertexBufferSize;
+            meshInfos[i].vertexCount = (uint32_t)meshes[i].positions.size();
 
             vertexBufferSize += size;
             // add index count
@@ -229,15 +218,27 @@ void Lettuce::X3D::Scene::LoadFromFile(const std::shared_ptr<Lettuce::Core::Devi
     for (auto &texture : asset->textures)
     {
     }
+
+    // TODO: add node system
+    for(auto & node: asset->nodes)
+    {
+        // nodes.push_back({
+        //     node.children,
+        //     node.meshIndex.value(),
+        //     node.transform,
+        // });
+    }
 }
 
 void Lettuce::X3D::Scene::DrawIndexed(VkCommandBuffer cmd)
 {
-    for(auto &mesh : meshInfos)
-    {
-        vkCmdBindVertexBuffers2(cmd, 0, 1, &(geometryBuffer->_buffer),(VkDeviceSize*) &(mesh.vertexBufferOffset),(VkDeviceSize*) &(mesh.vertexBufferSize), nullptr);
-        vkCmdBindIndexBuffer(cmd, geometryBuffer->_buffer, (VkDeviceSize)mesh.indexBufferOffset, VK_INDEX_TYPE_UINT32);
-    }
+    // NOPE: this should be made by scene nodes
+    // for (auto &mesh : meshInfos)
+    // {
+    //     vkCmdBindVertexBuffers2(cmd, 0, 1, &(geometryBuffer->_buffer), (VkDeviceSize *)&(mesh.vertexBufferOffset), (VkDeviceSize *)&(mesh.vertexBufferSize), nullptr);
+    //     vkCmdBindIndexBuffer(cmd, geometryBuffer->_buffer, (VkDeviceSize)mesh.indexBufferOffset, VK_INDEX_TYPE_UINT32);
+    //     vkCmdDrawIndexed(cmd, mesh.vertexCount, 1, 0, 0, 0);
+    // }
 }
 
 void Lettuce::X3D::Scene::Release()
