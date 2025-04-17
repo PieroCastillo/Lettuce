@@ -2,6 +2,7 @@
 #include "Core/Version.hpp"
 #include "Core/Utils.hpp"
 #include "Core/IReleasable.hpp"
+#include "Core/IManageHandle.hpp"
 #include "Core/ReleaseQueue.hpp"
 
 // shaders langs compilers
