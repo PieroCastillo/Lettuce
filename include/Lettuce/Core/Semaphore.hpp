@@ -9,15 +9,15 @@
 #include <algorithm>
 #include "Device.hpp"
 #include "IReleasable.hpp"
+#include "IManageHandle.hpp"
 
 namespace Lettuce::Core
 {
-    class Semaphore : public IReleasable
+    class Semaphore : public IReleasable, public IManageHandle<VkSemaphore>
     {
     public:
         std::shared_ptr<Device> _device;
         VkSemaphore _semaphore;
-        // uint64_t currentValue;
 
         Semaphore(const std::shared_ptr<Device> &device, uint64_t initialValue);
         void Release();

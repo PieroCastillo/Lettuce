@@ -8,10 +8,11 @@
 #include "IResource.hpp"
 #include "Device.hpp"
 #include "IReleasable.hpp"
+#include "IManageHandle.hpp"
 
 namespace Lettuce::Core
 {
-    class ResourcePool : public IReleasable
+    class ResourcePool : public IReleasable, public IManageHandle<VkDeviceMemory>
     {
     private:
         uint32_t poolSize;

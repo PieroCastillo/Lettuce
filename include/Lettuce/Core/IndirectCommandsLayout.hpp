@@ -9,10 +9,11 @@
 #include "IReleasable.hpp"
 #include "Utils.hpp"
 #include "PipelineLayout.hpp"
+#include "IManageHandle.hpp"
 
 namespace Lettuce::Core
 {
-    class IndirectCommandsLayout : public IReleasable
+    class IndirectCommandsLayout : public IReleasable, public IManageHandle<VkIndirectCommandsLayoutEXT>
     {
         uint32_t currentOffset = 0;
         uint32_t pushCurrentOffset = 0;

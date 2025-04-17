@@ -10,10 +10,11 @@
 #include "Descriptors.hpp"
 #include "PipelineLayout.hpp"
 #include "Utils.hpp"
+#include "IManageHandle.hpp"
 
 namespace Lettuce::Core
 {
-    class Shader : public IReleasable
+    class Shader : public IReleasable, public IManageHandle<VkShaderEXT>
     {
     private:
         std::vector<VkSpecializationMapEntry> entries;

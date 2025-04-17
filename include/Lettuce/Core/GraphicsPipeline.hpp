@@ -11,11 +11,12 @@
 #include "ShaderModule.hpp"
 #include "Utils.hpp"
 #include "PipelineLayout.hpp"
+#include "IManageHandle.hpp"
 
 namespace Lettuce::Core
 {
     // TODO: implement PipelineCache, ShaderStages, DynamicState
-    class GraphicsPipeline : public IReleasable
+    class GraphicsPipeline : public IReleasable, public IManageHandle<VkPipeline>
     {
     public:
         struct PipelineBuildData

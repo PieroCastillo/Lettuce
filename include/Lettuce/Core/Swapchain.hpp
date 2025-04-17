@@ -10,10 +10,11 @@
 #include "Device.hpp"
 #include "IReleasable.hpp"
 #include "Semaphore.hpp"
+#include "IManageHandle.hpp"
 
 namespace Lettuce::Core
 {
-    class Swapchain : public IReleasable
+    class Swapchain : public IReleasable, public IManageHandle<VkSwapchainKHR>
     {
     private:
         std::function<std::tuple<uint32_t, uint32_t>(void)> _func;

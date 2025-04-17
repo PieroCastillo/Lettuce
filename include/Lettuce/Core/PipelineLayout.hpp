@@ -8,10 +8,11 @@
 #include "IReleasable.hpp"
 #include "Descriptors.hpp"
 #include <memory>
+#include "IManageHandle.hpp"
 
 namespace Lettuce::Core
 {
-    class PipelineLayout : public IReleasable
+    class PipelineLayout : public IReleasable, public IManageHandle<VkPipelineLayout>
     {
     private:
         uint32_t currentOffset = 0;

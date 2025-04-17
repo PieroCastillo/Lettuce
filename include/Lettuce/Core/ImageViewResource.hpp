@@ -8,10 +8,11 @@
 #include "Device.hpp"
 #include "IReleasable.hpp"
 #include "ImageResource.hpp"
+#include "IManageHandle.hpp"
 
 namespace Lettuce::Core
 {
-    class ImageViewResource : public IReleasable
+    class ImageViewResource : public IReleasable, public IManageHandle<VkImageView>
     {
     public:
         std::shared_ptr<Device> _device;

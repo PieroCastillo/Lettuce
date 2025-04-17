@@ -7,10 +7,11 @@
 #include <string>
 #include "Utils.hpp"
 #include "IReleasable.hpp"
+#include "IManageHandle.hpp"
 
 namespace Lettuce::Core
 {
-    class Sampler : public IReleasable
+    class Sampler : public IReleasable, public IManageHandle<VkSampler>
     {
     public:
         std::shared_ptr<Device> _device;

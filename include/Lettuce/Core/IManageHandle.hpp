@@ -4,10 +4,13 @@
 #pragma once
 
 #include <type_traits>
+#include <concepts>
 #include <vector>
 
 template <typename T>
-concept VulkanHandle = std::is_base_of<uint64_t, T>::value;
+concept VulkanHandle = std::is_same_v<T, uint64_t> ||
+                       (std::is_pointer_v<T> &&
+                        std::is_class_v<std::remove_pointer_t<T>>);
 
 template <VulkanHandle T>
 class IManageHandle
@@ -16,7 +19,7 @@ protected:
     T handle;
 
 public:
-    T GetHandle()
+    T GetHandle() const
     {
         return handle;
     }
@@ -34,7 +37,7 @@ protected:
     std::vector<T> handles;
 
 public:
-    std::vector<T> GetHandles()
+    const std::vector<T> &GetHandles() const
     {
         return handles;
     }
@@ -44,7 +47,7 @@ public:
         return handles.data();
     }
 
-    uint32_t GetCount()
+    uint32_t GetCount() const
     {
         return (uint32_t)handles.size();
     }

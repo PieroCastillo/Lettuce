@@ -8,10 +8,11 @@
 #include "Device.hpp"
 #include "IReleasable.hpp"
 #include "Utils.hpp"
+#include "IManageHandle.hpp"
 
 namespace Lettuce::Core
 {
-    class ShaderModule : public IReleasable
+    class ShaderModule : public IReleasable, public IManageHandle<VkShaderModule>
     {
     public:
         std::shared_ptr<Device> _device;

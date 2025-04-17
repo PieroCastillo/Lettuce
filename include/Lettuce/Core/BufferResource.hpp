@@ -5,9 +5,10 @@
 #include <iostream>
 #include <vector>
 #include <memory>
-#include "IResource.hpp"
 #include "Device.hpp"
+#include "IResource.hpp"
 #include "IReleasable.hpp"
+#include "IManageHandle.hpp"
 
 namespace Lettuce::Core
 {
@@ -18,7 +19,7 @@ namespace Lettuce::Core
         VkBufferUsageFlagBits usage;
     };
 
-    class BufferResource : public IResource, public IReleasable
+    class BufferResource : public IResource, public IReleasable, public IManageHandle<VkBuffer>
     {
     private:
         uint64_t address = 0;

@@ -8,10 +8,11 @@
 #include "IReleasable.hpp"
 #include "PipelineLayout.hpp"
 #include "ShaderModule.hpp"
+#include "IManageHandle.hpp"
 
 namespace Lettuce::Core
 {
-    class ComputePipeline : public IReleasable
+    class ComputePipeline : public IReleasable, public IManageHandle<VkPipeline>
     {
     public:
         std::shared_ptr<Device> _device;

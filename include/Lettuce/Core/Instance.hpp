@@ -13,10 +13,11 @@
 #include "GPU.hpp"
 #include "Utils.hpp"
 #include "Version.hpp"
+#include "IManageHandle.hpp"
 
 namespace Lettuce::Core
 {
-    class Instance : public IReleasable
+    class Instance : public IReleasable, public IManageHandle<VkInstance>
     {
     private:
         bool isSurfaceCreated = false;

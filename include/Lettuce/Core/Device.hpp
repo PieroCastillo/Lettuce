@@ -10,6 +10,7 @@
 #include "IReleasable.hpp"
 #include "Instance.hpp"
 #include "GPU.hpp"
+#include "IManageHandle.hpp"
 
 namespace Lettuce::Core
 {
@@ -31,7 +32,7 @@ namespace Lettuce::Core
         bool maintenance5 = false;
     };
 
-    class Device : public IReleasable
+    class Device : public IReleasable, public IManageHandle<VkDevice>
     {
     private:
         std::vector<std::string> availableExtensionsNames;

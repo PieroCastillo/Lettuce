@@ -12,10 +12,11 @@
 #include "PipelineLayout.hpp"
 #include "Descriptors.hpp"
 #include "IndirectCommandsLayout.hpp"
+#include "IManageHandle.hpp"
 
 namespace Lettuce::Core
 {
-    class IndirectExecutionSet : public IReleasable
+    class IndirectExecutionSet : public IReleasable, public IManageHandle<VkIndirectExecutionSetEXT>
     {
     public:
         VkIndirectExecutionSetEXT _executionSet;
