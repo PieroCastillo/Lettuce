@@ -1,6 +1,8 @@
 set_languages("c++23")
 set_runtimes("MD") 
 
+add_rules("plugin.compile_commands.autoupdate", {outputdir = ".vscode"})
+
 add_requires("vulkansdk")
 add_requires("shaderc", {
     configs = {
@@ -34,18 +36,8 @@ end
 target("Lettuce")
     set_kind("static")
     add_includedirs("include")
-    add_headerfiles("include/Lettuce/Core/*.hpp")
-    add_headerfiles("include/Lettuce/Core/Compilers/*.hpp")
-    add_headerfiles("include/Lettuce/Foundation/*.hpp")
-    add_headerfiles("include/Lettuce/X2D/*.hpp")
-    add_headerfiles("include/Lettuce/X3D/*.hpp")
-    add_headerfiles("include/Lettuce/*.hpp")
-    add_files("Lettuce/Core/*.cpp")
-    add_files("Lettuce/Foundation/*.cpp")
-    add_files("Lettuce/X3D/*.cpp")
-    add_files("Lettuce/Core/Compilers/*.cpp")
-    add_files("Lettuce/X3D/Geometries/*.cpp")
-    -- add_files("Lettuce/X3D/Materials/*.cpp")
+    add_headerfiles("include/Lettuce/**.hpp")
+    add_files("Lettuce/**.cpp")
     add_packages("vulkansdk", "volk", "vulkan-memory-allocator", "glfw", "glm", "fastgltf", "shaderc", "directxshadercompiler", {public = true})
     
 local samples = {
@@ -70,6 +62,6 @@ end
 target("renderer")
     set_kind("binary")
     add_includedirs("external/stb","include", "renderer/include")
-    add_files("renderer/*.cpp", "renderer/core/*.cpp")
+    add_files("renderer/**.cpp")
     add_deps("Lettuce")
     add_packages("volk", "glfw", "glm", "imgui", "taskflow")

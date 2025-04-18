@@ -13,13 +13,6 @@ namespace Lettuce::X2D::Materials
 {
     class IMaterial
     {
-    public:
-        uint32_t pushDataSize;
-        float lineWidth;
-        VkPrimitiveTopology topology;
-        std::shared_ptr<Descriptors> descriptorsPtr;
-        PipelineLayout layout;
-        GraphicsPipeline pipeline;
-        virtual void UpdateDescriptors();
+        
     };
 }

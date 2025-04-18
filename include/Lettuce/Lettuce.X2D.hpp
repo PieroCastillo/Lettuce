@@ -1,13 +1,8 @@
 // Lettuce X2D Objects
 #include "X2D/Camera2D.hpp"
 #include "X2D/RenderContext2D.hpp"
-// Geometries
-#include "X2D/Geometries/GeometryBase.hpp"
-#include "X2D/Geometries/Rectangle.hpp"
 // Materials
 #include "X2D/Materials/IMaterial.hpp"
-#include "X2D/Materials/MaterialBase.hpp"
-#include "X2D/Materials/ColorMaterial.hpp"
 // Lights
 #include "X2D/Lights/AmbientLight.hpp"
 #include "X2D/Lights/GeometryLight.hpp"
