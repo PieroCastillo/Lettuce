@@ -16,7 +16,7 @@ template <VulkanHandle T>
 class IManageHandle
 {
 protected:
-    T handle;
+    T handle = VK_NULL_HANDLE;
 
 public:
     T GetHandle() const

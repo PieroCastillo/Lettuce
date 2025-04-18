@@ -282,7 +282,7 @@ void main()
             .flags = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT | VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT,
             .queueFamilyIndex = device->_gpu.graphicsFamily.value(),
         };
-        checkResult(vkCreateCommandPool(device->_device, &poolCI, nullptr, &pool));
+        checkResult(vkCreateCommandPool(device->GetHandle(), &poolCI, nullptr, &pool));
 
         VkCommandBufferAllocateInfo cmdAI = {
             .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
@@ -290,7 +290,7 @@ void main()
             .level = VkCommandBufferLevel::VK_COMMAND_BUFFER_LEVEL_PRIMARY,
             .commandBufferCount = 1,
         };
-        checkResult(vkAllocateCommandBuffers(device->_device, &cmdAI, &cmd));
+        checkResult(vkAllocateCommandBuffers(device->GetHandle(), &cmdAI, &cmd));
     }
 
     void updateData()
@@ -379,13 +379,13 @@ void main()
         };
         for (auto &[offset, color] : pairs)
         {
-            vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, linespipeline->_pipeline);
+            vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, linespipeline->GetHandle());
             VkDeviceSize _offset = offset;
             VkDeviceSize size = 2 * sizeof(LineVertex);
-            vkCmdBindVertexBuffers2(cmd, 0, 1, &(deviceBuffer->_buffer), &_offset, &size, nullptr);
-            vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, linesLayout->_pipelineLayout, 0, 1, descriptor->_descriptorSets.data(), 0, nullptr);
+            vkCmdBindVertexBuffers2(cmd, 0, 1, deviceBuffer->GetHandlePtr(), &_offset, &size, nullptr);
+            vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, linesLayout->GetHandle(), 0, 1, descriptor->_descriptorSets.data(), 0, nullptr);
             dataPush.color = color;
-            vkCmdPushConstants(cmd, linesLayout->_pipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(DataPush), &dataPush);
+            vkCmdPushConstants(cmd, linesLayout->GetHandle(), VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(DataPush), &dataPush);
             vkCmdSetLineWidth(cmd, 5.0f);
             VkViewport viewport = {0, 0, (float)width, (float)height, 0.0f, 1.0f};
             vkCmdSetViewportWithCount(cmd, 1, &viewport);
@@ -396,15 +396,15 @@ void main()
         }
         /*render donut*/ 
         // TODO: find error
-        vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->_pipeline);
+        vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->GetHandle());
         VkDeviceSize size = verticesSize;
         VkDeviceSize offset = 0;
-        vkCmdBindVertexBuffers2(cmd, 0, 1, &(deviceBuffer->_buffer), &offset, &size, nullptr);
-        // vkCmdBindIndexBuffer2(cmd, deviceBuffer->_buffer, verticesSize, indicesSize, VK_INDEX_TYPE_UINT32);
-        vkCmdBindIndexBuffer(cmd, deviceBuffer->_buffer, verticesSize, VK_INDEX_TYPE_UINT32);
-        vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, connector->_pipelineLayout, 0, 1, descriptor->_descriptorSets.data(), 0, nullptr);
+        vkCmdBindVertexBuffers2(cmd, 0, 1, deviceBuffer->GetHandlePtr(), &offset, &size, nullptr);
+        // vkCmdBindIndexBuffer2(cmd, deviceBuffer->GetHandle(), verticesSize, indicesSize, VK_INDEX_TYPE_UINT32);
+        vkCmdBindIndexBuffer(cmd, deviceBuffer->GetHandle(), verticesSize, VK_INDEX_TYPE_UINT32);
+        vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, connector->GetHandle(), 0, 1, descriptor->_descriptorSets.data(), 0, nullptr);
 
-        vkCmdPushConstants(cmd, connector->_pipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(DataPush), &dataPush);
+        vkCmdPushConstants(cmd, connector->GetHandle(), VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(DataPush), &dataPush);
         vkCmdSetLineWidth(cmd, 1.0f);
         VkViewport viewport = {0, 0, (float)width, (float)height, 0.0f, 1.0f};
         // vkCmdSetViewport(cmd, 0, 1, &viewport);
@@ -444,7 +444,7 @@ void main()
 
         VkSemaphoreSubmitInfo signalSI = {
             .sType = VK_STRUCTURE_TYPE_SEMAPHORE_SUBMIT_INFO,
-            .semaphore = renderFinished->_semaphore,
+            .semaphore = renderFinished->GetHandle(),
             .value = renderFinishedValue + 1,
             .stageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT,
             .deviceIndex = 0,
@@ -476,8 +476,8 @@ void main()
 
     void destroyObjects()
     {
-        vkFreeCommandBuffers(device->_device, pool, 1, &cmd);
-        vkDestroyCommandPool(device->_device, pool, nullptr);
+        vkFreeCommandBuffers(device->GetHandle(), pool, 1, &cmd);
+        vkDestroyCommandPool(device->GetHandle(), pool, nullptr);
     }
 
     void genTorus()

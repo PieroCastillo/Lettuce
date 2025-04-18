@@ -554,7 +554,7 @@ void main()
             .flags = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT | VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT,
             .queueFamilyIndex = device->_gpu.graphicsFamily.value(),
         };
-        checkResult(vkCreateCommandPool(device->_device, &poolCI, nullptr, &pool));
+        checkResult(vkCreateCommandPool(device->GetHandle(), &poolCI, nullptr, &pool));
 
         VkCommandBufferAllocateInfo cmdAI = {
             .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
@@ -562,7 +562,7 @@ void main()
             .level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
             .commandBufferCount = 1,
         };
-        checkResult(vkAllocateCommandBuffers(device->_device, &cmdAI, &cmd));
+        checkResult(vkAllocateCommandBuffers(device->GetHandle(), &cmdAI, &cmd));
     }
 
     void updateData()
@@ -641,13 +641,13 @@ void main()
         checkResult(vkBeginCommandBuffer(cmd, &cmdBI));
 
         // gen commands
-        vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_COMPUTE, layout_genCommands->_pipelineLayout, 0,
+        vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_COMPUTE, layout_genCommands->GetHandle(), 0,
                                 (uint32_t)descriptors_genCommands->_descriptorSets.size(),
                                 descriptors_genCommands->_descriptorSets.data(), 0, nullptr);
-        vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_COMPUTE, pipeline_genCommands->_pipeline);
+        vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_COMPUTE, pipeline_genCommands->GetHandle());
 
         uint32_t pcFullSize = sizeof(uint64_t) + sizeof(int) + sizeof(int);
-        vkCmdPushConstants(cmd, layout_genCommands->_pipelineLayout, VK_SHADER_STAGE_COMPUTE_BIT, 0, pcFullSize, (void *)&pcData_gen);
+        vkCmdPushConstants(cmd, layout_genCommands->GetHandle(), VK_SHADER_STAGE_COMPUTE_BIT, 0, pcFullSize, (void *)&pcData_gen);
         vkCmdDispatch(cmd, 1, 1, 1); // workgroup (4,4,0)
 
         // VkMemoryBarrier2 memBarrier1 = {
@@ -664,7 +664,7 @@ void main()
             .dstAccessMask = VK_ACCESS_2_MEMORY_READ_BIT,
             .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
             .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
-            .buffer = buffer_generatedCommands->_buffer,
+            .buffer = buffer_generatedCommands->GetHandle(),
             .offset = 0,
             .size = buffer_generatedCommands->_size,
         };
@@ -729,7 +729,7 @@ void main()
         VkGeneratedCommandsInfoEXT genCommandsI = {
             .sType = VK_STRUCTURE_TYPE_GENERATED_COMMANDS_INFO_EXT,
             .shaderStages = indirectCommandsLayout->_shaderStages,
-            .indirectExecutionSet = indirectExecutionSet->_executionSet,
+            .indirectExecutionSet = indirectExecutionSet->GetHandle(),
             .indirectCommandsLayout = indirectCommandsLayout->_commandsLayout,
             .indirectAddress = (VkDeviceAddress)address_generatedCommands,
             .indirectAddressSize = (VkDeviceSize)buffer_generatedCommands->_size,
@@ -739,7 +739,7 @@ void main()
             // .sequenceCountAddress;
             .maxDrawCount = 16,
         };
-        vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, layout_bindable->_pipelineLayout, 0,
+        vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, layout_bindable->GetHandle(), 0,
                                 (uint32_t)descriptors_bindable->_descriptorSets.size(),
                                 descriptors_bindable->_descriptorSets.data(), 0, nullptr);
 
@@ -783,7 +783,7 @@ void main()
 
         VkSemaphoreSubmitInfo signalSI = {
             .sType = VK_STRUCTURE_TYPE_SEMAPHORE_SUBMIT_INFO,
-            .semaphore = renderFinished->_semaphore,
+            .semaphore = renderFinished->GetHandle(),
             .value = renderFinishedValue + 1,
             .stageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT,
             .deviceIndex = 0,
@@ -813,8 +813,8 @@ void main()
 
     void destroyObjects()
     {
-        vkFreeCommandBuffers(device->_device, pool, 1, &cmd);
-        vkDestroyCommandPool(device->_device, pool, nullptr);
+        vkFreeCommandBuffers(device->GetHandle(), pool, 1, &cmd);
+        vkDestroyCommandPool(device->GetHandle(), pool, nullptr);
 
         pool_ubo->UnMap();
     }

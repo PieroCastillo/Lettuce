@@ -48,9 +48,9 @@
 
 //     for (int i = 0; i < threads; i++)
 //     {
-//         vkCreateCommandPool(device->_device, &poolCI, nullptr, &(pools[i]));
+//         vkCreateCommandPool(device->GetHandle(), &poolCI, nullptr, &(pools[i]));
 //         cmdAI.commandPool = pools[i];
-//         vkAllocateCommandBuffers(device->_device, nullptr, &(cmds[i]));
+//         vkAllocateCommandBuffers(device->GetHandle(), nullptr, &(cmds[i]));
 //     }
 // }
 
@@ -58,8 +58,8 @@
 // {
 //     for (int i = 0; i < _threads; i++)
 //     {
-//         vkFreeCommandBuffers(_device->_device, pools[i], 1, &cmds[i]);
-//         vkDestroyCommandPool(_device->_device, pools[i], nullptr);
+//         vkFreeCommandBuffers(_device->GetHandle(), pools[i], 1, &cmds[i]);
+//         vkDestroyCommandPool(_device->GetHandle(), pools[i], nullptr);
 //     }
 // }
 

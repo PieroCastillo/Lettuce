@@ -43,7 +43,7 @@ void GraphicsPipelineLibrary::AddVertexInput(std::string name)
         };
 
         VkPipeline pipeline = VK_NULL_HANDLE;
-        checkResult(vkCreateGraphicsPipelines(_device->_device, VK_NULL_HANDLE, 1, &pipelineLibraryCI, nullptr, &pipeline));
+        checkResult(vkCreateGraphicsPipelines(_device->GetHandle(), VK_NULL_HANDLE, 1, &pipelineLibraryCI, nullptr, &pipeline));
         vertexInputLibraries[name] = pipeline;
         return;
     }
@@ -79,7 +79,7 @@ void GraphicsPipelineLibrary::AddPreRasterizationShaders(std::string name)
         };
 
         VkPipeline pipeline = VK_NULL_HANDLE;
-        checkResult(vkCreateGraphicsPipelines(_device->_device, VK_NULL_HANDLE, 1, &pipelineLibraryCI, nullptr, &pipeline));
+        checkResult(vkCreateGraphicsPipelines(_device->GetHandle(), VK_NULL_HANDLE, 1, &pipelineLibraryCI, nullptr, &pipeline));
         preRasterizationShadersLibraries[name] = pipeline;
         return;
     }
@@ -114,7 +114,7 @@ void GraphicsPipelineLibrary::AddFragmentShader(std::string name)
         };
 
         VkPipeline pipeline = VK_NULL_HANDLE;
-        checkResult(vkCreateGraphicsPipelines(_device->_device, VK_NULL_HANDLE, 1, &pipelineLibraryCI, nullptr, &pipeline));
+        checkResult(vkCreateGraphicsPipelines(_device->GetHandle(), VK_NULL_HANDLE, 1, &pipelineLibraryCI, nullptr, &pipeline));
         fragmentShaderLibraries[name] = pipeline;
         return;
     }
@@ -142,7 +142,7 @@ void GraphicsPipelineLibrary::AddFragmentOutput(std::string name)
         };
 
         VkPipeline pipeline = VK_NULL_HANDLE;
-        checkResult(vkCreateGraphicsPipelines(_device->_device, VK_NULL_HANDLE, 1, &pipelineLibraryCI, nullptr, &pipeline));
+        checkResult(vkCreateGraphicsPipelines(_device->GetHandle(), VK_NULL_HANDLE, 1, &pipelineLibraryCI, nullptr, &pipeline));
         fragmentOutputLibraries[name] = pipeline;
         return;
     }
@@ -154,19 +154,19 @@ void GraphicsPipelineLibrary::Release()
     {
         for (auto &[_, pl] : vertexInputLibraries)
         {
-            vkDestroyPipeline(_device->_device, pl, nullptr);
+            vkDestroyPipeline(_device->GetHandle(), pl, nullptr);
         }
         for (auto &[_, pl] : preRasterizationShadersLibraries)
         {
-            vkDestroyPipeline(_device->_device, pl, nullptr);
+            vkDestroyPipeline(_device->GetHandle(), pl, nullptr);
         }
         for (auto &[_, pl] : fragmentShaderLibraries)
         {
-            vkDestroyPipeline(_device->_device, pl, nullptr);
+            vkDestroyPipeline(_device->GetHandle(), pl, nullptr);
         }
         for (auto &[_, pl] : fragmentOutputLibraries)
         {
-            vkDestroyPipeline(_device->_device, pl, nullptr);
+            vkDestroyPipeline(_device->GetHandle(), pl, nullptr);
         }
         return;
     }
@@ -197,11 +197,11 @@ VkPipeline GraphicsPipelineLibrary::AssemblyPipeline(std::string vertexInputName
             .sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
             .pNext = &libraryCI,
             .flags = VK_PIPELINE_CREATE_LINK_TIME_OPTIMIZATION_BIT_EXT,
-            .layout = layout->_pipelineLayout,
+            .layout = layout->GetHandle(),
         };
 
         VkPipeline pipeline = VK_NULL_HANDLE;
-        checkResult(vkCreateGraphicsPipelines(_device->_device, VK_NULL_HANDLE, 1, &executablePipeline, nullptr, &pipeline));
+        checkResult(vkCreateGraphicsPipelines(_device->GetHandle(), VK_NULL_HANDLE, 1, &executablePipeline, nullptr, &pipeline));
         return pipeline;
     }
 }

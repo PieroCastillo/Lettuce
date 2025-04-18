@@ -16,9 +16,9 @@ using namespace Lettuce::Core;
 
 void Swapchain::loadImages()
 {
-    vkGetSwapchainImagesKHR(_device->_device, _swapchain, &imageCount, nullptr);
+    vkGetSwapchainImagesKHR(_device->GetHandle(), GetHandle(), &imageCount, nullptr);
     swapChainImages.resize(imageCount);
-    vkGetSwapchainImagesKHR(_device->_device, _swapchain, &imageCount, swapChainImages.data());
+    vkGetSwapchainImagesKHR(_device->GetHandle(), GetHandle(), &imageCount, swapChainImages.data());
 }
 
 void Swapchain::createImageViews()
@@ -34,7 +34,7 @@ void Swapchain::createImageViews()
             .components = {VK_COMPONENT_SWIZZLE_IDENTITY, VK_COMPONENT_SWIZZLE_IDENTITY, VK_COMPONENT_SWIZZLE_IDENTITY, VK_COMPONENT_SWIZZLE_IDENTITY},
             .subresourceRange = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1},
         };
-        checkResult(vkCreateImageView(_device->_device, &imageViewCI, nullptr, &swapChainImageViews[i]));
+        checkResult(vkCreateImageView(_device->GetHandle(), &imageViewCI, nullptr, &swapChainImageViews[i]));
     }
 }
 
@@ -84,12 +84,12 @@ Swapchain::Swapchain(const std::shared_ptr<Device> &device, uint32_t initialWidt
         swapchainCI.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
     }
 
-    checkResult(vkCreateSwapchainKHR(_device->_device, &swapchainCI, nullptr, &_swapchain));
+    checkResult(vkCreateSwapchainKHR(_device->GetHandle(), &swapchainCI, nullptr, GetHandlePtr()));
 
     VkFenceCreateInfo fenceCI = {
         .sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO,
     };
-    checkResult(vkCreateFence(_device->_device, &fenceCI, nullptr, &_fence));
+    checkResult(vkCreateFence(_device->GetHandle(), &fenceCI, nullptr, &_fence));
 
     loadImages();
     createImageViews();
@@ -97,9 +97,9 @@ Swapchain::Swapchain(const std::shared_ptr<Device> &device, uint32_t initialWidt
 
 void Swapchain::AcquireNextImage()
 {
-    checkResult(vkResetFences(_device->_device, 1, &_fence));
-    checkResult(vkAcquireNextImageKHR(_device->_device, _swapchain, (std::numeric_limits<uint64_t>::max)(), VK_NULL_HANDLE, _fence, &index));
-    checkResult(vkWaitForFences(_device->_device, 1, &_fence, VK_TRUE, (std::numeric_limits<uint64_t>::max)()));
+    checkResult(vkResetFences(_device->GetHandle(), 1, &_fence));
+    checkResult(vkAcquireNextImageKHR(_device->GetHandle(), GetHandle(), (std::numeric_limits<uint64_t>::max)(), VK_NULL_HANDLE, _fence, &index));
+    checkResult(vkWaitForFences(_device->GetHandle(), 1, &_fence, VK_TRUE, (std::numeric_limits<uint64_t>::max)()));
 }
 
 void Swapchain::Present()
@@ -107,7 +107,7 @@ void Swapchain::Present()
     VkPresentInfoKHR presentI = {
         .sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
         .swapchainCount = 1,
-        .pSwapchains = &_swapchain,
+        .pSwapchains = GetHandlePtr(),
         .pImageIndices = &index,
     };
     auto result = vkQueuePresentKHR(_device->_presentQueue, &presentI);
@@ -136,7 +136,7 @@ void Swapchain::Wait()
 {
     // VkPresentIdKHR s = {
     // };
-    // vkWaitForPresentKHR(_device->_device, _swapchain, )
+    // vkWaitForPresentKHR(_device->GetHandle(), GetHandle(), )
 }
 
 void Swapchain::SetResizeFunc(std::function<std::tuple<uint32_t, uint32_t>(void)> call, std::function<void(void)> postFunc)
@@ -149,11 +149,11 @@ void Swapchain::Resize(uint32_t newWidth, uint32_t newHeight)
 {
     for (auto imageView : swapChainImageViews)
     {
-        vkDestroyImageView(_device->_device, imageView, nullptr);
+        vkDestroyImageView(_device->GetHandle(), imageView, nullptr);
     }
     swapChainImageViews.clear();
     swapChainImages.clear();
-    vkDestroySwapchainKHR(_device->_device, _swapchain, nullptr);
+    vkDestroySwapchainKHR(_device->GetHandle(), GetHandle(), nullptr);
     width = newWidth;
     height = newHeight;
     extent = {newWidth, newHeight};
@@ -190,7 +190,7 @@ void Swapchain::Resize(uint32_t newWidth, uint32_t newHeight)
         swapchainCI.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
     }
 
-    checkResult(vkCreateSwapchainKHR(_device->_device, &swapchainCI, nullptr, &_swapchain));
+    checkResult(vkCreateSwapchainKHR(_device->GetHandle(), &swapchainCI, nullptr, GetHandlePtr()));
     loadImages();
     createImageViews();
 }
@@ -199,10 +199,10 @@ void Swapchain::Release()
 {
     for (auto imageView : swapChainImageViews)
     {
-        vkDestroyImageView(_device->_device, imageView, nullptr);
+        vkDestroyImageView(_device->GetHandle(), imageView, nullptr);
     }
     swapChainImageViews.clear();
     swapChainImages.clear();
-    vkDestroyFence(_device->_device, _fence, nullptr);
-    vkDestroySwapchainKHR(_device->_device, _swapchain, nullptr);
+    vkDestroyFence(_device->GetHandle(), _fence, nullptr);
+    vkDestroySwapchainKHR(_device->GetHandle(), GetHandle(), nullptr);
 }

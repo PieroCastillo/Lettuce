@@ -20,7 +20,6 @@ namespace Lettuce::Core
     public:
         std::shared_ptr<Device> _device;
         std::shared_ptr<Descriptors> _descriptors;
-        VkPipelineLayout _pipelineLayout;
         std::vector<VkPushConstantRange> pushConstants;
 
         PipelineLayout(const std::shared_ptr<Device> &device, const std::shared_ptr<Descriptors> &descriptor);

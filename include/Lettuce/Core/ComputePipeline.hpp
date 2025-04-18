@@ -16,8 +16,7 @@ namespace Lettuce::Core
     {
     public:
         std::shared_ptr<Device> _device;
-        VkPipelineLayout _pipelineLayout;
-        VkPipeline _pipeline;
+        std::shared_ptr<PipelineLayout> _pipelineLayout;
 
         ComputePipeline(const std::shared_ptr<Device> &device, const std::shared_ptr<PipelineLayout> &connector, const std::shared_ptr<ShaderModule> &shader);
 

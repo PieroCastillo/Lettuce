@@ -25,32 +25,32 @@ Semaphore::Semaphore(const std::shared_ptr<Device> &device, uint64_t initialValu
         .sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO,
         .pNext = &semaphoreTypeCI,
     };
-    checkResult(vkCreateSemaphore(device->_device, &semaphoreCI, nullptr, &_semaphore));
+    checkResult(vkCreateSemaphore(device->GetHandle(), &semaphoreCI, nullptr, GetHandlePtr()));
 }
 void Semaphore::Wait(uint64_t value)
 {
     VkSemaphoreWaitInfo waitI = {
         .sType = VK_STRUCTURE_TYPE_SEMAPHORE_WAIT_INFO,
         .semaphoreCount = 1,
-        .pSemaphores = &_semaphore,
+        .pSemaphores = GetHandlePtr(),
         .pValues = &value,
     };
-    checkResult(vkWaitSemaphores(_device->_device, &waitI, (std::numeric_limits<uint64_t>::max)()));
+    checkResult(vkWaitSemaphores(_device->GetHandle(), &waitI, (std::numeric_limits<uint64_t>::max)()));
 }
 
 void Semaphore::Release()
 {
-    vkDestroySemaphore(_device->_device, _semaphore, nullptr);
+    vkDestroySemaphore(_device->GetHandle(), GetHandle(), nullptr);
 }
 
 void Semaphore::Signal(uint64_t signalValue)
 {
     VkSemaphoreSignalInfo semaphoreSignalI = {
         .sType = VK_STRUCTURE_TYPE_SEMAPHORE_SIGNAL_INFO,
-        .semaphore = _semaphore,
+        .semaphore = GetHandle(),
         .value = signalValue,
     };
-    checkResult(vkSignalSemaphore(_device->_device, &semaphoreSignalI));
+    checkResult(vkSignalSemaphore(_device->GetHandle(), &semaphoreSignalI));
 }
 
 std::vector<std::shared_ptr<Semaphore>> Semaphore::CreateSemaphores(const std::shared_ptr<Device> &device, uint32_t semaphoresCount)
@@ -70,7 +70,7 @@ std::vector<std::shared_ptr<Semaphore>> Semaphore::CreateSemaphores(const std::s
     for (int i = 0; i < semaphoresCount; i++)
     {
         semaphores[i]->_device = device;
-        checkResult(vkCreateSemaphore(device->_device, &semaphoreCI, nullptr, &(semaphores[i]->_semaphore)), "semaphore #" + std::to_string(i) + " created succesfully");
+        checkResult(vkCreateSemaphore(device->GetHandle(), &semaphoreCI, nullptr, semaphores[i]->GetHandlePtr()));
     }
     return semaphores;
 }
@@ -83,20 +83,20 @@ void Semaphore::WaitSemaphores(std::vector<Semaphore> semaphores, std::vector<ui
     }
     std::vector<VkSemaphore> vkSemaphores;
     std::transform(semaphores.begin(), semaphores.end(), std::back_inserter(vkSemaphores), [](Semaphore x)
-                   { return x._semaphore; });
+                   { return x.GetHandle(); });
     VkSemaphoreWaitInfo semaphoreWaitInfo = {
         .sType = VK_STRUCTURE_TYPE_SEMAPHORE_WAIT_INFO,
         .semaphoreCount = (uint32_t)semaphores.size(),
         .pSemaphores = vkSemaphores.data(),
         .pValues = values.data(),
     };
-    checkResult(vkWaitSemaphores(semaphores[0]._device->_device, &semaphoreWaitInfo, (std::numeric_limits<uint64_t>::max)()));
+    checkResult(vkWaitSemaphores(semaphores[0]._device->GetHandle(), &semaphoreWaitInfo, (std::numeric_limits<uint64_t>::max)()));
 }
 
 void Semaphore::DestroySemaphores(std::vector<Semaphore> semaphores)
 {
     for (int i = 0; i < semaphores.size(); i++)
     {
-        vkDestroySemaphore(semaphores[i]._device->_device, semaphores[i]._semaphore, nullptr);
+        vkDestroySemaphore(semaphores[i]._device->GetHandle(), semaphores[i].GetHandle(), nullptr);
     }
 }

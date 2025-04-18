@@ -65,7 +65,7 @@ void Descriptors::Assemble(uint32_t maxSets)
             .pBindings = bindings.data(),
         };
         VkDescriptorSetLayout layout;
-        checkResult(vkCreateDescriptorSetLayout(_device->_device, &layoutCI, nullptr, &layout));
+        checkResult(vkCreateDescriptorSetLayout(_device->GetHandle(), &layoutCI, nullptr, &layout));
         _layouts[index] = layout;
         index++;
     }
@@ -87,7 +87,7 @@ void Descriptors::Assemble(uint32_t maxSets)
         .poolSizeCount = (uint32_t)sizes.size(),
         .pPoolSizes = sizes.data(),
     };
-    checkResult(vkCreateDescriptorPool(_device->_device, &poolCI, nullptr, &_pool));
+    checkResult(vkCreateDescriptorPool(_device->GetHandle(), &poolCI, nullptr, &_pool));
 
     // creates descriptor set
     _descriptorSets.resize(_layouts.size(), VK_NULL_HANDLE);
@@ -97,7 +97,7 @@ void Descriptors::Assemble(uint32_t maxSets)
         .descriptorSetCount = (uint32_t)_layouts.size(),
         .pSetLayouts = _layouts.data(),
     };
-    checkResult(vkAllocateDescriptorSets(_device->_device, &descriptorSetAI, _descriptorSets.data()));
+    checkResult(vkAllocateDescriptorSets(_device->GetHandle(), &descriptorSetAI, _descriptorSets.data()));
 }
 
 Descriptors::Descriptors(const std::shared_ptr<Device> &device) : _device(device)
@@ -106,11 +106,11 @@ Descriptors::Descriptors(const std::shared_ptr<Device> &device) : _device(device
 
 void Descriptors::Release()
 {
-    checkResult(vkResetDescriptorPool(_device->_device, _pool, 0));
-    vkDestroyDescriptorPool(_device->_device, _pool, nullptr);
+    checkResult(vkResetDescriptorPool(_device->GetHandle(), _pool, 0));
+    vkDestroyDescriptorPool(_device->GetHandle(), _pool, nullptr);
     for (auto layout : _layouts)
     {
-        vkDestroyDescriptorSetLayout(_device->_device, layout, nullptr);
+        vkDestroyDescriptorSetLayout(_device->GetHandle(), layout, nullptr);
     }
     bindingsMap.clear();
     _layouts.clear();
@@ -126,7 +126,7 @@ void Descriptors::AddUpdateInfo(uint32_t set, uint32_t binding, const std::vecto
     for (auto &[size, buffer] : sizeBuffersPairs)
     {
         VkDescriptorBufferInfo bufferI = {
-            .buffer = buffer->_buffer,
+            .buffer = buffer->GetHandle(),
             .offset = 0,
             .range = size,
         };
@@ -154,7 +154,7 @@ void Descriptors::AddUpdateInfo(uint32_t set, uint32_t binding, const std::vecto
     for (int i = 0; i < samplers.size(); i++)
     {
         imageInfos[i] = VkDescriptorImageInfo{
-            .sampler = samplers[i]->_sampler,
+            .sampler = samplers[i]->GetHandle(),
         };
     }
     writesFieldsMap[{set, binding}].imageInfos = imageInfos;
@@ -178,8 +178,8 @@ void Descriptors::AddUpdateInfo(uint32_t set, uint32_t binding, const std::vecto
     for (auto &[sampler, view] : samplerViewsPairs)
     {
         VkDescriptorImageInfo imageInfo = {
-            .sampler = sampler->_sampler,
-            .imageView = view->_imageView,
+            .sampler = sampler->GetHandle(),
+            .imageView = view->GetHandle(),
             .imageLayout = view->_image->_layout,
         };
         imageInfos[i] = imageInfo;
@@ -200,7 +200,7 @@ void Descriptors::AddUpdateInfo(uint32_t set, uint32_t binding, const std::vecto
 
 void Descriptors::Update()
 {
-    vkUpdateDescriptorSets(_device->_device, (uint32_t)writes.size(), writes.data(), 0, nullptr);
+    vkUpdateDescriptorSets(_device->GetHandle(), (uint32_t)writes.size(), writes.data(), 0, nullptr);
     writes.clear();
     writesFieldsMap.clear();
 }

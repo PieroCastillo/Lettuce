@@ -17,7 +17,6 @@ namespace Lettuce::Core
     public:
         std::shared_ptr<Device> _device;
         PipelineStage _stage;
-        VkShaderModule _shaderModule;
         std::string _name;
 
         template <class T = Compilers::ICompiler>
@@ -34,7 +33,7 @@ namespace Lettuce::Core
                 .codeSize = code.size() * sizeof(uint32_t),
                 .pCode = code.data(),
             };
-            checkResult(vkCreateShaderModule(_device->_device, &shaderModuleCI, nullptr, &_shaderModule));
+            checkResult(vkCreateShaderModule(_device->GetHandle(), &shaderModuleCI, nullptr, GetHandlePtr()));
         }
 
         void Release();

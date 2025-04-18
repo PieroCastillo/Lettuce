@@ -25,7 +25,7 @@ PipelineLayout::PipelineLayout(const std::shared_ptr<Device> &device) : _device(
 
 void PipelineLayout::Release()
 {
-    vkDestroyPipelineLayout(_device->_device, _pipelineLayout, nullptr);
+    vkDestroyPipelineLayout(_device->GetHandle(), GetHandle(), nullptr);
 }
 
 void PipelineLayout::AddPushConstant(uint32_t size, VkShaderStageFlags stages)
@@ -58,5 +58,5 @@ void PipelineLayout::Assemble()
         pipelineLayoutCI.setLayoutCount = (uint32_t)_descriptors->_layouts.size();
     }
 
-    checkResult(vkCreatePipelineLayout(_device->_device, &pipelineLayoutCI, nullptr, &_pipelineLayout));
+    checkResult(vkCreatePipelineLayout(_device->GetHandle(), &pipelineLayoutCI, nullptr, GetHandlePtr()));
 }

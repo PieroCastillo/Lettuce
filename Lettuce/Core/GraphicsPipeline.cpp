@@ -27,7 +27,7 @@ void GraphicsPipeline::AddShaderStage(const std::shared_ptr<ShaderModule> &shade
     VkPipelineShaderStageCreateInfo pipelineShaderStageCI = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
         .stage = (VkShaderStageFlagBits)shader->_stage,
-        .module = shader->_shaderModule,
+        .module = shader->GetHandle(),
         .pName = shader->_name.c_str(),
     };
     stages.emplace_back(pipelineShaderStageCI);
@@ -154,15 +154,15 @@ void GraphicsPipeline::Assemble(std::vector<VkFormat> colorFormats, VkFormat dep
         .pDepthStencilState = &depthStencilStateCI,
         .pColorBlendState = &colorBlendStateCI,
         .pDynamicState = &dynamicStateCI,
-        .layout = _layout->_pipelineLayout,
+        .layout = _layout->GetHandle(),
         // VkPipeline                                       basePipelineHandle;
         // int32_t                                          basePipelineIndex;
     };
 
-    checkResult(vkCreateGraphicsPipelines(_device->_device, VK_NULL_HANDLE, 1, &graphicsPipelineCI, nullptr, &_pipeline));
+    checkResult(vkCreateGraphicsPipelines(_device->GetHandle(), VK_NULL_HANDLE, 1, &graphicsPipelineCI, nullptr, GetHandlePtr()));
 }
 
 void GraphicsPipeline::Release()
 {
-    vkDestroyPipeline(_device->_device, _pipeline, nullptr);
+    vkDestroyPipeline(_device->GetHandle(), GetHandle(), nullptr);
 }

@@ -24,7 +24,6 @@ namespace Lettuce::Core
     private:
         uint64_t address = 0;
     public:
-        VkBuffer _buffer;
         uint32_t _size;
         std::shared_ptr<Device> _device;
         std::vector<BufferBlock> _blocks;

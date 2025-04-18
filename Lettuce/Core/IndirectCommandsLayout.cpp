@@ -29,17 +29,17 @@ void IndirectCommandsLayout::Assemble(VkShaderStageFlags shaderStages, bool manu
         .flags = manualPreprocessing ? VK_INDIRECT_COMMANDS_LAYOUT_USAGE_EXPLICIT_PREPROCESS_BIT_EXT : (VkIndirectCommandsLayoutUsageFlagsEXT)0,
         .shaderStages = shaderStages,
         .indirectStride = 0,
-        .pipelineLayout = _pipelineLayout->_pipelineLayout,
+        .pipelineLayout = _pipelineLayout->GetHandle(),
         .tokenCount = (uint32_t)tokens.size(),
         .pTokens = tokens.data(),
     };
 
-    checkResult(vkCreateIndirectCommandsLayoutEXT(_device->_device, &layoutCI, nullptr, &_commandsLayout));
+    checkResult(vkCreateIndirectCommandsLayoutEXT(_device->GetHandle(), &layoutCI, nullptr, GetHandlePtr()));
 }
 
 void IndirectCommandsLayout::Release()
 {
-    vkDestroyIndirectCommandsLayoutEXT(_device->_device, _commandsLayout, nullptr);
+    vkDestroyIndirectCommandsLayoutEXT(_device->GetHandle(), GetHandle(), nullptr);
 }
 
 void IndirectCommandsLayout::AddExecutionSetToken(VkShaderStageFlags shaderStages, uint32_t size)

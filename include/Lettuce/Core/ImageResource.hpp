@@ -15,7 +15,6 @@ namespace Lettuce::Core
     {
     public:
         std::shared_ptr<Device> _device;
-        VkImage _image;
         VkImageLayout _layout;
         uint32_t _mipLevels, _layerCount;
         uint32_t _width, _height, _depth;

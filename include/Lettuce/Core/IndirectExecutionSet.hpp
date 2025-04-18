@@ -19,7 +19,6 @@ namespace Lettuce::Core
     class IndirectExecutionSet : public IReleasable, public IManageHandle<VkIndirectExecutionSetEXT>
     {
     public:
-        VkIndirectExecutionSetEXT _executionSet;
         std::shared_ptr<Device> _device;
         std::shared_ptr<PipelineLayout> _pipelineLayout;
 

@@ -21,7 +21,7 @@ TransferManager::TransferManager(const std::shared_ptr<Device> &device) : _devic
         .flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT,
         .queueFamilyIndex = _queueFamily,
     };
-    checkResult(vkCreateCommandPool(device->_device, &poolCI, nullptr, &cmdPool));
+    checkResult(vkCreateCommandPool(device->GetHandle(), &poolCI, nullptr, &cmdPool));
 
     VkCommandBufferAllocateInfo cmdAI = {
         .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
@@ -29,14 +29,14 @@ TransferManager::TransferManager(const std::shared_ptr<Device> &device) : _devic
         .level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
         .commandBufferCount = 1,
     };
-    checkResult(vkAllocateCommandBuffers(device->_device, &cmdAI, &cmd));
+    checkResult(vkAllocateCommandBuffers(device->GetHandle(), &cmdAI, &cmd));
 
     transferFinished = std::make_shared<Semaphore>(device, transferFinishedValue);
 }
 void TransferManager::Release()
 {
-    vkFreeCommandBuffers(_device->_device, cmdPool, 1, &cmd);
-    vkDestroyCommandPool(_device->_device, cmdPool, nullptr);
+    vkFreeCommandBuffers(_device->GetHandle(), cmdPool, 1, &cmd);
+    vkDestroyCommandPool(_device->GetHandle(), cmdPool, nullptr);
     transferFinished->Release();
 }
 
@@ -67,7 +67,7 @@ void TransferManager::AddTransference(const std::shared_ptr<BufferResource> &src
             .newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
             .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
             .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
-            .image = dst->_image,
+            .image = dst->GetHandle(),
             .subresourceRange = range,
         };
 
@@ -89,7 +89,7 @@ void TransferManager::AddTransference(const std::shared_ptr<BufferResource> &src
             .imageExtent = {dst->_width, dst->_height, dst->_depth},
         };
 
-        vkCmdCopyBufferToImage(cmd, src->_buffer, dst->_image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copy);
+        vkCmdCopyBufferToImage(cmd, src->GetHandle(), dst->GetHandle(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copy);
 
         barrier.srcStageMask = VK_PIPELINE_STAGE_2_COPY_BIT;
         barrier.srcAccessMask = VK_ACCESS_2_MEMORY_WRITE_BIT;
@@ -125,7 +125,7 @@ void TransferManager::AddTransference(const std::shared_ptr<BufferResource> &src
             .size = src->_size,
         };
 
-        vkCmdCopyBuffer(cmd, src->_buffer, dst->_buffer, 1, &copy);
+        vkCmdCopyBuffer(cmd, src->GetHandle(), dst->GetHandle(), 1, &copy);
     }
     break;
 
@@ -154,7 +154,7 @@ void TransferManager::AddTransference(VkImageSubresourceLayers srcSubresource, V
             .extent = {src->_width, src->_height, src->_depth},
         };
 
-        vkCmdCopyImage(cmd, src->_image, src->_layout, dst->_image, dst->_layout, 1, &copy);
+        vkCmdCopyImage(cmd, src->GetHandle(), src->_layout, dst->GetHandle(), dst->_layout, 1, &copy);
     }
     break;
 
@@ -177,7 +177,7 @@ void TransferManager::TransferAll()
 
     VkSemaphoreSubmitInfo signalSI = {
         .sType = VK_STRUCTURE_TYPE_SEMAPHORE_SUBMIT_INFO,
-        .semaphore = transferFinished->_semaphore,
+        .semaphore = transferFinished->GetHandle(),
         .value = transferFinishedValue + 1,
         .stageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT,
         .deviceIndex = 0,

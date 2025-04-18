@@ -246,7 +246,7 @@ Device::Device(const std::shared_ptr<Instance> &instance, GPU &gpu, Features gpu
         .pEnabledFeatures = &features,
     };
 
-    checkResult(vkCreateDevice(_pdevice, &deviceCI, nullptr, &_device));
+    checkResult(vkCreateDevice(_pdevice, &deviceCI, nullptr, GetHandlePtr()));
 
     VmaVulkanFunctions vulkanFunctions = {
         .vkGetInstanceProcAddr = vkGetInstanceProcAddr,
@@ -257,7 +257,7 @@ Device::Device(const std::shared_ptr<Instance> &instance, GPU &gpu, Features gpu
 
     VmaAllocatorCreateInfo allocatorI = {
         .physicalDevice = _pdevice,
-        .device = _device,
+        .device = GetHandle(),
         .pVulkanFunctions = &vulkanFunctions,
         .instance = _instance->_instance,
         .vulkanApiVersion = VK_API_VERSION_1_3,
@@ -268,10 +268,10 @@ Device::Device(const std::shared_ptr<Instance> &instance, GPU &gpu, Features gpu
     _graphicsQueues.resize(graphicsQueuesCount);
     for (int i = 0; i < graphicsQueuesCount; i++)
     {
-        vkGetDeviceQueue(_device, gpu.graphicsFamily.value(), i, &(_graphicsQueues.at(i)));
+        vkGetDeviceQueue(GetHandle(), gpu.graphicsFamily.value(), i, &(_graphicsQueues.at(i)));
     }
-    vkGetDeviceQueue(_device, gpu.presentFamily.value(), 0, &_presentQueue);
-    vkGetDeviceQueue(_device, gpu.computeFamily.value(), 0, &_computeQueue);
+    vkGetDeviceQueue(GetHandle(), gpu.presentFamily.value(), 0, &_presentQueue);
+    vkGetDeviceQueue(GetHandle(), gpu.computeFamily.value(), 0, &_computeQueue);
 }
 
 Features Device::GetEnabledFeatures()
@@ -281,11 +281,11 @@ Features Device::GetEnabledFeatures()
 
 void Device::Wait()
 {
-    checkResult(vkDeviceWaitIdle(_device));
+    checkResult(vkDeviceWaitIdle(GetHandle()));
 }
 
 void Device::Release()
 {
     vmaDestroyAllocator(allocator);
-    vkDestroyDevice(_device, nullptr);
+    vkDestroyDevice(GetHandle(), nullptr);
 }

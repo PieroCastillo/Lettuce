@@ -186,7 +186,7 @@ namespace Lettuce::Foundation
             VkGeneratedCommandsInfoEXT genCommandsInfo = {
                 .sType = VK_STRUCTURE_TYPE_GENERATED_COMMANDS_INFO_EXT,
                 .shaderStages = shaderStages,
-                .indirectExecutionSet = indirectExecutionSet->_executionSet,
+                .indirectExecutionSet = indirectExecutionSet->GetHandle(),
                 .indirectCommandsLayout = indirectCommandsLayout->_commandsLayout,
                 .indirectAddress = indirectBuffer->GetAddress(),
                 .indirectAddressSize = indirectBuffer->_size,

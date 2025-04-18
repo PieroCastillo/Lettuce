@@ -17,7 +17,6 @@ namespace Lettuce::Core
     {
     public:
         std::shared_ptr<Device> _device;
-        VkSemaphore _semaphore;
 
         Semaphore(const std::shared_ptr<Device> &device, uint64_t initialValue);
         void Release();

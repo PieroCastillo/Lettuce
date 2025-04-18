@@ -31,14 +31,14 @@ BufferResource::BufferResource(const std::shared_ptr<Device> &device, std::vecto
         .usage = usage,
         .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
     };
-    checkResult(vkCreateBuffer(device->_device, &bufferCI, nullptr, &_buffer));
+    checkResult(vkCreateBuffer(device->GetHandle(), &bufferCI, nullptr, GetHandlePtr()));
     _size = size;
 
     VkBufferDeviceAddressInfo addressInfo = {
         .sType = VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO,
-        .buffer = _buffer,
+        .buffer = GetHandle(),
     };
-    address = (uint64_t)vkGetBufferDeviceAddress(_device->_device, &addressInfo);
+    address = (uint64_t)vkGetBufferDeviceAddress(_device->GetHandle(), &addressInfo);
 }
 
 BufferResource::BufferResource(const std::shared_ptr<Device> &device, uint32_t size, VkBufferUsageFlags2 usage) : _device(device)
@@ -64,12 +64,12 @@ BufferResource::BufferResource(const std::shared_ptr<Device> &device, uint32_t s
         bufferCI.usage = (VkBufferUsageFlags)usage;
     }
 
-    checkResult(vkCreateBuffer(device->_device, &bufferCI, nullptr, &_buffer));
+    checkResult(vkCreateBuffer(device->GetHandle(), &bufferCI, nullptr, GetHandlePtr()));
 }
 
 void BufferResource::Release()
 {
-    vkDestroyBuffer(_device->_device, _buffer, nullptr);
+    vkDestroyBuffer(_device->GetHandle(), GetHandle(), nullptr);
 }
 
 uint64_t BufferResource::GetAddress()
@@ -90,6 +90,6 @@ ResourceLinearity BufferResource::GetResourceLinearity()
 VkMemoryRequirements BufferResource::GetResourceMemoryRequirements()
 {
     VkMemoryRequirements memReqs;
-    vkGetBufferMemoryRequirements(_device->_device, _buffer, &memReqs);
+    vkGetBufferMemoryRequirements(_device->GetHandle(), GetHandle(), &memReqs);
     return memReqs;
 }

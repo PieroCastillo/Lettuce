@@ -17,7 +17,6 @@ namespace Lettuce::Core
     public:
         std::shared_ptr<Device> _device;
         std::shared_ptr<ImageResource> _image;
-        VkImageView _imageView;
         VkImageViewType _viewType;
         VkImageSubresourceRange _subresourceRange;
 

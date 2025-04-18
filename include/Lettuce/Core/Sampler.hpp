@@ -15,7 +15,6 @@ namespace Lettuce::Core
     {
     public:
         std::shared_ptr<Device> _device;
-        VkSampler _sampler;
 
         Sampler(const std::shared_ptr<Device> &device,
                    SamplerAddressMode addressModeU = SamplerAddressMode::Repeat,

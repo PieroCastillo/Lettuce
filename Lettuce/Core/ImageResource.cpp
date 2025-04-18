@@ -39,12 +39,12 @@ ImageResource::ImageResource(const std::shared_ptr<Device> &device, uint32_t wid
         .initialLayout = initialLayout,
     };
 
-    checkResult(vkCreateImage(_device->_device, &imageCI, nullptr, &_image));
+    checkResult(vkCreateImage(_device->GetHandle(), &imageCI, nullptr, GetHandlePtr()));
 }
 
 void ImageResource::Release()
 {
-    vkDestroyImage(_device->_device, _image, nullptr);
+    vkDestroyImage(_device->GetHandle(), GetHandle(), nullptr);
 }
 
 ResourceType ImageResource::GetResourceType()
@@ -58,6 +58,6 @@ ResourceLinearity ImageResource::GetResourceLinearity()
 VkMemoryRequirements ImageResource::GetResourceMemoryRequirements()
 {
     VkMemoryRequirements memReqs;
-    vkGetImageMemoryRequirements(_device->_device, _image, &memReqs);
+    vkGetImageMemoryRequirements(_device->GetHandle(), GetHandle(), &memReqs);
     return memReqs;
 }

@@ -27,7 +27,6 @@ namespace Lettuce::Core
 
     public:
         VkShaderStageFlags _shaderStages;
-        VkIndirectCommandsLayoutEXT _commandsLayout;
         std::shared_ptr<Device> _device;
         std::shared_ptr<PipelineLayout> _pipelineLayout;
 

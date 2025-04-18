@@ -30,7 +30,6 @@ namespace Lettuce::Core
 
     public:
         std::shared_ptr<Device> _device;
-        VkSwapchainKHR _swapchain = VK_NULL_HANDLE;
         std::vector<VkImage> swapChainImages;
         std::vector<VkImageView> swapChainImageViews;
         uint32_t index;

@@ -20,7 +20,7 @@ using namespace Lettuce::Core;
 
 void ResourcePool::Map(uint32_t offset, uint32_t size)
 {
-    vkMapMemory(_device->_device, _memory, offset, size, 0, &temp);
+    vkMapMemory(_device->GetHandle(), _memory, offset, size, 0, &temp);
 }
 void ResourcePool::SetData(void *data, uint32_t offset, uint32_t size)
 {
@@ -28,7 +28,7 @@ void ResourcePool::SetData(void *data, uint32_t offset, uint32_t size)
 }
 void ResourcePool::UnMap()
 {
-    vkUnmapMemory(_device->_device, _memory);
+    vkUnmapMemory(_device->GetHandle(), _memory);
 }
 
 /*
@@ -166,7 +166,7 @@ void ResourcePool::Bind(const std::shared_ptr<Device> &device, VkMemoryPropertyF
 
     poolSize = measuredSize; // set size for read only
 
-    checkResult(vkAllocateMemory(device->_device, &memoryAI, nullptr, &_memory));
+    checkResult(vkAllocateMemory(device->GetHandle(), &memoryAI, nullptr, &_memory));
 
     // create bind infos
     int j = 0;
@@ -179,7 +179,7 @@ void ResourcePool::Bind(const std::shared_ptr<Device> &device, VkMemoryPropertyF
         {
             VkBindBufferMemoryInfo bindBufferI = {
                 .sType = VK_STRUCTURE_TYPE_BIND_BUFFER_MEMORY_INFO,
-                .buffer = std::dynamic_pointer_cast<BufferResource>(resourcePtr)->_buffer,
+                .buffer = std::dynamic_pointer_cast<BufferResource>(resourcePtr)->GetHandle(),
                 .memory = _memory,
                 .memoryOffset = offsets[j],
             };
@@ -190,7 +190,7 @@ void ResourcePool::Bind(const std::shared_ptr<Device> &device, VkMemoryPropertyF
         {
             VkBindImageMemoryInfo bindImageI = {
                 .sType = VK_STRUCTURE_TYPE_BIND_IMAGE_MEMORY_INFO,
-                .image = std::dynamic_pointer_cast<ImageResource>(resourcePtr)->_image,
+                .image = std::dynamic_pointer_cast<ImageResource>(resourcePtr)->GetHandle(),
                 .memory = _memory,
                 .memoryOffset = offsets[j],
             };
@@ -207,11 +207,11 @@ void ResourcePool::Bind(const std::shared_ptr<Device> &device, VkMemoryPropertyF
     // bind resources
     if (bufferBindInfos.size() > 0)
     {
-        checkResult(vkBindBufferMemory2(device->_device, (uint32_t)bufferBindInfos.size(), bufferBindInfos.data()));
+        checkResult(vkBindBufferMemory2(device->GetHandle(), (uint32_t)bufferBindInfos.size(), bufferBindInfos.data()));
     }
     if (imageBindInfos.size() > 0)
     {
-        checkResult(vkBindImageMemory2(device->_device, (uint32_t)imageBindInfos.size(), imageBindInfos.data()));
+        checkResult(vkBindImageMemory2(device->GetHandle(), (uint32_t)imageBindInfos.size(), imageBindInfos.data()));
     }
 }
 
@@ -222,5 +222,5 @@ void ResourcePool::AddResource(const std::shared_ptr<IResource> &resourcePtr)
 
 void ResourcePool::Release()
 {
-    vkFreeMemory(_device->_device, _memory, nullptr);
+    vkFreeMemory(_device->GetHandle(), _memory, nullptr);
 }

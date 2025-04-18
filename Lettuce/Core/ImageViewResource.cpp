@@ -26,7 +26,7 @@ ImageViewResource::ImageViewResource(const std::shared_ptr<Device> &device, cons
 
     VkImageViewCreateInfo imageViewCI = {
         .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
-        .image = image->_image,
+        .image = image->GetHandle(),
         .viewType = viewType,
         // and arrays
         .format = image->_format,
@@ -39,10 +39,10 @@ ImageViewResource::ImageViewResource(const std::shared_ptr<Device> &device, cons
             },
         .subresourceRange = _subresourceRange,
     };
-    checkResult(vkCreateImageView(_device->_device, &imageViewCI, nullptr, &_imageView));
+    checkResult(vkCreateImageView(_device->GetHandle(), &imageViewCI, nullptr, GetHandlePtr()));
 }
 
 void ImageViewResource::Release()
 {
-    vkDestroyImageView(_device->_device, _imageView, nullptr);
+    vkDestroyImageView(_device->GetHandle(), GetHandle(), nullptr);
 }

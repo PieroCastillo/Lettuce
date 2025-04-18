@@ -14,5 +14,5 @@ using namespace Lettuce::Core;
 
 void ShaderModule::Release()
 {
-    vkDestroyShaderModule(_device->_device, _shaderModule, nullptr);
+    vkDestroyShaderModule(_device->GetHandle(), GetHandle(), nullptr);
 }

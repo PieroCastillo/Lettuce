@@ -33,7 +33,7 @@ void IndirectExecutionSet::Assemble(const std::vector<std::shared_ptr<Shader>> &
 
     for (auto &shaderPtr : initialShaders)
     {
-        shaders.push_back(shaderPtr->_shader);
+        shaders.push_back(shaderPtr->GetHandle());
     }
 
     VkIndirectExecutionSetShaderInfoEXT shadersInfo = {
@@ -54,7 +54,7 @@ void IndirectExecutionSet::Assemble(const std::vector<std::shared_ptr<Shader>> &
         .type = VK_INDIRECT_EXECUTION_SET_INFO_TYPE_SHADER_OBJECTS_EXT,
         .info = info,
     };
-    checkResult(vkCreateIndirectExecutionSetEXT(_device->_device, &executionSetCI, nullptr, &_executionSet));
+    checkResult(vkCreateIndirectExecutionSetEXT(_device->GetHandle(), &executionSetCI, nullptr, GetHandlePtr()));
 }
 
 void IndirectExecutionSet::Update(const std::vector<std::shared_ptr<Shader>> &shaders)
@@ -67,29 +67,29 @@ void IndirectExecutionSet::Update(const std::vector<std::shared_ptr<Shader>> &sh
         shaderWrites[i] ={
             .sType = VK_STRUCTURE_TYPE_WRITE_INDIRECT_EXECUTION_SET_SHADER_EXT,
             .index = (uint32_t)i,
-            .shader = shaders[i]->_shader,
+            .shader = shaders[i]->GetHandle(),
         };
     }
-    vkUpdateIndirectExecutionSetShaderEXT(_device->_device, _executionSet, (uint32_t)shaderWrites.size(), shaderWrites.data());
+    vkUpdateIndirectExecutionSetShaderEXT(_device->GetHandle(), GetHandle(), (uint32_t)shaderWrites.size(), shaderWrites.data());
 }
 
 void IndirectExecutionSet::Release()
 {
-    vkDestroyIndirectExecutionSetEXT(_device->_device, _executionSet, nullptr);
+    vkDestroyIndirectExecutionSetEXT(_device->GetHandle(), GetHandle(), nullptr);
 }
 
 VkMemoryRequirements IndirectExecutionSet::GetRequirements(const std::shared_ptr<IndirectCommandsLayout>& layout, uint32_t maxSequenceCount, uint32_t maxDrawCount)
 {
     VkGeneratedCommandsMemoryRequirementsInfoEXT info = {
         .sType = VK_STRUCTURE_TYPE_GENERATED_COMMANDS_MEMORY_REQUIREMENTS_INFO_EXT,
-        .indirectExecutionSet = _executionSet,
-        .indirectCommandsLayout = layout->_commandsLayout,
+        .indirectExecutionSet = GetHandle(),
+        .indirectCommandsLayout = layout->GetHandle(),
         .maxSequenceCount = maxSequenceCount,
         .maxDrawCount = maxDrawCount,
     };
     VkMemoryRequirements2 reqs = {
         .sType = VK_STRUCTURE_TYPE_MEMORY_REQUIREMENTS_2,
     };
-    vkGetGeneratedCommandsMemoryRequirementsEXT(_device->_device, &info, &reqs);
+    vkGetGeneratedCommandsMemoryRequirementsEXT(_device->GetHandle(), &info, &reqs);
     return reqs.memoryRequirements;
 }

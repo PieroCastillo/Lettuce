@@ -114,7 +114,6 @@ namespace Lettuce::Core
     public:
         std::shared_ptr<Instance> _instance;
         VkPhysicalDevice _pdevice;
-        VkDevice _device;
         std::vector<VkQueue> _graphicsQueues;
         VkQueue _presentQueue;
         VkQueue _computeQueue;

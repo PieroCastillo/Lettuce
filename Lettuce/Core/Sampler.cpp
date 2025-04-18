@@ -32,10 +32,10 @@ Sampler::Sampler(const std::shared_ptr<Device> &device,
         .unnormalizedCoordinates = VK_FALSE,
     };
 
-    checkResult(vkCreateSampler(_device->_device, &samplerCI, nullptr, &_sampler));
+    checkResult(vkCreateSampler(_device->GetHandle(), &samplerCI, nullptr, GetHandlePtr()));
 }
 
 void Sampler::Release()
 {
-    vkDestroySampler(_device->_device, _sampler, nullptr);
+    vkDestroySampler(_device->GetHandle(), GetHandle(), nullptr);
 }

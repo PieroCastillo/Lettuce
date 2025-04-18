@@ -143,7 +143,7 @@ void buildCmds()
         .flags = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT | VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT,
         .queueFamilyIndex = device->_gpu.graphicsFamily.value(),
     };
-    checkResult(vkCreateCommandPool(device->_device, &poolCI, nullptr, &pool));
+    checkResult(vkCreateCommandPool(device->GetHandle(), &poolCI, nullptr, &pool));
 
     VkCommandBufferAllocateInfo cmdAI = {
         .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
@@ -151,7 +151,7 @@ void buildCmds()
         .level = VkCommandBufferLevel::VK_COMMAND_BUFFER_LEVEL_PRIMARY,
         .commandBufferCount = 1,
     };
-    checkResult(vkAllocateCommandBuffers(device->_device, &cmdAI, &cmd));
+    checkResult(vkAllocateCommandBuffers(device->GetHandle(), &cmdAI, &cmd));
 }
 
 void updateData()
@@ -198,7 +198,7 @@ void draw()
 
     VkSemaphoreSubmitInfo signalSI = {
         .sType = VK_STRUCTURE_TYPE_SEMAPHORE_SUBMIT_INFO,
-        .semaphore = renderFinished._semaphore,
+        .semaphore = renderFinished.GetHandle(),
         .value = renderFinishedValue + 1,
         .stageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT,
         .deviceIndex = 0,
@@ -224,8 +224,8 @@ void draw()
 
 void endLettuce()
 {
-    vkFreeCommandBuffers(device->_device, pool, 1, &cmd);
-    vkDestroyCommandPool(device->_device, pool, nullptr);
+    vkFreeCommandBuffers(device->GetHandle(), pool, 1, &cmd);
+    vkDestroyCommandPool(device->GetHandle(), pool, nullptr);
 
     renderFinished.Destroy();
     // renderpass.DestroyFramebuffers();

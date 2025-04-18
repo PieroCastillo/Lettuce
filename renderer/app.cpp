@@ -67,7 +67,7 @@ public:
             .flags = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT | VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT,
             .queueFamilyIndex = device->_gpu.graphicsFamily.value(),
         };
-        checkResult(vkCreateCommandPool(device->_device, &poolCI, nullptr, &pool));
+        checkResult(vkCreateCommandPool(device->GetHandle(), &poolCI, nullptr, &pool));
 
         VkCommandBufferAllocateInfo cmdAI = {
             .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
@@ -75,7 +75,7 @@ public:
             .level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
             .commandBufferCount = 1,
         };
-        checkResult(vkAllocateCommandBuffers(device->_device, &cmdAI, &cmd));
+        checkResult(vkAllocateCommandBuffers(device->GetHandle(), &cmdAI, &cmd));
     }
 
     void recordCmds()
@@ -201,8 +201,8 @@ public:
 
     void destroyObjects()
     {
-        vkFreeCommandBuffers(device->_device, pool, 1, &cmd);
-        vkDestroyCommandPool(device->_device, pool, nullptr);
+        vkFreeCommandBuffers(device->GetHandle(), pool, 1, &cmd);
+        vkDestroyCommandPool(device->GetHandle(), pool, nullptr);
     }
 };
 

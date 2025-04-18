@@ -75,7 +75,7 @@ void Shader::Assemble(const VkShaderStageFlagBits &stage,
         info.pData = data;
         shaderCI.pSpecializationInfo = &info;
     }
-    checkResult(vkCreateShadersEXT(_device->_device, 1, &shaderCI, nullptr, &_shader));
+    checkResult(vkCreateShadersEXT(_device->GetHandle(), 1, &shaderCI, nullptr, GetHandlePtr()));
     if (entries.size() > 0)
     {
         free(data);
@@ -84,5 +84,5 @@ void Shader::Assemble(const VkShaderStageFlagBits &stage,
 
 void Shader::Release()
 {
-    vkDestroyShaderEXT(_device->_device, _shader, nullptr);
+    vkDestroyShaderEXT(_device->GetHandle(), GetHandle(), nullptr);
 }

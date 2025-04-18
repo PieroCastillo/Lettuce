@@ -22,7 +22,6 @@ namespace Lettuce::Core
         uint32_t currentOffset = 0;
 
     public:
-        VkShaderEXT _shader;
         std::shared_ptr<Device> _device;
         std::shared_ptr<PipelineLayout> _layout;
 

@@ -85,7 +85,6 @@ namespace Lettuce::Core
 
         std::shared_ptr<Device> _device;
         std::shared_ptr<PipelineLayout> _layout;
-        VkPipeline _pipeline;
         std::vector<VkPipelineShaderStageCreateInfo> stages;
         std::vector<VkVertexInputBindingDescription> vertexInputBindings;
         std::vector<VkVertexInputAttributeDescription> vertexInputAttributes;
