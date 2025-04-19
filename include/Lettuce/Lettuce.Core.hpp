@@ -27,6 +27,8 @@
 
 // other Lettuce objects
 #include "Core/Descriptors.hpp"
+#include "Core/DescriptorLayoutGroup.hpp"
+#include "Core/DescriptorSetGroup.hpp"
 #include "Core/Device.hpp"
 #include "Core/GPU.hpp"
 #include "Core/Instance.hpp"

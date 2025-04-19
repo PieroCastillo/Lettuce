@@ -271,7 +271,8 @@ void main()
         releaseQueue.Push(linesLayout);
         releaseQueue.Push(linespipeline);
 
-        camera = Lettuce::X3D::Camera3D::Camera3D(width, height);
+        camera.SetProjection(width, height);// = Lettuce::X3D::Camera3D::Camera3D(width, height);
+        camera.Position = glm::vec3(20, 20, 30);
         beforeResize();
     }
     void buildCmds()
@@ -297,10 +298,10 @@ void main()
     {
         dataPush.color = glm::vec3(1.0f, 0.5f, 0.31f);
         // camera.SetPosition(glm::vec3(20, 20, 30));
-        camera.Update();
-        dataUBO.projectionView = camera.GetProjectionView();
+        // camera.Update();
+        dataUBO.projectionView = camera.GetProjectionViewMatrix();
         dataUBO.model = glm::mat4(1.0f);
-        dataUBO.cameraPos = camera.eye;
+        dataUBO.cameraPos = camera.Position;// .eye;
         // dataUBO.cameraPos = glm::vec3(30);
 
         coherentResources->SetData(&dataUBO, 0, sizeof(DataUBO));
@@ -470,8 +471,8 @@ void main()
 
     void beforeResize()
     {
-        camera = Lettuce::X3D::Camera3D::Camera3D(width, height);
-        camera.Reset(glm::vec3(20, 20, 30), glm::vec3(0.0f), glm::vec3(0.57735026919)); // 1 / sqrt(3)
+        camera.SetProjection(width, height);// = Lettuce::X3D::Camera3D::Camera3D(width, height);
+        // camera.Reset(glm::vec3(20, 20, 30), glm::vec3(0.0f), glm::vec3(0.57735026919)); // 1 / sqrt(3)
     }
 
     void destroyObjects()

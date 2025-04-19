@@ -42,6 +42,11 @@ public:
         return handles;
     }
 
+    void AddHandle(T &handle)
+    {
+        handles.push_back(std::move(handle));
+    }
+
     T *GetHandlesPtrs()
     {
         return handles.data();

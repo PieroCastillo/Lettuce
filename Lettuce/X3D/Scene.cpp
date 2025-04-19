@@ -74,21 +74,60 @@ void Lettuce::X3D::Scene::loadMesh(fastgltf::Asset &asset, fastgltf::Mesh &meshD
     meshes.push_back(mesh);
 }
 
+void Lettuce::X3D::Scene::transferGeometry(void *bufferMemory, uint32_t bufferMemorySize)
+{
+    // create tmp pool    / geometry pool
+
+    auto tmpPool = std::make_shared<Lettuce::Core::ResourcePool>();
+    geometryBufferPool = std::make_shared<Lettuce::Core::ResourcePool>();
+    transfer = std::make_shared<TransferManager>(device);
+
+    // create tmp buffer / geometry buffer
+
+    auto tmpBuffer = std::make_shared<BufferResource>(device, bufferMemorySize, VK_BUFFER_USAGE_2_TRANSFER_SRC_BIT);
+    geometryBuffer = std::make_shared<BufferResource>(device, bufferMemorySize, VK_BUFFER_USAGE_2_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_2_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_2_TRANSFER_DST_BIT);
+
+    // add buffers to their respectives pools
+    tmpPool->AddResource(tmpBuffer);
+    geometryBufferPool->AddResource(geometryBuffer);
+
+    // bind resources
+    tmpPool->Bind(device, VK_MEMORY_PROPERTY_HOST_CACHED_BIT);             // create pool in host memory
+    geometryBufferPool->Bind(device, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT); // create pool in device memory
+
+    // copy data
+
+    tmpPool->Map(0, bufferMemorySize);
+    tmpPool->SetData((void *)bufferMemory, 0, bufferMemorySize);
+    tmpPool->UnMap();
+    free((void *)bufferMemory); // WARNING : here we are deleting memory
+
+    // transfer
+    transfer->Prepare();
+    transfer->AddTransference(tmpBuffer, geometryBuffer, TransferType::HostToDevice);
+    transfer->TransferAll();
+
+    tmpBuffer->Release();
+    tmpPool->Release();
+}
+
 void Lettuce::X3D::Scene::LoadFromFile(const std::shared_ptr<Lettuce::Core::Device> &device, std::filesystem::path path)
 {
-    _device = device;
+    this->device = device;
     // loads gltf file
     auto data = fastgltf::GltfDataBuffer::FromPath(path);
     if (data.error() != fastgltf::Error::None)
     {
         return;
     }
+    std::cout << "data obtained successfully" << std::endl;
     fastgltf::Parser parser;
-    auto asset = parser.loadGltf(data.get(), path.parent_path(), fastgltf::Options::None);
+    auto asset = parser.loadGltf(data.get(), path.parent_path(), fastgltf::Options::GenerateMeshIndices);
     if (auto error = asset.error(); error != fastgltf::Error::None)
     {
         return;
     }
+    std::cout << "asset loaded successfully" << std::endl;
 
     // load all meshes
     // alloc all in one big pool
@@ -130,6 +169,7 @@ void Lettuce::X3D::Scene::LoadFromFile(const std::shared_ptr<Lettuce::Core::Devi
 
             i++;
         }
+        std::cout << "meshes geometries loaded successfully" << std::endl;
 
         // set index offsets
         uint32_t indexBufferOffset = vertexBufferSize;
@@ -142,6 +182,8 @@ void Lettuce::X3D::Scene::LoadFromFile(const std::shared_ptr<Lettuce::Core::Devi
 
             j++;
         }
+
+        std::cout << "meshes loaded successfully" << std::endl;
 
         // release memory used by mesh vector
         meshes.clear();
@@ -173,39 +215,7 @@ void Lettuce::X3D::Scene::LoadFromFile(const std::shared_ptr<Lettuce::Core::Devi
             bufferMemoryIdx += mesh.indices.size();
         }
 
-        // create tmp pool    / geometry pool
-
-        auto tmpPool = std::make_shared<Lettuce::Core::ResourcePool>();
-        geometryBufferPool = std::make_shared<Lettuce::Core::ResourcePool>();
-        transfer = std::make_shared<TransferManager>(device);
-
-        // create tmp buffer / geometry buffer
-
-        auto tmpBuffer = std::make_shared<BufferResource>(device, bufferMemorySize, VK_BUFFER_USAGE_2_TRANSFER_SRC_BIT);
-        geometryBuffer = std::make_shared<BufferResource>(device, bufferMemorySize, VK_BUFFER_USAGE_2_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_2_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_2_TRANSFER_DST_BIT);
-
-        // add buffers to their respectives pools
-        tmpPool->AddResource(tmpBuffer);
-        geometryBufferPool->AddResource(geometryBuffer);
-
-        // bind resources
-        tmpPool->Bind(device, VK_MEMORY_PROPERTY_HOST_CACHED_BIT);             // create pool in host memory
-        geometryBufferPool->Bind(device, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT); // create pool in device memory
-
-        // copy data
-
-        tmpPool->Map(0, bufferMemorySize);
-        tmpPool->SetData((void *)bufferMemory, 0, bufferMemorySize);
-        tmpPool->UnMap();
-        free((void *)bufferMemory); // WARNING : here we are deleting memory
-
-        // transfer
-        transfer->Prepare();
-        transfer->AddTransference(tmpBuffer, geometryBuffer, TransferType::HostToDevice);
-        transfer->TransferAll();
-
-        tmpBuffer->Release();
-        tmpPool->Release();
+        transferGeometry((void *)bufferMemory, bufferMemorySize);
     }
 
     for (auto &img : asset->images)
@@ -220,32 +230,51 @@ void Lettuce::X3D::Scene::LoadFromFile(const std::shared_ptr<Lettuce::Core::Devi
     {
     }
 
-    // TODO: add node system
     for (auto &node : asset->nodes)
     {
-        std::vector<uint32_t> children;
+        std::vector<int> children;
         children.resize(node.children.size());
         for (int i = 0; i < node.children.size(); i++)
         {
             children[i] = node.children[i];
         }
-        // nodes.push_back(Node {
-        //     children,
-        //     node.meshIndex.value(),
-        //     node.transform,
-        // });
+
+        glm::mat4 transform = glm::identity<glm::mat4>();
+
+        if (std::holds_alternative<fastgltf::math::fmat4x4>(node.transform))
+        {
+            auto m = std::get<1>(node.transform);
+            transform = glm::mat4(m[0][0], m[0][1], m[0][2], m[0][3],
+                                  m[1][0], m[1][1], m[1][2], m[1][3],
+                                  m[2][0], m[2][1], m[2][2], m[2][3],
+                                  m[3][0], m[3][1], m[3][2], m[3][3]);
+        }
+
+        nodes.emplace_back(children, (int)node.meshIndex.value(), std::move(transform));
+    }
+
+    auto defScene = asset->scenes[asset->defaultScene.value()];
+    for (auto &idx : defScene.nodeIndices)
+    {
+        nodesIndices.push_back(idx);
     }
 }
 
 void Lettuce::X3D::Scene::DrawIndexed(VkCommandBuffer cmd)
 {
-    // NOPE: this should be made by scene nodes
-    // for (auto &mesh : meshInfos)
-    // {
-    //     vkCmdBindVertexBuffers2(cmd, 0, 1, &(geometryBuffer->_buffer), (VkDeviceSize *)&(mesh.vertexBufferOffset), (VkDeviceSize *)&(mesh.vertexBufferSize), nullptr);
-    //     vkCmdBindIndexBuffer(cmd, geometryBuffer->_buffer, (VkDeviceSize)mesh.indexBufferOffset, VK_INDEX_TYPE_UINT32);
-    //     vkCmdDrawIndexed(cmd, mesh.vertexCount, 1, 0, 0, 0);
-    // }
+    std::vector<int> instancedNodeIndices(nodesIndices);
+
+    for (auto &idx : instancedNodeIndices)
+    {
+        // get mesh
+        auto mesh = meshInfos[nodes[idx].meshIndex];
+        // draw indexed
+        vkCmdBindVertexBuffers2(cmd, 0, 1, geometryBuffer->GetHandlePtr(), (VkDeviceSize *)&(mesh.vertexBufferOffset), (VkDeviceSize *)&(mesh.vertexBufferSize), nullptr);
+        vkCmdBindIndexBuffer(cmd, geometryBuffer->GetHandle(), (VkDeviceSize)mesh.indexBufferOffset, VK_INDEX_TYPE_UINT32);
+        vkCmdDrawIndexed(cmd, mesh.vertexCount, 1, 0, 0, 0);
+        // copy node indices
+        instancedNodeIndices.insert(instancedNodeIndices.end(), nodes[idx].children.begin(), nodes[idx].children.end());
+    }
 }
 
 void Lettuce::X3D::Scene::Release()

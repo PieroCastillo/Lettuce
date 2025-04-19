@@ -14,6 +14,9 @@
 #include "Lettuce/Lettuce.Core.hpp"
 #include "Lettuce/Lettuce.X3D.hpp"
 
+using namespace Lettuce::Core;
+using namespace Lettuce::X3D;
+
 /// @brief this is a simple class to implement Lettuce samples quickly
 class LettuceSampleApp
 {
@@ -128,54 +131,60 @@ protected:
         }
     }
 
+    const double fixedDt = 0.01;
     void onKeyPress(int key, int action, int mods)
     {
-        float su, sd, sdt; // sensibility of up, direction, direction orthogonal vectors
-        su = 0.05;
-        sd = 0.05;
-        sdt = 0.05;
-        std::cout << std::fixed << std::setprecision(6);
-        auto distance = camera.center - camera.eye;
-        auto dd = -sd * distance; // the minus is for thew reflect effect
-        auto ddt = -sdt * (glm::cross(camera.up, distance));
-        auto du = su * camera.up;
+        // float su, sd, sdt; // sensibility of up, direction, direction orthogonal vectors
+        // su = 0.05;
+        // sd = 0.05;
+        // sdt = 0.05;
+        // std::cout << std::fixed << std::setprecision(6);
+        // auto distance = camera.center - camera.eye;
+        // auto dd = -sd * distance; // the minus is for thew reflect effect
+        // auto ddt = -sdt * (glm::cross(camera.up, distance));
+        // auto du = su * camera.up;
         // forward
         if (key == GLFW_KEY_UP && (action == GLFW_PRESS || action == GLFW_REPEAT))
         {
-            camera.center += dd;
-            camera.eye += dd;
+            // camera.center += dd;
+            // camera.eye += dd;
+            
+            camera.ProcessKeyboard(CameraMovement::Forward, fixedDt);
         }
         // backward
         else if (key == GLFW_KEY_DOWN && (action == GLFW_PRESS || action == GLFW_REPEAT))
         {
-            camera.center -= dd;
-            camera.eye -= dd;
+            // camera.center -= dd;
+            // camera.eye -= dd;
+            camera.ProcessKeyboard(CameraMovement::Backward, fixedDt);
         }
         // left
         else if (key == GLFW_KEY_LEFT && (action == GLFW_PRESS || action == GLFW_REPEAT))
         {
-            camera.center += ddt;
-            camera.eye += ddt;
+            // camera.center -= ddt;
+            // camera.eye -= ddt;
+            camera.ProcessKeyboard(CameraMovement::Left, fixedDt);
         }
         // right
         else if (key == GLFW_KEY_RIGHT && (action == GLFW_PRESS || action == GLFW_REPEAT))
         {
-            camera.center -= ddt;
-            camera.eye -= ddt;
+            // camera.center += ddt;
+            // camera.eye += ddt;
+            camera.ProcessKeyboard(CameraMovement::Right, fixedDt);
         }
         // up
         else if (key == GLFW_KEY_R && (action == GLFW_PRESS || action == GLFW_REPEAT))
         {
-            camera.center += du;
-            camera.eye += du;
+            // camera.center += du;
+            // camera.eye += du;
         }
         // down
         else if (key == GLFW_KEY_F && (action == GLFW_PRESS || action == GLFW_REPEAT))
         {
-            camera.center -= du;
-            camera.eye -= du;
+            // camera.center -= du;
+            // camera.eye -= du;
         }
-        camera.Update();
+        // camera.Update();
 
         // if (action == GLFW_REPEAT)
         //     std::cout << "camera pos: x : " << cameraPosition.x << " y : " << cameraPosition.y << " z : " << cameraPosition.z << std::endl;
@@ -201,14 +210,19 @@ protected:
         }
     }
 
+    // double yaw = 0;
+    // double pitch = 0;
+    // double roll = 0;
+
     virtual void onCursorMotion(double xpos, double ypos)
     {
         double sx = 0.0001f, sy = 0.0001f; /*sensiblities*/
         if (pressed)
         {
             double dx = xl - xpos;
-            double dy = yl - ypos;
-            camera.Rotate(sx * dx, sy * dy);
+            double dy = - yl + ypos;
+            // camera.Rotate(sx * dx, sy * dy);
+            camera.ProcessMouseMovement(dx,dy);
         }
     }
     bool pressed = false;
@@ -220,6 +234,7 @@ protected:
         {
             pressed = true;
             glfwGetCursorPos(window, &xl, &yl);
+            // camera.ProcessMouseScroll()
         }
         else
         {

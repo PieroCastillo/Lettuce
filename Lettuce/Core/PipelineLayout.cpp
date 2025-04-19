@@ -52,7 +52,7 @@ void PipelineLayout::Assemble()
         pipelineLayoutCI.pushConstantRangeCount = (uint32_t)pushConstants.size();
     }
 
-    if (_descriptors && _descriptors->_pool != VK_NULL_HANDLE && _descriptors->_layouts.size() > 0)
+    if (_descriptors && (_descriptors->_pool != VK_NULL_HANDLE) && _descriptors->_layouts.size() > 0)
     {
         pipelineLayoutCI.pSetLayouts = _descriptors->_layouts.data();
         pipelineLayoutCI.setLayoutCount = (uint32_t)_descriptors->_layouts.size();

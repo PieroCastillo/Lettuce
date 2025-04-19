@@ -21,16 +21,109 @@ public:
     /* sync objects*/
     std::shared_ptr<Lettuce::Core::Semaphore> renderFinished;
 
+    std::shared_ptr<Lettuce::Core::Descriptors> descriptor;
+    std::shared_ptr<Lettuce::Core::PipelineLayout> layout;
+    std::shared_ptr<Lettuce::Core::GraphicsPipeline> pipeline;
+
+    std::shared_ptr<Lettuce::Core::ShaderModule> fragmentShader;
+    std::shared_ptr<Lettuce::Core::ShaderModule> vertexShader;
+
+    std::shared_ptr<Scene> scene;
+
     VkCommandPool pool;
     VkCommandBuffer cmd;
+
+    struct DataPush
+    {
+        glm::mat4 projectionView;
+        glm::mat4 model;
+        glm::vec3 cameraPos;
+    };
+
+    std::string vertexShaderText = R"(#version 450
+    layout (location = 0) in vec3 pos;
+    layout (location = 1) in vec3 normal;
+    layout (location = 2) in vec4 tangent;
+    // layout (location = 0) out vec3 norm;
+    
+    layout (push_constant) uniform DataPush {
+        mat4 projectionView;
+        mat4 model;
+        vec3 cameraPos;
+    } data;
+    
+    void main()
+    {   
+        // vec3 norm = mat3(transpose(inverse(data.model))) * normal;
+        gl_Position = data.projectionView * data.model * vec4(pos,1.0);
+    })";
+
+    std::string fragmentShaderText = R"(#version 450
+    // layout (push_constant) uniform pushData {
+    //     vec3 color;
+    // } data;
+    // layout (location = 0) in vec3 norm;
+
+    layout (location = 0) out vec4 outColor;
+    
+    void main()
+    {
+        outColor = vec4(1.0);
+    })";
+
+    void loadScene()
+    {
+        auto gltfFile = "assets/Fox.gtlf";
+        scene->LoadFromFile(device, gltfFile);
+    }
 
     void createObjects()
     {
         renderFinished = std::make_shared<Lettuce::Core::Semaphore>(device, 0);
         releaseQueue.Push(renderFinished);
 
-        buildCmds();
+        std::cout << "scene is not loaded yet" << std::endl;
+        loadScene();
+        std::cout << "scene loaded" << std::endl;
 
+        layout = std::make_shared<PipelineLayout>(device);
+        layout->AddPushConstant<DataPush>(VK_SHADER_STAGE_VERTEX_BIT); // pass transform to vertex stage
+        layout->Assemble();
+
+        std::cout << "layout built" << std::endl;
+
+        fragmentShader = std::make_shared<ShaderModule>(device, compiler, fragmentShaderText, "main", "frag.glsl", PipelineStage::Fragment, true);
+        vertexShader = std::make_shared<ShaderModule>(device, compiler, vertexShaderText, "main", "vert.glsl", PipelineStage::Vertex, true);
+
+        std::cout << "shaders built" << std::endl;
+
+        pipeline = std::make_shared<GraphicsPipeline>(device, layout);
+        pipeline->AddVertexBindingDescription<Vertex>(0);                                     // binding = 0
+        pipeline->AddVertexAttribute(0, 0, 0, VK_FORMAT_R32G32B32_SFLOAT);                    // layout(location = 0) in vec3 pos;
+        pipeline->AddVertexAttribute(0, 1, sizeof(glm::vec3), VK_FORMAT_R32G32B32_SFLOAT);    // layout(location = 1) in vec3 normal;
+        pipeline->AddVertexAttribute(0, 2, sizeof(glm::vec3), VK_FORMAT_R32G32B32A32_SFLOAT); // layout(location = 2) in vec4 tangent;
+        pipeline->AddShaderStage(fragmentShader);
+        pipeline->AddShaderStage(vertexShader);
+        pipeline->Assemble({swapchain->imageFormat}, VK_FORMAT_UNDEFINED, VK_FORMAT_UNDEFINED,
+                           {.rasterization = {
+                                .frontFace = VK_FRONT_FACE_CLOCKWISE,
+                            },
+                            .colorBlend = {
+                                .attachments = {
+                                    {
+                                        .colorWriteMask = VK_COMPONENT_SWIZZLE_R | VK_COMPONENT_SWIZZLE_G | VK_COMPONENT_SWIZZLE_B | VK_COMPONENT_SWIZZLE_A,
+                                    },
+                                },
+                            }});
+        std::cout << "pipeline built" << std::endl;
+        fragmentShader->Release();
+        vertexShader->Release();
+
+        releaseQueue.Push(scene);
+        releaseQueue.Push(layout);
+        releaseQueue.Push(pipeline);
+
+        buildCmds();
         beforeResize();
     }
 
@@ -173,7 +266,6 @@ public:
 
         renderFinishedValue++;
     }
-
 
     void destroyObjects()
     {

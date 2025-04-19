@@ -58,6 +58,28 @@ for _, name in ipairs(samples) do
         add_packages("volk", "glfw", "glm", "imgui")
 end
 
+-- partial paths
+local gltfSamplesDir = "external/glTF-Sample-Assets/Models"
+local assets = {
+    "GlassVaseFlowers",
+    "Fox",
+    "CarConcept",
+}
+local endDir = "glTF"
+
+target("copyAssets")
+    set_configdir("$(buildir)/$(plat)/$(arch)/$(mode)/assets")
+    for _, assetPartialPath in ipairs(assets) do
+        local pathVar = path.join(path.join(gltfSamplesDir, assetPartialPath),endDir)
+        local jpgs = path.join(pathVar, "*.jpg")
+        local pngs = path.join(pathVar, "*.png")
+        local gltfs = path.join(pathVar, "*.gltf")
+        local bins = path.join(pathVar, "*.bin")
+        add_configfiles(jpgs, {onlycopy = true})
+        add_configfiles(pngs, {onlycopy = true})
+        add_configfiles(gltfs, {onlycopy = true})
+        add_configfiles(bins, {onlycopy = true})
+    end
 -- renderer
 target("renderer")
     set_kind("binary")
