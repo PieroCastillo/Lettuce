@@ -27,6 +27,12 @@
          PrimitiveInfo info;
          std::vector<Vertex> points;
          std::vector<uint32_t> indices;
+
+         uint32_t GetFullSize()
+         {
+            return info.indexBlock.size + info.vertBlock.size;
+         }
+
          void Clear()
          {
              points.clear();

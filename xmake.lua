@@ -35,7 +35,7 @@ end
 
 target("Lettuce")
     set_kind("static")
-    add_includedirs("include")
+    add_includedirs("include", "external/stb" )
     add_headerfiles("include/Lettuce/**.hpp")
     add_files("Lettuce/**.cpp")
     add_packages("vulkansdk", "volk", "vulkan-memory-allocator", "glfw", "glm", "fastgltf", "shaderc", "directxshadercompiler", {public = true})
@@ -46,7 +46,8 @@ local samples = {
     "GeometryIndirectSample",
     "LoadModel",
 --    "SampleX2D",
-    "ShadowMaps"
+    "ShadowMaps",
+    "SkyBox",
 }
 
 for _, name in ipairs(samples) do 
@@ -80,6 +81,10 @@ target("copyAssets")
         add_configfiles(gltfs, {onlycopy = true})
         add_configfiles(bins, {onlycopy = true})
     end
+
+    local localAssets = "samples/assets/*.jpg"
+    add_configfiles(localAssets, {onlycopy = true})
+
 -- renderer
 target("renderer")
     set_kind("binary")

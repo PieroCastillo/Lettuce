@@ -1,3 +1,5 @@
+#include "Foundation/AssetsLoader.hpp"
+
 #include "Foundation/CommandState.hpp"
 #include "Foundation/CommandData.hpp"
 #include "Foundation/BufferHandle.hpp"
