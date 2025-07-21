@@ -1,5 +1,5 @@
 /*
-Creted by @PieroCastillo on 2025-07-20
+Created by @PieroCastillo on 2025-07-20
 */
 #ifndef LETTUCE_CORE_GPU_HPP
 #define LETTUCE_CORE_GPU_HPP 
@@ -37,9 +37,7 @@ namespace Lettuce::Core
         std::vector<char *> availableExtensionsNames;
         uint32_t bufferImageGranularity = 0;
 
-        GPU(VkSurfaceKHR &surface, VkPhysicalDevice &device);
-
-        bool GraphicsCapable();
+        GPU(VkPhysicalDevice &device);
 
         /// @brief Gets the supported Depth-Stencil Format
         /// Always return one value

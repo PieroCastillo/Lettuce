@@ -1,5 +1,5 @@
 /*
-Creted by @PieroCastillo on 2025-07-20
+Created by @PieroCastillo on 2025-07-20
 */
 #ifndef LETTUCE_CORE_SEMAPHORE_HPP
 #define LETTUCE_CORE_SEMAPHORE_HPP 
