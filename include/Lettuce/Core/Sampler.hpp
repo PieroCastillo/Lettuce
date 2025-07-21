@@ -1,26 +1,20 @@
-//
-// Created by piero on 3/08/2024.
-//
-#pragma once
-#include <iostream>
-#include <vector>
-#include <string>
-#include "Utils.hpp"
-#include "IReleasable.hpp"
-#include "IManageHandle.hpp"
+/*
+Creted by @PieroCastillo on 2025-07-20
+*/
+#ifndef LETTUCE_CORE_SAMPLER_HPP
+#define LETTUCE_CORE_SAMPLER_HPP 
 
 namespace Lettuce::Core
 {
-    class Sampler : public IReleasable, public IManageHandle<VkSampler>
+    class Sampler
     {
+    private:
     public:
-        std::shared_ptr<Device> _device;
+        VkDevice m_device;
+        VkSampler m_sampler;
 
-        Sampler(const std::shared_ptr<Device> &device,
-                   SamplerAddressMode addressModeU = SamplerAddressMode::Repeat,
-                   SamplerAddressMode addressModeV = SamplerAddressMode::Repeat,
-                   SamplerAddressMode addressModeW = SamplerAddressMode::Repeat);
-
+        Sampler(VkDevice device);
         void Release();
     };
 }
+#endif // LETTUCE_CORE_SAMPLER_HPP

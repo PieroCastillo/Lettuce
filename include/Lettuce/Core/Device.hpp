@@ -1,16 +1,8 @@
-//
-// Created by piero on 14/02/2024.
-//
-#pragma once
-
-#include <iostream>
-#include <set>
-#include <vector>
-#include <string>
-#include "IReleasable.hpp"
-#include "Instance.hpp"
-#include "GPU.hpp"
-#include "IManageHandle.hpp"
+/*
+Creted by @PieroCastillo on 2025-07-20
+*/
+#ifndef LETTUCE_CORE_DEVICE_HPP
+#define LETTUCE_CORE_DEVICE_HPP 
 
 namespace Lettuce::Core
 {
@@ -95,43 +87,26 @@ namespace Lettuce::Core
             .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MESH_SHADER_FEATURES_EXT,
         };
 
-        void addExt(const std::string &extName);
-
-        bool checkExtIfExists(const std::string &extName);
-
-        void addRequiredFeatures();
-
-        void addRecommendedFeatures();
-
-        void addOptionalFeatures();
-
-        void listExtensions();
-
-        void listLayers();
-
-        void loadExtensionsLayersAndFeatures();
 
     public:
-        std::shared_ptr<Instance> _instance;
-        VkPhysicalDevice _pdevice;
-        std::vector<VkQueue> _graphicsQueues;
-        VkQueue _presentQueue;
-        VkQueue _computeQueue;
-        VmaAllocator allocator;
-        GPU _gpu;
-
-        Features GetEnabledFeatures();
-
-        Device(const std::shared_ptr<Instance> &instance, GPU &gpu, Features features, uint32_t graphicsQueuesCount = 1);
+        Device();
 
         EnabledRecommendedFeatures GetEnabledRecommendedFeatures()
         {
             return enabledRecommendedFeatures;
         }
 
-        void
-        Wait();
+        std::shared_ptr<Pipelile> CreateGraphicsPipeline();
+        std::shared_ptr<Pipelile> CreateComputePipeline();
+        std::shared_ptr<Buffer> CreateBuffer();
+        std::shared_ptr<Swapchain> CreateSwapchain();
+        std::shared_ptr<Sampler> CreateSampler();
+        std::shared_ptr<Semaphore> CreateSemaphore();
+        std::shared_ptr<TextureArray> CreateTextureArray();
+        std::shared_ptr<RenderFlowGraph> CreateRenderFlowGraph();
+        std::shared_ptr<DescriptorTable> CreateDescriptorTable();
 
         void Release();
     };
 }
+#endif // LETTUCE_CORE_DEVICE_HPP

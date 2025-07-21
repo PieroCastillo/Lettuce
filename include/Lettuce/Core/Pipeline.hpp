@@ -1,0 +1,21 @@
+/*
+Creted by @PieroCastillo on 2025-07-20
+*/
+#ifndef LETTUCE_CORE_PIPELINE_HPP
+#define LETTUCE_CORE_PIPELINE_HPP 
+
+namespace Lettuce::Core
+{
+    class Pipeline
+    {
+    private:
+    
+    public:
+        VkDevice m_device;
+        VkPipeline m_pipeline;
+
+        Pipeline(VkDevice device);
+        void Release();
+    };
+}
+#endif // LETTUCE_CORE_PIPELINE_HPP

@@ -1,10 +1,10 @@
-//
-// Created by piero on 11/02/2024.
-//
-#pragma once
+/*
+Creted by @PieroCastillo on 2025-07-20
+*/
+#ifndef LETTUCE_CORE_GPU_HPP
+#define LETTUCE_CORE_GPU_HPP 
+
 #include "Common.hpp"
-#include <algorithm>
-#include <iostream>
 #include <optional>
 #include <vector>
 
@@ -12,6 +12,10 @@ namespace Lettuce::Core
 {
     class GPU
     {
+    private:
+        void checkSurfaceCapabilities();
+
+        void loadQueuesFamilies();
     public:
         VkSurfaceKHR _surface;
         VkPhysicalDevice _pdevice;
@@ -47,10 +51,6 @@ namespace Lettuce::Core
         uint32_t FindMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
 
         VkFormat findSupportedFormat(const std::vector<VkFormat> &candidates, VkImageTiling tiling, VkFormatFeatureFlags features);
-
-    private:
-        void checkSurfaceCapabilities();
-
-        void loadQueuesFamilies();
     };
 }
+#endif // LETTUCE_CORE_GPU_HPP

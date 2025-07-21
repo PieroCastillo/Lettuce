@@ -1,6 +1,3 @@
-[submodule "external/glTF-Sample-Assets"]
-	path = external/glTF-Sample-Assets
-	url = https://github.com/KhronosGroup/glTF-Sample-Assets.git
 [submodule "external/stb"]
 	path = external/stb
 	url = https://github.com/nothings/stb.git

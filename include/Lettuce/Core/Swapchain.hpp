@@ -1,56 +1,29 @@
-//
-// Created by piero on 14/02/2024.
-//
-#pragma once
-#include <iostream>
-#include <string>
-#include <functional>
-#include <tuple>
-#include <algorithm>
-#include "Device.hpp"
-#include "IReleasable.hpp"
-#include "Semaphore.hpp"
-#include "IManageHandle.hpp"
+/*
+Creted by @PieroCastillo on 2025-07-20
+*/
+#ifndef LETTUCE_CORE_SWAPCHAIN_HPP
+#define LETTUCE_CORE_SWAPCHAIN_HPP 
 
 namespace Lettuce::Core
 {
     class Swapchain : public IReleasable, public IManageHandle<VkSwapchainKHR>
     {
     private:
-        std::function<std::tuple<uint32_t, uint32_t>(void)> _func;
-        std::function<void(void)> _postFunc;
-        VkSurfaceCapabilitiesKHR capabilities;
-        std::vector<VkSurfaceFormatKHR> formats;
-        std::vector<VkPresentModeKHR> presentModes;
-
-        uint32_t imageCount;
-
-        void loadImages();
-        void createImageViews();
-
-    public:
-        std::shared_ptr<Device> _device;
-        std::vector<VkImage> swapChainImages;
-        std::vector<VkImageView> swapChainImageViews;
-        uint32_t index;
         uint32_t width;
         uint32_t height;
-        VkFormat imageFormat;
-        VkExtent2D extent;
-        VkFence _fence;
 
-        Swapchain(const std::shared_ptr<Device> &device, uint32_t initialWidth, uint32_t initialHeight);
+    public:
+        VkDevice m_device;
+        VkPhysicalDevice m_gpu;
+        VkSwapchainKHR m_swapchain;
+
+        Swapchain(VkDevice device, VkPhysicalDevice gpu, uint32_t initialWidth, uint32_t initialHeight);
         void Release();
 
-        void SetResizeFunc(std::function<std::tuple<uint32_t, uint32_t>(void)> call, std::function<void(void)> postFunc);
-
         void AcquireNextImage();
-
         void Present();
-
         void Resize(uint32_t newWidth, uint32_t newHeight);
-
         void Wait();
-
     };
 }
+#endif // LETTUCE_CORE_SWAPCHAIN_HPP
