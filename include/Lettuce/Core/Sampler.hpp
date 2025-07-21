@@ -6,6 +6,23 @@ Creted by @PieroCastillo on 2025-07-20
 
 namespace Lettuce::Core
 {
+    struct SamplerCreateInfo
+    {
+        VkFilter magFilter;
+        VkFilter minFilter;
+        VkSamplerAddressMode addressModeU;
+        VkSamplerAddressMode addressModeV;
+        VkSamplerAddressMode addressModeW;
+        float mipLodBias;
+        bool anisotropyEnable;
+        float maxAnisotropy;
+        bool compareEnable;
+        VkCompareOp compareOp;
+        float minLod;
+        float maxLod;
+        VkBorderColor borderColor;
+    };
+
     class Sampler
     {
     private:
@@ -13,7 +30,7 @@ namespace Lettuce::Core
         VkDevice m_device;
         VkSampler m_sampler;
 
-        Sampler(VkDevice device);
+        Sampler(VkDevice device, const SamplerCreateInfo& createInfo);
         void Release();
     };
 }

@@ -6,6 +6,11 @@ Creted by @PieroCastillo on 2025-07-20
 
 namespace Lettuce::Core
 {
+    struct SemaphoreCreateInfo
+    {
+        uint64_t initialValue;
+    };
+
     class Semaphore
     {
     private:
@@ -13,7 +18,7 @@ namespace Lettuce::Core
     public:
         VkDevice m_device;
 
-        Semaphore(const std::shared_ptr<Device> &device, uint64_t initialValue);
+        Semaphore(VkDevice device, const SemaphoreCreateInfo& createInfo);
         void Release();
 
         void Wait(uint64_t value);

@@ -6,7 +6,14 @@ Creted by @PieroCastillo on 2025-07-20
 
 namespace Lettuce::Core
 {
-    class Swapchain : public IReleasable, public IManageHandle<VkSwapchainKHR>
+    struct SwapchainCreateInfo
+    {
+        uint32_t width;
+        uint32_t height;
+        bool clipped;
+    };
+
+    class Swapchain
     {
     private:
         uint32_t width;
@@ -16,8 +23,9 @@ namespace Lettuce::Core
         VkDevice m_device;
         VkPhysicalDevice m_gpu;
         VkSwapchainKHR m_swapchain;
+        VkSurfaceKHR m_surface;
 
-        Swapchain(VkDevice device, VkPhysicalDevice gpu, uint32_t initialWidth, uint32_t initialHeight);
+        Swapchain(VkDevice device, VkPhysicalDevice gpu, const SwapchainCreateInfo& createInfo);
         void Release();
 
         void AcquireNextImage();

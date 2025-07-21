@@ -6,25 +6,30 @@ Creted by @PieroCastillo on 2025-07-20
 
 namespace Lettuce::Core
 {
+    struct TextureArrayCreateInfo
+    {
+        uint32_t width;
+        uint32_t height;
+        uint32_t depth;
+        VkImageType type;
+        VkImageUsageFlags imageUsage;
+        uint32_t mipLevels;
+        uint32_t layerCount;
+        VkFormat format;
+    };
+
     class TextureArray
     {
     private:
-        VkImageLayout _layout;
-        uint32_t _mipLevels, _layerCount;
-        uint32_t p_width, p_height, p_depth;
-        VkFormat _format;
+        uint32_t m_mipLevels, m_layerCount;
+        uint32_t m_width, m_height, m_depth;
+        VkFormat m_format;
 
     public:
         VkDevice m_device;
         VkImage m_image;
 
-        ImageResource(VkDevice device, uint32_t width, uint32_t height, uint32_t depth,
-                      VkImageType type,
-                      VkImageUsageFlags imageUsage,
-                      uint32_t mipLevels,
-                      uint32_t layerCount,
-                      VkFormat format,
-                      VkImageLayout initialLayout);
+        ImageResource(VkDevice device, const TextureArrayCreateInfo& createInfo);
         void Release();
 
         VkFormat GetFormat();

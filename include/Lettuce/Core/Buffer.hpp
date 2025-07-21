@@ -6,6 +6,12 @@ Creted by @PieroCastillo on 2025-07-20
 
 namespace Lettuce::Core
 {
+    struct BufferCreateInfo
+    {
+        uint32_t size;
+        VkBufferUsageFlags2 usage;
+    };
+
     class Buffer
     {
     private:
@@ -15,7 +21,7 @@ namespace Lettuce::Core
         VkDevice m_device;
         VkDeviceMemory m_memory;
 
-        Buffer(VkDevice device, uint32_t size, VkBufferUsageFlags2 usage);
+        Buffer(VkDevice device, const BufferCreateInfo& createInfo);
         void Release();
 
         uint64_t GetAddress();

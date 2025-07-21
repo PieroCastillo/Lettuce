@@ -6,6 +6,21 @@ Creted by @PieroCastillo on 2025-07-20
 
 namespace Lettuce::Core
 {
+    struct RenderTargetCreateInfo
+    {
+        uint32_t width;
+        uint32_t height;
+        uint32_t depth;
+        VkFormat format;
+    };
+
+    struct RenderTargetViewInfo
+    {
+        VkFormat format;
+        VkComponentMapping components;
+        VkImageSubresourceRange subresourceRange;
+    };
+
     class RenderTarget
     {
     private:
@@ -19,21 +34,8 @@ namespace Lettuce::Core
         VkImage m_image;
         VkImageView m_imageView;
 
-        RenderTarget(VkDevice device, uint32_t width, uint32_t height, uint32_t depth,
-                     VkImageType type,
-                     VkImageUsageFlags imageUsage,
-                     uint32_t mipLevels,
-                     uint32_t layerCount,
-                     VkFormat format,
-                     VkImageLayout initialLayout);
-        RenderTarget(VkDevice device, VkImage customImage,
-                     uint32_t width, uint32_t height, uint32_t depth,
-                     VkImageType type,
-                     VkImageUsageFlags imageUsage,
-                     uint32_t mipLevels,
-                     uint32_t layerCount,
-                     VkFormat format,
-                     VkImageLayout initialLayout);
+        RenderTarget(VkDevice device, const RenderTargetCreateInfo& createInfo);
+        RenderTarget(VkDevice device, const RenderTargetCreateInfo& createInfo, const RenderTargetViewInfo& viewInfo);
         void Release();
 
         VkFormat GetFormat();
