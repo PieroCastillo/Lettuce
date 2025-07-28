@@ -13,10 +13,11 @@ namespace Lettuce::Core
     public:
         VkDevice m_device;
         VkDeviceMemory m_descriptorBufferMemory;
-        VkBuffer m_descriptorBuffer;
 
         DescriptorTable(VkDevice device);
         void Release();
+
+        void AutoLayout();
     };
 }
 #endif // LETTUCE_CORE_DESCRIPTOR_TABLE_HPP

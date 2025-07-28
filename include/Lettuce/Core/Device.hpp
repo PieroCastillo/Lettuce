@@ -2,7 +2,7 @@
 Created by @PieroCastillo on 2025-07-20
 */
 #ifndef LETTUCE_CORE_DEVICE_HPP
-#define LETTUCE_CORE_DEVICE_HPP 
+#define LETTUCE_CORE_DEVICE_HPP
 
 namespace Lettuce::Core
 {
@@ -22,6 +22,13 @@ namespace Lettuce::Core
         bool graphicsPipelineLibrary = false;
         bool dynamicRenderingLocalRead = false;
         bool maintenance5 = false;
+    };
+
+    enum class LettuceResult
+    {
+        OutOfDeviceMemory,
+        OutOfHostMemory,
+        Unknown,
     };
 
     class Device : public IReleasable, public IManageHandle<VkDevice>
@@ -65,7 +72,7 @@ namespace Lettuce::Core
         VkPhysicalDeviceDeviceGeneratedCommandsFeaturesEXT deviceGeneratedCommandsFeature = {
             .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DEVICE_GENERATED_COMMANDS_FEATURES_EXT,
         };
-        
+
         VkPhysicalDeviceGraphicsPipelineLibraryFeaturesEXT graphicsPipelineLibraryFeature = {
             .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_GRAPHICS_PIPELINE_LIBRARY_FEATURES_EXT,
         };
@@ -73,7 +80,7 @@ namespace Lettuce::Core
         VkPhysicalDeviceDynamicRenderingLocalReadFeaturesKHR dynamicRenderingLocalReadFeature = {
             .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DYNAMIC_RENDERING_LOCAL_READ_FEATURES_KHR,
         };
-        
+
         VkPhysicalDeviceMaintenance5FeaturesKHR maintenance5Feature = {
             .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MAINTENANCE_5_FEATURES_KHR,
         };
@@ -87,26 +94,42 @@ namespace Lettuce::Core
             .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MESH_SHADER_FEATURES_EXT,
         };
 
-
     public:
+        VkInstance m_instance;
+        VkPhysicalDevice m_physicalDevice;
+        VkDevice m_device;
+
         Device();
+        void Release();
 
         EnabledRecommendedFeatures GetEnabledRecommendedFeatures()
         {
             return enabledRecommendedFeatures;
         }
 
-        std::shared_ptr<Pipelile> CreateGraphicsPipeline();
-        std::shared_ptr<Pipelile> CreateComputePipeline();
-        std::shared_ptr<Buffer> CreateBuffer();
-        std::shared_ptr<Swapchain> CreateSwapchain();
-        std::shared_ptr<Sampler> CreateSampler();
-        std::shared_ptr<Semaphore> CreateSemaphore();
-        std::shared_ptr<TextureArray> CreateTextureArray();
-        std::shared_ptr<RenderFlowGraph> CreateRenderFlowGraph();
-        std::shared_ptr<DescriptorTable> CreateDescriptorTable();
+        auto CreateGraphicsPipeline() -> std::expected<std::shared_ptr<Pipeline>, LettuceResult>;
+        auto CreateComputePipeline() -> std::expected<std::shared_ptr<Pipeline>, LettuceResult>;
+        auto CreateBuffer() -> std::expected<std::shared_ptr<Buffer>, LettuceResult>;
+        auto CreateSwapchain() -> std::expected<std::shared_ptr<Swapchain>, LettuceResult>;
+        auto CreateSampler() -> std::expected<std::shared_ptr<Sampler>, LettuceResult>;
+        auto CreateSemaphore() -> std::expected<std::shared_ptr<Semaphore>, LettuceResult>;
+        auto CreateTextureArray() -> std::expected<std::shared_ptr<TextureArray>, LettuceResult>;
+        auto CreateTextureView() -> std::expected<std::shared_ptr<TextureView>, LettuceResult>;
+        auto CreateRenderFlowGraph() -> std::expected<std::shared_ptr<RenderFlowGraph>, LettuceResult>;
+        auto CreateSequentialRenderFlow() -> std::expected<std::shared_ptr<SequentialRenderFlow>, LettuceResult>;
+        auto CreateDescriptorTable() -> std::expected<std::shared_ptr<DescriptorTable>, LettuceResult>;
+        auto CreateRenderTarget() -> std::expected<std::shared_ptr<RenderTarget>, LettuceResult>;
 
-        void Release();
+        void BindMemory(std::shared_ptr<Memory> memory, std::shared_ptr<Buffer> buffer);
+        void BindMemory(std::shared_ptr<Memory> memory, std::shared_ptr<TextureArray> textureArray);
+        
+        auto MemoryAlloc(uint32_t size = (16 * 1024 * 1024)) -> std::expected<std::shared_ptr<Memory>, LettuceResult>; // 16 MiB default size
+        void MemoryCopy(std::shared_ptr<Buffer> srcBuffer, std::shared_ptr<Buffer> dstBuffer);
+        void MemoryCopy(std::shared_ptr<Buffer> srcBuffer, std::shared_ptr<TextureArray> dstTextureArray);
+        void MemoryCopy(std::shared_ptr<TextureArray> srcTextureArray, std::shared_ptr<Buffer> dstBuffer);
+        void MemoryCopy(std::shared_ptr<TextureArray> srcTextureArray, std::shared_ptr<TextureArray> dstTextureArray);
+
+        void Blit(std::shared_ptr<TextureArray> srcTextureArray, std::shared_ptr<TextureArray> dstTextureArray);
     };
 }
 #endif // LETTUCE_CORE_DEVICE_HPP

@@ -20,6 +20,8 @@ namespace Lettuce::Core
     public:
         VkDevice m_device;
         VkDeviceMemory m_memory;
+        VkBuffer m_buffer;
+        std::optional<VkDescriptorSetLayout> m_descriptorSetLayout;
 
         Buffer(VkDevice device, const BufferCreateInfo& createInfo);
         void Release();
