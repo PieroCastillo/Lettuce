@@ -14,11 +14,14 @@ namespace Lettuce::Core
     class ComputeNode
     {
     private:
-
+        std::function<void(CommandList)> commands;
     public:
         VkDevice m_device;
         ComputeNode(VkDevice device, const ComputeNodeCreateInfo& createInfo);
         void Release();
+
+        void Record(std::function<void(CommandList)> commands);
+        void Replay(VkCommandBuffer commandBuffer);
     };
 }
 #endif // LETTUCE_CORE_COMPUTE_NODE_HPP

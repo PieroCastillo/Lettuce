@@ -14,11 +14,14 @@ namespace Lettuce::Core
     class TransferNode
     {
     private:
-
+        std::function<void(CommandList)> commands;
     public:
         VkDevice m_device;
         TransferNode(VkDevice device, const TransferNodeCreateInfo& createInfo);
         void Release();
+
+        void Record(std::function<void(CommandList)> commands);
+        void Replay(VkCommandBuffer commandBuffer);
     };
 }
 #endif // LETTUCE_CORE_TRANSFER_NODE_HPP

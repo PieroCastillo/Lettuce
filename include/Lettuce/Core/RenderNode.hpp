@@ -14,11 +14,14 @@ namespace Lettuce::Core
     class RenderNode
     {
     private:
-
+        std::function<void(CommandList)> commands;
     public:
         VkDevice m_device;
         RenderNode(VkDevice device, const RenderNodeCreateInfo& createInfo);
         void Release();
+
+        void Record(std::function<void(CommandList)> commands);
+        void Replay(VkCommandBuffer commandBuffer);
     };
 }
 #endif // LETTUCE_CORE_RENDER_NODE_HPP
