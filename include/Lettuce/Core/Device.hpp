@@ -4,6 +4,32 @@ Created by @PieroCastillo on 2025-07-20
 #ifndef LETTUCE_CORE_DEVICE_HPP
 #define LETTUCE_CORE_DEVICE_HPP
 
+// standard headers
+#include <memory>
+#include <variant>
+#include <expected>
+#include <vector>
+
+// project headers
+#include "Buffer.hpp"
+#include "CommandList.hpp"
+#include "ComputeNode.hpp"
+#include "DescriptorTable.hpp"
+#include "GPU.hpp"
+#include "Memory.hpp"
+#include "Pipeline.hpp"
+#include "PipelineLayout.hpp"
+#include "RenderFlowGraph.hpp"
+#include "RenderNode.hpp"
+#include "RenderTarget.hpp"
+#include "Sampler.hpp"
+#include "Semaphore.hpp"
+#include "SequentialRenderFlow.hpp"
+#include "Swapchain.hpp"
+#include "TextureArray.hpp"
+#include "TextureView.hpp"
+#include "TransferNode.hpp"
+
 namespace Lettuce::Core
 {
     struct Features
@@ -24,6 +50,31 @@ namespace Lettuce::Core
         bool maintenance5 = false;
     };
 
+    struct DescriptorTableBufferUpdateData
+    {
+        std::shared_ptr<Buffer> buffer;
+        DescriptorAddressType addressType;
+    };
+
+    struct DescriptorTableTextureViewUpdateData
+    {
+        std::shared_ptr<TextureView> textureView;
+        std::shared_ptr<Sampler> sampler;
+        DescriptorTextureType textureType;
+    };
+
+    struct DescriptorTableSamplerUpdateData
+    {
+        std::shared_ptr<Sampler> sampler;
+    };
+
+    struct DescriptorTableUpdateBindingInfo
+    {
+        uint32_t set;
+        uint32_t binding;
+        std::variant<DescriptorTableBufferUpdateData, DescriptorTableTextureViewUpdateData, DescriptorTableSamplerUpdateData> updateData;
+    };
+
     enum class LettuceResult
     {
         OutOfDeviceMemory,
@@ -31,7 +82,7 @@ namespace Lettuce::Core
         Unknown,
     };
 
-    class Device : public IReleasable, public IManageHandle<VkDevice>
+    class Device
     {
     private:
         std::vector<std::string> availableExtensionsNames;
@@ -120,9 +171,11 @@ namespace Lettuce::Core
         auto CreateDescriptorTable() -> std::expected<std::shared_ptr<DescriptorTable>, LettuceResult>;
         auto CreateRenderTarget() -> std::expected<std::shared_ptr<RenderTarget>, LettuceResult>;
 
+        void UpdateBinding(const std::shared_ptr<DescriptorTable> descriptorTable, const DescriptorTableUpdateBindingInfo& updateInfo);
+
         void BindMemory(std::shared_ptr<Memory> memory, std::shared_ptr<Buffer> buffer);
         void BindMemory(std::shared_ptr<Memory> memory, std::shared_ptr<TextureArray> textureArray);
-        
+
         auto MemoryAlloc(uint32_t size = (16 * 1024 * 1024)) -> std::expected<std::shared_ptr<Memory>, LettuceResult>; // 16 MiB default size
         void MemoryCopy(std::shared_ptr<Buffer> srcBuffer, std::shared_ptr<Buffer> dstBuffer);
         void MemoryCopy(std::shared_ptr<Buffer> srcBuffer, std::shared_ptr<TextureArray> dstTextureArray);

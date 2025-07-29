@@ -5,7 +5,18 @@ Created by @PieroCastillo on 2025-07-20
 #define LETTUCE_CORE_PIPELINE_LAYOUT_HPP 
 
 namespace Lettuce::Core
-{
+{   
+    struct PushConstant
+    {
+        uint32_t size;
+        VkShaderStageFlags stages;
+    };
+
+    struct PipelineLayoutCreateInfo
+    {
+        std::vector<PushConstant> pushConstants;
+    };
+
     class PipelineLayout
     {
     private:
@@ -13,11 +24,8 @@ namespace Lettuce::Core
     public:
         VkDevice m_device;
             
-        PipelineLayout(const std::shared_ptr<Device> &device);
+        PipelineLayout(VkDevice device, std::vector<VkDescriptorSetLayout> layouts, const PipelineLayoutCreateInfo& createInfo);
         void Release();
-
-        void AddPushConstant(uint32_t size, VkShaderStageFlags stages);
-        void Assemble();
     };
 }
 #endif // LETTUCE_CORE_PIPELINE_LAYOUT_HPP
