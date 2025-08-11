@@ -12,9 +12,11 @@ namespace Lettuce::Core
         uint32_t height;
         uint32_t depth;
         VkFormat format;
+        VkComponentMapping components;
+        VkImageSubresourceRange subresourceRange;
     };
 
-    struct RenderTargetViewInfo
+    struct RenderTargetAsViewCreateInfo
     {
         VkFormat format;
         VkComponentMapping components;
@@ -35,7 +37,7 @@ namespace Lettuce::Core
         VkImageView m_imageView;
 
         RenderTarget(VkDevice device, const RenderTargetCreateInfo& createInfo);
-        RenderTarget(VkDevice device, const RenderTargetCreateInfo& createInfo, const RenderTargetViewInfo& viewInfo);
+        RenderTarget(VkDevice device, VkImage image, const RenderTargetAsViewCreateInfo& viewInfo);
         void Release();
 
         VkFormat GetFormat();

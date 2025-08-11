@@ -14,7 +14,7 @@ namespace Lettuce::Core
         uint32_t size;
         VkBufferUsageFlags2 usage;
     };
-
+    
     class Buffer
     {
     private:

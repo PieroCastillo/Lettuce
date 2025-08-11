@@ -6,3 +6,8 @@
 #ifdef LETTUCE_EXPERIMENTAL
 #include <vulkan/vulkan_beta.h>
 #endif
+
+#include <memory>
+
+template<typename T>
+using Handle<T> = std::shared_ptr<T>;

@@ -37,58 +37,25 @@ target("Lettuce")
     set_kind("static")
     add_includedirs("include", "external/stb" )
     add_headerfiles("include/Lettuce/**.hpp")
-    add_files("Lettuce/**.cpp")
+    add_files("src/Core/**.cpp")
     add_packages("vulkansdk", "volk", "vulkan-memory-allocator", "glfw", "glm", "fastgltf", "shaderc", "directxshadercompiler", {public = true})
     
 local samples = {
-    "ClearScreenSample",
-    "DonutSample",
-    "GeometryIndirectSample",
-    "LoadModel",
---    "SampleX2D",
-    "ShadowMaps",
-    "SkyBox",
+        "helloTriangle",
+--     "ClearScreenSample",
+--     "DonutSample",
+--     "GeometryIndirectSample",
+--     "LoadModel",
+--     "SampleX2D",
+--     "ShadowMaps",
+--     "SkyBox",
 }
 
 for _, name in ipairs(samples) do 
     target(name)
         set_kind("binary")
-        add_includedirs("samples/SampleFramework", "external/stb","include")
+        -- add_includedirs("samples/SampleFramework", "external/stb","include")
         add_files("samples/" .. name .. "/app.cpp")
         add_deps("Lettuce")
         add_packages("volk", "glfw", "glm", "imgui")
 end
-
--- partial paths
-local gltfSamplesDir = "external/glTF-Sample-Assets/Models"
-local assets = {
-    "GlassVaseFlowers",
-    "Fox",
-    "CarConcept",
-}
-local endDir = "glTF"
-
-target("copyAssets")
-    set_configdir("$(buildir)/$(plat)/$(arch)/$(mode)/assets")
-    for _, assetPartialPath in ipairs(assets) do
-        local pathVar = path.join(path.join(gltfSamplesDir, assetPartialPath),endDir)
-        local jpgs = path.join(pathVar, "*.jpg")
-        local pngs = path.join(pathVar, "*.png")
-        local gltfs = path.join(pathVar, "*.gltf")
-        local bins = path.join(pathVar, "*.bin")
-        add_configfiles(jpgs, {onlycopy = true})
-        add_configfiles(pngs, {onlycopy = true})
-        add_configfiles(gltfs, {onlycopy = true})
-        add_configfiles(bins, {onlycopy = true})
-    end
-
-    local localAssets = "samples/assets/*.jpg"
-    add_configfiles(localAssets, {onlycopy = true})
-
--- renderer
-target("renderer")
-    set_kind("binary")
-    add_includedirs("external/stb","include", "renderer/include")
-    add_files("renderer/**.cpp")
-    add_deps("Lettuce")
-    add_packages("volk", "glfw", "glm", "imgui", "taskflow")

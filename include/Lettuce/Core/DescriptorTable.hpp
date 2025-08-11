@@ -11,18 +11,17 @@ namespace Lettuce::Core
 {
     enum class DescriptorAddressType
     {
-        UniformBuffer,
-        StorageBuffer,
-        UniformTexelBuffer,
-        StorageTexelBuffer
+        UniformBuffer = 6,
+        StorageBuffer = 7,
+        UniformTexelBuffer = 4,
+        StorageTexelBuffer = 5,
     };
 
     enum class DescriptorTextureType
     {
-        CombinedImageSampler,
         StorageImage,
-        SampledImage,
-        InputAttachment
+        SampledImage, 
+        InputAttachment,
     };
 
     struct DescriptorBinding
@@ -50,7 +49,6 @@ namespace Lettuce::Core
 
         void SetBuffer(uint32_t set, uint32_t binding, VkBuffer buffer, DescriptorAddressType addressType);
         void SetTexture(uint32_t set, uint32_t binding, VkImageView imageView, VkSampler sampler, DescriptorTextureType textureType);
-        void SetSampler(uint32_t set, uint32_t binding, VkSampler sampler);
     };
 }
 #endif // LETTUCE_CORE_DESCRIPTOR_TABLE_HPP
