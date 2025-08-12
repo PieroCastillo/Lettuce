@@ -28,13 +28,10 @@ namespace Lettuce::Core
     {
     private:
         std::function<void(CommandRecordingContext&)> commands;
-        CommandListType type;
 
     public:
-        VkDevice m_device;
-        CommandList(VkDevice device, const CommandListCreateInfo& createInfo);
-        void Release();
-
+        CommandListType type;
+        
         void Record(std::function<void(CommandRecordingContext&)> commands);
         void Replay(VkCommandBuffer commandBuffer);
     };

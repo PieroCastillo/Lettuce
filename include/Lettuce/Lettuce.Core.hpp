@@ -12,15 +12,12 @@
 
 // other Lettuce objects
 #include "Core/CommandList.hpp"
+#include "Core/CommandRecordingContext.hpp"
 #include "Core/RenderFlowGraph.hpp"
-#include "Core/SequentialRenderFlow.hpp"
-#include "Core/ComputeNode.hpp"
-#include "Core/RenderNode.hpp"
-#include "Core/TransferNode.hpp"
 #include "Core/RenderTarget.hpp"
 #include "Core/DescriptorTable.hpp"
 #include "Core/Device.hpp"
+#include "Core/DeviceExecutionContext.hpp"
 #include "Core/GPU.hpp"
 #include "Core/Sampler.hpp"
-#include "Core/Semaphore.hpp"
 #include "Core/Swapchain.hpp"

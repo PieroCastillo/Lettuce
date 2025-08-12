@@ -183,11 +183,24 @@ namespace Lettuce::Core
             { obj.Release(); } -> std::same_as<void>;
         };
 
+        
+        template <typename T, typename TCreateInfo>
+        concept ValidObjectWithGPUType = std::constructible_from<T, VkDevice, VkPhysicalDevice, TCreateInfo> && requires(T obj) {
+            { obj.Release(); } -> std::same_as<void>;
+        };
+
         template <typename T, typename Args>
         requires ValidObjectType<T, Args>
         inline auto CreateObject(Args &&args) -> Result<T>
         {
             return std::make_shared<T>(m_device, std::forward<Args>(args));
+        }
+
+        template <typename T, typename Args>
+        requires ValidObjectWithGPUType<T, Args>
+        inline auto CreateObjectWithGPU(Args &&args) -> Result<T>
+        {
+            return std::make_shared<T>(m_device, m_physicalDevice, std::forward<Args>(args));
         }
 
         template <typename T, typename Args>
