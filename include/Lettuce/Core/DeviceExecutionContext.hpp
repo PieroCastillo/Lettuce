@@ -14,6 +14,9 @@ Created by @PieroCastillo on 2025-08-11
 #include <functional>
 #include <barrier>
 
+// project headers
+#include "Common.hpp"
+
 namespace Lettuce::Core
 {
     struct DeviceExecutionContextCreateInfo

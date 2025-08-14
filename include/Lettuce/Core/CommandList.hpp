@@ -8,6 +8,7 @@ Created by @PieroCastillo on 2025-07-21
 #include <function>
 
 // project headers
+#include "Common.hpp"
 #include "CommandRecordingContext.hpp"
 
 namespace Lettuce::Core

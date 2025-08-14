@@ -4,6 +4,9 @@ Created by @PieroCastillo on 2025-07-27
 #ifndef LETTUCE_CORE_MEMORY_HPP
 #define LETTUCE_CORE_MEMORY_HPP 
 
+// project headers
+#include "Common.hpp"
+
 namespace Lettuce::Core
 {
     enum class MemoryAccess

@@ -6,3 +6,5 @@ out
 .xmake
 vcpkg_installed
 *.nupkg
+.cache
+src/compile_commands.json

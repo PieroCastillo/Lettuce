@@ -4,9 +4,12 @@ Created by @PieroCastillo on 2025-07-20
 #ifndef LETTUCE_CORE_GPU_HPP
 #define LETTUCE_CORE_GPU_HPP 
 
-#include "Common.hpp"
+// standard headers
 #include <optional>
 #include <vector>
+
+// project headers
+#include "Common.hpp"
 
 namespace Lettuce::Core
 {

@@ -1,4 +1,8 @@
 // standard headers
+#include <limits>
+
+// external headers
+#include "Volk/volk.h"
 
 // project headers
 #include "Lettuce/Core/Swapchain.hpp"
@@ -32,6 +36,9 @@ void Swapchain::Release()
 
 void Swapchain::AcquireNextImage()
 {
+    constexpr auto timeout = std::numeric_limits<uint32_t>::max();
+    uint32_t imgIdx = 0;
+    vkAcquireNextImageKHR(m_device, m_swapchain, timeout, VK_NULL_HANDLE, VK_NULL_HANDLE, &imgIdx);
 }
 
 void Swapchain::Present()

@@ -4,6 +4,12 @@ Created by @PieroCastillo on 2025-07-20
 #ifndef LETTUCE_CORE_PIPELINE_LAYOUT_HPP
 #define LETTUCE_CORE_PIPELINE_LAYOUT_HPP 
 
+// standard headers
+#include <vector>
+
+// project headers
+#include "Common.hpp"
+
 namespace Lettuce::Core
 {   
     struct PushConstant

@@ -3,6 +3,8 @@
 #include <memory>
 #include <vector>
 
+using namespace Lettuce::Core;
+
 std::shared_ptr<Device> device;
 std::shared_ptr<Swapchain> swapchain;
 std::shared_ptr<Memory> meshMemory;
@@ -72,7 +74,7 @@ void initLettuce()
     CommandsList cmdList = {
         .type = CommandListType::Graphics,
     };
-    cmdList.Record([&](CommandRecordingContext &ctx)
+    cmdList.Record([&](CommandRecordingContext &ctx) 
                    {
                        ctx.BindPipeline(pipeline);
                        ctx.BindDescriptorTable(descriptorTable);

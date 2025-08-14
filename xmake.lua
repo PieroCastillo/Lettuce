@@ -1,23 +1,15 @@
 set_languages("c++23")
-set_runtimes("MD") 
+set_toolchains("clang-cl")
 
 add_rules("plugin.compile_commands.autoupdate", {outputdir = ".vscode"})
+add_rules("plugin.compile_commands.autoupdate", {outputdir = "src"})
 
 add_requires("vulkansdk")
-add_requires("shaderc", {
-    configs = {
-        binaryonly = false,
-        shared = false     
-    }
-})
 add_requires("volk")
-add_requires("vulkan-memory-allocator")
 add_requires("glfw")
 add_requires("glm")
 add_requires("fastgltf")
-add_requires("directxshadercompiler")
 add_requires("imgui")
-add_requires("taskflow")
 
 local v = ("0.0.1.0"):split("%.")
 add_defines("VARIANT_VERSION=" .. (v[1] or 0),
@@ -35,10 +27,10 @@ end
 
 target("Lettuce")
     set_kind("static")
-    add_includedirs("include", "external/stb" )
+    add_includedirs("include/")
     add_headerfiles("include/Lettuce/**.hpp")
     add_files("src/Core/**.cpp")
-    add_packages("vulkansdk", "volk", "vulkan-memory-allocator", "glfw", "glm", "fastgltf", "shaderc", "directxshadercompiler", {public = true})
+    add_packages("vulkansdk", "volk", "glfw", "glm", "fastgltf",{public = true})
     
 local samples = {
         "helloTriangle",

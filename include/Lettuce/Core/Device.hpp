@@ -14,22 +14,13 @@ Created by @PieroCastillo on 2025-07-20
 #include <concepts>
 
 // project headers
-#include "Buffer.hpp"
+#include "Common.hpp"
 #include "CommandList.hpp"
-#include "ComputeNode.hpp"
-#include "DescriptorTable.hpp"
 #include "GPU.hpp"
 #include "Memory.hpp"
-#include "Pipeline.hpp"
-#include "PipelineLayout.hpp"
-#include "RenderFlowGraph.hpp"
-#include "RenderNode.hpp"
-#include "RenderTarget.hpp"
-#include "Sampler.hpp"
-#include "Swapchain.hpp"
+#include "Buffer.hpp"
+#include "DescriptorTable.hpp"
 #include "TextureArray.hpp"
-#include "TextureView.hpp"
-#include "TransferNode.hpp"
 
 namespace Lettuce::Core
 {
@@ -94,10 +85,10 @@ namespace Lettuce::Core
     {
     private:
         std::vector<std::string> availableExtensionsNames;
-        std::vector<char *> availableLayersNames;
-        std::vector<const char *> requestedExtensionsNames;
-        std::vector<const char *> requestedLayersNames;
-        void *next;
+        std::vector<char*> availableLayersNames;
+        std::vector<const char*> requestedExtensionsNames;
+        std::vector<const char*> requestedLayersNames;
+        void* next;
         Features _features;
         Features _enabledFeatures;
         EnabledRecommendedFeatures enabledRecommendedFeatures;
@@ -170,47 +161,43 @@ namespace Lettuce::Core
             return enabledRecommendedFeatures;
         }
 
-        
-        template <typename T>
-        using Result = std::expected<std::shared_ptr<T>, LettuceResult>;
         template <typename T>
         using AsyncResult = std::future<Result<T>>;
         using Op = std::expected<void, LettuceResult>;
         using AsyncOp = std::future<Op>;
 
+        template <typename T>
+        using Result = std::expected<std::shared_ptr<T>, LettuceResult>;
+
         template <typename T, typename TCreateInfo>
-        concept ValidObjectType = std::constructible_from<T, VkDevice, TCreateInfo> && requires(T obj) {
-            { obj.Release(); } -> std::same_as<void>;
+        concept ValidObjectType1 = std::constructible_from<T, VkDevice, TCreateInfo> &&
+            !std::constructible_from<T, VkInstance, VkPhysicalDevice, VkDevice, TCreateInfo> &&
+            requires(T obj) {
+                { obj.Release(); } -> std::same_as<void>;
         };
 
-        
         template <typename T, typename TCreateInfo>
-        concept ValidObjectWithGPUType = std::constructible_from<T, VkDevice, VkPhysicalDevice, TCreateInfo> && requires(T obj) {
-            { obj.Release(); } -> std::same_as<void>;
+        concept ValidObjectType2 = std::constructible_from<T, VkInstance, VkPhysicalDevice, VkDevice, TCreateInfo> &&
+            !std::constructible_from<T, VkDevice, TCreateInfo> &&
+            requires(T obj) {
+                { obj.Release(); } -> std::same_as<void>;
         };
 
         template <typename T, typename Args>
-        requires ValidObjectType<T, Args>
-        inline auto CreateObject(Args &&args) -> Result<T>
+            requires ValidObjectType1<T, Args>
+        inline auto CreateObject(Args&& args) -> Result<T>
         {
             return std::make_shared<T>(m_device, std::forward<Args>(args));
         }
 
         template <typename T, typename Args>
-        requires ValidObjectWithGPUType<T, Args>
-        inline auto CreateObjectWithGPU(Args &&args) -> Result<T>
+            requires ValidObjectType2<T, Args>
+        inline auto CreateObject(Args&& args) -> Result<T>
         {
-            return std::make_shared<T>(m_device, m_physicalDevice, std::forward<Args>(args));
+            return std::make_shared<T>(m_instance, m_physicalDevice, m_device, std::forward<Args>(args));
         }
 
-        template <typename T, typename Args>
-        requires ValidObjectType<T, Args>
-        inline auto CreateAsyncObject(Args && args) -> AsyncResult<T>
-        {
-            return std::async<Result<T>>(std::launch::async, std::make_shared<T>(m_device, std::forward<Args>(args)));
-        }
-
-        auto UpdateBinding(const std::shared_ptr<DescriptorTable> descriptorTable, const DescriptorTableUpdateBindingInfo &updateInfo) -> Op;
+        auto UpdateBinding(const std::shared_ptr<DescriptorTable> descriptorTable, const DescriptorTableUpdateBindingInfo& updateInfo) -> Op;
 
         auto BindMemory(std::shared_ptr<Memory> memory, std::shared_ptr<Buffer> buffer) -> Op;
         auto BindMemory(std::shared_ptr<Memory> memory, std::shared_ptr<TextureArray> textureArray) -> Op;

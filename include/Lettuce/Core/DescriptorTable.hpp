@@ -7,6 +7,9 @@ Created by @PieroCastillo on 2025-07-20
 // standard headers
 #include <vector>
 
+// project headers
+#include "Common.hpp"
+
 namespace Lettuce::Core
 {
     enum class DescriptorAddressType

@@ -4,6 +4,9 @@ Created by @PieroCastillo on 2025-07-20
 #ifndef LETTUCE_CORE_SWAPCHAIN_HPP
 #define LETTUCE_CORE_SWAPCHAIN_HPP
 
+// project headers
+#include "Common.hpp"
+
 namespace Lettuce::Core
 {
     struct SwapchainCreateInfo
@@ -23,8 +26,9 @@ namespace Lettuce::Core
         inline void setupSwapchain(const SwapchainCreateInfo &createInfo);
 
     public:
-        VkDevice m_device;
+        VkInstance m_instance;
         VkPhysicalDevice m_gpu;
+        VkDevice m_device;
         VkSwapchainKHR m_swapchain;
         VkSurfaceKHR m_surface;
 

@@ -7,23 +7,14 @@
 #include <unordered_map>
 #include <array>
 
+// external headers
+#include <volk.h>
+
 // project headers
-#include "Lettuce/Core/Buffer.hpp"
+#include "Lettuce/Core/Device.hpp"
 #include "Lettuce/Core/CommandList.hpp"
-#include "Lettuce/Core/ComputeNode.hpp"
-#include "Lettuce/Core/DescriptorTable.hpp"
 #include "Lettuce/Core/GPU.hpp"
 #include "Lettuce/Core/Memory.hpp"
-#include "Lettuce/Core/Pipeline.hpp"
-#include "Lettuce/Core/PipelineLayout.hpp"
-#include "Lettuce/Core/RenderFlowGraph.hpp"
-#include "Lettuce/Core/RenderNode.hpp"
-#include "Lettuce/Core/RenderTarget.hpp"
-#include "Lettuce/Core/Sampler.hpp"
-#include "Lettuce/Core/Swapchain.hpp"
-#include "Lettuce/Core/TextureArray.hpp"
-#include "Lettuce/Core/TextureView.hpp"
-#include "Lettuce/Core/TransferNode.hpp"
 
 using namespace Lettuce::Core;
 
@@ -42,10 +33,12 @@ void Device::Release()
 {
     vkDestroyDevice(m_device, nullptr);
     vkDestroyInstance(m_instance, nullptr);
+    volkFinalize();
 }
 
 void Device::setupInstance()
 {
+    volkInitialize();
     VkApplicationInfo appInfo = {
         .sType = VK_STRUCTURE_TYPE_APPLICATION_INFO,
         .pApplicationName = "Lettuce Application",
@@ -70,6 +63,7 @@ void Device::setupInstance()
     };
     // TODO: Add validation to vulkan functions
     vkCreateInstance(&instanceCI, nullptr, &m_instance);
+    volkLoadInstanceOnly(m_instance);
 }
 
 void Device::setupFeaturesExtensions()
@@ -152,6 +146,7 @@ void Device::setupDevice()
         .sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
     };
     vkCreateDevice(m_physicalDevice, &deviceCI, nullptr, &m_device);
+    volkLoadDevice(m_device);
 }
 
 void Device::getQueues()

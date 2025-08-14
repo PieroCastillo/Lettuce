@@ -1,4 +1,5 @@
-// standard headers
+// external headers
+#include "Volk/volk.h"
 
 // project headers
 #include "Lettuce/Core/DeviceExecutionContext.hpp"

@@ -1,3 +1,12 @@
+// standard headers
+#include <memory>
+#include <vector>
+#include <unordered_map>
+
+// external headers
+#include <volk.h>
+
+// project headers
 #include "Lettuce/Core/DescriptorTable.hpp"
 
 using namespace Lettuce::Core;
@@ -5,7 +14,7 @@ using namespace Lettuce::Core;
 DescriptorTable::DescriptorTable(VkDevice device, const DescriptorTableCreateInfo &createInfo)
 {
     // initialize descriptor buffer and its device memory
-    VkMemoryAllocationInfo memoryAI = {
+    VkMemoryAllocateInfo memoryAI = {
 
     };
     checkResult(vkAllocateMemory(m_device, &memoryAI, nullptr, &m_descriptorBufferMemory));
@@ -26,15 +35,15 @@ void DescriptorTable::SetBuffer(uint32_t set, uint32_t binding, VkBuffer buffer,
 {
     VkDescriptorAddressInfoEXT addressInfo = {
         .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_ADDRESS_INFO_EXT,
-        .address =, // buffer address
-        .range =,   // size of the buffer
+        .address = 0, // buffer address
+        .range = 0,   // size of the buffer
         .format = VK_FORMAT_UNDEFINED,
     };
 
     VkDescriptorGetInfoEXT getInfo = {
         .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_GET_INFO_EXT,
-        .type =,
-        .data =,
+        .type = 0,
+        .data = 0,
     };
 
     vkGetDescriptorEXT(m_device, &getInfo, dataSize, &pDescriptor);
@@ -43,7 +52,7 @@ void DescriptorTable::SetBuffer(uint32_t set, uint32_t binding, VkBuffer buffer,
 void DescriptorTable::SetTexture(uint32_t set, uint32_t binding, VkImageView imageView, VkSampler sampler, DescriptorTextureType textureType)
 {
     VkDescriptorType dt = {};
-    VkDescriptorGetDataEXT data = {};
+    VkDescriptorDataEXT data = {};
 
     VkDescriptorImageInfo imageInfo = {
         .sampler = sampler,

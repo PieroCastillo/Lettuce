@@ -4,6 +4,9 @@ Created by @PieroCastillo on 2025-07-25
 #ifndef LETTUCE_CORE_TEXTURE_VIEW_HPP
 #define LETTUCE_CORE_TEXTURE_VIEW_HPP
 
+// project headers
+#include "Common.hpp"
+
 namespace Lettuce::Core
 {
     struct TextureViewCreateInfo
