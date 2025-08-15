@@ -11,9 +11,9 @@ namespace Lettuce::Core
 {
     enum class MemoryAccess
     {
-        FastGPUReadWrite, // VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
-        FastCPUWrite, // VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT 
-        FastGPUWriteCPURead, // VK_MEMORY_PROPERTY_HOST_CACHED_BIT | VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT
+        FastGPUReadWrite,   // VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
+        FastGPUReadCPUWrite, // VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT | VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT
+        FastGPUWriteCPURead, // VK_MEMORY_PROPERTY_HOST_CACHED_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT | VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT
     };
 
     struct MemoryCreateInfo
@@ -30,7 +30,7 @@ namespace Lettuce::Core
         VkDevice m_device;
         VkDeviceMemory m_memory;
 
-        Memory(VkDevice device, const MemoryCreateInfo& createInfo);
+        Memory(VkPhysicalDevice physicalDevice, VkDevice device, const MemoryCreateInfo& createInfo);
         void Release();
     };
 }
