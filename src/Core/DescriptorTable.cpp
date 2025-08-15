@@ -11,7 +11,7 @@
 
 using namespace Lettuce::Core;
 
-DescriptorTable::DescriptorTable(VkDevice device, const DescriptorTableCreateInfo &createInfo)
+DescriptorTable::DescriptorTable(VkDevice device, const DescriptorTableCreateInfo &createInfo, LettuceResult& result)
 {
     // initialize descriptor buffer and its device memory
     VkMemoryAllocateInfo memoryAI = {

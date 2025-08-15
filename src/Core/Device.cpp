@@ -48,7 +48,7 @@ void Device::setupInstance()
         .apiVersion = VK_API_VERSION_1_3,
     };
 
-    std::array<const char *, 2> instanceExtensions = {
+    std::array<const char*, 2> instanceExtensions = {
         VK_KHR_SURFACE_EXTENSION_NAME,
         VK_KHR_WIN32_SURFACE_EXTENSION_NAME,
     };
@@ -62,7 +62,7 @@ void Device::setupInstance()
         .ppEnabledLayerNames = nullptr,
     };
     // TODO: Add validation to vulkan functions
-    vkCreateInstance(&instanceCI, nullptr, &m_instance);
+    checkResult(vkCreateInstance(&instanceCI, nullptr, &m_instance));
     volkLoadInstanceOnly(m_instance);
 }
 
@@ -142,48 +142,73 @@ void Device::setupFeaturesExtensions()
 
 void Device::setupDevice()
 {
+    // get queue families
+    uint32_t queueFamiliesCount = 0;
+    vkGetPhysicalDeviceQueueFamilyProperties(m_physicalDevice, &queueFamiliesCount, nullptr);
+    std::vector<VkQueueFamilyProperties> queueFamiliesVec(queueFamiliesCount);
+    vkGetPhysicalDeviceQueueFamilyProperties(m_physicalDevice, &queueFamiliesCount, queueFamiliesVec.data());
+
+    VkQueueFlags graphicsFlags = VK_QUEUE_GRAPHICS_BIT | VK_QUEUE_COMPUTE_BIT | VK_QUEUE_TRANSFER_BIT | VK_QUEUE_SPARSE_BINDING_BIT;
+    VkQueueFlags transferFlags =  VK_QUEUE_TRANSFER_BIT | VK_QUEUE_SPARSE_BINDING_BIT;
+    VkQueueFlags computeFlags = VK_QUEUE_COMPUTE_BIT | VK_QUEUE_TRANSFER_BIT | VK_QUEUE_SPARSE_BINDING_BIT;
+
+    // find queue family indices
+    for(const VkQueueFamilyProperties& queueFamily : queueFamiliesVec)
+    {
+        if(queueFamily.queueFlags == graphicsFlags)
+        {
+            
+        }
+    }
+
     VkDeviceCreateInfo deviceCI = {
         .sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
     };
-    vkCreateDevice(m_physicalDevice, &deviceCI, nullptr, &m_device);
+    checkResult(vkCreateDevice(m_physicalDevice, &deviceCI, nullptr, &m_device));
     volkLoadDevice(m_device);
 }
 
 void Device::getQueues()
 {
+    
 }
 
-auto UpdateBinding(const std::shared_ptr<DescriptorTable> descriptorTable, const DescriptorTableUpdateBindingInfo &updateInfo) -> Op
+auto Device::UpdateBinding(const std::shared_ptr<DescriptorTable> descriptorTable, const DescriptorTableUpdateBindingInfo& updateInfo) -> Op
 {
 }
 
-auto BindMemory(std::shared_ptr<Memory> memory, std::shared_ptr<Buffer> buffer) -> Op
+auto Device::BindMemory(std::shared_ptr<Memory> memory, std::shared_ptr<Buffer> buffer) -> Op
 {
 }
 
-auto BindMemory(std::shared_ptr<Memory> memory, std::shared_ptr<TextureArray> textureArray) -> Op
+auto Device::BindMemory(std::shared_ptr<Memory> memory, std::shared_ptr<TextureArray> textureArray) -> Op
 {
 }
 
-auto MemoryAlloc(uint32_t size) -> Result<Memory>
+auto Device::MemoryAlloc(uint32_t size, MemoryAccess access) -> Result<Memory>
+{
+    MemoryCreateInfo createInfo = {
+        .size = size,
+        .access = access,
+    };
+    return std::make_shared<Memory>(m_physicalDevice, m_device, createInfo);
+}
+
+auto Device::MemoryCopy(std::shared_ptr<Buffer> srcBuffer, std::shared_ptr<Buffer> dstBuffer) -> Op
 {
 }
 
-auto MemoryCopy(std::shared_ptr<Buffer> srcBuffer, std::shared_ptr<Buffer> dstBuffer) -> Op
+auto Device::MemoryCopy(std::shared_ptr<Buffer> srcBuffer, std::shared_ptr<TextureArray> dstTextureArray) -> Op
 {
 }
 
-auto MemoryCopy(std::shared_ptr<Buffer> srcBuffer, std::shared_ptr<TextureArray> dstTextureArray) -> Op
+auto Device::MemoryCopy(std::shared_ptr<TextureArray> srcTextureArray, std::shared_ptr<Buffer> dstBuffer) -> Op
+{
+}
+auto Device::MemoryCopy(std::shared_ptr<TextureArray> srcTextureArray, std::shared_ptr<TextureArray> dstTextureArray) -> Op
 {
 }
 
-auto MemoryCopy(std::shared_ptr<TextureArray> srcTextureArray, std::shared_ptr<Buffer> dstBuffer) -> Op
-{
-}
-auto MemoryCopy(std::shared_ptr<TextureArray> srcTextureArray, std::shared_ptr<TextureArray> dstTextureArray) -> Op
-{
-}
-
-auto Blit(std::shared_ptr<TextureArray> srcTextureArray, std::shared_ptr<TextureArray> dstTextureArray) -> Op
+auto Device::Blit(std::shared_ptr<TextureArray> srcTextureArray, std::shared_ptr<TextureArray> dstTextureArray) -> Op
 {
 }

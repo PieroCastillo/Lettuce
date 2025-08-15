@@ -36,19 +36,20 @@ void initLettuce()
     };
     playout = device->CreateObject(playoutCI);
 
-    GraphicsPipelineCreateInfo = {
+    GraphicsPipelineCreateInfo pipelineCI = {
 
     };
     pipeline = device->CreateObject(pipelineCI);
-
-    colorTarget = device->CreateObject(RenderTargetCreateInfo{
-        .width = swapchain->GetWidth(),
-        .height = swapchain->GetHeight(),
-        .depth = 1,
-        .format = swapchain->GetFormat(),
-        .components = {VK_COMPONENT_SWIZZLE_R, VK_COMPONENT_SWIZZLE_G, VK_COMPONENT_SWIZZLE_B, VK_COMPONENT_SWIZZLE_A},
-        .subresourceRange = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1},
-    });
+    
+    RenderTargetCreateInfo colorTarget = {
+            .width = swapchain->GetWidth(),
+            .height = swapchain->GetHeight(),
+            .depth = 1,
+            .format = swapchain->GetFormat(),
+            .components = {VK_COMPONENT_SWIZZLE_R, VK_COMPONENT_SWIZZLE_G, VK_COMPONENT_SWIZZLE_B, VK_COMPONENT_SWIZZLE_A},
+            .subresourceRange = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1},
+    }
+    colorTarget = device->CreateObject(colorTarget);
 
     meshMemory = device->MemoryAlloc();
 
@@ -56,7 +57,7 @@ void initLettuce()
         .size = 1024 * 1024, // 1 MiB
         .usage = BufferUsage::VertexBuffer | BufferUsage::IndexBuffer,
         .memory = meshMemory,
-    });
+        });
 
     hostMemory = device->MemoryAlloc(1024 * 1024, MemoryAccess::FastCPUWrite);
 
@@ -64,26 +65,26 @@ void initLettuce()
         .size = 256, // 256 bytes for UBO
         .usage = BufferUsage::UniformBuffer,
         .memory = hostMemory,
-    });
+        });
 
     executionContext = device->CreateObject(DeviceExecutionContextCreateInfo{
         .threadCount = 4,
         .maxTasks = 4,
-    });
+        });
 
     CommandsList cmdList = {
         .type = CommandListType::Graphics,
     };
-    cmdList.Record([&](CommandRecordingContext &ctx) 
-                   {
-                       ctx.BindPipeline(pipeline);
-                       ctx.BindDescriptorTable(descriptorTable);
-                       ctx.BindVertexBuffers(meshBuffer);
-                       ctx.BindIndexBuffer(meshBuffer);
-                       ctx.DrawIndexed(3, 1, 0, 0, 0); });
+    cmdList.Record([&](CommandRecordingContext& ctx)
+        {
+            ctx.BindPipeline(pipeline);
+            ctx.BindDescriptorTable(descriptorTable);
+            ctx.BindVertexBuffers(meshBuffer);
+            ctx.BindIndexBuffer(meshBuffer);
+            ctx.DrawIndexed(3, 1, 0, 0, 0); });
 
     std::vector<std::vector<CommandList>> cmds;
-    cmd.push_back({cmdList});
+    cmd.push_back({ cmdList });
 
     executionContext->Prepare(cmds);
 }

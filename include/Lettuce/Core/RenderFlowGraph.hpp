@@ -19,7 +19,7 @@ namespace Lettuce::Core
     public:
         VkDevice m_device;
         
-        RenderFlowGraph(VkDevice device, const RenderFlowGraphCreateInfo &createInfo);
+        RenderFlowGraph(VkDevice device, const RenderFlowGraphCreateInfo &createInfo, LettuceResult& result);
         void Release();
     };
 }

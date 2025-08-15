@@ -67,19 +67,19 @@ namespace Lettuce::Core
         std::variant<DescriptorTableBufferUpdateData, DescriptorTableTextureViewUpdateData, DescriptorTableSamplerUpdateData> updateData;
     };
 
-    enum class LettuceResult
-    {
-        OutOfDeviceMemory,
-        OutOfHostMemory,
-        Unknown,
-    };
-
     enum class DeviceQueueType
     {
         Graphics,
         Compute,
         Transfer,
     }
+
+    struct QueueFamilyIndices
+    {
+        uint32_t graphics;
+        uint32_t compute;
+        uint32_t transfer;
+    };
 
     class Device
     {
@@ -93,6 +93,7 @@ namespace Lettuce::Core
         Features _enabledFeatures;
         EnabledRecommendedFeatures enabledRecommendedFeatures;
         std::unordered_multimap<DeviceQueueType, VkQueue> queues;
+        QueueFamilyIndices queuefamilyIndices;
 
         // physical device features structs
         // required features/extensions
@@ -162,23 +163,23 @@ namespace Lettuce::Core
         }
 
         template <typename T>
+        using Result = std::expected<std::shared_ptr<T>, LettuceResult>;
+        template <typename T>
         using AsyncResult = std::future<Result<T>>;
         using Op = std::expected<void, LettuceResult>;
         using AsyncOp = std::future<Op>;
 
-        template <typename T>
-        using Result = std::expected<std::shared_ptr<T>, LettuceResult>;
 
         template <typename T, typename TCreateInfo>
-        concept ValidObjectType1 = std::constructible_from<T, VkDevice, TCreateInfo> &&
-            !std::constructible_from<T, VkInstance, VkPhysicalDevice, VkDevice, TCreateInfo> &&
+        concept ValidObjectType1 = std::constructible_from<T, VkDevice, TCreateInfo, LettuceResult> &&
+            !std::constructible_from<T, VkInstance, VkPhysicalDevice, VkDevice, TCreateInfo, LettuceResult>&&
             requires(T obj) {
                 { obj.Release(); } -> std::same_as<void>;
         };
 
         template <typename T, typename TCreateInfo>
-        concept ValidObjectType2 = std::constructible_from<T, VkInstance, VkPhysicalDevice, VkDevice, TCreateInfo> &&
-            !std::constructible_from<T, VkDevice, TCreateInfo> &&
+        concept ValidObjectType2 = std::constructible_from<T, VkInstance, VkPhysicalDevice, VkDevice, TCreateInfo, LettuceResult> &&
+            !std::constructible_from<T, VkDevice, TCreateInfo, LettuceResult>&&
             requires(T obj) {
                 { obj.Release(); } -> std::same_as<void>;
         };
@@ -187,14 +188,24 @@ namespace Lettuce::Core
             requires ValidObjectType1<T, Args>
         inline auto CreateObject(Args&& args) -> Result<T>
         {
-            return std::make_shared<T>(m_device, std::forward<Args>(args));
+            LettuceResult res;
+            auto value = std::make_shared<T>(m_device, std::forward<Args>(args), res);
+            if (res == LettuceResult::Success)
+                return value;
+
+            return res;
         }
 
         template <typename T, typename Args>
             requires ValidObjectType2<T, Args>
         inline auto CreateObject(Args&& args) -> Result<T>
         {
-            return std::make_shared<T>(m_instance, m_physicalDevice, m_device, std::forward<Args>(args));
+            LettuceResult res;
+            auto value = std::make_shared<T>(m_instance, m_physicalDevice, m_device, std::forward<Args>(args), res);
+            if (res == LettuceResult::Success)
+                return value;
+
+            return res;
         }
 
         auto UpdateBinding(const std::shared_ptr<DescriptorTable> descriptorTable, const DescriptorTableUpdateBindingInfo& updateInfo) -> Op;
@@ -202,14 +213,7 @@ namespace Lettuce::Core
         auto BindMemory(std::shared_ptr<Memory> memory, std::shared_ptr<Buffer> buffer) -> Op;
         auto BindMemory(std::shared_ptr<Memory> memory, std::shared_ptr<TextureArray> textureArray) -> Op;
 
-        auto MemoryAlloc(uint32_t size = (16 * 1024 * 1024), MemoryAccess access = MemoryAccess::FastGPUReadWrite) -> Result<Memory> // 16 MiB default size
-        {
-            MemoryCreateInfo createInfo = {
-                .size = size,
-                .access = access,
-            };
-            return std::make_shared<Memory>(m_device, createInfo);
-        }
+        auto MemoryAlloc(uint32_t size = (16 * 1024 * 1024), MemoryAccess access = MemoryAccess::FastGPUReadWrite) -> Result<Memory>; // 16 MiB default size
         auto MemoryCopy(std::shared_ptr<Buffer> srcBuffer, std::shared_ptr<Buffer> dstBuffer) -> Op;
         auto MemoryCopy(std::shared_ptr<Buffer> srcBuffer, std::shared_ptr<TextureArray> dstTextureArray) -> Op;
         auto MemoryCopy(std::shared_ptr<TextureArray> srcTextureArray, std::shared_ptr<Buffer> dstBuffer) -> Op;

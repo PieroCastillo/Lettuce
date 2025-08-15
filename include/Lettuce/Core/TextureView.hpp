@@ -37,7 +37,7 @@ namespace Lettuce::Core
         VkImage m_image;
         VkImageView m_imageView;
 
-        TextureView(VkDevice device, VkImage image, const TextureViewCreateInfo& createInfo);
+        TextureView(VkDevice device, VkImage image, const TextureViewCreateInfo& createInfo, LettuceResult& result);
         void Release();
     };
 }

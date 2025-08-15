@@ -32,7 +32,7 @@ namespace Lettuce::Core
         VkDevice m_device;
         VkImage m_image;
 
-        ImageResource(VkDevice device, const TextureArrayCreateInfo& createInfo);
+        ImageResource(VkDevice device, const TextureArrayCreateInfo& createInfo, LettuceResult& result);
         void Release();
 
         VkFormat GetFormat();

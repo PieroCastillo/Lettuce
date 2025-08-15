@@ -14,6 +14,8 @@ namespace Lettuce::Core
         uint32_t width;
         uint32_t height;
         bool clipped;
+        void* windowPtr;
+        void* applicationPtr;
     };
 
     class Swapchain
@@ -32,13 +34,12 @@ namespace Lettuce::Core
         VkSwapchainKHR m_swapchain;
         VkSurfaceKHR m_surface;
 
-        Swapchain(VkDevice device, VkPhysicalDevice gpu, const SwapchainCreateInfo &createInfo);
+        Swapchain(VkDevice device, VkPhysicalDevice gpu, const SwapchainCreateInfo &createInfo, LettuceResult& result);
         void Release();
 
         void AcquireNextImage();
         void Present();
         void Resize(uint32_t newWidth, uint32_t newHeight);
-        void Wait();
     };
 }
 #endif // LETTUCE_CORE_SWAPCHAIN_HPP

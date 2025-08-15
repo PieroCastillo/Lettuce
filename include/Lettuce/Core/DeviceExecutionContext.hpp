@@ -61,8 +61,11 @@ namespace Lettuce::Core
 
     public:
         VkDevice m_device;
+        VkQueue m_graphicsQueue;
+        VkQueue m_computeQueue;
+        VkQueue m_transferQueue;
 
-        DeviceExecutionContext(VkDevice device, const DeviceExecutorCreateInfo &createInfo);
+        DeviceExecutionContext(VkDevice device, const DeviceExecutorCreateInfo &createInfo, LettuceResult& result);
         void Release();
 
         void Prepare(const std::vector<std::vector<CommandList>> &cmds);

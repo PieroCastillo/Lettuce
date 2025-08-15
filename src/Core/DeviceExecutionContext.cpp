@@ -1,3 +1,8 @@
+// standard headers
+#include <functional>
+#include <vector>
+#include <mutex>
+
 // external headers
 #include "Volk/volk.h"
 
@@ -93,7 +98,7 @@ void DeviceExecutionContext::setupCommandPools(const DeviceExecutionContextCreat
             .flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT,
             .queueFamilyIndex = 0, // TODO: get correct queue family index
         };
-        vkCreateCommandPool(m_device, &cmdPoolCI, nullptr, &cmdPools[i]);
+        checkResult(vkCreateCommandPool(m_device, &cmdPoolCI, nullptr, &cmdPools[i]));
 
         VkCommandBufferAllocateInfo cmdAllocInfo = {
             .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
@@ -101,12 +106,13 @@ void DeviceExecutionContext::setupCommandPools(const DeviceExecutionContextCreat
             .level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
             .commandBufferCount = cmdCountPerThread,
         };
-        vkAllocateCommandBuffers(m_device, &cmdAllocInfo, &cmds[i * cmdCountPerThread]);
+        checkResult(vkAllocateCommandBuffers(m_device, &cmdAllocInfo, &cmds[i * cmdCountPerThread]));
     }
 }
 
-DeviceExecutionContext::DeviceExecutionContext(VkDevice device, const DeviceExecutorCreateInfo &createInfo)
+DeviceExecutionContext::DeviceExecutionContext(VkDevice device, const DeviceExecutorCreateInfo &createInfo, LettuceResult& result)
 {
+    m_device = device;
     setupSynchronizationPrimitives(createInfo);
     setupCommandPools(createInfo);
     setupThreads(createInfo);

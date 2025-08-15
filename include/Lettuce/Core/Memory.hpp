@@ -30,7 +30,7 @@ namespace Lettuce::Core
         VkDevice m_device;
         VkDeviceMemory m_memory;
 
-        Memory(VkPhysicalDevice physicalDevice, VkDevice device, const MemoryCreateInfo& createInfo);
+        Memory(VkPhysicalDevice physicalDevice, VkDevice device, const MemoryCreateInfo& createInfo, LettuceResult& result);
         void Release();
     };
 }

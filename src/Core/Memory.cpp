@@ -10,7 +10,7 @@
 
 using namespace Lettuce::Core;
 
-Memory::Memory(VkPhysicalDevice physicalDevice, VkDevice device, const MemoryCreateInfo& createInfo)
+Memory::Memory(VkPhysicalDevice physicalDevice, VkDevice device, const MemoryCreateInfo& createInfo, LettuceResult& result)
 {
     m_device = device;
 

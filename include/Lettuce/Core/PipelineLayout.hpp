@@ -30,7 +30,7 @@ namespace Lettuce::Core
     public:
         VkDevice m_device;
             
-        PipelineLayout(VkDevice device, std::vector<VkDescriptorSetLayout> layouts, const PipelineLayoutCreateInfo& createInfo);
+        PipelineLayout(VkDevice device, std::vector<VkDescriptorSetLayout> layouts, const PipelineLayoutCreateInfo& createInfo, LettuceResult& result);
         void Release();
     };
 }

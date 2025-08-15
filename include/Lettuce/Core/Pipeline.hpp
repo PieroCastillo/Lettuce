@@ -27,8 +27,8 @@ namespace Lettuce::Core
         VkDevice m_device;
         VkPipeline m_pipeline;
 
-        Pipeline(VkDevice device, const GraphicsPipelineCreateInfo& createInfo);
-        Pipeline(VkDevice device, const ComputePipelineCreateInfo& createInfo);
+        Pipeline(VkDevice device, const GraphicsPipelineCreateInfo& createInfo, LettuceResult& result);
+        Pipeline(VkDevice device, const ComputePipelineCreateInfo& createInfo, LettuceResult& result);
         void Release();
     };
 }

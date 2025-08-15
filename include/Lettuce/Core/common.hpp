@@ -6,7 +6,20 @@
 
 #define NOMINMAX
 
-struct VkResult;
+#ifdef __INTELLISENSE__
+#define WIN32_
+#define __linux__
+#endif
+
+enum class LettuceResult
+{
+    Success,
+    OutOfDeviceMemory,
+    OutOfHostMemory,
+    Unknown,
+};
+
+enum VkResult;
 
 inline void checkResult(VkResult result)
 {
