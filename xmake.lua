@@ -2,7 +2,6 @@ set_languages("c++23")
 set_toolchains("clang-cl")
 
 add_rules("plugin.compile_commands.autoupdate", {outputdir = ".vscode"})
-add_rules("plugin.compile_commands.autoupdate", {outputdir = "src"})
 
 add_requires("vulkansdk")
 add_requires("volk")

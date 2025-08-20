@@ -29,7 +29,7 @@ namespace Lettuce::Core
         VkBuffer m_buffer;
         std::optional<VkDescriptorSetLayout> m_descriptorSetLayout;
 
-        Buffer(VkDevice device, const BufferCreateInfo& createInfo, LettuceResult& result);
+        LettuceResult Create(VkDevice device, const BufferCreateInfo& createInfo);
         void Release();
 
         uint64_t GetAddress();

@@ -38,12 +38,14 @@ void Swapchain::setupSwapchain(const SwapchainCreateInfo& createInfo)
     checkResult(vkCreateSwapchainKHR(m_device, &swapchainCI, nullptr, &m_swapchain));
 }
 
-Swapchain::Swapchain(VkDevice device, VkPhysicalDevice gpu, const SwapchainCreateInfo& createInfo, LettuceResult& result)
+LettuceResult Swapchain::Create(VkInstance instance, VkPhysicalDevice gpu, VkDevice device, const SwapchainCreateInfo& createInfo)
 {
     m_device = device;
     m_gpu = gpu;
     setupSurface(createInfo);
     setupSwapchain(createInfo);
+
+    return LettuceResult::Success;
 }
 
 void Swapchain::Release()

@@ -6,6 +6,7 @@ Created by @PieroCastillo on 2025-07-28
 
 // project headers
 #include "Common.hpp"
+#include "RenderingInfo.hpp"
 
 namespace Lettuce::Core
 {
@@ -42,6 +43,7 @@ namespace Lettuce::Core
         void Release();
 
         // Graphics & Compute commands
+        void BindRenderingInfo();
         void BindIndexBuffer();
         void BindVertexBuffers();
         void BindPipeline();

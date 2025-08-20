@@ -11,7 +11,7 @@
 
 using namespace Lettuce::Core;
 
-DescriptorTable::DescriptorTable(VkDevice device, const DescriptorTableCreateInfo &createInfo, LettuceResult& result)
+LettuceResult DescriptorTable::Create(VkDevice device, const DescriptorTableCreateInfo &createInfo)
 {
     // initialize descriptor buffer and its device memory
     VkMemoryAllocateInfo memoryAI = {
@@ -23,6 +23,9 @@ DescriptorTable::DescriptorTable(VkDevice device, const DescriptorTableCreateInf
 
     };
     checkResult(vkCreateBuffer(m_device, &descriptorBufferCI, nullptr, &m_descriptorBuffer));
+
+    
+    return LettuceResult::Success;
 }
 
 void DescriptorTable::Release()

@@ -39,8 +39,8 @@ namespace Lettuce::Core
         VkImage m_image;
         VkImageView m_imageView;
 
-        RenderTarget(VkDevice device, const RenderTargetCreateInfo& createInfo, LettuceResult& result);
-        RenderTarget(VkDevice device, VkImage image, const RenderTargetAsViewCreateInfo& viewInfo, LettuceResult& result);
+        LettuceResult Create(VkDevice device, const RenderTargetCreateInfo& createInfo);
+        LettuceResult Create(VkDevice device, VkImage image, const RenderTargetAsViewCreateInfo& viewInfo);
         void Release();
 
         VkFormat GetFormat();

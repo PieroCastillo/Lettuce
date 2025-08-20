@@ -110,12 +110,14 @@ void DeviceExecutionContext::setupCommandPools(const DeviceExecutionContextCreat
     }
 }
 
-DeviceExecutionContext::DeviceExecutionContext(VkDevice device, const DeviceExecutorCreateInfo &createInfo, LettuceResult& result)
+LettuceResult DeviceExecutionContext::Create(VkDevice device, const DeviceExecutorCreateInfo &createInfo)
 {
     m_device = device;
     setupSynchronizationPrimitives(createInfo);
     setupCommandPools(createInfo);
     setupThreads(createInfo);
+
+    return LettuceResult::Success;
 }
 
 void DeviceExecutionContext::Release()

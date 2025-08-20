@@ -10,7 +10,7 @@
 
 using namespace Lettuce::Core;
 
-Memory::Memory(VkPhysicalDevice physicalDevice, VkDevice device, const MemoryCreateInfo& createInfo, LettuceResult& result)
+LettuceResult Memory::Create(VkPhysicalDevice physicalDevice, VkDevice device, const MemoryCreateInfo& createInfo)
 {
     m_device = device;
 
@@ -40,6 +40,9 @@ Memory::Memory(VkPhysicalDevice physicalDevice, VkDevice device, const MemoryCre
         .memoryTypeIndex = memTypeIdx,
     };
     checkResult(vkAllocateMemory(m_device, &memoryAI, nullptr, &m_memory));
+
+    
+    return LettuceResult::Success;
 }
 
 void Memory::Release()

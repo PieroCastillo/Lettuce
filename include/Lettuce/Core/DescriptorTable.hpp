@@ -47,7 +47,7 @@ namespace Lettuce::Core
         VkDeviceMemory m_descriptorBufferMemory;
         VkBuffer m_descriptorBuffer;
 
-        DescriptorTable(VkDevice device, const DescriptorTableCreateInfo& createInfo, LettuceResult& result);
+        LettuceResult Create(VkDevice device, const DescriptorTableCreateInfo& createInfo);
         void Release();
 
         void SetBuffer(uint32_t set, uint32_t binding, VkBuffer buffer, DescriptorAddressType addressType);

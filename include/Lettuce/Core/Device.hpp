@@ -164,48 +164,62 @@ namespace Lettuce::Core
 
         template <typename T>
         using Result = std::expected<std::shared_ptr<T>, LettuceResult>;
-        template <typename T>
-        using AsyncResult = std::future<Result<T>>;
         using Op = std::expected<void, LettuceResult>;
-        using AsyncOp = std::future<Op>;
 
-
-        template <typename T, typename TCreateInfo>
-        concept ValidObjectType1 = std::constructible_from<T, VkDevice, TCreateInfo, LettuceResult> &&
-            !std::constructible_from<T, VkInstance, VkPhysicalDevice, VkDevice, TCreateInfo, LettuceResult>&&
-            requires(T obj) {
-                { obj.Release(); } -> std::same_as<void>;
+        template <typename T>
+        concept HasRelease = requires(T obj) {
+            { obj.Release() } -> std::same_as<void>;
         };
 
         template <typename T, typename TCreateInfo>
-        concept ValidObjectType2 = std::constructible_from<T, VkInstance, VkPhysicalDevice, VkDevice, TCreateInfo, LettuceResult> &&
-            !std::constructible_from<T, VkDevice, TCreateInfo, LettuceResult>&&
-            requires(T obj) {
-                { obj.Release(); } -> std::same_as<void>;
+        concept ConstructibleFromDevice = requires(T obj, VkDevice device, TCreateInfo createInfo) {
+            { obj.Create(device, createInfo) } -> std::same_as<LettuceResult>;
         };
 
-        template <typename T, typename Args>
-            requires ValidObjectType1<T, Args>
-        inline auto CreateObject(Args&& args) -> Result<T>
+        template <typename T, typename TCreateInfo>
+            requires HasRelease<T> && ConstructibleFromDevice<T, TCreateInfo>
+        auto CreateObject(const TCreateInfo& createInfo) -> Result<T>
         {
-            LettuceResult res;
-            auto value = std::make_shared<T>(m_device, std::forward<Args>(args), res);
-            if (res == LettuceResult::Success)
-                return value;
+            auto obj = std::make_shared<T>();
+            auto result = obj->Create(m_device, createInfo);
 
-            return res;
+            if (result == LettuceResult::Success)
+                return obj;
+
+            return std::unexpected(result);
         }
 
-        template <typename T, typename Args>
-            requires ValidObjectType2<T, Args>
-        inline auto CreateObject(Args&& args) -> Result<T>
+        auto CreateObject(const SwapchainCreateInfo& createInfo) -> Result<Swapchain>
         {
-            LettuceResult res;
-            auto value = std::make_shared<T>(m_instance, m_physicalDevice, m_device, std::forward<Args>(args), res);
-            if (res == LettuceResult::Success)
-                return value;
+            auto obj = std::make_shared<Swapchain>();
+            auto result = obj->Create(m_instance, m_physicalDevice, m_device, createInfo);
 
-            return res;
+            if (result == LettuceResult::Success)
+                return obj;
+
+            return std::unexpected(result);
+        }
+
+        auto CreateObject(const std::shared_ptr<TextureArray>& textureArray, const RenderTargetAsViewCreateInfo& createInfo) -> Result<RenderTarget>
+        {
+            auto obj = std::make_shared<RenderTarget>();
+            auto result = obj->Create(m_device, textureArray->m_image, createInfo);
+
+            if (result == LettuceResult::Success)
+                return obj;
+
+            return std::unexpected(result);
+        }
+
+        auto CreateObject(const std::shared_ptr<TextureArray>& textureArray, const TextureViewCreateInfo& createInfo) -> Result<TextureView>
+        {
+            auto obj = std::make_shared<TextureView>();
+            auto result = obj->Create(m_device, textureArray->m_image, createInfo);
+
+            if (result == LettuceResult::Success)
+                return obj;
+
+            return std::unexpected(result);
         }
 
         auto UpdateBinding(const std::shared_ptr<DescriptorTable> descriptorTable, const DescriptorTableUpdateBindingInfo& updateInfo) -> Op;

@@ -21,10 +21,17 @@ enum class LettuceResult
 
 enum VkResult;
 
-inline void checkResult(VkResult result)
+inline void handleResult(VkResult vkResult, LettuceResult& lResult)
 {
-    // TODO: Implement error handling
-    return;
+    switch (vkResult)
+    {
+    case VK_SUCCESS:
+        lResult = LettuceResult::Success;
+        break;
+    default:
+        lResult = LettuceResult::Unknown;
+        break;
+    }
 }
 
 template<typename T>

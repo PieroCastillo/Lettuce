@@ -33,7 +33,7 @@ namespace Lettuce::Core
         VkDevice m_device;
         VkSampler m_sampler;
 
-        Sampler(VkDevice device, const SamplerCreateInfo& createInfo, LettuceResult& result);
+        LettuceResult Create(VkDevice device, const SamplerCreateInfo& createInfo);
         void Release();
     };
 }

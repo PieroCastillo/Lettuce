@@ -11,7 +11,9 @@ namespace Lettuce::Core
 {
     struct GraphicsPipelineCreateInfo
     {
-        
+        VkPrimitiveTopology topology;
+        uint32_t patchControlPoints;
+        bool fragmentShadingRate;
     };
 
     struct ComputePipelineCreateInfo
@@ -27,8 +29,8 @@ namespace Lettuce::Core
         VkDevice m_device;
         VkPipeline m_pipeline;
 
-        Pipeline(VkDevice device, const GraphicsPipelineCreateInfo& createInfo, LettuceResult& result);
-        Pipeline(VkDevice device, const ComputePipelineCreateInfo& createInfo, LettuceResult& result);
+        LettuceResult Create(VkDevice device, const GraphicsPipelineCreateInfo& createInfo);
+        LettuceResult Create(VkDevice device, const ComputePipelineCreateInfo& createInfo);
         void Release();
     };
 }
