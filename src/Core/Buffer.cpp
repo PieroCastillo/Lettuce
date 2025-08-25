@@ -1,4 +1,5 @@
 // standard headers
+#include <memory>
 
 // external headers
 #include <volk.h>
@@ -8,9 +9,9 @@
 
 using namespace Lettuce::Core;
 
-LettuceResult Buffer::Create(VkDevice device, const BufferCreateInfo& createInfo)
+LettuceResult Buffer::Create(const std::weak_ptr<IDevice>& device, const BufferCreateInfo& createInfo)
 {
-    m_device = device;
+    m_device = device->m_device;
     m_size = createInfo.size;
 
     VkBufferCreateInfo bufferCI = {
@@ -20,7 +21,7 @@ LettuceResult Buffer::Create(VkDevice device, const BufferCreateInfo& createInfo
         .usage = createInfo.usage,
         .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
     };
-    handleResult(vkCreateBuffer(device, &bufferCI, nullptr, &m_buffer), result);
+    auto result = vkCreateBuffer(m_device, &bufferCI, nullptr, &m_buffer);
 
     VkBufferDeviceAddressInfo bufferDAI = {
         .sType = VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO,

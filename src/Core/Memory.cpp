@@ -10,9 +10,9 @@
 
 using namespace Lettuce::Core;
 
-LettuceResult Memory::Create(VkPhysicalDevice physicalDevice, VkDevice device, const MemoryCreateInfo& createInfo)
+LettuceResult Memory::Create(const std::weak_ptr<IDevice>& device, const MemoryCreateInfo& createInfo)
 {
-    m_device = device;
+    m_device = device->m_device;
 
     VkPhysicalDeviceMemoryProperties memProps;
     vkGetPhysicalDeviceMemoryProperties(physicalDevice, &memProps);

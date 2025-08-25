@@ -34,7 +34,7 @@ namespace Lettuce::Core
         VkSwapchainKHR m_swapchain;
         VkSurfaceKHR m_surface;
 
-        LettuceResult Create(VkInstance instance, VkPhysicalDevice gpu, VkDevice device, const SwapchainCreateInfo &createInfo);
+        LettuceResult Create(const std::weak_ptr<IDevice>& device, const SwapchainCreateInfo &createInfo);
         void Release();
 
         void AcquireNextImage();

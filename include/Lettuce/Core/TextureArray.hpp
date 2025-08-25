@@ -13,19 +13,20 @@ namespace Lettuce::Core
     {
         uint32_t width;
         uint32_t height;
-        uint32_t depth;
         VkImageType type;
         VkImageUsageFlags imageUsage;
         uint32_t mipLevels;
         uint32_t layerCount;
         VkFormat format;
+        bool isCube;
+        bool isArray;
     };
 
     class TextureArray
     {
     private:
         uint32_t m_mipLevels, m_layerCount;
-        uint32_t m_width, m_height, m_depth;
+        uint32_t m_width, m_height;
         VkFormat m_format;
 
     public:

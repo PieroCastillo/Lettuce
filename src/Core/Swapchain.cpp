@@ -1,5 +1,6 @@
 // standard headers
 #include <limits>
+#include <memory>
 
 // external headers
 #include "Volk/volk.h"
@@ -38,9 +39,9 @@ void Swapchain::setupSwapchain(const SwapchainCreateInfo& createInfo)
     checkResult(vkCreateSwapchainKHR(m_device, &swapchainCI, nullptr, &m_swapchain));
 }
 
-LettuceResult Swapchain::Create(VkInstance instance, VkPhysicalDevice gpu, VkDevice device, const SwapchainCreateInfo& createInfo)
+LettuceResult Swapchain::Create(const std::weak_ptr<IDevice>& device, const SwapchainCreateInfo& createInfo)
 {
-    m_device = device;
+    m_device = device->m_device;
     m_gpu = gpu;
     setupSurface(createInfo);
     setupSwapchain(createInfo);

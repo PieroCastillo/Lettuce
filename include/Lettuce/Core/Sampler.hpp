@@ -4,6 +4,9 @@ Created by @PieroCastillo on 2025-07-20
 #ifndef LETTUCE_CORE_SAMPLER_HPP
 #define LETTUCE_CORE_SAMPLER_HPP
 
+// standard headers
+#include <memory>
+
 // project headers
 #include "Common.hpp"
 
@@ -33,7 +36,7 @@ namespace Lettuce::Core
         VkDevice m_device;
         VkSampler m_sampler;
 
-        LettuceResult Create(VkDevice device, const SamplerCreateInfo& createInfo);
+        LettuceResult Create(const std::weak_ptr<IDevice>& device, const SamplerCreateInfo& createInfo);
         void Release();
     };
 }

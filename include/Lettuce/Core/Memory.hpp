@@ -4,6 +4,9 @@ Created by @PieroCastillo on 2025-07-27
 #ifndef LETTUCE_CORE_MEMORY_HPP
 #define LETTUCE_CORE_MEMORY_HPP 
 
+// standard headers
+#include <memory>
+
 // project headers
 #include "Common.hpp"
 
@@ -30,7 +33,7 @@ namespace Lettuce::Core
         VkDevice m_device;
         VkDeviceMemory m_memory;
 
-        LettuceResult Create(VkPhysicalDevice physicalDevice, VkDevice device, const MemoryCreateInfo& createInfo);
+        LettuceResult Create(const std::weak_ptr<IDevice>& device, const MemoryCreateInfo& createInfo);
         void Release();
     };
 }

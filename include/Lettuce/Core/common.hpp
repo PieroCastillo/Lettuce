@@ -53,6 +53,7 @@ struct VkEvent_T;
 struct VkImageView_T;
 struct VkShaderModule_T;
 struct VkPipelineCache_T;
+struct VkPipelineBinaryKHR_T;
 struct VkPipelineLayout_T;
 struct VkPipeline_T;
 struct VkDescriptorSetLayout_T;
@@ -81,6 +82,7 @@ using VkEvent = VkHandle<VkEvent_T>::type;
 using VkImageView = VkHandle<VkImageView_T>::type;
 using VkShaderModule = VkHandle<VkShaderModule_T>::type;
 using VkPipelineCache = VkHandle<VkPipelineCache_T>::type;
+using VkPipelineBinaryKHR = VkHandle<VkPipelineBinaryKHR_T>::type;
 using VkPipelineLayout = VkHandle<VkPipelineLayout_T>::type;
 using VkPipeline = VkHandle<VkPipeline_T>::type;
 using VkDescriptorSetLayout = VkHandle<VkDescriptorSetLayout_T>::type;
@@ -110,10 +112,13 @@ enum VkImageType;
 struct VkComponentMapping;
 struct VkImageSubresourceRange;
 
-#ifdef LETTUCE_EXPERIMENTAL
+#endif // VULKAN_H_
 
-#endif
+class IDevice
+{
+    VkDevice m_device;
+    VkInstance m_instance;
+    VkPhysicalDevice m_physicalDevice;
+};
 
-#endif
-
-#endif // #define COMMON_HPP
+#endif // COMMON_HPP

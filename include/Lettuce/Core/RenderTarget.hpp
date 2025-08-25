@@ -17,13 +17,7 @@ namespace Lettuce::Core
         VkFormat format;
         VkComponentMapping components;
         VkImageSubresourceRange subresourceRange;
-    };
-
-    struct RenderTargetAsViewCreateInfo
-    {
-        VkFormat format;
-        VkComponentMapping components;
-        VkImageSubresourceRange subresourceRange;
+        std::optional<std::weak_ptr<TextureArray>> texture;
     };
 
     class RenderTarget
@@ -39,8 +33,7 @@ namespace Lettuce::Core
         VkImage m_image;
         VkImageView m_imageView;
 
-        LettuceResult Create(VkDevice device, const RenderTargetCreateInfo& createInfo);
-        LettuceResult Create(VkDevice device, VkImage image, const RenderTargetAsViewCreateInfo& viewInfo);
+        LettuceResult Create(const std::weak_ptr<IDevice>& device, const RenderTargetCreateInfo& createInfo);
         void Release();
 
         VkFormat GetFormat();

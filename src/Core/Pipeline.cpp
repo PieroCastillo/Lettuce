@@ -1,4 +1,6 @@
 // standard headers
+#include <memory>
+#include <array>
 
 // external headers
 #include <volk.h>
@@ -8,7 +10,7 @@
 
 using namespace Lettuce::Core;
 
-LettuceResult Pipeline::Create(VkDevice device, const GraphicsPipelineCreateInfo& createInfo)
+LettuceResult Pipeline::Create(const std::weak_ptr<IDevice>& device, const GraphicsPipelineCreateInfo& createInfo)
 {
 
     VkPipelineVertexInputStateCreateInfo vertexInputState =
@@ -61,11 +63,12 @@ LettuceResult Pipeline::Create(VkDevice device, const GraphicsPipelineCreateInfo
         VK_DYNAMIC_STATE_SCISSOR,
         VK_DYNAMIC_STATE_LINE_WIDTH,
     };
+
     VkPipelineDynamicStateCreateInfo dynamicState =
     {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO,
         .dynamicStateCount = (uint32_t)dynamicStates.size(),
-        .pDynamicStates = dynamicStates.count(),
+        .pDynamicStates = dynamicStates.data(),
     };
 
     VkPipelineFragmentShadingRateStateCreateInfoKHR fragmentShadingRate = {
@@ -76,10 +79,10 @@ LettuceResult Pipeline::Create(VkDevice device, const GraphicsPipelineCreateInfo
         .sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO,
         .pNext = createInfo.fragmentShadingRate ? nullptr : &fragmentShadingRate,
         .viewMask = 0, // multiview disabled
-        .colorAttachmentCount = ,
-        .pColorAttachmentFormats = ,
-        .depthAttachmentFormat = ,
-        .stencilAttachmentFormat = ,
+        // .colorAttachmentCount = ,
+        // .pColorAttachmentFormats = ,
+        // .depthAttachmentFormat = ,
+        // .stencilAttachmentFormat = ,
     };
 
     VkGraphicsPipelineCreateInfo gpipelineCI = {
@@ -101,7 +104,7 @@ LettuceResult Pipeline::Create(VkDevice device, const GraphicsPipelineCreateInfo
     return LettuceResult::Success;
 }
 
-LettuceResult Pipeline::Create(VkDevice device, const ComputePipelineCreateInfo& createInfo)
+LettuceResult Pipeline::Create(const std::weak_ptr<IDevice>& device, const ComputePipelineCreateInfo& createInfo)
 {
     return LettuceResult::Success;
 }

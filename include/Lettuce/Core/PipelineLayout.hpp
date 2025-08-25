@@ -21,6 +21,7 @@ namespace Lettuce::Core
     struct PipelineLayoutCreateInfo
     {
         std::vector<PushConstant> pushConstants;
+        std::weak_ptr<DescriptorTable> descriptorTable;
     };
 
     class PipelineLayout
@@ -29,8 +30,9 @@ namespace Lettuce::Core
 
     public:
         VkDevice m_device;
+        VkPipelineLayout m_pipelineLayout;
             
-        LettuceResult Create(VkDevice device, std::vector<VkDescriptorSetLayout> layouts, const PipelineLayoutCreateInfo& createInfo);
+        LettuceResult Create(const std::weak_ptr<IDevice>& device, const PipelineLayoutCreateInfo& createInfo);
         void Release();
     };
 }

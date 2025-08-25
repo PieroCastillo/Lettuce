@@ -81,7 +81,7 @@ namespace Lettuce::Core
         uint32_t transfer;
     };
 
-    class Device
+    class Device : IDevice
     {
     private:
         std::vector<std::string> availableExtensionsNames;
@@ -149,9 +149,6 @@ namespace Lettuce::Core
         inline void getQueues();
 
     public:
-        VkInstance m_instance;
-        VkPhysicalDevice m_physicalDevice;
-        VkDevice m_device;
 
         Device();
         void Build();
@@ -172,7 +169,7 @@ namespace Lettuce::Core
         };
 
         template <typename T, typename TCreateInfo>
-        concept ConstructibleFromDevice = requires(T obj, VkDevice device, TCreateInfo createInfo) {
+        concept ConstructibleFromDevice = requires(T obj,const std::weak_ptr<IDevice>& device, TCreateInfo createInfo) {
             { obj.Create(device, createInfo) } -> std::same_as<LettuceResult>;
         };
 
@@ -181,40 +178,7 @@ namespace Lettuce::Core
         auto CreateObject(const TCreateInfo& createInfo) -> Result<T>
         {
             auto obj = std::make_shared<T>();
-            auto result = obj->Create(m_device, createInfo);
-
-            if (result == LettuceResult::Success)
-                return obj;
-
-            return std::unexpected(result);
-        }
-
-        auto CreateObject(const SwapchainCreateInfo& createInfo) -> Result<Swapchain>
-        {
-            auto obj = std::make_shared<Swapchain>();
-            auto result = obj->Create(m_instance, m_physicalDevice, m_device, createInfo);
-
-            if (result == LettuceResult::Success)
-                return obj;
-
-            return std::unexpected(result);
-        }
-
-        auto CreateObject(const std::shared_ptr<TextureArray>& textureArray, const RenderTargetAsViewCreateInfo& createInfo) -> Result<RenderTarget>
-        {
-            auto obj = std::make_shared<RenderTarget>();
-            auto result = obj->Create(m_device, textureArray->m_image, createInfo);
-
-            if (result == LettuceResult::Success)
-                return obj;
-
-            return std::unexpected(result);
-        }
-
-        auto CreateObject(const std::shared_ptr<TextureArray>& textureArray, const TextureViewCreateInfo& createInfo) -> Result<TextureView>
-        {
-            auto obj = std::make_shared<TextureView>();
-            auto result = obj->Create(m_device, textureArray->m_image, createInfo);
+            auto result = obj->Create(this, createInfo);
 
             if (result == LettuceResult::Success)
                 return obj;

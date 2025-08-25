@@ -6,6 +6,7 @@ Created by @PieroCastillo on 2025-07-20
 
 // standard headers
 #include <optional>
+#include <memory>
 
 // project headers
 #include "Common.hpp"
@@ -29,7 +30,7 @@ namespace Lettuce::Core
         VkBuffer m_buffer;
         std::optional<VkDescriptorSetLayout> m_descriptorSetLayout;
 
-        LettuceResult Create(VkDevice device, const BufferCreateInfo& createInfo);
+        LettuceResult Create(const std::weak_ptr<IDevice>& device, const BufferCreateInfo& createInfo);
         void Release();
 
         uint64_t GetAddress();

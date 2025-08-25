@@ -1,4 +1,4 @@
-#include "Lettuce.Core.hpp"
+#include "Lettuce/Lettuce.Core.hpp"
 
 #include <memory>
 #include <vector>
@@ -24,7 +24,7 @@ void initLettuce()
     SwapchainCreateInfo swapchainCI = {
 
     };
-    swapchain = device->CreateObjectWithGPU(swapchainCI);
+    swapchain = device->CreateObject(swapchainCI);
 
     DescriptorTableCreateInfo descriptorTableCI = {
 

@@ -50,7 +50,9 @@ void Device::setupInstance()
 
     std::array<const char*, 2> instanceExtensions = {
         VK_KHR_SURFACE_EXTENSION_NAME,
+#ifdef WIN32_
         VK_KHR_WIN32_SURFACE_EXTENSION_NAME,
+#endif
     };
 
     VkInstanceCreateInfo instanceCI = {
@@ -149,15 +151,15 @@ void Device::setupDevice()
     vkGetPhysicalDeviceQueueFamilyProperties(m_physicalDevice, &queueFamiliesCount, queueFamiliesVec.data());
 
     VkQueueFlags graphicsFlags = VK_QUEUE_GRAPHICS_BIT | VK_QUEUE_COMPUTE_BIT | VK_QUEUE_TRANSFER_BIT | VK_QUEUE_SPARSE_BINDING_BIT;
-    VkQueueFlags transferFlags =  VK_QUEUE_TRANSFER_BIT | VK_QUEUE_SPARSE_BINDING_BIT;
+    VkQueueFlags transferFlags = VK_QUEUE_TRANSFER_BIT | VK_QUEUE_SPARSE_BINDING_BIT;
     VkQueueFlags computeFlags = VK_QUEUE_COMPUTE_BIT | VK_QUEUE_TRANSFER_BIT | VK_QUEUE_SPARSE_BINDING_BIT;
 
     // find queue family indices
-    for(const VkQueueFamilyProperties& queueFamily : queueFamiliesVec)
+    for (const VkQueueFamilyProperties& queueFamily : queueFamiliesVec)
     {
-        if(queueFamily.queueFlags == graphicsFlags)
+        if (queueFamily.queueFlags == graphicsFlags)
         {
-            
+
         }
     }
 
@@ -170,7 +172,7 @@ void Device::setupDevice()
 
 void Device::getQueues()
 {
-    
+
 }
 
 auto Device::UpdateBinding(const std::shared_ptr<DescriptorTable> descriptorTable, const DescriptorTableUpdateBindingInfo& updateInfo) -> Op
