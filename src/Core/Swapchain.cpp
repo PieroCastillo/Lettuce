@@ -19,10 +19,7 @@ void Swapchain::setupSurface(const SwapchainCreateInfo& createInfo)
         .hwnd = *(HWND*)(createInfo.windowPtr),
     };
 
-    if(auto res = vkCreateWin32SurfaceKHR(m_instance, &win32surfaceCI, nullptr, &m_surface); res != VK_SUCCESS)
-    {
-
-    }
+    handleResult(vkCreateWin32SurfaceKHR(m_instance, &win32surfaceCI, nullptr, &m_surface));
 #endif
 #if defined(__linux__)
     VkWaylandSurfaceCreateInfoKHR waylandsurfaceCI = {
@@ -31,10 +28,7 @@ void Swapchain::setupSurface(const SwapchainCreateInfo& createInfo)
         .surface = (wl_surface*)createInfo.windowPtr,
     };
 
-    if(auto res = vkCreateWaylandSurfaceKHR(m_instance, &waylandsurfaceCI, nullptr, &m_surface); res != VK_SUCCESS)
-    {
-
-    }
+    handleResult(vkCreateWaylandSurfaceKHR(m_instance, &waylandsurfaceCI, nullptr, &m_surface));
 #endif
 }
 
@@ -54,11 +48,9 @@ void Swapchain::setupSwapchain(const SwapchainCreateInfo& createInfo)
 void Swapchain::Create(const std::weak_ptr<IDevice>& device, const SwapchainCreateInfo& createInfo)
 {
     m_device = (device.lock())->m_device;
-    m_gpu = gpu;
+    m_gpu = (device.lock())->m_physicalDevice;
     setupSurface(createInfo);
     setupSwapchain(createInfo);
-
-    
 }
 
 void Swapchain::Release()

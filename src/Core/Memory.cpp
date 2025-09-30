@@ -40,10 +40,7 @@ void Memory::Create(const std::weak_ptr<IDevice>& device, const MemoryCreateInfo
         .memoryTypeIndex = memTypeIdx,
     };
 
-    auto res = vkAllocateMemory(m_device, &memoryAI, nullptr, &m_memory);
-
-    
-    
+    handleResult(vkAllocateMemory(m_device, &memoryAI, nullptr, &m_memory));
 }
 
 void Memory::Release()

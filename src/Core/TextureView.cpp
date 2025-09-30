@@ -19,11 +19,7 @@ void TextureView::Create(const std::weak_ptr<IDevice>& device, const TextureView
         .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
     };
 
-    auto result = vkCreateImageView(m_device, &imageViewCI, nullptr, &m_imageView);
-    if(result !=   VK_SUCCESS)
-    {
-        throw LettuceException(result);
-    }
+    handleResult(vkCreateImageView(m_device, &imageViewCI, nullptr, &m_imageView));
 }
 
 void TextureView::Release()

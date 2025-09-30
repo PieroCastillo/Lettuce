@@ -22,9 +22,7 @@ void PipelineLayout::Create(const std::weak_ptr<IDevice>& device, const Pipeline
         // .pPushConstantRanges =  
     };
 
-    auto result = vkCreatePipelineLayout(m_device, &pipelineLayoutCI, nullptr, &m_pipelineLayout);
-
-    
+    handleResult(vkCreatePipelineLayout(m_device, &pipelineLayoutCI, nullptr, &m_pipelineLayout));
 }
 
 void PipelineLayout::Release()

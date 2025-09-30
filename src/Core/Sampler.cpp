@@ -16,9 +16,8 @@ void Sampler::Create(const std::weak_ptr<IDevice>& device, const SamplerCreateIn
     VkSamplerCreateInfo samplerCI = {
         .sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
     };
-    auto result = vkCreateSampler(m_device, &samplerCI, nullptr, &m_sampler);
-
     
+    handleResult(vkCreateSampler(m_device, &samplerCI, nullptr, &m_sampler));
 }
 
 void Sampler::Release() 

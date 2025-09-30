@@ -41,10 +41,10 @@ void TextureArray::Create(const std::weak_ptr<IDevice>& device, const TextureArr
         .sharingMode = VK_SHARING_MODE_EXCLUSIVE ,
         .initialLayout = VK_IMAGE_LAYOUT_PREINITIALIZED,
     };
-    auto result = vkCreateImage(m_device, &imageCI, nullptr, &m_image);
 
-    
+    handleResult(vkCreateImage(m_device, &imageCI, nullptr, &m_image));
 }
+
 void TextureArray::Release()
 {
     vkDestroyImage(m_device, m_image, nullptr);
