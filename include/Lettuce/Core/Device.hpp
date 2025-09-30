@@ -32,6 +32,14 @@ namespace Lettuce::Core
         bool maintenance5 = false;
     };
 
+    class QueueFamily
+    {
+        uint32_t index;
+        uint32_t currentQueueIndex = 0;
+        VkQueueFlags flags;
+        std::vector<VkQueue> queues;
+    };
+
     class Device : public IReleasable, public IManageHandle<VkDevice>
     {
     private:
@@ -111,26 +119,31 @@ namespace Lettuce::Core
 
         void loadExtensionsLayersAndFeatures();
 
+        std::vector<VkDeviceQueueCreateInfo> genQueuesInfos(VkPhysicalDevice pdevice);
+
+        void getQueues(const std::vector<VkDeviceQueueCreateInfo>& queuesCI);
+
     public:
         std::shared_ptr<Instance> _instance;
         VkPhysicalDevice _pdevice;
-        std::vector<VkQueue> _graphicsQueues;
-        VkQueue _presentQueue;
-        VkQueue _computeQueue;
+
+        std::vector<QueueFamily> queueFamilies;
+
         VmaAllocator allocator;
         GPU _gpu;
 
         Features GetEnabledFeatures();
 
         Device(const std::shared_ptr<Instance> &instance, GPU &gpu, Features features, uint32_t graphicsQueuesCount = 1);
-
+        
         EnabledRecommendedFeatures GetEnabledRecommendedFeatures()
         {
             return enabledRecommendedFeatures;
         }
 
-        void
-        Wait();
+        void SubmitToQueue(VkQueueFlagBits queueFlag, const std::vector<VkSubmitInfo2>& infos);
+
+        void Wait();
 
         void Release();
     };

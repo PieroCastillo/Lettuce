@@ -69,21 +69,6 @@ Swapchain::Swapchain(const std::shared_ptr<Device> &device, uint32_t initialWidt
         .oldSwapchain = VK_NULL_HANDLE,
     };
 
-    std::vector<uint32_t> queueFamilyIndices;
-    queueFamilyIndices.push_back(_device->_gpu.graphicsFamily.value());
-    queueFamilyIndices.push_back(_device->_gpu.presentFamily.value());
-
-    if (_device->_gpu.graphicsFamily.value() != _device->_gpu.presentFamily.value())
-    {
-        swapchainCI.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
-        swapchainCI.queueFamilyIndexCount = (uint32_t)queueFamilyIndices.size();
-        swapchainCI.pQueueFamilyIndices = queueFamilyIndices.data();
-    }
-    else
-    {
-        swapchainCI.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
-    }
-
     checkResult(vkCreateSwapchainKHR(_device->GetHandle(), &swapchainCI, nullptr, GetHandlePtr()));
 
     VkFenceCreateInfo fenceCI = {

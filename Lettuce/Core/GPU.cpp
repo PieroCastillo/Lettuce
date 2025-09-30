@@ -18,16 +18,9 @@ GPU::GPU(VkSurfaceKHR &surface, VkPhysicalDevice &device) : _surface(surface),
     vkGetPhysicalDeviceFeatures(device, &deviceFeatures);
 
     deviceType = deviceProperties.deviceType;
-    geometryShaderPresent = deviceFeatures.geometryShader;
     bufferImageGranularity = deviceProperties.limits.bufferImageGranularity;
     deviceName = std::string(deviceProperties.deviceName);
-    loadQueuesFamilies();
     checkSurfaceCapabilities();
-}
-
-bool GPU::GraphicsCapable()
-{
-    return graphicsFamily.has_value() && presentFamily.has_value() && !formats.empty() && !presentModes.empty();
 }
 
 VkFormat GPU::GetDepthFormat()
@@ -104,35 +97,6 @@ void GPU::checkSurfaceCapabilities()
         }
     }
     presentMode = VK_PRESENT_MODE_FIFO_KHR;
-}
-
-void GPU::loadQueuesFamilies()
-{
-    uint32_t queueFamilyCount = 0;
-    vkGetPhysicalDeviceQueueFamilyProperties(_pdevice, &queueFamilyCount, nullptr);
-
-    std::vector<VkQueueFamilyProperties> queueFamilies(queueFamilyCount);
-    vkGetPhysicalDeviceQueueFamilyProperties(_pdevice, &queueFamilyCount, queueFamilies.data());
-
-    int i = 0;
-    for (const auto &queueFamily : queueFamilies)
-    {
-        if (!graphicsFamily.has_value() && (queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT))
-        {
-            graphicsFamily = i;
-            presentFamily = i;
-        }
-
-        if (!computeFamily.has_value() && (queueFamily.queueFlags & VK_QUEUE_COMPUTE_BIT))
-        {
-            computeFamily = i;
-        }
-
-        if (GraphicsCapable())
-            break;
-
-        i++;
-    }
 }
 
 VkFormat GPU::findSupportedFormat(const std::vector<VkFormat> &candidates, VkImageTiling tiling, VkFormatFeatureFlags features)

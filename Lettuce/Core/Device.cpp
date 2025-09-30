@@ -192,6 +192,59 @@ void Device::loadExtensionsLayersAndFeatures()
     }
 }
 
+std::vector<VkDeviceQueueCreateInfo> Device::genQueuesInfos(VkPhysicalDevice pdevice)
+{
+
+    uint32_t queueFamilyCount = 0;
+    vkGetPhysicalDeviceQueueFamilyProperties2(_pdevice, &queueFamilyCount, nullptr);
+    std::vector<VkQueueFamilyProperties2> queueFamilies(queueFamilyCount,
+                                                        {VK_STRUCTURE_TYPE_QUEUE_FAMILY_PROPERTIES_2, 0, 0});
+    vkGetPhysicalDeviceQueueFamilyProperties2(_pdevice, &queueFamilyCount, queueFamilies.data());
+
+    std::vector<VkDeviceQueueCreateInfo> queuesCI;
+
+    uint32_t index = 0;
+    for (auto queueFamilyProps2 : queueFamilies)
+    {
+        VkQueueFamilyProperties queueFamilyProps = queueFamilyProps2.queueFamilyProperties;
+
+        std::vector<float> priorities(queueFamilyProps.queueCount, 1.0f);
+
+        queuesCI.push_back({
+            .sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
+            .flags = queueFamilyProps.queueFlags,
+            .queueFamilyIndex = index,
+            .queueCount = queueFamilyProps.queueCount,
+            .pQueuePriorities = priorities.data(),
+        });
+
+        index++;
+    }
+
+    return queuesCI;
+}
+
+void Device::getQueues(const std::vector<VkDeviceQueueCreateInfo> &queuesCI)
+{
+    uint32_t i = 0;
+    for (auto queueCI : queuesCI)
+    {
+        QueueFamily queueFamily{};
+        queueFamily.index = i;
+        queueFamily.flags = queueCI.flags;
+
+        for (uint32_t j = 0; j < queueCI.queueCount; j++)
+        {
+            VkQueue queue;
+            vkGetDeviceQueue(GetHandle(), i, j, queue);
+
+            queueFamily.queues.push_back(queue);
+        }
+
+        i++;
+    }
+}
+
 Device::Device(const std::shared_ptr<Instance> &instance, GPU &gpu, Features gpuFeatures, uint32_t graphicsQueuesCount) : _pdevice(gpu._pdevice),
                                                                                                                           _instance(instance),
                                                                                                                           _gpu(gpu),
@@ -201,32 +254,11 @@ Device::Device(const std::shared_ptr<Instance> &instance, GPU &gpu, Features gpu
     listLayers();
     loadExtensionsLayersAndFeatures();
 
-    std::vector<VkDeviceQueueCreateInfo> queueCreateInfos; // here we store all queues CI
-    std::vector<float> queuePriorities(graphicsQueuesCount, 1.0f);
-    float queuePriority = 1.0f;
-
-    // create  queues for graphics
-    VkDeviceQueueCreateInfo graphicsQueuesCI = {
-        .sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
-        .queueFamilyIndex = gpu.graphicsFamily.value(),
-        .queueCount = graphicsQueuesCount,
-        .pQueuePriorities = queuePriorities.data(),
-    };
-    queueCreateInfos.push_back(graphicsQueuesCI);
-
-    if (gpu.computeFamily.value() != gpu.graphicsFamily.value())
-    {
-        VkDeviceQueueCreateInfo computeQueueCI = {
-            .sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
-            .queueFamilyIndex = gpu.computeFamily.value(),
-            .queueCount = 1,
-            .pQueuePriorities = &queuePriority,
-        };
-        queueCreateInfos.push_back(computeQueueCI);
-    }
+    // create queues
+    auto queueCreateInfos = genQueuesInfos(gpu._pdevice);
 
     VkPhysicalDeviceFeatures features;
-    vkGetPhysicalDeviceFeatures(_pdevice, &features);
+    vkGetPhysicalDeviceFeatures(gpu._pdevice, &features);
 
     // here we enable device features, like Buffer Device Address, Timeline Semaphores, etc
 
@@ -265,18 +297,103 @@ Device::Device(const std::shared_ptr<Instance> &instance, GPU &gpu, Features gpu
     checkResult(vmaCreateAllocator(&allocatorI, &allocator));
 
     // get all queues
-    _graphicsQueues.resize(graphicsQueuesCount);
-    for (int i = 0; i < graphicsQueuesCount; i++)
-    {
-        vkGetDeviceQueue(GetHandle(), gpu.graphicsFamily.value(), i, &(_graphicsQueues.at(i)));
-    }
-    vkGetDeviceQueue(GetHandle(), gpu.presentFamily.value(), 0, &_presentQueue);
-    vkGetDeviceQueue(GetHandle(), gpu.computeFamily.value(), 0, &_computeQueue);
+    getQueues(queueCreateInfos);
 }
 
 Features Device::GetEnabledFeatures()
 {
     return _enabledFeatures;
+}
+
+void Device::SubmitToQueue(VkQueueFlagBits queueFlag, const std::vector<VkSubmitInfo2> &infos)
+{
+    /*
+    1. choose queue family
+    2. choose queue
+    3. submit to the queue that is possibly free
+
+    also, this select the first graphics/video encode/decode that it found
+    but if it's transfer or compute, select the last
+    */
+
+    uint32_t familyIndex = 0;
+    if (queueFlag & VK_QUEUE_GRAPHICS_BIT != 0)
+    {
+        int i = 0;
+        for (auto family : queueFamilies)
+        {
+            if (family.flags & VK_QUEUE_GRAPHICS_BIT != 0)
+            {
+                familyIndex = i;
+                break;
+            }
+
+            i++;
+        }
+    }
+    else if (queueFlag & VK_QUEUE_VIDEO_ENCODE_BIT_KHR != 0)
+    {
+        int i = 0;
+        for (auto family : queueFamilies)
+        {
+            if (family.flags & VK_QUEUE_VIDEO_ENCODE_BIT_KHR != 0)
+            {
+                familyIndex = i;
+                break;
+            }
+
+            i++;
+        }
+    }
+    else if (queueFlag & VK_QUEUE_VIDEO_DECODE_BIT_KHR != 0)
+    {
+        int i = 0;
+        for (auto family : queueFamilies)
+        {
+            if (family.flags & VK_QUEUE_VIDEO_DECODE_BIT_KHR != 0)
+            {
+                familyIndex = i;
+                break;
+            }
+
+            i++;
+        }
+    }
+    else if (queueFlag & VK_QUEUE_COMPUTE_BIT != 0)
+    {
+        int i = 0;
+        for (auto family : queueFamilies)
+        {
+            if (family.flags & (VK_QUEUE_COMPUTE_BIT | VK_QUEUE_TRANSFER_BIT | VK_QUEUE_SPARSE_BINDING_BIT) != 0)
+            {
+                familyIndex = i;
+                break;
+            }
+
+            i++;
+        }
+    }
+    else if (queueFlag & VK_QUEUE_TRANSFER_BIT != 0)
+    {
+        int i = 0;
+        for (auto family : queueFamilies)
+        {
+            if (family.flags & (VK_QUEUE_TRANSFER_BIT | VK_QUEUE_SPARSE_BINDING_BIT) != 0)
+            {
+                familyIndex = i;
+                break;
+            }
+
+            i++;
+        }
+    }
+    QueueFamily family = queueFamilies[(int)familyIndex];
+
+    VkQueue currentQueue = family.queues[(int)family.currentQueueIndex];
+
+    checkResult(vkQueueSubmit2(currentQueue, (uint32_t)infos.size(), infos.data(), VK_NULL_HANDLE));
+
+    queueFamilies[(int)familyIndex].currentQueueIndex = (family.currentQueueIndex + 1) % family.queues.size();
 }
 
 void Device::Wait()
