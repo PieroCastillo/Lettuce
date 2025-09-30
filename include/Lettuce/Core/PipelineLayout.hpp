@@ -9,6 +9,7 @@ Created by @PieroCastillo on 2025-07-20
 
 // project headers
 #include "Common.hpp"
+#include "DescriptorTable.hpp"
 
 namespace Lettuce::Core
 {   
@@ -32,7 +33,7 @@ namespace Lettuce::Core
         VkDevice m_device;
         VkPipelineLayout m_pipelineLayout;
             
-        LettuceResult Create(const std::weak_ptr<IDevice>& device, const PipelineLayoutCreateInfo& createInfo);
+        void Create(const std::weak_ptr<IDevice>& device, const PipelineLayoutCreateInfo& createInfo);
         void Release();
     };
 }

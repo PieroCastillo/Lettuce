@@ -33,7 +33,7 @@ namespace Lettuce::Core
         VkDevice m_device;
         VkDeviceMemory m_memory;
 
-        LettuceResult Create(const std::weak_ptr<IDevice>& device, const MemoryCreateInfo& createInfo);
+        void Create(const std::weak_ptr<IDevice>& device, const MemoryCreateInfo& createInfo);
         void Release();
     };
 }

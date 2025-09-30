@@ -46,7 +46,7 @@ namespace Lettuce::Core
         VkImage m_image;
         VkImageView m_imageView;
 
-        LettuceResult Create(const std::weak_ptr<IDevice>& device, const TextureViewCreateInfo& createInfo);
+        void Create(const std::weak_ptr<IDevice>& device, const TextureViewCreateInfo& createInfo);
         void Release();
     };
 }

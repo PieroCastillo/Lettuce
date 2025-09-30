@@ -3,6 +3,7 @@
 
 // standard headers
 #include <cstdint>
+#include <stdexcept>
 
 #define NOMINMAX
 
@@ -18,6 +19,36 @@ enum class LettuceResult
     OutOfHostMemory,
     Unknown,
 };
+
+class LettuceException : public std::runtime_error {
+public:
+    explicit LettuceException(LettuceResult r) 
+        : std::runtime_error(resultToString(r)), result(r) {}
+    
+    explicit LettuceException(VkResult r) 
+        : std::runtime_error(resultToString(r)), vkResult(r) {}
+
+    LettuceResult result;
+    VkResult vkResult;
+    
+private:
+    static std::string resultToString(LettuceResult r) {
+        switch (r) {
+            case LettuceResult::OutOfDeviceMemory: return "Out of Device Memory";
+            case LettuceResult::OutOfHostMemory: return "Out of Host Memory";
+            default: return "Unknown error";
+        }
+    }
+
+    static std::string resultToString(VkResult r) {
+        switch (r) {
+            case VK_ERROR_OUT_OF_DEVICE_MEMORY: return "Out of Device Memory";
+            case VK_ERROR_OUT_OF_HOST_MEMORY: return "Out of Host Memory";
+            default: return "Unknown error";
+        }
+    }
+};
+
 
 enum VkResult;
 
@@ -116,6 +147,7 @@ struct VkImageSubresourceRange;
 
 class IDevice
 {
+public:
     VkDevice m_device;
     VkInstance m_instance;
     VkPhysicalDevice m_physicalDevice;

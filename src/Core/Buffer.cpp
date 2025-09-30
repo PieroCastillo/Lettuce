@@ -9,16 +9,21 @@
 
 using namespace Lettuce::Core;
 
-LettuceResult Buffer::Create(const std::weak_ptr<IDevice>& device, const BufferCreateInfo& createInfo)
+void Buffer::Create(const std::weak_ptr<IDevice>& device, const BufferCreateInfo& createInfo)
 {
-    m_device = device->m_device;
+    m_device = (device.lock())->m_device;
     m_size = createInfo.size;
+
+    VkBufferUsageFlags2CreateInfo usageFlags2CI = {
+        .sType = VK_STRUCTURE_TYPE_BUFFER_USAGE_FLAGS_2_CREATE_INFO,
+        .usage = createInfo.usage,
+    };
 
     VkBufferCreateInfo bufferCI = {
         .sType =    VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
+        .pNext = &usageFlags2CI,
         .flags = VK_BUFFER_CREATE_DEVICE_ADDRESS_CAPTURE_REPLAY_BIT,
         .size = createInfo.size,
-        .usage = createInfo.usage,
         .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
     };
     auto result = vkCreateBuffer(m_device, &bufferCI, nullptr, &m_buffer);
@@ -29,7 +34,7 @@ LettuceResult Buffer::Create(const std::weak_ptr<IDevice>& device, const BufferC
     };
     m_address = vkGetBufferDeviceAddress(m_device, &bufferDAI);
     
-    return LettuceResult::Success;
+    
 }
 
 void Buffer::Release()

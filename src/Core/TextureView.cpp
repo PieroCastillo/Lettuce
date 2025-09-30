@@ -10,15 +10,20 @@
 
 using namespace Lettuce::Core;
 
-LettuceResult TextureView::Create(const std::weak_ptr<IDevice>& device, const TextureViewCreateInfo& createInfo)
+void TextureView::Create(const std::weak_ptr<IDevice>& device, const TextureViewCreateInfo& createInfo)
 {
-    m_device = device->m_device;
-    m_image = createInfo.texture->m_image;
+    m_device = (device.lock())->m_device;
+    m_image = (createInfo.texture.lock())->m_image;
 
     VkImageViewCreateInfo imageViewCI = {
         .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
     };
+
     auto result = vkCreateImageView(m_device, &imageViewCI, nullptr, &m_imageView);
+    if(result !=   VK_SUCCESS)
+    {
+        throw LettuceException(result);
+    }
 }
 
 void TextureView::Release()

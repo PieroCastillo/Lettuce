@@ -198,6 +198,8 @@ namespace Lettuce::Core
         auto MemoryCopy(std::shared_ptr<TextureArray> srcTextureArray, std::shared_ptr<TextureArray> dstTextureArray) -> Op;
 
         auto Blit(std::shared_ptr<TextureArray> srcTextureArray, std::shared_ptr<TextureArray> dstTextureArray) -> Op;
+
+        auto Present(const std::shared_ptr<Swapchain>& swapchain) -> Op;
     };
 }
 #endif // LETTUCE_CORE_DEVICE_HPP

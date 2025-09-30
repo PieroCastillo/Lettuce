@@ -10,7 +10,7 @@
 
 using namespace Lettuce::Core;
 
-LettuceResult Pipeline::Create(const std::weak_ptr<IDevice>& device, const GraphicsPipelineCreateInfo& createInfo)
+void Pipeline::Create(const std::weak_ptr<IDevice>& device, const GraphicsPipelineCreateInfo& createInfo)
 {
 
     VkPipelineVertexInputStateCreateInfo vertexInputState =
@@ -101,12 +101,12 @@ LettuceResult Pipeline::Create(const std::weak_ptr<IDevice>& device, const Graph
         .pDynamicState = &dynamicState,
     };
 
-    return LettuceResult::Success;
+    
 }
 
-LettuceResult Pipeline::Create(const std::weak_ptr<IDevice>& device, const ComputePipelineCreateInfo& createInfo)
+void Pipeline::Create(const std::weak_ptr<IDevice>& device, const ComputePipelineCreateInfo& createInfo)
 {
-    return LettuceResult::Success;
+    
 }
 
 void Pipeline::Release()

@@ -36,7 +36,7 @@ namespace Lettuce::Core
         VkDevice m_device;
         VkSampler m_sampler;
 
-        LettuceResult Create(const std::weak_ptr<IDevice>& device, const SamplerCreateInfo& createInfo);
+        void Create(const std::weak_ptr<IDevice>& device, const SamplerCreateInfo& createInfo);
         void Release();
     };
 }

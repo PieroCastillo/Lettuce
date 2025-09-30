@@ -33,7 +33,7 @@ namespace Lettuce::Core
         VkDevice m_device;
         VkImage m_image;
 
-        LettuceResult Create(VkDevice device, const TextureArrayCreateInfo& createInfo);
+        void Create(const std::weak_ptr<IDevice>& device, const TextureArrayCreateInfo& createInfo);
         void Release();
 
         VkFormat GetFormat();

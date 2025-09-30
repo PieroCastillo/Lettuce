@@ -47,7 +47,7 @@ namespace Lettuce::Core
         VkDeviceMemory m_descriptorBufferMemory;
         VkBuffer m_descriptorBuffer;
 
-        LettuceResult Create(const std::weak_ptr<IDevice>& device, const DescriptorTableCreateInfo& createInfo);
+        void Create(const std::weak_ptr<IDevice>& device, const DescriptorTableCreateInfo& createInfo);
         void Release();
 
         void SetBuffer(uint32_t set, uint32_t binding, VkBuffer buffer, DescriptorAddressType addressType);

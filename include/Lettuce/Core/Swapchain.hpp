@@ -34,11 +34,10 @@ namespace Lettuce::Core
         VkSwapchainKHR m_swapchain;
         VkSurfaceKHR m_surface;
 
-        LettuceResult Create(const std::weak_ptr<IDevice>& device, const SwapchainCreateInfo &createInfo);
+        void Create(const std::weak_ptr<IDevice>& device, const SwapchainCreateInfo &createInfo);
         void Release();
 
         void AcquireNextImage();
-        void Present();
         void Resize(uint32_t newWidth, uint32_t newHeight);
     };
 }

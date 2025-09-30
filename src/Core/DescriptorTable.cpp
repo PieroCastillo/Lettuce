@@ -11,9 +11,9 @@
 
 using namespace Lettuce::Core;
 
-LettuceResult DescriptorTable::Create(const std::weak_ptr<IDevice>& device, const DescriptorTableCreateInfo &createInfo)
+void DescriptorTable::Create(const std::weak_ptr<IDevice>& device, const DescriptorTableCreateInfo &createInfo)
 {
-    m_device = device->m_device;
+    m_device = (device.lock())->m_device;
     // initialize descriptor buffer and its device memory
     VkMemoryAllocateInfo memoryAI = {
 
@@ -26,7 +26,7 @@ LettuceResult DescriptorTable::Create(const std::weak_ptr<IDevice>& device, cons
     checkResult(vkCreateBuffer(m_device, &descriptorBufferCI, nullptr, &m_descriptorBuffer));
 
     
-    return LettuceResult::Success;
+    
 }
 
 void DescriptorTable::Release()

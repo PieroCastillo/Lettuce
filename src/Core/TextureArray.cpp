@@ -10,9 +10,9 @@
 
 using namespace Lettuce::Core;
 
-LettuceResult TextureArray::Create(const std::weak_ptr<IDevice>& device, const TextureArrayCreateInfo& createInfo)
+void TextureArray::Create(const std::weak_ptr<IDevice>& device, const TextureArrayCreateInfo& createInfo)
 {
-    m_device = device->m_device;
+    m_device = (device.lock())->m_device;
     m_width = createInfo.width;
     m_height = createInfo.height;
     m_format = createInfo.format;
@@ -43,7 +43,7 @@ LettuceResult TextureArray::Create(const std::weak_ptr<IDevice>& device, const T
     };
     auto result = vkCreateImage(m_device, &imageCI, nullptr, &m_image);
 
-    return LettuceResult::Success;
+    
 }
 void TextureArray::Release()
 {
