@@ -18,15 +18,12 @@ void DescriptorTable::Create(const std::weak_ptr<IDevice>& device, const Descrip
     VkMemoryAllocateInfo memoryAI = {
 
     };
-    checkResult(vkAllocateMemory(m_device, &memoryAI, nullptr, &m_descriptorBufferMemory));
+    handleResult(vkAllocateMemory(m_device, &memoryAI, nullptr, &m_descriptorBufferMemory));
 
     VkBufferCreateInfo descriptorBufferCI = {
-
+        
     };
-    checkResult(vkCreateBuffer(m_device, &descriptorBufferCI, nullptr, &m_descriptorBuffer));
-
-    
-    
+    handleResult(vkCreateBuffer(m_device, &descriptorBufferCI, nullptr, &m_descriptorBuffer));
 }
 
 void DescriptorTable::Release()

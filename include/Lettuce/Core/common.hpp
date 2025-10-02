@@ -17,6 +17,8 @@ enum class LettuceResult
     Success,
     OutOfDeviceMemory,
     OutOfHostMemory,
+    InvalidDevice,
+    InvalidOperation,
     Unknown,
 };
 
@@ -52,16 +54,14 @@ private:
 
 enum VkResult;
 
-inline void handleResult(VkResult vkResult, LettuceResult& lResult)
+/// @brief throws an LettuceException if vkResult is not VK_SUCCESS
+/// This method MUST NOT be called in performance critical paths
+/// @param vkResult the VkResult to check
+inline void handleResult(VkResult vkResult)
 {
-    switch (vkResult)
+    if(vkResult != VK_SUCCESS) [[unlikely]]
     {
-    case VK_SUCCESS:
-        lResult = LettuceResult::Success;
-        break;
-    default:
-        lResult = LettuceResult::Unknown;
-        break;
+        throw LettuceException(vkResult);
     }
 }
 
@@ -151,6 +151,13 @@ public:
     VkDevice m_device;
     VkInstance m_instance;
     VkPhysicalDevice m_physicalDevice;
+    VkQueue m_graphicsQueue;
+    VkQueue m_computeQueue;
+    VkQueue m_transferQueue;
+    uint32_t m_graphicsQueueFamilyIndex;
+    uint32_t m_computeQueueFamilyIndex;
+    uint32_t m_transferQueueFamilyIndex;
+    bool supportBufferUsage2;
 };
 
 #endif // COMMON_HPP
