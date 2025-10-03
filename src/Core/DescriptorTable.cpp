@@ -36,18 +36,20 @@ void DescriptorTable::SetBuffer(uint32_t set, uint32_t binding, VkBuffer buffer,
 {
     VkDescriptorAddressInfoEXT addressInfo = {
         .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_ADDRESS_INFO_EXT,
-        .address = 0, // buffer address
-        .range = 0,   // size of the buffer
+        .address = 0, // TODO: buffer address
+        .range = 0,   // TODO: size of the buffer
         .format = VK_FORMAT_UNDEFINED,
     };
 
     VkDescriptorGetInfoEXT getInfo = {
         .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_GET_INFO_EXT,
-        .type = 0,
-        .data = 0,
+        // TODO
+        // .type = 0,
+        // .data = 0,
     };
 
-    vkGetDescriptorEXT(m_device, &getInfo, dataSize, &pDescriptor);
+    // TODO
+    // vkGetDescriptorEXT(m_device, &getInfo, dataSize, &pDescriptor);
 }
 
 void DescriptorTable::SetTexture(uint32_t set, uint32_t binding, VkImageView imageView, VkSampler sampler, DescriptorTextureType textureType)
@@ -100,5 +102,5 @@ void DescriptorTable::SetTexture(uint32_t set, uint32_t binding, VkImageView ima
         .data = data,
     };
     // TODO: dataSize & pDescriptor
-    vkGetDescriptorEXT(m_device, &getInfo, dataSize, &pDescriptor);
+    // vkGetDescriptorEXT(m_device, &getInfo, dataSize, &pDescriptor);
 }

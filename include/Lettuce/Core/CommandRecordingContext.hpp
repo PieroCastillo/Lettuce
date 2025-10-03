@@ -5,7 +5,7 @@ Created by @PieroCastillo on 2025-07-28
 #define LETTUCE_CORE_COMMAND_RECORDING_CONTEXT_HPP
 
 // project headers
-#include "Common.hpp"
+#include "common.hpp"
 #include "RenderingInfo.hpp"
 
 namespace Lettuce::Core

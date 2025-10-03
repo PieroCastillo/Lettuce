@@ -4,8 +4,12 @@ Created by @PieroCastillo on 2025-07-20
 #ifndef LETTUCE_CORE_RENDER_TARGET_HPP
 #define LETTUCE_CORE_RENDER_TARGET_HPP
 
+#include <optional>
+#include <memory>
+
 // project headers
-#include "Common.hpp"
+#include "common.hpp"
+#include "TextureArray.hpp"
 
 namespace Lettuce::Core
 {

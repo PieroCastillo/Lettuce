@@ -8,7 +8,7 @@ Created by @PieroCastillo on 2025-07-20
 #include <memory>
 
 // project headers
-#include "Common.hpp"
+#include "common.hpp"
 
 namespace Lettuce::Core
 {

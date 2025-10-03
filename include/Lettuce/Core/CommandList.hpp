@@ -5,10 +5,10 @@ Created by @PieroCastillo on 2025-07-21
 #define LETTUCE_CORE_COMMAND_LIST_HPP
 
 // standard headers
-#include <function>
+#include <functional>
 
 // project headers
-#include "Common.hpp"
+#include "common.hpp"
 #include "CommandRecordingContext.hpp"
 
 namespace Lettuce::Core

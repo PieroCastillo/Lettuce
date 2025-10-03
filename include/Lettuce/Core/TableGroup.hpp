@@ -12,7 +12,7 @@ Created by @PieroCastillo on 2025-09-30
 #include <unordered_map>
 
 // project headers
-#include "Common.hpp"
+#include "common.hpp"
 
 namespace Lettuce::Core
 {
@@ -26,12 +26,31 @@ namespace Lettuce::Core
     Each Table has its own offset in the buffer
     */
 
-
-
     struct PendingCopy
     { 
         void* data;
         uint32_t size;
+    };    
+    
+    template <typename T>
+    class TableColumnView
+    {
+        void EnqueueCopyRange(uint32_t startIndex, uint32_t count, const T* data);
+    };
+
+    class DeviceTable
+    {
+        friend class TableGroup;
+    private:
+        std::vector<std::string> m_columnNames;
+        std::vector<uint64_t>    m_columnOffsets;
+        std::vector<uint64_t>    m_columnSizes;
+        uint32_t                 m_maxCount;
+
+        std::vector<PendingCopy> m_pendingCopies;
+    public:
+        template <typename T>
+        TableColumnView<T> GetColumn(const std::string& name);
     };
 
     struct TableCreateInfo 
@@ -84,26 +103,6 @@ namespace Lettuce::Core
             return m_size;    
         }
     };
-
-    template <typename T>
-    class TableColumnView
-    {
-        void EnqueueCopyRange(uint32_t startIndex, uint32_t count, const T* data);
-    };
-
-    class DeviceTable
-    {
-        friend class TableGroup;
-    private:
-        std::vector<std::string> m_columnNames;
-        std::vector<uint64_t>    m_columnOffsets;
-        std::vector<uint64_t>    m_columnSizes;
-        uint32_t                 m_maxCount;
-
-        std::vector<PendingCopy> m_pendingCopies;
-    public:
-        template <typename T>
-        TableColumnView<T> GetColumn(const std::string& name);
-    };
 }
+
 #endif // LETTUCE_CORE_TABLE_GROUP_HPP

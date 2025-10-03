@@ -5,7 +5,7 @@ Created by @PieroCastillo on 2025-07-21
 #define LETTUCE_CORE_RENDER_FLOW_GRAPH_HPP
 
 // project headers
-#include "Common.hpp"
+#include "common.hpp"
 
 namespace Lettuce::Core
 {

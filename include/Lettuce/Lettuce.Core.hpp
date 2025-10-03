@@ -1,4 +1,4 @@
-#include "Core/Common.hpp"
+#include "Core/common.hpp"
 
 // resources 
 #include "Core/Memory.hpp"

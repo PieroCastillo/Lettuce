@@ -11,20 +11,7 @@
 
 using namespace Lettuce::Core;
 
-std::vector<std::unique_lock<std::mutex>> DeviceExecutionContext::lockAllCmdPools()
-{
-    std::vector<std::unique_lock<std::mutex>> locks;
-    locks.reserve(mtxs.size());
-
-    for (auto &m : mtxs)
-        locks.emplace_back(m, std::defer_lock);
-
-    // lock all mutexes here
-    std::lock(locks.begin(), locks.end());
-    return locks;
-}
-
-void DeviceExecutionContext::workThreadFunc(uint32_t threadIndex)
+void DeviceExecutionContext::workThreadFunc(uint32_t threadIndex, std::barrier<>& syncBarrier)
 {
     while (!threadShouldExit)
     {
@@ -66,26 +53,35 @@ void DeviceExecutionContext::workThreadFunc(uint32_t threadIndex)
         // signal that this thread is ready and work is done
         syncBarrier.arrive_and_wait();
     }
+    // all thread must reach this barrier before exiting
+    syncBarrier.arrive_and_wait();
 }
 
-void DeviceExecutionContext::setupThreads(const DeviceExecutionContextCreateInfo &createInfo)
+void DeviceExecutionContext::setupThreads(const DeviceExecutionContextCreateInfo& createInfo)
 {
+    std::barrier<> syncBarrier(createInfo.threadCount + 1); // worker threads + main thread
     for (uint32_t i = 0; i < createInfo.threadCount; ++i)
     {
-        workThreads.emplace_back(&DeviceExecutionContext::workThreadFunc, this, i);
+        workThreads.emplace_back(&DeviceExecutionContext::workThreadFunc, this, i, syncBarrier);
     }
 }
 
-void DeviceExecutionContext::setupSynchronizationPrimitives(const DeviceExecutionContextCreateInfo &createInfo)
-{
+void DeviceExecutionContext::setupSynchronizationPrimitives(const DeviceExecutionContextCreateInfo& createInfo)
+{   
     threadShouldExit = false;
-    barrier(createInfo.threadCount + 1); // worker threads + main thread
     cmdPoolAccessMutexes.resize(createInfo.threadCount);
 }
 
-void DeviceExecutionContext::setupCommandPools(const DeviceExecutionContextCreateInfo &createInfo)
+void DeviceExecutionContext::setupCommandPools(const DeviceExecutionContextCreateInfo& createInfo)
 {
-    auto locks = lockAllCmdPools();
+    // lock all cmd pools
+    std::vector<std::unique_lock<std::mutex>> locks;
+    locks.reserve(cmdPoolAccessMutexes.size());
+
+    for (auto& m : cmdPoolAccessMutexes)
+        locks.emplace_back(m);
+    /////////////////////////////
+
     uint32_t cmdCountPerThread = createInfo.maxTasks;
 
     cmdPools.resize(createInfo.threadCount);
@@ -110,14 +106,12 @@ void DeviceExecutionContext::setupCommandPools(const DeviceExecutionContextCreat
     }
 }
 
-void DeviceExecutionContext::Create(VkDevice device, const DeviceExecutorCreateInfo &createInfo)
+void DeviceExecutionContext::Create(const std::weak_ptr<IDevice>& device, const DeviceExecutionContextCreateInfo& createInfo)
 {
     m_device = (device.lock())->m_device;
     setupSynchronizationPrimitives(createInfo);
     setupCommandPools(createInfo);
     setupThreads(createInfo);
-
-    
 }
 
 void DeviceExecutionContext::Release()
@@ -128,8 +122,8 @@ void DeviceExecutionContext::Release()
         threadShouldExit = true;
     }
     // wait for all threads to reach the barrier & join them
-    syncBarrier.arrive_and_wait();
-    for (auto &thread : workThreads)
+    //syncBarrier.arrive_and_wait();
+    for (auto& thread : workThreads)
     {
         if (thread.joinable())
             thread.join();
@@ -148,7 +142,7 @@ void DeviceExecutionContext::Release()
     cmdPools.shrink_to_fit();
 }
 
-void DeviceExecutionContext::Prepare(const std::vector<std::vector<CommandList>> &cmds)
+void DeviceExecutionContext::Prepare(const std::vector<std::vector<CommandList>>& cmds)
 {
 }
 

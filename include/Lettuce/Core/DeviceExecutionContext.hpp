@@ -7,6 +7,7 @@ Created by @PieroCastillo on 2025-08-11
 // standard headers
 #include <thread>
 #include <mutex>
+#include <memory>
 #include <condition_variable>
 #include <vector>
 #include <atomic>
@@ -15,7 +16,8 @@ Created by @PieroCastillo on 2025-08-11
 #include <barrier>
 
 // project headers
-#include "Common.hpp"
+#include "common.hpp"
+#include "CommandList.hpp"
 
 namespace Lettuce::Core
 {
@@ -38,26 +40,24 @@ namespace Lettuce::Core
     {
     private:
         std::vector<std::thread> workThreads;
-        std::vector<VkCommandsPool> cmdPools;
+        std::vector<VkCommandPool> cmdPools;
         std::vector<VkCommandBuffer> cmds;
         std::vector<std::mutex> cmdPoolAccessMutexes;
 
-        std::queue<VkCommandsBuffer> readyCmds;
+        std::queue<VkCommandBuffer> readyCmds;
 
         std::queue<std::function<void(uint32_t, VkCommandBuffer)>> tasks;
         std::mutex tasksAccessMutex;
 
         std::atomic<bool> threadShouldExit;
-        std::barrier<> syncBarrier;
 
         std::mutex queueSubmitMutex;
 
         // called one time
-        inline std::vector<std::unique_lock<std::mutex>> lockAllCmdPools();
-        inline void workThreadFunc(uint32_t threadIndex);
-        inline void setupThreads(const DeviceExecutionContextCreateInfo &createInfo);
-        inline void setupSynchronizationPrimitives(const DeviceExecutionContextCreateInfo &createInfo);
-        inline void setupCommandPools(const DeviceExecutionContextCreateInfo &createInfo);
+        void workThreadFunc(uint32_t threadIndex, std::barrier<>& syncBarrier);
+        void setupThreads(const DeviceExecutionContextCreateInfo& createInfo);
+        void setupSynchronizationPrimitives(const DeviceExecutionContextCreateInfo& createInfo);
+        void setupCommandPools(const DeviceExecutionContextCreateInfo& createInfo);
 
     public:
         VkDevice m_device;
@@ -65,10 +65,10 @@ namespace Lettuce::Core
         VkQueue m_computeQueue;
         VkQueue m_transferQueue;
 
-        void Create(VkDevice device, const DeviceExecutorCreateInfo &createInfo);
+        void Create(const std::weak_ptr<IDevice>& device, const DeviceExecutionContextCreateInfo& createInfo);
         void Release();
 
-        void Prepare(const std::vector<std::vector<CommandList>> &cmds);
+        void Prepare(const std::vector<std::vector<CommandList>>& cmds);
         void Record();
         void Execute();
     };

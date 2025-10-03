@@ -14,7 +14,7 @@ Created by @PieroCastillo on 2025-07-20
 #include <concepts>
 
 // project headers
-#include "Common.hpp"
+#include "common.hpp"
 #include "CommandList.hpp"
 #include "GPU.hpp"
 #include "Memory.hpp"
