@@ -7,13 +7,13 @@ using namespace Lettuce::Core;
 
 std::shared_ptr<Device> device;
 std::shared_ptr<Swapchain> swapchain;
-std::shared_ptr<Memory> meshMemory;
-std::shared_ptr<Buffer> meshBuffer; // vertices | indices
-std::shared_ptr<Memory> hostMemory;
-std::shared_ptr<Buffer> ubo;
-std::shared_ptr<DescriptorTable> descriptorTable;
-std::shared_ptr<PipelineLayout> playout;
-std::shared_ptr<Pipeline> pipeline;
+// std::shared_ptr<Memory> meshMemory;
+// std::shared_ptr<Buffer> meshBuffer; // vertices | indices
+// std::shared_ptr<Memory> hostMemory;
+// std::shared_ptr<Buffer> ubo;
+// std::shared_ptr<DescriptorTable> descriptorTable;
+// std::shared_ptr<PipelineLayout> playout;
+// std::shared_ptr<Pipeline> pipeline;
 std::shared_ptr<RenderTarget> colorTarget;
 std::shared_ptr<DeviceExecutionContext> executionContext;
 
@@ -26,22 +26,22 @@ void initLettuce()
     };
     swapchain = device->CreateObject(swapchainCI);
 
-    DescriptorTableCreateInfo descriptorTableCI = {
+    // DescriptorTableCreateInfo descriptorTableCI = {
 
-    };
-    descriptorTable = device->CreateObject(descriptorTableCI);
+    // };
+    // descriptorTable = device->CreateObject(descriptorTableCI);
 
-    PipelineLayoutCreateInfo playoutCI = {
+    // PipelineLayoutCreateInfo playoutCI = {
 
-    };
-    playout = device->CreateObject(playoutCI);
+    // };
+    // playout = device->CreateObject(playoutCI);
 
-    GraphicsPipelineCreateInfo pipelineCI = {
+    // GraphicsPipelineCreateInfo pipelineCI = {
 
-    };
-    pipeline = device->CreateObject(pipelineCI);
+    // };
+    // pipeline = device->CreateObject(pipelineCI);
     
-    RenderTargetCreateInfo colorTarget = {
+    RenderTargetCreateInfo colorTargetCI = {
             .width = swapchain->GetWidth(),
             .height = swapchain->GetHeight(),
             .depth = 1,
@@ -49,23 +49,23 @@ void initLettuce()
             .components = {VK_COMPONENT_SWIZZLE_R, VK_COMPONENT_SWIZZLE_G, VK_COMPONENT_SWIZZLE_B, VK_COMPONENT_SWIZZLE_A},
             .subresourceRange = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1},
     }
-    colorTarget = device->CreateObject(colorTarget);
+    colorTarget = device->CreateObject(colorTargetCI);
 
-    meshMemory = device->MemoryAlloc();
+    // meshMemory = device->MemoryAlloc();
 
-    meshBuffer = device->CreateObject(BufferCreateInfo{
-        .size = 1024 * 1024, // 1 MiB
-        .usage = BufferUsage::VertexBuffer | BufferUsage::IndexBuffer,
-        .memory = meshMemory,
-        });
+    // meshBuffer = device->CreateObject(BufferCreateInfo{
+    //     .size = 1024 * 1024, // 1 MiB
+    //     .usage = BufferUsage::VertexBuffer | BufferUsage::IndexBuffer,
+    //     .memory = meshMemory,
+    //     });
 
-    hostMemory = device->MemoryAlloc(1024 * 1024, MemoryAccess::FastCPUWrite);
+    // hostMemory = device->MemoryAlloc(1024 * 1024, MemoryAccess::FastCPUWrite);
 
-    ubo = device->CreateObject(BufferCreateInfo{
-        .size = 256, // 256 bytes for UBO
-        .usage = BufferUsage::UniformBuffer,
-        .memory = hostMemory,
-        });
+    // ubo = device->CreateObject(BufferCreateInfo{
+    //     .size = 256, // 256 bytes for UBO
+    //     .usage = BufferUsage::UniformBuffer,
+    //     .memory = hostMemory,
+    //     });
 
     executionContext = device->CreateObject(DeviceExecutionContextCreateInfo{
         .threadCount = 4,
@@ -101,10 +101,10 @@ void cleanupLettuce()
 {
     executionContext->Release();
     colorTarget->Release();
-    ubo->Release();
-    hostMemory->Release();
-    meshBuffer->Release();
-    meshMemory->Release();
+    // ubo->Release();
+    // hostMemory->Release();
+    // meshBuffer->Release();
+    // meshMemory->Release();
     pipeline->Release();
     playout->Release();
     descriptorTable->Release();
