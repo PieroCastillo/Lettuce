@@ -25,10 +25,14 @@ namespace Lettuce::Core
         CommandListType type;
     };
 
+    /*
+    CommandList stores (via a CommandRecordingContext) a list of commands to be recorded later.
+    */
     class CommandList
     {
     private:
-        std::function<void(CommandRecordingContext&)> commands;
+    VkCommandBuffer commandBuffer;
+        CommandRecordingContext commands;
 
     public:
         CommandListType type;
