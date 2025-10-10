@@ -105,27 +105,11 @@ namespace Lettuce::Core
         // void ClearAttachments();
 
         // void Draw();
-        void DrawIndexed(const DrawIndexedArgs& args);
         // void DrawMeshTasks();
 
+        void DrawIndexed(const DrawIndexedArgs& args);
         void DrawIndirect(const DrawIndirectArgs& args);
-
-        // void BlitImage();
-        // void ResolveImage();
-        /*
-            vkCmdSetScissor
-            vkCmdSetViewport
-        */
-
-        // Compute commands
         void Dispatch(const DispatchArgs& args);
-        // void DispatchIndirect();
-
-        // Transfer commands
-        // void CopyBuffer();
-        // void CopyBufferToImage();
-        // void CopyImageToBuffer();
-        // void CopyImage();
     };
 }
 #endif // LETTUCE_CORE_COMMAND_RECORDING_CONTEXT_HPP

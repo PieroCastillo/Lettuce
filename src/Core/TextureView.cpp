@@ -17,6 +17,8 @@ void TextureView::Create(const std::weak_ptr<IDevice>& device, const TextureView
 
     VkImageViewCreateInfo imageViewCI = {
         .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
+        .image = m_image,
+        
     };
 
     handleResult(vkCreateImageView(m_device, &imageViewCI, nullptr, &m_imageView));

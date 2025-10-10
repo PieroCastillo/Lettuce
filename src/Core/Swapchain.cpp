@@ -1,6 +1,7 @@
 // standard headers
 #include <limits>
 #include <memory>
+#include <algorithm>
 
 // external headers
 #include "Volk/volk.h"
@@ -34,14 +35,55 @@ void Swapchain::setupSurface(const SwapchainCreateInfo& createInfo)
 
 void Swapchain::setupSwapchain(const SwapchainCreateInfo& createInfo)
 {
-    // TODO
+    // query surface capabilities
+    VkSurfaceCapabilitiesKHR sc;
+    vkGetPhysicalDeviceSurfaceCapabilitiesKHR(m_gpu, m_surface, &sc);
+    VkSurfaceFormatKHR surfaceFormat;
+    VkExtent2D surfaceExtent;
+    VkPresentModeKHR surfacePresentMode;
+
+    surfaceFormat = sc.formats[0];
+
+    surfaceExtent.width = std::clamp(createInfo.width, sc.minImageExtent.width, sc.maxImageExtent.width);
+    surfaceExtent.height = std::clamp(createInfo.height, sc.minImageExtent.height, sc.maxImageExtent.height);
+
+    for(int i = 0; i < sc.presentModeCount; i++)
+    {
+        if(sc.presentModes[i] == VK_PRESENT_MODE_MAILBOX_KHR)
+        {
+            surfacePresentMode = VK_PRESENT_MODE_MAILBOX_KHR;
+            break;
+        }
+        else if(sc.presentModes[i] == VK_PRESENT_MODE_FIFO_KHR)
+        {
+            surfacePresentMode = VK_PRESENT_MODE_FIFO_KHR;
+        }
+        else
+        {
+            surfacePresentMode = sc.presentModes[0];
+        }
+    }
+
+    // init values for swapchain creation
     VkSwapchainCreateInfoKHR swapchainCI = {
         .sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR,
-
+        .surface = m_surface,
+        .minImageCount = sc.minImageCount + 1,
+        .imageFormat = surfaceFormat.colorSpace,
+        .imageColorSpace = 0,
+        .imageExtent = surfaceExtent,
+        .imageArrayLayers = 1,
+        .imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
+        .imageSharingMode = VK_SHARING_MODE_EXCLUSIVE,
+        .preTransform = sc.currentTransform ,
+        .compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR ,
+        .presentMode = surfacePresentMode,
+        .clipped = VK_FALSE,
+        .oldSwapchain = VK_NULL_HANDLE,
     };
-    if(auto res = vkCreateSwapchainKHR(m_device, &swapchainCI, nullptr, &m_swapchain); res != VK_SUCCESS)
+    if (auto res = vkCreateSwapchainKHR(m_device, &swapchainCI, nullptr, &m_swapchain); res != VK_SUCCESS)
     {
-
+        // TODO: handle errors (as OUT_OF_DATE or SUBOPTIMAL)
     }
 }
 
@@ -63,7 +105,7 @@ void Swapchain::AcquireNextImage()
 {
     constexpr auto timeout = std::numeric_limits<uint32_t>::max();
     uint32_t imgIdx = 0;
-    if(auto res = vkAcquireNextImageKHR(m_device, m_swapchain, timeout, VK_NULL_HANDLE, VK_NULL_HANDLE, &imgIdx); res != VK_SUCCESS)
+    if (auto res = vkAcquireNextImageKHR(m_device, m_swapchain, timeout, VK_NULL_HANDLE, VK_NULL_HANDLE, &imgIdx); res != VK_SUCCESS)
     {
 
     }
