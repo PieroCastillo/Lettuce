@@ -46,7 +46,7 @@ local samples = {
 for _, name in ipairs(samples) do 
     target(name)
         set_kind("binary")
-        -- add_includedirs("samples/SampleFramework", "external/stb","include")
+        add_includedirs("include")
         add_files("samples/" .. name .. "/app.cpp")
         add_deps("Lettuce")
         add_packages("volk", "glfw", "glm", "imgui")

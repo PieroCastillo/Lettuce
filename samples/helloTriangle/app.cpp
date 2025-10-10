@@ -1,9 +1,12 @@
 #include "Lettuce/Lettuce.Core.hpp"
+#include "glfw/glfw3.h"
 
 #include <memory>
 #include <vector>
 
 using namespace Lettuce::Core;
+
+GLFWwindow* window
 
 std::shared_ptr<Device> device;
 std::shared_ptr<Swapchain> swapchain;
@@ -14,8 +17,8 @@ std::shared_ptr<Swapchain> swapchain;
 // std::shared_ptr<DescriptorTable> descriptorTable;
 // std::shared_ptr<PipelineLayout> playout;
 // std::shared_ptr<Pipeline> pipeline;
-std::shared_ptr<RenderTarget> colorTarget;
-std::shared_ptr<DeviceExecutionContext> executionContext;
+//std::shared_ptr<RenderTarget> colorTarget;
+//std::shared_ptr<DeviceExecutionContext> executionContext;
 
 void initLettuce()
 {
@@ -40,7 +43,7 @@ void initLettuce()
 
     // };
     // pipeline = device->CreateObject(pipelineCI);
-    
+
     RenderTargetCreateInfo colorTargetCI = {
             .width = swapchain->GetWidth(),
             .height = swapchain->GetHeight(),
@@ -48,7 +51,7 @@ void initLettuce()
             .format = swapchain->GetFormat(),
             .components = {VK_COMPONENT_SWIZZLE_R, VK_COMPONENT_SWIZZLE_G, VK_COMPONENT_SWIZZLE_B, VK_COMPONENT_SWIZZLE_A},
             .subresourceRange = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1},
-    }
+    };
     colorTarget = device->CreateObject(colorTargetCI);
 
     // meshMemory = device->MemoryAlloc();
@@ -91,10 +94,13 @@ void initLettuce()
 
 void mainLoop()
 {
-    swapchain->AcquireNextImage();
-    executionContext->Record();
-    executionContext->Execute();
-    swapchain->Present();
+    while (!glfwWindowShouldClose(window))
+    {
+        swapchain->AcquireNextImage();
+        executionContext->Record();
+        executionContext->Execute();
+        swapchain->Present();
+    }
 }
 
 void cleanupLettuce()
@@ -114,10 +120,14 @@ void cleanupLettuce()
 
 void initWindow()
 {
+    glfwInit();
+    window = glfwCreateWindow(640, 480, "My Title", NULL, NULL);
 }
 
 void cleanupWindow()
 {
+    glfwDestroyWindow(window);
+    glfwTerminate();
 }
 
 int main()

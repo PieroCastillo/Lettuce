@@ -9,7 +9,6 @@ Created by @PieroCastillo on 2025-07-20
 
 // project headers
 #include "common.hpp"
-#include "TextureArray.hpp"
 
 namespace Lettuce::Core
 {
@@ -21,7 +20,6 @@ namespace Lettuce::Core
         VkFormat format;
         VkComponentMapping components;
         VkImageSubresourceRange subresourceRange;
-        std::optional<std::weak_ptr<TextureArray>> texture;
     };
 
     class RenderTarget

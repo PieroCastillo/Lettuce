@@ -1,6 +1,7 @@
 // standard headers
 #include <limits>
 #include <memory>
+#include <vector>
 #include <algorithm>
 
 // external headers
@@ -38,39 +39,50 @@ void Swapchain::setupSwapchain(const SwapchainCreateInfo& createInfo)
     // query surface capabilities
     VkSurfaceCapabilitiesKHR sc;
     vkGetPhysicalDeviceSurfaceCapabilitiesKHR(m_gpu, m_surface, &sc);
+
+    uint32_t formatCount;
+    uint32_t presentModeCount;
+    vkGetPhysicalDeviceSurfaceFormatsKHR(m_gpu, m_surface, &formatCount, nullptr);
+    vkGetPhysicalDeviceSurfacePresentModesKHR(m_gpu, m_surface, &presentModeCount, nullptr);
+    std::vector<VkSurfaceFormatKHR> formats(formatCount);
+    std::vector<VkPresentModeKHR> presentModes(presentModeCount);
+    vkGetPhysicalDeviceSurfaceFormatsKHR(m_gpu, m_surface, &formatCount, formats.data());
+    vkGetPhysicalDeviceSurfacePresentModesKHR(m_gpu, m_surface, &presentModeCount, presentModes.data());
+
     VkSurfaceFormatKHR surfaceFormat;
     VkExtent2D surfaceExtent;
     VkPresentModeKHR surfacePresentMode;
 
-    surfaceFormat = sc.formats[0];
+    surfaceFormat = formats[0];
 
     surfaceExtent.width = std::clamp(createInfo.width, sc.minImageExtent.width, sc.maxImageExtent.width);
     surfaceExtent.height = std::clamp(createInfo.height, sc.minImageExtent.height, sc.maxImageExtent.height);
 
-    for(int i = 0; i < sc.presentModeCount; i++)
+    for(int i = 0; i < presentModeCount; i++)
     {
-        if(sc.presentModes[i] == VK_PRESENT_MODE_MAILBOX_KHR)
+        if(presentModes[i] == VK_PRESENT_MODE_MAILBOX_KHR)
         {
             surfacePresentMode = VK_PRESENT_MODE_MAILBOX_KHR;
             break;
         }
-        else if(sc.presentModes[i] == VK_PRESENT_MODE_FIFO_KHR)
+        else if(presentModes[i] == VK_PRESENT_MODE_FIFO_KHR)
         {
             surfacePresentMode = VK_PRESENT_MODE_FIFO_KHR;
         }
         else
         {
-            surfacePresentMode = sc.presentModes[0];
+            surfacePresentMode = presentModes[0];
         }
     }
 
     // init values for swapchain creation
-    VkSwapchainCreateInfoKHR swapchainCI = {
+    VkSwapchainCreateInfoKHR swapchainCI = 
+    {
         .sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR,
         .surface = m_surface,
         .minImageCount = sc.minImageCount + 1,
-        .imageFormat = surfaceFormat.colorSpace,
-        .imageColorSpace = 0,
+        .imageFormat = surfaceFormat.format,
+        .imageColorSpace = surfaceFormat.colorSpace,
         .imageExtent = surfaceExtent,
         .imageArrayLayers = 1,
         .imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,

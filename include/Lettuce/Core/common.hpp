@@ -12,6 +12,12 @@
 #define __linux__
 #endif
 
+enum VkResult;
+
+#define VK_SUCCESS 0
+#define VK_ERROR_OUT_OF_HOST_MEMORY   -1
+#define VK_ERROR_OUT_OF_DEVICE_MEMORY -2
+
 enum class LettuceResult
 {
     Success,
@@ -51,8 +57,6 @@ private:
     }
 };
 
-
-enum VkResult;
 
 /// @brief throws an LettuceException if vkResult is not VK_SUCCESS
 /// This method MUST NOT be called in performance critical paths
@@ -97,7 +101,7 @@ struct VkVideoSessionParametersKHR_T;
 struct VkAccelerationStructureKHR_T;
 struct VkDeferredOperationKHR_T;
 struct VkIndirectCommandsLayoutEXT_T;
-struct VkIndirectExecutionSet_T;
+struct VkIndirectExecutionSetEXT_T;
 
 using VkInstance = VkHandle<VkInstance_T>::type;
 using VkPhysicalDevice = VkHandle<VkPhysicalDevice_T>::type;

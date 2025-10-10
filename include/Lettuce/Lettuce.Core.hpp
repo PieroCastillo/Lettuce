@@ -1,11 +1,8 @@
 #include "Core/common.hpp"
 
 // resources 
-#include "Core/Memory.hpp"
-#include "Core/Buffer.hpp"
 #include "Core/TableGroup.hpp"
-#include "Core/TextureArray.hpp"
-#include "Core/TextureView.hpp"
+#include "Core/TextureDictionary.hpp"
 
 //pipelines
 #include "Core/PipelineLayout.hpp"

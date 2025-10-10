@@ -94,8 +94,8 @@ namespace Lettuce::Core
 
         // Graphics & Compute commands
         void BindRenderingInfo(const RenderingInfo& renderingInfo);
-        void BindIndexBuffer(const std::shared_ptr<Buffer>& buffer);
-        void BindVertexBuffers(const std::vector<std::shared_ptr<Buffer>>& buffers);
+        //void BindIndexBuffer(const std::shared_ptr<Buffer>& buffer);
+        //void BindVertexBuffers(const std::vector<std::shared_ptr<Buffer>>& buffers);
         void BindPipeline(const std::shared_ptr<Pipeline>& pipeline);
         void BindDescriptorTable(const std::shared_ptr<DescriptorTable>& table);
 

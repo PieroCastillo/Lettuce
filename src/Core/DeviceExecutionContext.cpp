@@ -5,7 +5,7 @@
 
 // external headers
 #include "Volk/volk.h"
-
+/*
 // project headers
 #include "Lettuce/Core/DeviceExecutionContext.hpp"
 
@@ -158,3 +158,4 @@ void DeviceExecutionContext::Record()
 void DeviceExecutionContext::Execute()
 {
 }
+*/

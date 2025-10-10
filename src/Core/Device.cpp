@@ -14,9 +14,15 @@
 #include "Lettuce/Core/Device.hpp"
 #include "Lettuce/Core/CommandList.hpp"
 #include "Lettuce/Core/GPU.hpp"
-#include "Lettuce/Core/Memory.hpp"
 
 using namespace Lettuce::Core;
+
+template <typename T>
+inline bool exists(const std::vector<T>& vec, const T& elem)
+{
+    return std::find(vec.begin(), vec.end(), elem) != vec.end();
+}
+
 
 Device::Device()
 {
@@ -64,7 +70,7 @@ void Device::setupInstance()
         .ppEnabledLayerNames = nullptr,
     };
     // TODO: Add validation to vulkan functions
-    checkResult(vkCreateInstance(&instanceCI, nullptr, &m_instance));
+    handleResult(vkCreateInstance(&instanceCI, nullptr, &m_instance));
     volkLoadInstanceOnly(m_instance);
 }
 
@@ -128,17 +134,69 @@ void Device::setupFeaturesExtensions()
 
     dynamicRenderingUnusedAttachmentsFeature.dynamicRenderingUnusedAttachments = VK_TRUE;
 
-    // recommended features/extensions
-    deviceGeneratedCommandsFeature.deviceGeneratedCommands = VK_TRUE;
-    graphicsPipelineLibraryFeature.graphicsPipelineLibrary = VK_TRUE;
+    requestedExtensionsNames.push_back(VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME);
+    requestedExtensionsNames.push_back(VK_EXT_DESCRIPTOR_BUFFER_EXTENSION_NAME);
+    requestedExtensionsNames.push_back(VK_EXT_DYNAMIC_RENDERING_UNUSED_ATTACHMENTS_EXTENSION_NAME);
 
-    dynamicRenderingLocalReadFeature.dynamicRenderingLocalRead = VK_TRUE;
-    maintenance5Feature.maintenance5 = VK_TRUE;
+    next = &dynamicRenderingUnusedAttachmentsFeature;
+
+    // recommended features/extensions
+    if (exists<const char*>(availableExtensionsNames, VK_EXT_DEVICE_GENERATED_COMMANDS_EXTENSION_NAME))
+    {
+        enabledRecommendedFeatures.deviceGeneratedCommands = true;
+        deviceGeneratedCommandsFeature.deviceGeneratedCommands = VK_TRUE;
+        deviceGeneratedCommandsFeature.pNext = next;
+        next = &deviceGeneratedCommandsFeature;
+        requestedExtensionsNames.push_back(VK_EXT_DEVICE_GENERATED_COMMANDS_EXTENSION_NAME);
+    }
+
+    if (exists<const char*>(availableExtensionsNames, VK_EXT_GRAPHICS_PIPELINE_LIBRARY_EXTENSION_NAME))
+    {
+        enabledRecommendedFeatures.graphicsPipelineLibrary = true;
+        graphicsPipelineLibraryFeature.graphicsPipelineLibrary = VK_TRUE;
+        graphicsPipelineLibraryFeature.pNext = next;
+        next = &graphicsPipelineLibraryFeature;
+        requestedExtensionsNames.push_back(VK_EXT_GRAPHICS_PIPELINE_LIBRARY_EXTENSION_NAME);
+    }
+
+    if (exists<const char*>(availableExtensionsNames, VK_KHR_DYNAMIC_RENDERING_LOCAL_READ_EXTENSION_NAME))
+    {
+        enabledRecommendedFeatures.dynamicRenderingLocalRead = true;
+        dynamicRenderingLocalReadFeature.dynamicRenderingLocalRead = VK_TRUE;
+        dynamicRenderingLocalReadFeature.pNext = next;
+        next = &dynamicRenderingLocalReadFeature;
+        requestedExtensionsNames.push_back(VK_KHR_DYNAMIC_RENDERING_LOCAL_READ_EXTENSION_NAME);
+    }
+
+    if (exists<const char*>(availableExtensionsNames, VK_KHR_MAINTENANCE_5_EXTENSION_NAME))
+    {
+        enabledRecommendedFeatures.maintenance5 = true;
+        maintenance5Feature.maintenance5 = VK_TRUE;
+        maintenance5Feature.pNext = next;
+        next = &maintenance5Feature;
+        requestedExtensionsNames.push_back(VK_KHR_MAINTENANCE_5_EXTENSION_NAME);
+    }
+
+    next = &maintenance5Feature;
 
     // optional features/extensions
-    fragmentShadingRateFeature.fragmentShadingRate = VK_TRUE;
-    meshShaderFeature.taskShader = VK_TRUE;
-    meshShaderFeature.meshShader = VK_TRUE;
+
+    if (exists<const char*>(availableExtensionsNames, VK_KHR_FRAGMENT_SHADING_RATE_EXTENSION_NAME))
+    {
+        fragmentShadingRateFeature.pipelineFragmentShadingRate = VK_TRUE;
+        fragmentShadingRateFeature.pNext = next;
+        next = &fragmentShadingRateFeature;
+        requestedExtensionsNames.push_back(VK_KHR_FRAGMENT_SHADING_RATE_EXTENSION_NAME);
+    }
+
+    if (exists<const char*>(availableExtensionsNames, VK_EXT_MESH_SHADER_EXTENSION_NAME))
+    {
+        meshShaderFeature.taskShader = VK_TRUE;
+        meshShaderFeature.meshShader = VK_TRUE;
+        meshShaderFeature.pNext = next;
+        next = &meshShaderFeature;
+        requestedExtensionsNames.push_back(VK_EXT_MESH_SHADER_EXTENSION_NAME);
+    }
 
 }
 
@@ -154,63 +212,38 @@ void Device::setupDevice()
     VkQueueFlags transferFlags = VK_QUEUE_TRANSFER_BIT | VK_QUEUE_SPARSE_BINDING_BIT;
     VkQueueFlags computeFlags = VK_QUEUE_COMPUTE_BIT | VK_QUEUE_TRANSFER_BIT | VK_QUEUE_SPARSE_BINDING_BIT;
 
+    std::vector<VkDeviceQueueCreateInfo> queueCIs;
+
     // find queue family indices
+    uint32_t familyIdx = 0;
+    float priority = 1.0f; // stack value, used one time before destruction
     for (const VkQueueFamilyProperties& queueFamily : queueFamiliesVec)
     {
         if (queueFamily.queueFlags == graphicsFlags)
         {
-
+            VkDeviceQueueCreateInfo ci = {
+                .sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
+                .queueFamilyIndex = familyIdx,
+                .queueCount = 1,
+                .pQueuePriorities = &priority,
+            };
+            queueCIs.push_back(ci);
         }
+        familyIdx++;
     }
 
     VkDeviceCreateInfo deviceCI = {
         .sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
+        .pNext = next,
+        .queueCreateInfoCount = (uint32_t)queueCIs.size(),
+        .pQueueCreateInfos = queueCIs.data(),
+
     };
-    checkResult(vkCreateDevice(m_physicalDevice, &deviceCI, nullptr, &m_device));
+    handleResult(vkCreateDevice(m_physicalDevice, &deviceCI, nullptr, &m_device));
     volkLoadDevice(m_device);
 }
 
 void Device::getQueues()
 {
 
-}
-
-auto Device::UpdateBinding(const std::shared_ptr<DescriptorTable> descriptorTable, const DescriptorTableUpdateBindingInfo& updateInfo) -> Op
-{
-}
-
-auto Device::BindMemory(std::shared_ptr<Memory> memory, std::shared_ptr<Buffer> buffer) -> Op
-{
-}
-
-auto Device::BindMemory(std::shared_ptr<Memory> memory, std::shared_ptr<TextureArray> textureArray) -> Op
-{
-}
-
-auto Device::MemoryAlloc(uint32_t size, MemoryAccess access) -> Result<Memory>
-{
-    MemoryCreateInfo createInfo = {
-        .size = size,
-        .access = access,
-    };
-    return std::make_shared<Memory>(m_physicalDevice, m_device, createInfo);
-}
-
-auto Device::MemoryCopy(std::shared_ptr<Buffer> srcBuffer, std::shared_ptr<Buffer> dstBuffer) -> Op
-{
-}
-
-auto Device::MemoryCopy(std::shared_ptr<Buffer> srcBuffer, std::shared_ptr<TextureArray> dstTextureArray) -> Op
-{
-}
-
-auto Device::MemoryCopy(std::shared_ptr<TextureArray> srcTextureArray, std::shared_ptr<Buffer> dstBuffer) -> Op
-{
-}
-auto Device::MemoryCopy(std::shared_ptr<TextureArray> srcTextureArray, std::shared_ptr<TextureArray> dstTextureArray) -> Op
-{
-}
-
-auto Device::Blit(std::shared_ptr<TextureArray> srcTextureArray, std::shared_ptr<TextureArray> dstTextureArray) -> Op
-{
 }
