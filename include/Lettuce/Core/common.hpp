@@ -13,6 +13,8 @@
 #endif
 
 enum VkResult;
+enum VkPrimitiveTopology;
+struct VkComponentMapping;
 
 #define VK_SUCCESS 0
 #define VK_ERROR_OUT_OF_HOST_MEMORY   -1

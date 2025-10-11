@@ -34,7 +34,8 @@ namespace Lettuce::Core
         std::vector<VkImageView> m_imageViews;
         std::vector<std::string> m_names;
 
-        
+        void Create(const std::weak_ptr<IDevice>& device, const TextureDictionaryCreateInfo& createInfo);
+        void Release();
     };
 };
 
