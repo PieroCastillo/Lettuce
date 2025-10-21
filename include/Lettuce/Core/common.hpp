@@ -12,13 +12,14 @@
 #define __linux__
 #endif
 
-enum VkResult;
-enum VkPrimitiveTopology;
-struct VkComponentMapping;
+template <typename First, typename... Rest>
+bool haveSameSize(const First& first, const Rest&... rest)
+{
+    size_t size = first.size();
+    return ((rest.size() == size) && ...);
+}
 
-#define VK_SUCCESS 0
-#define VK_ERROR_OUT_OF_HOST_MEMORY   -1
-#define VK_ERROR_OUT_OF_DEVICE_MEMORY -2
+enum VkResult;
 
 enum class LettuceResult
 {
@@ -27,6 +28,7 @@ enum class LettuceResult
     OutOfHostMemory,
     InvalidDevice,
     InvalidOperation,
+    InitializationFailed,
     Unknown,
 };
 
@@ -52,8 +54,10 @@ private:
 
     static std::string resultToString(VkResult r) {
         switch (r) {
-            case VK_ERROR_OUT_OF_DEVICE_MEMORY: return "Out of Device Memory";
-            case VK_ERROR_OUT_OF_HOST_MEMORY: return "Out of Host Memory";
+            // VK_ERROR_OUT_OF_DEVICE_MEMORY
+            case -2: return "Out of Device Memory";
+            // VK_ERROR_OUT_OF_HOST_MEMORY
+            case -1: return "Out of Host Memory";
             default: return "Unknown error";
         }
     }
@@ -65,7 +69,8 @@ private:
 /// @param vkResult the VkResult to check
 inline void handleResult(VkResult vkResult)
 {
-    if(vkResult != VK_SUCCESS) [[unlikely]]
+    // VK_SUCCESS
+    if(vkResult != 0) [[unlikely]]
     {
         throw LettuceException(vkResult);
     }
@@ -146,6 +151,8 @@ enum VkSamplerAddressMode;
 enum VkBorderColor;
 enum VkCompareOp;
 enum VkImageType;
+enum VkDescriptorType;
+enum VkPrimitiveTopology;
 struct VkComponentMapping;
 struct VkImageSubresourceRange;
 
