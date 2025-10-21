@@ -10,9 +10,9 @@
 
 using namespace Lettuce::Core;
 
-void PipelineLayout::Create(const std::weak_ptr<IDevice>& device, const PipelineLayoutCreateInfo& createInfo)
+void PipelineLayout::Create(const IDevice& device, const PipelineLayoutCreateInfo& createInfo)
 {
-    m_device = (device.lock())->m_device;
+    m_device = device.m_device;
     
     // TODO: Impl Buffer Address Table
     VkPipelineLayoutCreateInfo pipelineLayoutCI = {

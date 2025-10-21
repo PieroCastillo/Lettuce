@@ -19,7 +19,7 @@ namespace Lettuce::Core
     public:
         VkDevice m_device;
         
-        void Create(const std::weak_ptr<IDevice>& device, const RenderFlowGraphCreateInfo &createInfo);
+        void Create(const IDevice& device, const RenderFlowGraphCreateInfo &createInfo);
         void Release();
     };
 }

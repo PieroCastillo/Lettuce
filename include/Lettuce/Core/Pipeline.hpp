@@ -29,8 +29,8 @@ namespace Lettuce::Core
         VkDevice m_device;
         VkPipeline m_pipeline;
 
-        void Create(const std::weak_ptr<IDevice>& device, const GraphicsPipelineCreateInfo& createInfo);
-        void Create(const std::weak_ptr<IDevice>& device, const ComputePipelineCreateInfo& createInfo);
+        void Create(const IDevice& device, const GraphicsPipelineCreateInfo& createInfo);
+        void Create(const IDevice& device, const ComputePipelineCreateInfo& createInfo);
         void Release();
     };
 }

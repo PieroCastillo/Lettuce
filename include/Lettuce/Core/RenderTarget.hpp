@@ -39,7 +39,7 @@ namespace Lettuce::Core
         VkImage m_image;
         VkImageView m_imageView;
 
-        void Create(const std::weak_ptr<IDevice>& device, const RenderTargetCreateInfo& createInfo);
+        void Create(const IDevice& device, const RenderTargetCreateInfo& createInfo);
         void Release();
 
         VkFormat GetFormat();

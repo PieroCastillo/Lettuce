@@ -21,8 +21,8 @@ namespace Lettuce::Core
     class Swapchain
     {
     private:
-        uint32_t width;
-        uint32_t height;
+        uint32_t m_width;
+        uint32_t m_height;
 
         inline void setupSurface(const SwapchainCreateInfo &createInfo);
         inline void setupSwapchain(const SwapchainCreateInfo &createInfo);
@@ -34,11 +34,14 @@ namespace Lettuce::Core
         VkSwapchainKHR m_swapchain;
         VkSurfaceKHR m_surface;
 
-        void Create(const std::weak_ptr<IDevice>& device, const SwapchainCreateInfo &createInfo);
+        void Create(const IDevice& device, const SwapchainCreateInfo &createInfo);
         void Release();
 
         void AcquireNextImage();
         void Resize(uint32_t newWidth, uint32_t newHeight);
+
+        inline uint32_t GetHeight() { return m_height; }
+        inline uint32_t GetWidth() { return m_width; }
     };
 }
 #endif // LETTUCE_CORE_SWAPCHAIN_HPP

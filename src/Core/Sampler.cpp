@@ -9,9 +9,9 @@
 
 using namespace Lettuce::Core;
 
-void Sampler::Create(const std::weak_ptr<IDevice>& device, const SamplerCreateInfo& createInfo) 
+void Sampler::Create(const IDevice& device, const SamplerCreateInfo& createInfo) 
 {
-    m_device = (device.lock())->m_device;
+    m_device = device.m_device;
 
     VkSamplerCreateInfo samplerCI = {
         .sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,

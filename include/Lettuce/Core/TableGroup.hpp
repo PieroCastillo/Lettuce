@@ -85,7 +85,7 @@ namespace Lettuce::Core
         VkDeviceMemory m_memory;
         VkBuffer       m_buffer;
 
-        void Create(const std::weak_ptr<IDevice>& device, const TableGroupCreateInfo& createInfo);
+        void Create(const IDevice& device, const TableGroupCreateInfo& createInfo);
         void Release();
 
         void FlushCopies();

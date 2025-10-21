@@ -33,7 +33,7 @@ namespace Lettuce::Core
         VkDevice m_device;
         VkPipelineLayout m_pipelineLayout;
             
-        void Create(const std::weak_ptr<IDevice>& device, const PipelineLayoutCreateInfo& createInfo);
+        void Create(const IDevice& device, const PipelineLayoutCreateInfo& createInfo);
         void Release();
     };
 }

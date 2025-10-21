@@ -10,15 +10,14 @@
 
 using namespace Lettuce::Core;
 
-void TableGroup::Create(const std::weak_ptr<IDevice>& device, const TableGroupCreateInfo& createInfo)
+void TableGroup::Create(const IDevice& device, const TableGroupCreateInfo& createInfo)
 {
-    if (device.expired()) {
+    if (device.m_device == VK_NULL_HANDLE) {
         throw LettuceException(LettuceResult::InvalidDevice);
     }
 
-    auto devPtr = device.lock();
-    m_device = devPtr->m_device;
-    m_transferQueue = devPtr->m_transferQueue;
+    m_device = device.m_device;
+    m_transferQueue = device.m_transferQueue;
 
     // setup memory & buffer
     VkMemoryAllocateInfo memAI = {
@@ -36,8 +35,6 @@ void TableGroup::Create(const std::weak_ptr<IDevice>& device, const TableGroupCr
         .size = 1024 * 1024, // TODO: calculate size
         .usage = VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
         .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
-        .queueFamilyIndexCount = 0,
-        .pQueueFamilyIndices = nullptr,
     };
 
     // setup command buffer & pool
@@ -45,7 +42,7 @@ void TableGroup::Create(const std::weak_ptr<IDevice>& device, const TableGroupCr
         .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
         .pNext = nullptr,
         .flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT,
-        .queueFamilyIndex = devPtr->m_transferQueueFamilyIndex,
+        .queueFamilyIndex = device.m_transferQueueFamilyIndex,
     };
 
     handleResult(vkCreateCommandPool(m_device, &cmdPoolCI, nullptr, &m_cmdPool));
@@ -60,7 +57,8 @@ void TableGroup::Create(const std::weak_ptr<IDevice>& device, const TableGroupCr
     handleResult(vkAllocateCommandBuffers(m_device, &cmdAllocInfo, &m_cmd));
 }
 
-void  TableGroup::Release() {
+void  TableGroup::Release() 
+{
     // TODO: wait for copies complete
     vkDestroyBuffer(m_device, m_buffer, nullptr);
     vkFreeMemory(m_device, m_memory, nullptr);
@@ -71,6 +69,7 @@ void  TableGroup::Release() {
     m_tableOffsets.clear();
 }
 
-void  TableGroup::FlushCopies() {
+void  TableGroup::FlushCopies() 
+{
 
 }
