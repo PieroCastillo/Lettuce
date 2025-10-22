@@ -5,7 +5,7 @@
 #include <algorithm>
 
 // external headers
-#include "Volk/volk.h"
+#include <volk.h>
 
 // project headers
 #include "Lettuce/Core/TextureDictionary.hpp"

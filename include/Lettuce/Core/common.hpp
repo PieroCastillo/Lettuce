@@ -5,6 +5,9 @@
 #include <cstdint>
 #include <stdexcept>
 
+// library headers
+#include <volk.h>
+
 #define NOMINMAX
 
 #ifdef __INTELLISENSE__

@@ -4,73 +4,12 @@
 #include <mutex>
 
 // external headers
-#include "Volk/volk.h"
-/*
+#include <volk.h>
+
 // project headers
 #include "Lettuce/Core/DeviceExecutionContext.hpp"
 
 using namespace Lettuce::Core;
-
-void DeviceExecutionContext::workThreadFunc(uint32_t threadIndex, std::barrier<>& syncBarrier)
-{
-    while (!threadShouldExit)
-    {
-        // wait for the main thread to signal work
-        syncBarrier.arrive_and_wait();
-
-        // for release(), check if thread should exit
-        if (threadShouldExit)
-            break;
-
-        uint32_t taskIndex = 0;
-        // execute tasks
-        while (true)
-        {
-            std::function<void(uint32_t, VkCommandBuffer)> task;
-
-            {
-                // lock access to tasks queue to get one task
-                std::lock_guard<std::mutex> lock(tasksAccessMutex);
-                // if there are no tasks, break the loop to signal that this thread is ready
-                if (tasks.empty())
-                    break;
-
-                // get the task from the queue
-                task = std::move(tasks.front());
-                tasks.pop();
-            }
-
-            uint32_t maxTasks = cmds.size() / cmdPools.size();
-            // Each task contains information about recording commands
-            // Synchronization is handled by this thread
-            // this lock ensures that one pool is accessed by only one thread at a time
-            std::lock_guard<std::mutex> lock(cmdPoolAccessMutexes[threadIndex]);
-            auto cmd = cmds[(threadIndex * maxTasks) + taskIndex];
-            task(threadIndex, cmd);
-            taskIndex++;
-        }
-
-        // signal that this thread is ready and work is done
-        syncBarrier.arrive_and_wait();
-    }
-    // all thread must reach this barrier before exiting
-    syncBarrier.arrive_and_wait();
-}
-
-void DeviceExecutionContext::setupThreads(const DeviceExecutionContextCreateInfo& createInfo)
-{
-    std::barrier<> syncBarrier(createInfo.threadCount + 1); // worker threads + main thread
-    for (uint32_t i = 0; i < createInfo.threadCount; ++i)
-    {
-        workThreads.emplace_back(&DeviceExecutionContext::workThreadFunc, this, i, syncBarrier);
-    }
-}
-
-void DeviceExecutionContext::setupSynchronizationPrimitives(const DeviceExecutionContextCreateInfo& createInfo)
-{   
-    threadShouldExit = false;
-    cmdPoolAccessMutexes.resize(createInfo.threadCount);
-}
 
 void DeviceExecutionContext::setupCommandPools(const DeviceExecutionContextCreateInfo& createInfo)
 {
@@ -94,7 +33,7 @@ void DeviceExecutionContext::setupCommandPools(const DeviceExecutionContextCreat
             .flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT,
             .queueFamilyIndex = 0, // TODO: get correct queue family index
         };
-        checkResult(vkCreateCommandPool(m_device, &cmdPoolCI, nullptr, &cmdPools[i]));
+        handleResult(vkCreateCommandPool(m_device, &cmdPoolCI, nullptr, &cmdPools[i]));
 
         VkCommandBufferAllocateInfo cmdAllocInfo = {
             .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
@@ -102,32 +41,20 @@ void DeviceExecutionContext::setupCommandPools(const DeviceExecutionContextCreat
             .level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
             .commandBufferCount = cmdCountPerThread,
         };
-        checkResult(vkAllocateCommandBuffers(m_device, &cmdAllocInfo, &cmds[i * cmdCountPerThread]));
+        handleResult(vkAllocateCommandBuffers(m_device, &cmdAllocInfo, &cmds[i * cmdCountPerThread]));
     }
 }
 
-void DeviceExecutionContext::Create(const std::weak_ptr<IDevice>& device, const DeviceExecutionContextCreateInfo& createInfo)
+void DeviceExecutionContext::Create(const IDevice& device, const DeviceExecutionContextCreateInfo& createInfo)
 {
-    m_device = (device.lock())->m_device;
-    setupSynchronizationPrimitives(createInfo);
+    m_device = device.m_device;
     setupCommandPools(createInfo);
-    setupThreads(createInfo);
+    threadPool.Create(createInfo.threadCount);
 }
 
 void DeviceExecutionContext::Release()
 {
-    // declare threads should exit
-    {
-        std::lock_guard<std::mutex> lock(tasksAccessMutex);
-        threadShouldExit = true;
-    }
-    // wait for all threads to reach the barrier & join them
-    //syncBarrier.arrive_and_wait();
-    for (auto& thread : workThreads)
-    {
-        if (thread.joinable())
-            thread.join();
-    }
+    threadPool.Release();
 
     uint32_t maxTasks = cmds.size() / cmdPools.size();
     for (int i = 0; i < cmdPools.size(); ++i)
@@ -144,18 +71,15 @@ void DeviceExecutionContext::Release()
 
 void DeviceExecutionContext::Prepare(const std::vector<std::vector<CommandList>>& cmds)
 {
+
 }
 
 void DeviceExecutionContext::Record()
 {
-    // signal thread to start recording
-    syncBarrier.arrive_and_wait();
-
-    // wait for threads to finish recording
-    syncBarrier.arrive_and_wait();
+    
 }
 
 void DeviceExecutionContext::Execute()
 {
+
 }
-*/

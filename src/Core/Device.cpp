@@ -6,14 +6,12 @@
 #include <future>
 #include <unordered_map>
 #include <array>
-
-// external headers
-#include <volk.h>
+#include <iostream>
 
 // project headers
+#include "Lettuce/Core/common.hpp"
 #include "Lettuce/Core/Device.hpp"
 #include "Lettuce/Core/CommandList.hpp"
-#include "Lettuce/Core/GPU.hpp"
 
 using namespace Lettuce::Core;
 
@@ -23,14 +21,41 @@ inline bool exists(const std::vector<T>& vec, const T& elem)
     return std::find(vec.begin(), vec.end(), elem) != vec.end();
 }
 
+#define COLOR_RESET   "\033[0m"
+#define COLOR_YELLOW  "\033[1;33m"
+#define COLOR_RED     "\033[1;31m"
+#define COLOR_WHITE   "\033[0;37m"
 
-Device::Device()
+// Debug Callback :D (smile face because I don't like this syntax :p)
+static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
+    VkDebugUtilsMessageSeverityFlagBitsEXT           messageSeverity,
+    VkDebugUtilsMessageTypeFlagsEXT                  messageTypes,
+    const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
+    void* pUserData)
 {
-    setupInstance();
+    // Warning
+    if (messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT) {
+        std::cerr << COLOR_YELLOW << "[WARNING] " << COLOR_WHITE
+            << pCallbackData->pMessage << COLOR_RESET << std::endl;
+    }
+    // Error
+    else if (messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT) {
+        std::cerr << COLOR_RED << "[ERROR] " << COLOR_WHITE
+            << pCallbackData->pMessage << COLOR_RESET << std::endl;
+    }
+    // // Info or verbose messages
+    // else {
+    //     std::cout << COLOR_WHITE << pCallbackData->pMessage << COLOR_RESET << std::endl;
+    // }
+
+    return VK_FALSE;
 }
 
-void Device::Build()
+void Device::Create(const DeviceCreateInfo& createInfo)
 {
+    setupInstance();
+    selectGPU(createInfo);
+    setupFeaturesExtensions();
     setupDevice();
     getQueues();
 }
@@ -38,13 +63,25 @@ void Device::Build()
 void Device::Release()
 {
     vkDestroyDevice(m_device, nullptr);
+    vkDestroyDebugUtilsMessengerEXT(m_instance, m_messenger, nullptr);
     vkDestroyInstance(m_instance, nullptr);
     volkFinalize();
 }
 
 void Device::setupInstance()
 {
-    volkInitialize();
+    VkResult res;
+    try
+    {
+        res = volkInitialize();
+    }
+    catch (...)
+    {
+        std::cerr << "Volk initialization failed: " << res << std::endl;
+        return;
+    }
+
+    // create info about app & engine
     VkApplicationInfo appInfo = {
         .sType = VK_STRUCTURE_TYPE_APPLICATION_INFO,
         .pApplicationName = "Lettuce Application",
@@ -54,24 +91,52 @@ void Device::setupInstance()
         .apiVersion = VK_API_VERSION_1_3,
     };
 
-    std::array<const char*, 2> instanceExtensions = {
+    std::vector<const char*> instanceExtensions = {
         VK_KHR_SURFACE_EXTENSION_NAME,
-#ifdef WIN32_
+#if defined(WIN32_) || defined(_WIN32) || defined(WIN32)
         VK_KHR_WIN32_SURFACE_EXTENSION_NAME,
 #endif
+        VK_EXT_DEBUG_UTILS_EXTENSION_NAME,
+    };
+
+    std::array<const char*, 1> layers = {
+        "VK_LAYER_KHRONOS_validation",
+    };
+
+    VkDebugUtilsMessengerCreateInfoEXT messengerCI = {
+        .sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT,
+        // give messages about behaviours that may cause bugs or crashes
+        .messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT ,
+        // performance and validation messages are priority
+        .messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT ,
+        .pfnUserCallback = &debugCallback,
     };
 
     VkInstanceCreateInfo instanceCI = {
         .sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO,
+        .pNext = &messengerCI,
         .pApplicationInfo = &appInfo,
+        .enabledLayerCount = (uint32_t)layers.size(), // Add required layers here
+        .ppEnabledLayerNames = layers.data(),
         .enabledExtensionCount = (uint32_t)instanceExtensions.size(), // Add required extensions here
         .ppEnabledExtensionNames = instanceExtensions.data(),
-        .enabledLayerCount = 0, // Add required layers here
-        .ppEnabledLayerNames = nullptr,
     };
-    // TODO: Add validation to vulkan functions
     handleResult(vkCreateInstance(&instanceCI, nullptr, &m_instance));
     volkLoadInstanceOnly(m_instance);
+
+    handleResult(vkCreateDebugUtilsMessengerEXT(m_instance, &messengerCI, nullptr, &m_messenger));
+}
+
+
+void Device::selectGPU(const DeviceCreateInfo& createInfo)
+{
+    uint32_t gpuCount;
+    vkEnumeratePhysicalDevices(m_instance, &gpuCount, nullptr);
+    std::vector<VkPhysicalDevice> gpus(gpuCount);
+    vkEnumeratePhysicalDevices(m_instance, &gpuCount, gpus.data());
+
+    // TODO: impl selection by properties
+    m_physicalDevice = gpus[0];
 }
 
 void Device::setupFeaturesExtensions()
@@ -133,6 +198,8 @@ void Device::setupFeaturesExtensions()
     descriptorBufferFeature.descriptorBufferPushDescriptors = VK_TRUE;
 
     dynamicRenderingUnusedAttachmentsFeature.dynamicRenderingUnusedAttachments = VK_TRUE;
+
+    requestedExtensionsNames.push_back(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
 
     requestedExtensionsNames.push_back(VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME);
     requestedExtensionsNames.push_back(VK_EXT_DESCRIPTOR_BUFFER_EXTENSION_NAME);
@@ -237,7 +304,8 @@ void Device::setupDevice()
         .pNext = next,
         .queueCreateInfoCount = (uint32_t)queueCIs.size(),
         .pQueueCreateInfos = queueCIs.data(),
-
+        .enabledExtensionCount = (uint32_t)requestedExtensionsNames.size(),
+        .ppEnabledExtensionNames = requestedExtensionsNames.data(),
     };
     handleResult(vkCreateDevice(m_physicalDevice, &deviceCI, nullptr, &m_device));
     volkLoadDevice(m_device);
@@ -246,4 +314,41 @@ void Device::setupDevice()
 void Device::getQueues()
 {
 
+}
+
+auto Device::CreateSwapchain(const SwapchainCreateInfo& createInfo) -> Result<Swapchain>
+{
+    try
+    {
+        auto swapchain = std::make_shared<Swapchain>();
+        swapchain->Create(*this, createInfo);
+        return swapchain;
+    }
+    catch (...)
+    {
+        return std::unexpected(LettuceResult::InitializationFailed);
+    }
+}
+
+// here CreateDescriptorTable()
+
+auto Device::CreateContext(const DeviceExecutionContextCreateInfo& createInfo) -> Result<DeviceExecutionContext>
+{
+    try
+    {
+        auto ctx = std::make_shared<DeviceExecutionContext>();
+        ctx->Create(*this, createInfo);
+        return ctx;
+    }
+    catch (...)
+    {
+        return std::unexpected(LettuceResult::InitializationFailed);
+    }
+}
+
+// ...
+
+auto Device::Present(const std::shared_ptr<Swapchain>& swapchain) -> Op
+{
+    return {};
 }

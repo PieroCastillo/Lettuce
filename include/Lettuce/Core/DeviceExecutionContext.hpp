@@ -14,6 +14,7 @@ Created by @PieroCastillo on 2025-08-11
 #include <queue>
 #include <functional>
 #include <barrier>
+#include <latch>
 
 // project headers
 #include "common.hpp"
@@ -21,11 +22,35 @@ Created by @PieroCastillo on 2025-08-11
 
 namespace Lettuce::Core
 {
+    class DeviceThreadPool
+    {
+    public:
+        void Create(uint32_t threadCount);
+        void Release();
+
+        template<class F>
+        void Enqueue(F&& f) {
+            {
+                std::unique_lock<std::mutex> lock(queueMutex);
+                tasks.emplace(std::forward<F>(f));
+            }
+            cv.notify_one();
+        }
+
+    private:
+        std::vector<std::thread> workers;
+        std::queue<std::function<void()>> tasks;
+        std::mutex queueMutex;
+        std::condition_variable cv;
+        bool stop;
+    };
+
     struct DeviceExecutionContextCreateInfo
     {
         uint32_t threadCount;
         uint32_t maxTasks;
     };
+
 
     /*
         Responsabilities:
@@ -39,23 +64,12 @@ namespace Lettuce::Core
     class DeviceExecutionContext
     {
     private:
-        std::vector<std::thread> workThreads;
+        DeviceThreadPool threadPool;
         std::vector<VkCommandPool> cmdPools;
         std::vector<VkCommandBuffer> cmds;
         std::vector<std::mutex> cmdPoolAccessMutexes;
 
-        std::queue<VkCommandBuffer> readyCmds;
-
-        std::queue<std::function<void(uint32_t, VkCommandBuffer)>> tasks;
-        std::mutex tasksAccessMutex;
-
-        std::atomic<bool> threadShouldExit;
-
-        std::mutex queueSubmitMutex;
-
         // called one time
-        void workThreadFunc(uint32_t threadIndex, std::barrier<>& syncBarrier);
-        void setupThreads(const DeviceExecutionContextCreateInfo& createInfo);
         void setupSynchronizationPrimitives(const DeviceExecutionContextCreateInfo& createInfo);
         void setupCommandPools(const DeviceExecutionContextCreateInfo& createInfo);
 
@@ -65,7 +79,7 @@ namespace Lettuce::Core
         VkQueue m_computeQueue;
         VkQueue m_transferQueue;
 
-        void Create(const std::weak_ptr<IDevice>& device, const DeviceExecutionContextCreateInfo& createInfo);
+        void Create(const IDevice& device, const DeviceExecutionContextCreateInfo& createInfo);
         void Release();
 
         void Prepare(const std::vector<std::vector<CommandList>>& cmds);

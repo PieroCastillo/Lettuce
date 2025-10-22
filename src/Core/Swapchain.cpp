@@ -5,7 +5,10 @@
 #include <algorithm>
 
 // external headers
-#include "Volk/volk.h"
+#if defined(WIN32_) || defined(_WIN32) || defined(WIN32)
+    #define VK_USE_PLATFORM_WIN32_KHR
+    #include <windows.h>
+#endif
 
 // project headers
 #include "Lettuce/Core/Swapchain.hpp"
@@ -58,6 +61,10 @@ void Swapchain::setupSwapchain(const SwapchainCreateInfo& createInfo)
     surfaceExtent.width = std::clamp(createInfo.width, sc.minImageExtent.width, sc.maxImageExtent.width);
     surfaceExtent.height = std::clamp(createInfo.height, sc.minImageExtent.height, sc.maxImageExtent.height);
 
+    // set internal extent
+    m_width = surfaceExtent.width;
+    m_height = surfaceExtent.height;
+
     for(int i = 0; i < presentModeCount; i++)
     {
         if(presentModes[i] == VK_PRESENT_MODE_MAILBOX_KHR)
@@ -99,10 +106,11 @@ void Swapchain::setupSwapchain(const SwapchainCreateInfo& createInfo)
     }
 }
 
-void Swapchain::Create(const std::weak_ptr<IDevice>& device, const SwapchainCreateInfo& createInfo)
+void Swapchain::Create(const IDevice& device, const SwapchainCreateInfo& createInfo)
 {
-    m_device = (device.lock())->m_device;
-    m_gpu = (device.lock())->m_physicalDevice;
+    m_device = device.m_device;
+    m_gpu = device.m_physicalDevice;
+    m_instance = device.m_instance;
     setupSurface(createInfo);
     setupSwapchain(createInfo);
 }
@@ -115,7 +123,7 @@ void Swapchain::Release()
 
 void Swapchain::AcquireNextImage()
 {
-    constexpr auto timeout = std::numeric_limits<uint32_t>::max();
+    constexpr auto timeout = (std::numeric_limits<uint32_t>::max)();
     uint32_t imgIdx = 0;
     if (auto res = vkAcquireNextImageKHR(m_device, m_swapchain, timeout, VK_NULL_HANDLE, VK_NULL_HANDLE, &imgIdx); res != VK_SUCCESS)
     {
@@ -125,4 +133,5 @@ void Swapchain::AcquireNextImage()
 
 void Swapchain::Resize(uint32_t newWidth, uint32_t newHeight)
 {
+    // TODO: impl
 }

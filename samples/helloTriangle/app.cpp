@@ -1,119 +1,74 @@
 #include "Lettuce/Lettuce.Core.hpp"
 #include "glfw/glfw3.h"
+#define GLFW_EXPOSE_NATIVE_WIN32
+#include "glfw/glfw3native.h"
+#include <windows.h>
 
 #include <memory>
 #include <vector>
+#include <expected>
+#include <thread>
+#include <chrono>
+#include <print>
+#include <source_location>
+
+void check(std::string_view message,
+           const std::source_location& loc = std::source_location::current())
+{
+    std::println("[{}:{}] {}: {}",
+                 loc.file_name(),
+                 loc.line(),
+                 loc.function_name(),
+                 message);
+}
+
 
 using namespace Lettuce::Core;
 
-GLFWwindow* window
+GLFWwindow* window;
+
+constexpr uint32_t width = 800;
+constexpr uint32_t height = 600;
 
 std::shared_ptr<Device> device;
 std::shared_ptr<Swapchain> swapchain;
-// std::shared_ptr<Memory> meshMemory;
-// std::shared_ptr<Buffer> meshBuffer; // vertices | indices
-// std::shared_ptr<Memory> hostMemory;
-// std::shared_ptr<Buffer> ubo;
-// std::shared_ptr<DescriptorTable> descriptorTable;
-// std::shared_ptr<PipelineLayout> playout;
-// std::shared_ptr<Pipeline> pipeline;
-//std::shared_ptr<RenderTarget> colorTarget;
-//std::shared_ptr<DeviceExecutionContext> executionContext;
 
 void initLettuce()
 {
+    auto hwnd = glfwGetWin32Window(window);
+    auto hmodule = GetModuleHandle(NULL);
+
     device = std::make_shared<Device>();
-
+    DeviceCreateInfo deviceCI = {
+        .preferDedicated = false,
+    };
+    device->Create(deviceCI);
+    std::println("Device created successfully");
+    
     SwapchainCreateInfo swapchainCI = {
-
+        .width = width,
+        .height = height,
+        .clipped = true,
+        .windowPtr = &hwnd,
+        .applicationPtr = &hmodule,
     };
-    swapchain = device->CreateObject(swapchainCI);
-
-    // DescriptorTableCreateInfo descriptorTableCI = {
-
-    // };
-    // descriptorTable = device->CreateObject(descriptorTableCI);
-
-    // PipelineLayoutCreateInfo playoutCI = {
-
-    // };
-    // playout = device->CreateObject(playoutCI);
-
-    // GraphicsPipelineCreateInfo pipelineCI = {
-
-    // };
-    // pipeline = device->CreateObject(pipelineCI);
-
-    RenderTargetCreateInfo colorTargetCI = {
-            .width = swapchain->GetWidth(),
-            .height = swapchain->GetHeight(),
-            .depth = 1,
-            .format = swapchain->GetFormat(),
-            .components = {VK_COMPONENT_SWIZZLE_R, VK_COMPONENT_SWIZZLE_G, VK_COMPONENT_SWIZZLE_B, VK_COMPONENT_SWIZZLE_A},
-            .subresourceRange = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1},
-    };
-    colorTarget = device->CreateObject(colorTargetCI);
-
-    // meshMemory = device->MemoryAlloc();
-
-    // meshBuffer = device->CreateObject(BufferCreateInfo{
-    //     .size = 1024 * 1024, // 1 MiB
-    //     .usage = BufferUsage::VertexBuffer | BufferUsage::IndexBuffer,
-    //     .memory = meshMemory,
-    //     });
-
-    // hostMemory = device->MemoryAlloc(1024 * 1024, MemoryAccess::FastCPUWrite);
-
-    // ubo = device->CreateObject(BufferCreateInfo{
-    //     .size = 256, // 256 bytes for UBO
-    //     .usage = BufferUsage::UniformBuffer,
-    //     .memory = hostMemory,
-    //     });
-
-    executionContext = device->CreateObject(DeviceExecutionContextCreateInfo{
-        .threadCount = 4,
-        .maxTasks = 4,
-        });
-
-    CommandsList cmdList = {
-        .type = CommandListType::Graphics,
-    };
-    cmdList.Record([&](CommandRecordingContext& ctx)
-        {
-            ctx.BindPipeline(pipeline);
-            ctx.BindDescriptorTable(descriptorTable);
-            ctx.BindVertexBuffers(meshBuffer);
-            ctx.BindIndexBuffer(meshBuffer);
-            ctx.DrawIndexed(3, 1, 0, 0, 0); });
-
-    std::vector<std::vector<CommandList>> cmds;
-    cmd.push_back({ cmdList });
-
-    executionContext->Prepare(cmds);
+    swapchain = device->CreateSwapchain(swapchainCI).value();
 }
 
 void mainLoop()
 {
     while (!glfwWindowShouldClose(window))
     {
-        swapchain->AcquireNextImage();
-        executionContext->Record();
-        executionContext->Execute();
-        swapchain->Present();
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        //swapchain->AcquireNextImage();
+
+        //device->Present(swapchain);
+        glfwPollEvents();
     }
 }
 
 void cleanupLettuce()
 {
-    executionContext->Release();
-    colorTarget->Release();
-    // ubo->Release();
-    // hostMemory->Release();
-    // meshBuffer->Release();
-    // meshMemory->Release();
-    pipeline->Release();
-    playout->Release();
-    descriptorTable->Release();
     swapchain->Release();
     device->Release();
 }
@@ -121,7 +76,7 @@ void cleanupLettuce()
 void initWindow()
 {
     glfwInit();
-    window = glfwCreateWindow(640, 480, "My Title", NULL, NULL);
+    window = glfwCreateWindow(width, height, "My Lettuce Window", NULL, NULL);
 }
 
 void cleanupWindow()

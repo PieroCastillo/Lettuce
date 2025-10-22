@@ -16,10 +16,10 @@ Created by @PieroCastillo on 2025-07-20
 // project headers
 #include "common.hpp"
 #include "CommandList.hpp"
-#include "GPU.hpp"
+#include "DescriptorTable.hpp"
+#include "DeviceExecutionContext.hpp"
 #include "Swapchain.hpp"
 #include "Sampler.hpp"
-#include "DescriptorTable.hpp"
 
 namespace Lettuce::Core
 {
@@ -55,9 +55,15 @@ namespace Lettuce::Core
         uint32_t transfer;
     };
 
+    struct DeviceCreateInfo
+    {
+        bool preferDedicated;
+    };
+
     class Device : IDevice
     {
     private:
+        VkDebugUtilsMessengerEXT m_messenger;
         std::vector<const char*> availableExtensionsNames;
         std::vector<char*> availableLayersNames;
         std::vector<const char*> requestedExtensionsNames;
@@ -118,14 +124,13 @@ namespace Lettuce::Core
         };
 
         void setupInstance();
+        void selectGPU(const DeviceCreateInfo& createInfo);
         void setupFeaturesExtensions();
         void setupDevice();
         void getQueues();
 
     public:
-
-        Device();
-        void Build();
+        void Create(const DeviceCreateInfo& createInfo);
         void Release();
 
         EnabledRecommendedFeatures GetEnabledRecommendedFeatures()
@@ -136,6 +141,16 @@ namespace Lettuce::Core
         template <typename T>
         using Result = std::expected<std::shared_ptr<T>, LettuceResult>;
         using Op = std::expected<void, LettuceResult>;
+
+        auto CreateSwapchain(const SwapchainCreateInfo& createInfo) -> Result<Swapchain>;
+        // auto CreateDescriptorTable() -> Result<DescriptorTable>;
+        auto CreateContext(const DeviceExecutionContextCreateInfo& createInfo) -> Result<DeviceExecutionContext>;
+        // auto CreateRenderTarget() -> Result<RenderTarget>;
+        // auto CreatePipelineLayout() -> Result<PipelineLayout>;
+        // auto CreatePipeline() -> Result<Pipeline>;
+        // auto CreateSampler() -> Result<Sampler>;
+        // auto CreateTableGroup() -> Result<TableGroup>;
+        // auto CreateTextureDictionary() -> Result<TextureDictionary>;
 
         auto Present(const std::shared_ptr<Swapchain>& swapchain) -> Op;
     };
