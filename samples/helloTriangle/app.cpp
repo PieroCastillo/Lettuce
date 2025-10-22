@@ -27,8 +27,8 @@ using namespace Lettuce::Core;
 
 GLFWwindow* window;
 
-constexpr uint32_t width = 800;
-constexpr uint32_t height = 600;
+constexpr uint32_t width = 1366;
+constexpr uint32_t height = 768;
 
 std::shared_ptr<Device> device;
 std::shared_ptr<Swapchain> swapchain;
@@ -76,6 +76,8 @@ void cleanupLettuce()
 void initWindow()
 {
     glfwInit();
+    glfwWindowHint(GLFW_NO_API, GLFW_TRUE);
+    glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
     window = glfwCreateWindow(width, height, "My Lettuce Window", NULL, NULL);
 }
 
