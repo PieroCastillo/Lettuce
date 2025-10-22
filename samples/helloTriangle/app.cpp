@@ -60,9 +60,9 @@ void mainLoop()
     while (!glfwWindowShouldClose(window))
     {
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
-        //swapchain->AcquireNextImage();
+        swapchain->NextFrame();
 
-        //device->Present(swapchain);
+        swapchain->DisplayFrame();
         glfwPollEvents();
     }
 }

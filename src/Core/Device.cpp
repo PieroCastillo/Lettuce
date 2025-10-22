@@ -347,8 +347,3 @@ auto Device::CreateContext(const DeviceExecutionContextCreateInfo& createInfo) -
 }
 
 // ...
-
-auto Device::Present(const std::shared_ptr<Swapchain>& swapchain) -> Op
-{
-    return {};
-}

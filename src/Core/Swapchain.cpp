@@ -6,8 +6,8 @@
 
 // external headers
 #if defined(WIN32_) || defined(_WIN32) || defined(WIN32)
-    #define VK_USE_PLATFORM_WIN32_KHR
-    #include <windows.h>
+#define VK_USE_PLATFORM_WIN32_KHR
+#include <windows.h>
 #endif
 
 // project headers
@@ -43,6 +43,7 @@ void Swapchain::setupSwapchain(const SwapchainCreateInfo& createInfo)
     VkSurfaceCapabilitiesKHR sc;
     vkGetPhysicalDeviceSurfaceCapabilitiesKHR(m_gpu, m_surface, &sc);
 
+    // get surface format and present modes
     uint32_t formatCount;
     uint32_t presentModeCount;
     vkGetPhysicalDeviceSurfaceFormatsKHR(m_gpu, m_surface, &formatCount, nullptr);
@@ -57,6 +58,7 @@ void Swapchain::setupSwapchain(const SwapchainCreateInfo& createInfo)
     VkPresentModeKHR surfacePresentMode;
 
     surfaceFormat = formats[0];
+    m_format = surfaceFormat.format;
 
     surfaceExtent.width = std::clamp(createInfo.width, sc.minImageExtent.width, sc.maxImageExtent.width);
     surfaceExtent.height = std::clamp(createInfo.height, sc.minImageExtent.height, sc.maxImageExtent.height);
@@ -65,14 +67,15 @@ void Swapchain::setupSwapchain(const SwapchainCreateInfo& createInfo)
     m_width = surfaceExtent.width;
     m_height = surfaceExtent.height;
 
-    for(int i = 0; i < presentModeCount; i++)
+    // get most appropiate present mode
+    for (int i = 0; i < presentModeCount; i++)
     {
-        if(presentModes[i] == VK_PRESENT_MODE_MAILBOX_KHR)
+        if (presentModes[i] == VK_PRESENT_MODE_MAILBOX_KHR)
         {
             surfacePresentMode = VK_PRESENT_MODE_MAILBOX_KHR;
             break;
         }
-        else if(presentModes[i] == VK_PRESENT_MODE_FIFO_KHR)
+        else if (presentModes[i] == VK_PRESENT_MODE_FIFO_KHR)
         {
             surfacePresentMode = VK_PRESENT_MODE_FIFO_KHR;
         }
@@ -83,7 +86,7 @@ void Swapchain::setupSwapchain(const SwapchainCreateInfo& createInfo)
     }
 
     // init values for swapchain creation
-    VkSwapchainCreateInfoKHR swapchainCI = 
+    VkSwapchainCreateInfoKHR swapchainCI =
     {
         .sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR,
         .surface = m_surface,
@@ -106,29 +109,80 @@ void Swapchain::setupSwapchain(const SwapchainCreateInfo& createInfo)
     }
 }
 
+void Swapchain::setupImagesAndView(const SwapchainCreateInfo& createInfo)
+{
+    // get swapchain images
+    vkGetSwapchainImagesKHR(m_device, m_swapchain, &m_imageCount, nullptr);
+    m_swapchainImages.resize(m_imageCount, VK_NULL_HANDLE);
+    vkGetSwapchainImagesKHR(m_device, m_swapchain, &m_imageCount, m_swapchainImages.data());
+
+    // create views
+    VkImageViewCreateInfo viewCI = {
+        .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
+        .viewType = VK_IMAGE_VIEW_TYPE_2D,
+        .format = m_format,
+        .components = { VK_COMPONENT_SWIZZLE_IDENTITY , VK_COMPONENT_SWIZZLE_IDENTITY , VK_COMPONENT_SWIZZLE_IDENTITY ,VK_COMPONENT_SWIZZLE_IDENTITY },
+        .subresourceRange = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 },// 1 mipmap, 1 layer
+    };
+
+    // create Swapchain Image Views
+    m_swapchainViews.reserve(m_imageCount);
+    for (uint32_t i = 0; i < m_imageCount; ++i)
+    {
+        viewCI.image = m_swapchainImages[i];
+        VkImageView view;
+        handleResult(vkCreateImageView(m_device, &viewCI, nullptr, &view));
+        m_swapchainViews.push_back(view);
+    }
+}
+
 void Swapchain::Create(const IDevice& device, const SwapchainCreateInfo& createInfo)
 {
     m_device = device.m_device;
     m_gpu = device.m_physicalDevice;
     m_instance = device.m_instance;
+    // graphics queue always support present
+    m_presentQueue = device.m_graphicsQueue;
+    m_currentImageIndex = 0;
     setupSurface(createInfo);
     setupSwapchain(createInfo);
+    setupImagesAndView(createInfo);
 }
 
 void Swapchain::Release()
 {
+    for (const auto& view : m_swapchainViews)
+    {
+        vkDestroyImageView(m_device, view, nullptr);
+    }
+    m_swapchainViews.clear();
+    m_swapchainImages.clear();
     vkDestroySwapchainKHR(m_device, m_swapchain, nullptr);
     vkDestroySurfaceKHR(m_instance, m_surface, nullptr);
 }
 
-void Swapchain::AcquireNextImage()
+void Swapchain::NextFrame()
 {
     constexpr auto timeout = (std::numeric_limits<uint32_t>::max)();
-    uint32_t imgIdx = 0;
-    if (auto res = vkAcquireNextImageKHR(m_device, m_swapchain, timeout, VK_NULL_HANDLE, VK_NULL_HANDLE, &imgIdx); res != VK_SUCCESS)
+    if (auto res = vkAcquireNextImageKHR(m_device, m_swapchain, timeout, VK_NULL_HANDLE, VK_NULL_HANDLE, &m_currentImageIndex); res != VK_SUCCESS)
     {
 
     }
+}
+
+void Swapchain::DisplayFrame()
+{
+    // TODO: Manage Global Synchronization
+    VkPresentInfoKHR presentI = {
+        .sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
+        .waitSemaphoreCount = 0,
+        .pWaitSemaphores = nullptr,
+        .swapchainCount = 1,
+        .pSwapchains = &m_swapchain,
+        .pImageIndices = &m_currentImageIndex,
+    };
+    handleResult(vkQueuePresentKHR(m_presentQueue, &presentI));
+    m_currentImageIndex = (m_currentImageIndex + 1) % m_imageCount;
 }
 
 void Swapchain::Resize(uint32_t newWidth, uint32_t newHeight)

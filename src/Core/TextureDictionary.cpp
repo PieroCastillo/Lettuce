@@ -27,6 +27,7 @@ void TextureDictionary::Create(const IDevice& device, const TextureDictionaryCre
 
     VkImageViewCreateInfo viewCI = {
         .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
+        .components = { VK_COMPONENT_SWIZZLE_IDENTITY , VK_COMPONENT_SWIZZLE_IDENTITY , VK_COMPONENT_SWIZZLE_IDENTITY ,VK_COMPONENT_SWIZZLE_IDENTITY },
     };
 
     if (!haveSameSize(createInfo.formats,
@@ -74,7 +75,6 @@ void TextureDictionary::Create(const IDevice& device, const TextureDictionaryCre
             ? (isArray ? VK_IMAGE_VIEW_TYPE_CUBE_ARRAY : VK_IMAGE_VIEW_TYPE_CUBE)
             : (isArray ? VK_IMAGE_VIEW_TYPE_2D_ARRAY : VK_IMAGE_VIEW_TYPE_2D);
         viewCI.format = createInfo.formats[idx];
-        viewCI.components = { VK_COMPONENT_SWIZZLE_IDENTITY , VK_COMPONENT_SWIZZLE_IDENTITY , VK_COMPONENT_SWIZZLE_IDENTITY ,VK_COMPONENT_SWIZZLE_IDENTITY };
         viewCI.subresourceRange = { VK_IMAGE_ASPECT_COLOR_BIT, 0, createInfo.mipmapCount, 0, createInfo.layerCounts[idx]};
 
         VkImageView view;

@@ -151,8 +151,6 @@ namespace Lettuce::Core
         // auto CreateSampler() -> Result<Sampler>;
         // auto CreateTableGroup() -> Result<TableGroup>;
         // auto CreateTextureDictionary() -> Result<TextureDictionary>;
-
-        auto Present(const std::shared_ptr<Swapchain>& swapchain) -> Op;
     };
 }
 #endif // LETTUCE_CORE_DEVICE_HPP
