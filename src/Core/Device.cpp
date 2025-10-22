@@ -57,7 +57,6 @@ void Device::Create(const DeviceCreateInfo& createInfo)
     selectGPU(createInfo);
     setupFeaturesExtensions();
     setupDevice();
-    getQueues();
 }
 
 void Device::Release()
@@ -282,22 +281,36 @@ void Device::setupDevice()
     std::vector<VkDeviceQueueCreateInfo> queueCIs;
 
     // find queue family indices
-    uint32_t familyIdx = 0;
     float priority = 1.0f; // stack value, used one time before destruction
-    for (const VkQueueFamilyProperties& queueFamily : queueFamiliesVec)
+    VkDeviceQueueCreateInfo queueCI = {
+        .sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
+        .queueCount = 1,
+        .pQueuePriorities = &priority,
+    };
+
+    uint32_t familyIdx = 0;
+    for (const auto& queueFamily : queueFamiliesVec)
     {
         if (queueFamily.queueFlags == graphicsFlags)
         {
-            VkDeviceQueueCreateInfo ci = {
-                .sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
-                .queueFamilyIndex = familyIdx,
-                .queueCount = 1,
-                .pQueuePriorities = &priority,
-            };
-            queueCIs.push_back(ci);
+            m_graphicsQueueFamilyIndex = familyIdx;
+        }
+        else if (queueFamily.queueFlags == computeFlags)
+        {
+            m_computeQueueFamilyIndex = familyIdx;
+        }
+        else if (queueFamily.queueFlags == transferFlags)
+        {
+            m_transferQueueFamilyIndex = familyIdx;
         }
         familyIdx++;
     }
+    queueCI.queueFamilyIndex = m_graphicsQueueFamilyIndex;
+    queueCIs.push_back(queueCI);
+    queueCI.queueFamilyIndex = m_computeQueueFamilyIndex;
+    queueCIs.push_back(queueCI);
+    queueCI.queueFamilyIndex = m_transferQueueFamilyIndex;
+    queueCIs.push_back(queueCI);
 
     VkDeviceCreateInfo deviceCI = {
         .sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
@@ -309,11 +322,11 @@ void Device::setupDevice()
     };
     handleResult(vkCreateDevice(m_physicalDevice, &deviceCI, nullptr, &m_device));
     volkLoadDevice(m_device);
-}
 
-void Device::getQueues()
-{
-
+    // get queues
+    vkGetDeviceQueue(m_device, m_graphicsQueueFamilyIndex, 0, &m_graphicsQueue);
+    vkGetDeviceQueue(m_device, m_computeQueueFamilyIndex, 0, &m_computeQueue);
+    vkGetDeviceQueue(m_device, m_transferQueueFamilyIndex, 0, &m_transferQueue);
 }
 
 auto Device::CreateSwapchain(const SwapchainCreateInfo& createInfo) -> Result<Swapchain>

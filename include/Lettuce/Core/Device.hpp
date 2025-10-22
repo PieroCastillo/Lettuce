@@ -127,7 +127,6 @@ namespace Lettuce::Core
         void selectGPU(const DeviceCreateInfo& createInfo);
         void setupFeaturesExtensions();
         void setupDevice();
-        void getQueues();
 
     public:
         void Create(const DeviceCreateInfo& createInfo);
