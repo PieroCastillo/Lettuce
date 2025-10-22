@@ -39,6 +39,7 @@ namespace Lettuce::Core
         VkFormat m_format;
         VkSwapchainKHR m_swapchain;
         VkSurfaceKHR m_surface;
+        VkFence m_waitForAcquireFence;
         uint32_t m_imageCount;
         uint32_t m_currentImageIndex;
         std::vector<VkImage> m_swapchainImages;

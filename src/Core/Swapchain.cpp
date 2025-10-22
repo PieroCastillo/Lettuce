@@ -147,10 +147,15 @@ void Swapchain::Create(const IDevice& device, const SwapchainCreateInfo& createI
     setupSurface(createInfo);
     setupSwapchain(createInfo);
     setupImagesAndView(createInfo);
+    VkFenceCreateInfo fenceCI = {
+        .sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO,
+    };
+    handleResult(vkCreateFence(m_device, &fenceCI, nullptr, &m_waitForAcquireFence));
 }
 
 void Swapchain::Release()
 {
+    vkDestroyFence(m_device, m_waitForAcquireFence, nullptr);
     for (const auto& view : m_swapchainViews)
     {
         vkDestroyImageView(m_device, view, nullptr);
@@ -163,11 +168,13 @@ void Swapchain::Release()
 
 void Swapchain::NextFrame()
 {
+    vkResetFences(m_device, 1, &m_waitForAcquireFence);
     constexpr auto timeout = (std::numeric_limits<uint32_t>::max)();
-    if (auto res = vkAcquireNextImageKHR(m_device, m_swapchain, timeout, VK_NULL_HANDLE, VK_NULL_HANDLE, &m_currentImageIndex); res != VK_SUCCESS)
+    if (auto res = vkAcquireNextImageKHR(m_device, m_swapchain, timeout, VK_NULL_HANDLE, m_waitForAcquireFence, &m_currentImageIndex); res != VK_SUCCESS)
     {
 
     }
+    handleResult(vkWaitForFences(m_device, 1, &m_waitForAcquireFence, VK_TRUE, timeout));
 }
 
 void Swapchain::DisplayFrame()
@@ -182,7 +189,9 @@ void Swapchain::DisplayFrame()
         .pImageIndices = &m_currentImageIndex,
     };
     handleResult(vkQueuePresentKHR(m_presentQueue, &presentI));
-    m_currentImageIndex = (m_currentImageIndex + 1) % m_imageCount;
+    // wait for present complete
+    handleResult(vkQueueWaitIdle(m_presentQueue));
+    // m_currentImageIndex = (m_currentImageIndex + 1) % m_imageCount;
 }
 
 void Swapchain::Resize(uint32_t newWidth, uint32_t newHeight)
