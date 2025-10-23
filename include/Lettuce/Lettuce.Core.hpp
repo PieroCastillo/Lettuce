@@ -9,7 +9,6 @@
 #include "Core/Pipeline.hpp"
 
 // other Lettuce objects
-#include "Core/CommandList.hpp"
 #include "Core/CommandRecordingContext.hpp"
 #include "Core/Device.hpp"
 #include "Core/DeviceExecutionContext.hpp"

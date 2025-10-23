@@ -9,9 +9,7 @@
 #include <iostream>
 
 // project headers
-#include "Lettuce/Core/common.hpp"
 #include "Lettuce/Core/Device.hpp"
-#include "Lettuce/Core/CommandList.hpp"
 
 using namespace Lettuce::Core;
 
@@ -359,4 +357,19 @@ auto Device::CreateContext(const DeviceExecutionContextCreateInfo& createInfo) -
     }
 }
 
-// ...
+auto Device::CreateGraph() -> Result<RenderFlowGraph>
+{
+    try
+    {
+        auto graph = std::make_shared<RenderFlowGraph>();
+        RenderFlowGraphCreateInfo ci = {
+
+        };
+        graph->Create(*this, ci);
+        return graph;
+    }
+    catch (...)
+    {
+        return std::unexpected(LettuceResult::InitializationFailed);
+    }
+}

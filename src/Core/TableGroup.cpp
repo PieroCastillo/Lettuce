@@ -19,11 +19,23 @@ void TableGroup::Create(const IDevice& device, const TableGroupCreateInfo& creat
     m_device = device.m_device;
     m_transferQueue = device.m_transferQueue;
 
+    // calculate size
+    uint64_t memSize = 0;
+    for(const auto& tableCI : createInfo.tables)
+    {
+        uint64_t rowSize = 0;
+        for(const auto& columnCI : tableCI.columns)
+        {
+            rowSize += columnCI.second;
+        }
+        memSize += (rowSize * tableCI.maxCount);
+    }
+
     // setup memory & buffer
     VkMemoryAllocateInfo memAI = {
         .sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
         .pNext = nullptr,
-        .allocationSize = 1024 * 1024, // TODO: calculate size
+        .allocationSize = memSize, 
         .memoryTypeIndex = 0, // TODO: find proper memory type index
     };
     handleResult(vkAllocateMemory(m_device, &memAI, nullptr, &m_memory));

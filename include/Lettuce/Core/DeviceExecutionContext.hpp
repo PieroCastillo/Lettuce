@@ -18,7 +18,7 @@ Created by @PieroCastillo on 2025-08-11
 
 // project headers
 #include "common.hpp"
-#include "CommandList.hpp"
+#include "CommandRecordingContext.hpp"
 
 namespace Lettuce::Core
 {
@@ -82,8 +82,7 @@ namespace Lettuce::Core
         void Create(const IDevice& device, const DeviceExecutionContextCreateInfo& createInfo);
         void Release();
 
-        void Prepare(const std::vector<std::vector<CommandList>>& cmds);
-        void Record();
+        void Record(const CommandsList& cmds);
         void Execute();
     };
 }

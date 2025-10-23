@@ -69,12 +69,7 @@ void DeviceExecutionContext::Release()
     cmdPools.shrink_to_fit();
 }
 
-void DeviceExecutionContext::Prepare(const std::vector<std::vector<CommandList>>& cmds)
-{
-
-}
-
-void DeviceExecutionContext::Record()
+void DeviceExecutionContext::Record(const CommandsList& cmds)
 {
     
 }

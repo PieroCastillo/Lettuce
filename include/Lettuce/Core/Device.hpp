@@ -15,9 +15,10 @@ Created by @PieroCastillo on 2025-07-20
 
 // project headers
 #include "common.hpp"
-#include "CommandList.hpp"
 #include "DescriptorTable.hpp"
 #include "DeviceExecutionContext.hpp"
+#include "Pipeline.hpp"
+#include "RenderFlowGraph.hpp"
 #include "Swapchain.hpp"
 #include "Sampler.hpp"
 
@@ -144,6 +145,7 @@ namespace Lettuce::Core
         auto CreateSwapchain(const SwapchainCreateInfo& createInfo) -> Result<Swapchain>;
         // auto CreateDescriptorTable() -> Result<DescriptorTable>;
         auto CreateContext(const DeviceExecutionContextCreateInfo& createInfo) -> Result<DeviceExecutionContext>;
+        auto CreateGraph() -> Result<RenderFlowGraph>;
         // auto CreateRenderTarget() -> Result<RenderTarget>;
         // auto CreatePipelineLayout() -> Result<PipelineLayout>;
         // auto CreatePipeline() -> Result<Pipeline>;

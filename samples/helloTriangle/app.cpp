@@ -32,6 +32,9 @@ constexpr uint32_t height = 768;
 
 std::shared_ptr<Device> device;
 std::shared_ptr<Swapchain> swapchain;
+std::shared_ptr<Pipeline> rgbPipeline;
+
+std::shared_ptr<RenderFlowGraph> renderGraph;
 
 void initLettuce()
 {
@@ -55,11 +58,21 @@ void initLettuce()
     swapchain = device->CreateSwapchain(swapchainCI).value();
 }
 
+void createRenderingObjects()
+{
+
+}
+
+void createRenderGraph()
+{
+    renderGraph = device->CreateGraph().value();
+    // auto node = graph->
+}
+
 void mainLoop()
 {
     while (!glfwWindowShouldClose(window))
     {
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
         swapchain->NextFrame();
 
         swapchain->DisplayFrame();
@@ -69,6 +82,8 @@ void mainLoop()
 
 void cleanupLettuce()
 {
+    renderGraph->Release();
+
     swapchain->Release();
     device->Release();
 }

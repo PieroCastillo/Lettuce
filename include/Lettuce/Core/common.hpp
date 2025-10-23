@@ -32,6 +32,7 @@ enum class LettuceResult
     InvalidDevice,
     InvalidOperation,
     InitializationFailed,
+    NotReady,
     Unknown,
 };
 

@@ -9,4 +9,17 @@
 
 using namespace Lettuce::Core;
 
-//TODO: impl
+void CommandRecordingContext::BindPipeline(const std::shared_ptr<Pipeline>& pipeline)
+{
+
+}
+
+void CommandRecordingContext::BindDescriptorTable(const std::shared_ptr<DescriptorTable>& table)
+{
+
+}
+
+void CommandRecordingContext::SetOutputs(const std::vector<std::weak_ptr<RenderTarget>>& targets)
+{
+
+}
