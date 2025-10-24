@@ -5,13 +5,15 @@ Created by @PieroCastillo on 2025-07-20
 #define LETTUCE_CORE_DEVICE_HPP
 
 // standard headers
-#include <memory>
-#include <variant>
-#include <expected>
-#include <vector>
-#include <future>
-#include <unordered_map>
 #include <concepts>
+#include <expected>
+#include <future>
+#include <memory>
+#include <string>
+#include <unordered_map>
+#include <utility>
+#include <variant>
+#include <vector>
 
 // project headers
 #include "common.hpp"
@@ -21,9 +23,15 @@ Created by @PieroCastillo on 2025-07-20
 #include "RenderFlowGraph.hpp"
 #include "Swapchain.hpp"
 #include "Sampler.hpp"
+#include "TextureDictionary.hpp"
 
 namespace Lettuce::Core
 {
+    struct TextureCreateData
+    {
+        std::vector<std::pair<std::string, std::string>> namePathPairs;
+    };
+
     struct Features
     {
         bool FragmentShadingRate;
@@ -151,7 +159,7 @@ namespace Lettuce::Core
         // auto CreatePipeline() -> Result<Pipeline>;
         // auto CreateSampler() -> Result<Sampler>;
         // auto CreateTableGroup() -> Result<TableGroup>;
-        // auto CreateTextureDictionary() -> Result<TextureDictionary>;
+        auto CreateTextureDictionary(const TextureCreateData& createData) -> Result<TextureDictionary>;
     };
 }
 #endif // LETTUCE_CORE_DEVICE_HPP

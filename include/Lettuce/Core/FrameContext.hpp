@@ -1,8 +1,8 @@
 /*
 Created by @PieroCastillo on 2025-10-22
 */
-#ifndef FRAME_CONTEXT_HPP
-#define FRAME_CONTEXT_HPP
+#ifndef LETTUCE_CORE_FRAME_CONTEXT_HPP
+#define LETTUCE_CORE_FRAME_CONTEXT_HPP
 
 // standard headers
 #include <vector>
@@ -17,6 +17,9 @@ namespace Lettuce::Core
         int semaphoreCount;
     };
 
+    /*
+    Stores information for Commands Execution and Synchronization
+    */
     class FrameContext
     {
     public:
@@ -29,4 +32,4 @@ namespace Lettuce::Core
     };
 };
 
-#endif // FRAME_CONTEXT_HPP
+#endif // LETTUCE_CORE_FRAME_CONTEXT_HPP

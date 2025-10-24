@@ -11,6 +11,11 @@
 // project headers
 #include "Lettuce/Core/Device.hpp"
 
+// external headers
+#include <ktx.h>
+#define VK_NO_PROTOTYPE
+#include <ktxvulkan.h>
+
 using namespace Lettuce::Core;
 
 template <typename T>
@@ -371,5 +376,48 @@ auto Device::CreateGraph() -> Result<RenderFlowGraph>
     catch (...)
     {
         return std::unexpected(LettuceResult::InitializationFailed);
+    }
+}
+
+auto Device::CreateTextureDictionary(const TextureCreateData& createData) -> Result<TextureDictionary>
+{
+    try
+    {
+        auto dict = std::make_shared<TextureDictionary>();
+        // retrieve file names and info
+        TextureDictionaryCreateInfo textureCI;
+        std::vector<ktxTexture*> ktxTextures;
+
+        for(const auto& [name, path] : createData.namePathPairs)
+        {
+            // get params
+            ktxTexture* texture;
+            auto res = ktxTexture_CreateFromNamedFile(path.c_str(), KTX_TEXTURE_CREATE_LOAD_IMAGE_DATA_BIT, &texture);
+            
+            textureCI.names.push_back(std::move(name));
+            textureCI.formats.push_back(ktxTexture_GetVkFormat(texture));
+            textureCI.widths.push_back(texture->baseWidth);
+            textureCI.heights.push_back(texture->baseHeight);
+            textureCI.layerCounts.push_back(texture->numLayers);
+            textureCI.levelCounts.push_back(texture->numLevels);
+            textureCI.isCubes.push_back(texture->isCubemap);
+
+            ktxTextures.push_back(texture);
+        }
+
+        dict->Create(*this, textureCI);
+        // TODO: transfer data
+
+        // destroy ktx data
+        for(const auto& tex : ktxTextures)
+        {
+            ktxTexture_Destroy(tex);
+        }
+
+        return dict;
+    }
+    catch(...)
+    {
+        throw LettuceException(LettuceResult::InitializationFailed);
     }
 }
