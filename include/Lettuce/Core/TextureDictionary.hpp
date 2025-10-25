@@ -21,7 +21,7 @@ namespace Lettuce::Core
         std::vector<uint32_t> widths;
         std::vector<uint32_t> heights;
         std::vector<bool> isCubes;
-        uint32_t mipmapCount;
+        std::vector<uint32_t> levelCounts;
     };
 
     class TextureDictionary

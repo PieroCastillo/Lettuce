@@ -2,9 +2,6 @@
 #include <memory>
 #include <array>
 
-// external headers
-#include <volk.h>
-
 // project headers
 #include "Lettuce/Core/Pipeline.hpp"
 

@@ -15,6 +15,15 @@
 #define __linux__
 #endif
 
+enum class MemoryAccess
+{
+    FastGPUReadWrite, // DEVICE_LOCAL
+    FastGPUWriteCPURead, // HOST_VISIBLE+HOST_CACHED
+    FastCPUWriteGPURead, // DEVICE_LOCAL+HOST_CACHED
+};
+
+uint32_t findMemoryTypeIndex(VkDevice device, VkPhysicalDevice gpu, uint32_t typeFilter, MemoryAccess access);
+
 template <typename First, typename... Rest>
 bool haveSameSize(const First& first, const Rest&... rest)
 {
@@ -32,37 +41,38 @@ enum class LettuceResult
     InvalidDevice,
     InvalidOperation,
     InitializationFailed,
+    RequiredMemoryNotFound,
     NotReady,
     Unknown,
 };
 
 class LettuceException : public std::runtime_error {
 public:
-    explicit LettuceException(LettuceResult r) 
+    explicit LettuceException(LettuceResult r)
         : std::runtime_error(resultToString(r)), result(r) {}
-    
-    explicit LettuceException(VkResult r) 
+
+    explicit LettuceException(VkResult r)
         : std::runtime_error(resultToString(r)), vkResult(r) {}
 
     LettuceResult result;
     VkResult vkResult;
-    
+
 private:
     static std::string resultToString(LettuceResult r) {
         switch (r) {
-            case LettuceResult::OutOfDeviceMemory: return "Out of Device Memory";
-            case LettuceResult::OutOfHostMemory: return "Out of Host Memory";
-            default: return "Unknown error";
+        case LettuceResult::OutOfDeviceMemory: return "Out of Device Memory";
+        case LettuceResult::OutOfHostMemory: return "Out of Host Memory";
+        default: return "Unknown error";
         }
     }
 
     static std::string resultToString(VkResult r) {
         switch (r) {
             // VK_ERROR_OUT_OF_DEVICE_MEMORY
-            case -2: return "Out of Device Memory";
+        case -2: return "Out of Device Memory";
             // VK_ERROR_OUT_OF_HOST_MEMORY
-            case -1: return "Out of Host Memory";
-            default: return "Unknown error";
+        case -1: return "Out of Host Memory";
+        default: return "Unknown error";
         }
     }
 };
@@ -74,7 +84,7 @@ private:
 inline void handleResult(VkResult vkResult)
 {
     // VK_SUCCESS
-    if(vkResult != 0) [[unlikely]]
+    if (vkResult != 0) [[unlikely]]
     {
         throw LettuceException(vkResult);
     }

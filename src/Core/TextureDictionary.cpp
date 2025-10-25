@@ -58,7 +58,7 @@ void TextureDictionary::Create(const IDevice& device, const TextureDictionaryCre
         imageCI.imageType = VK_IMAGE_TYPE_2D;
         imageCI.format = createInfo.formats[idx];
         imageCI.extent = { std::move(createInfo.widths[idx]), std::move(createInfo.heights[idx]), 1 };
-        imageCI.mipLevels = createInfo.mipmapCount;
+        imageCI.mipLevels = createInfo.levelCounts[idx];
         imageCI.arrayLayers = createInfo.layerCounts[idx];
         imageCI.samples = VK_SAMPLE_COUNT_1_BIT;
         imageCI.tiling = VK_IMAGE_TILING_OPTIMAL;
@@ -75,7 +75,7 @@ void TextureDictionary::Create(const IDevice& device, const TextureDictionaryCre
             ? (isArray ? VK_IMAGE_VIEW_TYPE_CUBE_ARRAY : VK_IMAGE_VIEW_TYPE_CUBE)
             : (isArray ? VK_IMAGE_VIEW_TYPE_2D_ARRAY : VK_IMAGE_VIEW_TYPE_2D);
         viewCI.format = createInfo.formats[idx];
-        viewCI.subresourceRange = { VK_IMAGE_ASPECT_COLOR_BIT, 0, createInfo.mipmapCount, 0, createInfo.layerCounts[idx]};
+        viewCI.subresourceRange = { VK_IMAGE_ASPECT_COLOR_BIT, 0, createInfo.levelCounts[idx], 0, createInfo.layerCounts[idx]};
 
         VkImageView view;
         handleResult(vkCreateImageView(m_device, &viewCI, nullptr, &view));

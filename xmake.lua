@@ -4,12 +4,12 @@ add_rules("mode.debug", "mode.release")
 add_rules("plugin.compile_commands.autoupdate", {outputdir = ".vscode"})
 
 add_requires("vulkansdk")
-add_requires("volk", { header_only=true })
+add_requires("volk")
 add_requires("glfw")
 add_requires("glm")
 add_requires("fastgltf")
 add_requires("imgui")
-add_requires("ktx")
+add_requires("ktx", { configs={ vulkan=true, ktx2=true, decoder=true} })
 
 local v = ("0.0.1.0"):split("%.")
 add_defines("VARIANT_VERSION=" .. (v[1] or 0),

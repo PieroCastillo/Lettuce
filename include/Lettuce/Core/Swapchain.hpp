@@ -6,9 +6,11 @@ Created by @PieroCastillo on 2025-07-20
 
 // standard headers
 #include <vector>
+#include <memory>
 
 // project headers
 #include "common.hpp"
+#include "RenderTarget.hpp"
 
 namespace Lettuce::Core
 {
@@ -26,6 +28,9 @@ namespace Lettuce::Core
     private:
         uint32_t m_width;
         uint32_t m_height;
+        std::vector<VkImage> m_swapchainImages;
+        std::vector<VkImageView> m_swapchainViews;
+        std::vector<std::unique_ptr<RenderTarget>> m_renderViews;
 
         void setupSurface(const SwapchainCreateInfo &createInfo);
         void setupSwapchain(const SwapchainCreateInfo &createInfo);
@@ -42,8 +47,6 @@ namespace Lettuce::Core
         VkFence m_waitForAcquireFence;
         uint32_t m_imageCount;
         uint32_t m_currentImageIndex;
-        std::vector<VkImage> m_swapchainImages;
-        std::vector<VkImageView> m_swapchainViews;
 
         void Create(const IDevice& device, const SwapchainCreateInfo &createInfo);
         void Release();
@@ -51,6 +54,7 @@ namespace Lettuce::Core
         void NextFrame();
         void DisplayFrame();
         void Resize(uint32_t newWidth, uint32_t newHeight);
+        RenderTarget& GetCurrentRenderView();
 
         inline uint32_t GetHeight() { return m_height; }
         inline uint32_t GetWidth() { return m_width; }

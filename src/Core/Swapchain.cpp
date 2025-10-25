@@ -133,6 +133,19 @@ void Swapchain::setupImagesAndView(const SwapchainCreateInfo& createInfo)
         VkImageView view;
         handleResult(vkCreateImageView(m_device, &viewCI, nullptr, &view));
         m_swapchainViews.push_back(view);
+
+        auto renderView = std::make_unique<RenderTarget>();
+        renderView->isViewOnly = true;
+        renderView->m_device = m_device;
+        renderView->m_image = m_swapchainImages[i];
+        renderView->m_imageView = view;
+        renderView->p_depth = 1;
+        renderView->p_height = m_height;
+        renderView->p_width = m_width;
+        renderView->_format = m_format;
+        renderView->_layout = VK_IMAGE_LAYOUT_PREINITIALIZED;
+
+        m_renderViews.push_back(std::move(renderView));
     }
 }
 

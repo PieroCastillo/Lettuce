@@ -31,6 +31,8 @@ namespace Lettuce::Core
     class RenderTarget
     {
     private:
+        friend class Swapchain;
+        bool isViewOnly = false;
         VkImageLayout _layout;
         uint32_t p_width, p_height, p_depth;
         VkFormat _format;
