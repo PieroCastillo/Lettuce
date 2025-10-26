@@ -6,6 +6,35 @@
 
 using namespace Lettuce::Core;
 
+struct LinearAllocator
+{
+    std::vector<uint8_t> buffer;
+    size_t offset = 0;
+
+    explicit LinearAllocator(size_t initialSize = 1 << 20) // 1 MB
+    {
+        buffer.resize(initialSize);
+    }
+
+    void* allocate(size_t size, size_t alignment = alignof(std::max_align_t))
+    {
+        size_t alignedOffset = (offset + alignment - 1) & ~(alignment - 1);
+        if (alignedOffset + size > buffer.size())
+            buffer.resize(std::max(buffer.size() * 2, alignedOffset + size));
+
+        void* ptr = buffer.data() + alignedOffset;
+        offset = alignedOffset + size;
+        return ptr;
+    }
+
+    size_t getOffset(const void* ptr) const
+    {
+        return static_cast<const uint8_t*>(ptr) - buffer.data();
+    }
+
+    void reset() { offset = 0; }
+};
+
 void MeshPool::setupMeshBufferMemory(VkDeviceMemory* memoryPtr, VkBuffer* bufferPtr, bool isStaging)
 {
     // m_size must be set
@@ -47,43 +76,48 @@ void MeshPool::Create(const IDevice& device, const MeshPoolCreateInfo& createInf
 {
     m_device = device.m_device;
     m_gpu = device.m_physicalDevice;
+    m_transferQueue = device.m_transferQueue;
+    m_transferQueueFamilyIndex = device.m_transferQueueFamilyIndex;
+
+    VkCommandPoolCreateInfo poolCI = {
+        .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
+        .flags = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT,
+        .queueFamilyIndex = m_transferQueueFamilyIndex,
+    };
+    handleResult(vkCreateCommandPool(m_device, &poolCI, nullptr, &m_cmdPool));
+
+    VkCommandBufferAllocateInfo cmdAI = {
+        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
+        .commandPool = m_cmdPool,
+        .level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
+        .commandBufferCount = 1,
+    };
+    handleResult(vkAllocateCommandBuffers(m_device, &cmdAI, &m_cmdBuffer));
+
+    VkFenceCreateInfo fenceCI ={
+        .sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO,
+    };
+    handleResult(vkCreateFence(m_device, &fenceCI, nullptr, &m_fence));
 }
 
 void MeshPool::Release()
 {
+    vkDestroyFence(m_device, m_fence, nullptr);
+
+    vkFreeCommandBuffers(m_device, m_cmdPool, 1, &m_cmdBuffer);
+    vkDestroyCommandPool(m_device, m_cmdPool, nullptr);
+
     vkDestroyBuffer(m_device, m_buffer, nullptr);
     vkFreeMemory(m_device, m_memory, nullptr);
 }
 
 void MeshPool::Load(const fastgltf::Asset& asset)
 {
-    /*
-    equivalent: 
-    struct PrimitiveData {
-        uint32_t primitiveMemorySize;
-        int VertexCount;
-        int indexCount;
-        uint32_t posMemSize;
-        uint32_t norMemSize;
-        uint32_t tanMemSize;
-        uint32_t idxMemSize;
-        uint32_t posOffset;
-        uint32_t norOffset;
-        uint32_t tanOffset;
-        uint32_t idxOffset;
-    }
-    */
-    std::vector<std::vector<uint32_t>> primitiveOffsets;
-    std::vector<void*> primitivesMemories;
-    std::vector<int> vertexCount;
-    std::vector<uint32_t> primitiveSizes;
-    std::vector<uint32_t> posOffsets;
-    std::vector<uint32_t> norOffsets;
-    std::vector<uint32_t> tanOffsets;
-    std::vector<uint32_t> idxOffsets;
+    LinearAllocator allocator;
 
     for (const auto& mesh : asset.meshes)
     {
+        PrimitiveDatas datas;
         for (const auto& prim : mesh.primitives)
         {
             // find attributes
@@ -98,22 +132,83 @@ void MeshPool::Load(const fastgltf::Asset& asset)
             auto& tanA = asset.accessors[tanIt->accessorIndex];
             auto& idxA = asset.accessors[prim.indicesAccessor.value()];
 
-            uint32_t posASize = posA.count*3*sizeof(float);
-            uint32_t norASize = norA.count*3*sizeof(float);
-            uint32_t tanASize = tanA.count*4*sizeof(float);
-            uint32_t idxASize = idxA.count*sizeof(uint32_t);
+            uint32_t posASize = posA.count * 3 * sizeof(float);
+            uint32_t norASize = norA.count * 3 * sizeof(float);
+            uint32_t tanASize = tanA.count * 4 * sizeof(float);
+            uint32_t idxASize = idxA.count * sizeof(uint32_t);
 
             uint32_t primSize = posASize + norASize + tanASize + idxASize;
-            void* primMem = malloc(primSize);
-            
-            int* tempPtr = (int*)primMem;
-            fastgltf::copyFromAccessor<fastgltf::math::fvec3>(asset, posA, tempPtr);
-            tempPtr+=posASize;
-            fastgltf::copyFromAccessor<fastgltf::math::fvec3>(asset, norA, tempPtr);
-            tempPtr+=norASize;
-            fastgltf::copyFromAccessor<fastgltf::math::fvec3>(asset, tanA, tempPtr);
-            tempPtr+=tanASize;
-            fastgltf::copyFromAccessor<fastgltf::math::fvec3>(asset, idxA, tempPtr);
+
+            // copy to pointers
+            auto* posPtr = (fastgltf::math::fvec3*)allocator.allocate(posASize, alignof(fastgltf::math::fvec3));
+            fastgltf::copyFromAccessor<fastgltf::math::fvec3>(asset, posA, posPtr);
+            datas.posOffset.push_back(allocator.getOffset(posPtr));
+
+            auto* norPtr = (fastgltf::math::fvec3*)allocator.allocate(norASize, alignof(fastgltf::math::fvec3));
+            fastgltf::copyFromAccessor<fastgltf::math::fvec3>(asset, norA, norPtr);
+            datas.norOffset.push_back(allocator.getOffset(norPtr));
+
+            auto* tanPtr = (fastgltf::math::fvec4*)allocator.allocate(tanASize, alignof(fastgltf::math::fvec4));
+            fastgltf::copyFromAccessor<fastgltf::math::fvec4>(asset, tanA, tanPtr);
+            datas.tanOffset.push_back(allocator.getOffset(tanPtr));
+
+            auto* idxPtr = (uint32_t*)allocator.allocate(idxASize, alignof(uint32_t));
+            fastgltf::copyFromAccessor<uint32_t>(asset, idxA, idxPtr);
+            datas.idxOffset.push_back(allocator.getOffset(idxPtr));
+
+            datas.primitiveMemorySize.push_back(primSize);
+            datas.vertexCount.push_back(posA.count);
+            datas.indexCount.push_back(idxA.count);
         }
+        m_primitiveDatas.push_back(datas);
+        m_names.emplace_back(mesh.name);
     }
+    m_size = allocator.offset;
+
+    // copy to one VkDeviceMemory
+    VkDeviceMemory tempMemory;
+    VkBuffer tempBuffer;
+    setupMeshBufferMemory(&tempMemory, &tempBuffer, true);
+
+    // map, copy, unmap
+    void* tempDataPtr;
+    vkMapMemory(m_device, tempMemory, 0, VK_WHOLE_SIZE, 0, &tempDataPtr);
+    memcpy(tempDataPtr, allocator.buffer.data(), m_size);
+    vkUnmapMemory(m_device, tempMemory);
+
+    // create on-gpu buffer
+    setupMeshBufferMemory(&m_memory, &m_buffer, false);
+
+    vkResetFences(m_device, 1, &m_fence);
+    // prepare transfer
+
+    // START RECORDING
+    VkCommandBufferBeginInfo beginI = {
+        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
+        .flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT,
+    };
+    handleResult(vkBeginCommandBuffer(m_cmdBuffer, &beginI));
+
+    VkBufferCopy region = {
+        .srcOffset = 0,
+        .dstOffset = 0,
+        .size = m_size,
+    };
+    vkCmdCopyBuffer(m_cmdBuffer, tempBuffer, m_buffer, 1, &region);
+
+    handleResult(vkEndCommandBuffer(m_cmdBuffer));
+    // END RECORDING
+
+    VkSubmitInfo submitI = {
+        .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
+        .commandBufferCount = 1,
+        .pCommandBuffers = &m_cmdBuffer,
+    };
+    // send to transfer queue & wait for it
+    handleResult(vkQueueSubmit(m_transferQueue, 1, &submitI, m_fence));
+    handleResult(vkWaitForFences(m_device, 1, &m_fence, VK_TRUE, (std::numeric_limits<uint64_t>::max)()));
+
+    // destro temp resources
+    vkDestroyBuffer(m_device, tempBuffer, nullptr);
+    vkFreeMemory(m_device, tempMemory, nullptr);
 }

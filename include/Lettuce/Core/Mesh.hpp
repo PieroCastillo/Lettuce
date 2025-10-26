@@ -4,6 +4,7 @@ Created by @PieroCastillo on 2025-10-24
 #ifndef LETTUCE_CORE_MESH_HPP
 #define LETTUCE_CORE_MESH_HPP
 // standard headers
+#include <vector>
 
 // project headers
 #include "common.hpp"
@@ -14,6 +15,19 @@ Created by @PieroCastillo on 2025-10-24
 
 namespace Lettuce::Core
 {
+    // set of primitives of a Mesh
+    struct PrimitiveDatas
+    {
+        std::vector<void*> primitiveDataPtr;
+        std::vector<uint32_t> primitiveMemorySize;
+        std::vector<uint32_t> vertexCount;
+        std::vector<uint32_t> indexCount;
+        std::vector<uint32_t> posOffset;
+        std::vector<uint32_t> norOffset;
+        std::vector<uint32_t> tanOffset;
+        std::vector<uint32_t> idxOffset;
+    };
+
     struct MeshPoolCreateInfo
     {
 
@@ -29,23 +43,17 @@ namespace Lettuce::Core
     class MeshPool
     {
     private:
-        struct PrimitiveDatas
-        {
-            std::vector<uint32_t> primitiveMemorySize;
-            std::vector<int> VertexCount;
-            std::vector<int> indexCount;
-            std::vector<uint32_t> posMemSize;
-            std::vector<uint32_t> norMemSize;
-            std::vector<uint32_t> tanMemSize;
-            std::vector<uint32_t> idxMemSize;
-            std::vector<uint32_t> posOffset;
-            std::vector<uint32_t> norOffset;
-            std::vector<uint32_t> tanOffset;
-            std::vector<uint32_t> idxOffset;
-        };
+        std::vector<PrimitiveDatas> m_primitiveDatas;
+        std::vector<std::string> m_names;
 
         void setupMeshBufferMemory(VkDeviceMemory* memory, VkBuffer* buffer, bool isStaging);
         uint32_t m_size;
+
+        VkCommandPool m_cmdPool;
+        VkCommandBuffer m_cmdBuffer;
+        VkQueue m_transferQueue;
+        uint32_t m_transferQueueFamilyIndex;
+        VkFence m_fence;
     public:
         VkDevice m_device;
         VkPhysicalDevice m_gpu;
