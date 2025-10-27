@@ -1,3 +1,6 @@
+// standard headers
+#include <algorithm>
+
 // project headers
 #include "Lettuce/Core/Mesh.hpp"
 
@@ -94,7 +97,7 @@ void MeshPool::Create(const IDevice& device, const MeshPoolCreateInfo& createInf
     };
     handleResult(vkAllocateCommandBuffers(m_device, &cmdAI, &m_cmdBuffer));
 
-    VkFenceCreateInfo fenceCI ={
+    VkFenceCreateInfo fenceCI = {
         .sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO,
     };
     handleResult(vkCreateFence(m_device, &fenceCI, nullptr, &m_fence));
@@ -132,29 +135,39 @@ void MeshPool::Load(const fastgltf::Asset& asset)
             auto& tanA = asset.accessors[tanIt->accessorIndex];
             auto& idxA = asset.accessors[prim.indicesAccessor.value()];
 
-            uint32_t posASize = posA.count * 3 * sizeof(float);
-            uint32_t norASize = norA.count * 3 * sizeof(float);
-            uint32_t tanASize = tanA.count * 4 * sizeof(float);
-            uint32_t idxASize = idxA.count * sizeof(uint32_t);
-
-            uint32_t primSize = posASize + norASize + tanASize + idxASize;
-
             // copy to pointers
+            uint32_t posASize = posA.count * 3 * sizeof(float);
             auto* posPtr = (fastgltf::math::fvec3*)allocator.allocate(posASize, alignof(fastgltf::math::fvec3));
             fastgltf::copyFromAccessor<fastgltf::math::fvec3>(asset, posA, posPtr);
             datas.posOffset.push_back(allocator.getOffset(posPtr));
+            uint32_t primSize = posASize;
 
-            auto* norPtr = (fastgltf::math::fvec3*)allocator.allocate(norASize, alignof(fastgltf::math::fvec3));
-            fastgltf::copyFromAccessor<fastgltf::math::fvec3>(asset, norA, norPtr);
-            datas.norOffset.push_back(allocator.getOffset(norPtr));
+            if (norA.bufferViewIndex.has_value())
+            {
+                uint32_t norASize = norA.count * 3 * sizeof(float);
+                auto* norPtr = (fastgltf::math::fvec3*)allocator.allocate(norASize, alignof(fastgltf::math::fvec3));
+                fastgltf::copyFromAccessor<fastgltf::math::fvec3>(asset, norA, norPtr);
+                datas.norOffset.push_back(allocator.getOffset(norPtr));
+                primSize += norASize;
+            }
 
-            auto* tanPtr = (fastgltf::math::fvec4*)allocator.allocate(tanASize, alignof(fastgltf::math::fvec4));
-            fastgltf::copyFromAccessor<fastgltf::math::fvec4>(asset, tanA, tanPtr);
-            datas.tanOffset.push_back(allocator.getOffset(tanPtr));
+            if (tanA.bufferViewIndex.has_value())
+            {
+                uint32_t tanASize = tanA.count * 4 * sizeof(float);
+                auto* tanPtr = (fastgltf::math::fvec4*)allocator.allocate(tanASize, alignof(fastgltf::math::fvec4));
+                fastgltf::copyFromAccessor<fastgltf::math::fvec4>(asset, tanA, tanPtr);
+                datas.tanOffset.push_back(allocator.getOffset(tanPtr));
+                primSize += tanASize;
+            }
 
-            auto* idxPtr = (uint32_t*)allocator.allocate(idxASize, alignof(uint32_t));
-            fastgltf::copyFromAccessor<uint32_t>(asset, idxA, idxPtr);
-            datas.idxOffset.push_back(allocator.getOffset(idxPtr));
+            if (idxA.bufferViewIndex.has_value())
+            {
+                uint32_t idxASize = idxA.count * sizeof(uint32_t);
+                auto* idxPtr = (uint32_t*)allocator.allocate(idxASize, alignof(uint32_t));
+                fastgltf::copyFromAccessor<uint32_t>(asset, idxA, idxPtr);
+                datas.idxOffset.push_back(allocator.getOffset(idxPtr));
+                primSize += idxASize;
+            }
 
             datas.primitiveMemorySize.push_back(primSize);
             datas.vertexCount.push_back(posA.count);
@@ -211,4 +224,15 @@ void MeshPool::Load(const fastgltf::Asset& asset)
     // destro temp resources
     vkDestroyBuffer(m_device, tempBuffer, nullptr);
     vkFreeMemory(m_device, tempMemory, nullptr);
+}
+
+MeshPool::Mesh MeshPool::GetHandle(std::string_view name)
+{
+    auto it = std::find(m_names.begin(), m_names.end(), name);
+    if (it == m_names.end())
+    {
+        throw LettuceException(LettuceResult::NotFound);
+    }
+    uint32_t idx = (uint32_t)std::distance(m_names.begin(), it);
+    return Mesh{ idx, weak_from_this() };
 }

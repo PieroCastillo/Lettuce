@@ -1,6 +1,7 @@
 #include "Core/common.hpp"
 
 // resource management
+#include "Core/Mesh.hpp"
 #include "Core/TableGroup.hpp"
 #include "Core/TextureDictionary.hpp"
 

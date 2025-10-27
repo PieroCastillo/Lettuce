@@ -2,6 +2,7 @@
 #include <limits>
 #include <memory>
 #include <vector>
+#include <print>
 #include <algorithm>
 
 // external headers
@@ -103,10 +104,25 @@ void Swapchain::setupSwapchain(const SwapchainCreateInfo& createInfo)
         .clipped = VK_FALSE,
         .oldSwapchain = VK_NULL_HANDLE,
     };
-    if (auto res = vkCreateSwapchainKHR(m_device, &swapchainCI, nullptr, &m_swapchain); res != VK_SUCCESS)
+
+    // TODO: handle errors (as OUT_OF_DATE or SUBOPTIMAL)
+    m_swapchain = VK_NULL_HANDLE;
+
+    auto res = vkCreateSwapchainKHR(m_device, &swapchainCI, nullptr, &m_swapchain);
+    switch (res)
     {
-        // TODO: handle errors (as OUT_OF_DATE or SUBOPTIMAL)
+    case VK_SUCCESS:
+        std::println("swapchain created successfully");
+        break;
+    case VK_ERROR_OUT_OF_DATE_KHR:
+    case VK_SUBOPTIMAL_KHR:
+        break;
+    default:
+        //std::println("vk error code: {0}", (int)res);
+        //handleResult(res);
+        break;
     }
+
 }
 
 void Swapchain::setupImagesAndView(const SwapchainCreateInfo& createInfo)

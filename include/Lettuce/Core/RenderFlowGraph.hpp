@@ -27,7 +27,7 @@ namespace Lettuce::Core
     struct RenderNode
     {
         NodeKind kind;
-        std::function<void(const CommandRecordingContext&)>  func;
+        std::function<void(const CommandRecordingContext&)> func;
         std::vector<RenderNode*> nextNodes;
         void LinkTo(RenderNode& node);
     };

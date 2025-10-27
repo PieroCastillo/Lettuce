@@ -64,6 +64,7 @@ void Device::Create(const DeviceCreateInfo& createInfo)
 
 void Device::Release()
 {
+    handleResult(vkDeviceWaitIdle(m_device));
     vkDestroyDevice(m_device, nullptr);
     vkDestroyDebugUtilsMessengerEXT(m_instance, m_messenger, nullptr);
     vkDestroyInstance(m_instance, nullptr);

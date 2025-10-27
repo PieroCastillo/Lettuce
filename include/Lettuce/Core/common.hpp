@@ -43,6 +43,7 @@ enum class LettuceResult
     InitializationFailed,
     RequiredMemoryNotFound,
     NotReady,
+    NotFound,
     Unknown,
 };
 

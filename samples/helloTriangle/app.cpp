@@ -94,7 +94,7 @@ void cleanupLettuce()
 void initWindow()
 {
     glfwInit();
-    glfwWindowHint(GLFW_NO_API, GLFW_TRUE);
+    glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
     glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
     window = glfwCreateWindow(width, height, "My Lettuce Window", NULL, NULL);
 }

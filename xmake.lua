@@ -42,5 +42,5 @@ for _, name in ipairs(samples) do
         add_deps("Lettuce")
         add_includedirs("include")
         add_files("samples/" .. name .. "/app.cpp")
-        add_packages("volk", "glfw", "glm", "imgui")
+        add_packages("volk", "glfw", "glm", "imgui", "fastgltf")
 end

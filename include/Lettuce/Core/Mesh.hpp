@@ -5,6 +5,7 @@ Created by @PieroCastillo on 2025-10-24
 #define LETTUCE_CORE_MESH_HPP
 // standard headers
 #include <vector>
+#include <memory>
 
 // project headers
 #include "common.hpp"
@@ -40,7 +41,7 @@ namespace Lettuce::Core
     |               P1             |-P2 -| ...| ... |
     | Pos | Norm | Tex | ... | Idx |
     */
-    class MeshPool
+    class MeshPool : std::enable_shared_from_this<MeshPool>
     {
     private:
         std::vector<PrimitiveDatas> m_primitiveDatas;
@@ -55,6 +56,17 @@ namespace Lettuce::Core
         uint32_t m_transferQueueFamilyIndex;
         VkFence m_fence;
     public:
+        struct Mesh
+        {
+            uint32_t m_index;
+            std::weak_ptr<MeshPool> m_meshPool;
+
+            bool valid() const {
+                auto p = m_meshPool.lock();
+                return p && m_index < p->m_primitiveDatas.size();
+            }
+        };
+
         VkDevice m_device;
         VkPhysicalDevice m_gpu;
         VkDeviceMemory m_memory;
@@ -65,7 +77,7 @@ namespace Lettuce::Core
 
         void Load(const fastgltf::Asset& asset);
 
-        // TODO: get mesh handle by name
+        Mesh GetHandle(std::string_view name);
     };
 };
 #endif // LETTUCE_CORE_MESH_HPP
