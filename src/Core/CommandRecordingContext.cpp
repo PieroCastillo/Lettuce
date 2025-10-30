@@ -19,6 +19,11 @@ void CommandRecordingContext::BindDescriptorTable(const std::shared_ptr<Descript
 
 }
 
+void CommandRecordingContext::BindMesh(const MeshPool::Mesh& mesh)
+{
+
+}
+
 void CommandRecordingContext::SetOutputs(const std::vector<std::weak_ptr<RenderTarget>>& targets)
 {
 

@@ -11,6 +11,7 @@ Created by @PieroCastillo on 2025-07-28
 // project headers
 #include "common.hpp"
 #include "DescriptorTable.hpp"
+#include "Mesh.hpp"
 #include "Pipeline.hpp"
 #include "RenderingInfo.hpp"
 #include "RenderTarget.hpp"
@@ -41,6 +42,7 @@ namespace Lettuce::Core
         //void BindVertexBuffers(const std::vector<std::shared_ptr<Buffer>>& buffers);
         void BindPipeline(const std::shared_ptr<Pipeline>& pipeline);
         void BindDescriptorTable(const std::shared_ptr<DescriptorTable>& table);
+        void BindMesh(const MeshPool::Mesh& mesh);
 
         void SetOutputs(const std::vector<std::weak_ptr<RenderTarget>>& targets);
         // Graphics commands
