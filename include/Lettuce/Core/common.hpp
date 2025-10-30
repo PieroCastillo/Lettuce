@@ -42,6 +42,8 @@ enum class LettuceResult
     InvalidOperation,
     InitializationFailed,
     RequiredMemoryNotFound,
+    ShaderReflectionFailed,
+    ShaderCompilationFailed,
     NotReady,
     NotFound,
     Unknown,
