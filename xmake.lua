@@ -10,6 +10,8 @@ add_requires("glm")
 add_requires("fastgltf")
 add_requires("imgui")
 add_requires("ktx", { configs={ vulkan=true, ktx2=true, decoder=true} })
+add_requires("slang")
+add_requires("spirv-reflect", { configs = { shared=true }})
 
 local v = ("0.0.1.0"):split("%.")
 add_defines("VARIANT_VERSION=" .. (v[1] or 0),
@@ -29,7 +31,7 @@ target("Lettuce")
     add_includedirs("include/")
     add_headerfiles("include/Lettuce/**.hpp")
     add_files("src/Core/**.cpp")
-    add_packages("volk", "glfw", "ktx", "glm", "fastgltf")
+    add_packages("volk", "glfw", "ktx", "glm", "fastgltf", "slang", "spirv-reflect")
     add_rules("utils.symbols.export_all", {export_classes = true})
     
 local samples = {
@@ -42,5 +44,5 @@ for _, name in ipairs(samples) do
         add_deps("Lettuce")
         add_includedirs("include")
         add_files("samples/" .. name .. "/app.cpp")
-        add_packages("volk", "glfw", "glm", "imgui", "fastgltf")
+        add_packages("volk", "glfw", "glm", "imgui", "fastgltf", "slang")
 end
