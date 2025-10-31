@@ -9,6 +9,13 @@ using namespace Lettuce::Core;
 
 void Pipeline::Create(const IDevice& device, const GraphicsPipelineCreateInfo& createInfo)
 {
+    m_device = device.m_device;
+    m_layout = createInfo.layout;
+
+    if (!haveSameSize(createInfo.entryPoints, createInfo.shaderModules, createInfo.stages)) [[unlikely]]
+    {
+        throw LettuceException(LettuceResult::InitializationFailed);
+    }
 
     VkPipelineVertexInputStateCreateInfo vertexInputState =
     {
@@ -76,15 +83,31 @@ void Pipeline::Create(const IDevice& device, const GraphicsPipelineCreateInfo& c
         .sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO,
         .pNext = createInfo.fragmentShadingRate ? nullptr : &fragmentShadingRate,
         .viewMask = 0, // multiview disabled
-        // .colorAttachmentCount = ,
-        // .pColorAttachmentFormats = ,
-        // .depthAttachmentFormat = ,
-        // .stencilAttachmentFormat = ,
+        .colorAttachmentCount = (uint32_t)createInfo.colorAttachmentFormats.size(),
+        .pColorAttachmentFormats = createInfo.colorAttachmentFormats.data(),
+        .depthAttachmentFormat = createInfo.depthAttachmentFormat,
+        .stencilAttachmentFormat = createInfo.stencilAttachmentFormat,
     };
+
+    std::vector<VkPipelineShaderStageCreateInfo> stages(createInfo.stages.size());
+    
+    for(int i = 0; i < createInfo.shaderModules.size(); ++i)
+    {
+        VkPipelineShaderStageCreateInfo stageCI = {
+            .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
+            .stage = createInfo.stages[i],
+            .module = createInfo.shaderModules[i],
+            .pName = createInfo.entryPoints[i].c_str(),
+            // TODO: impl specialization constants
+        };
+    }
 
     VkGraphicsPipelineCreateInfo gpipelineCI = {
         .sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
         .pNext = &renderingCI,
+        // stages
+        .stageCount = (uint32_t)stages.size(),
+        .pStages = stages.data(),
         // vertex input state
         .pVertexInputState = &vertexInputState,
         .pInputAssemblyState = &inputAssemblyState,
@@ -96,14 +119,14 @@ void Pipeline::Create(const IDevice& device, const GraphicsPipelineCreateInfo& c
         .pDepthStencilState = &depthStencilState,
         .pColorBlendState = &colorBlendState,
         .pDynamicState = &dynamicState,
+        .layout = m_layout,
     };
-
-    
+    handleResult(vkCreateGraphicsPipelines(m_device, VK_NULL_HANDLE, 1, &gpipelineCI, nullptr, &m_pipeline));
 }
 
 void Pipeline::Create(const IDevice& device, const ComputePipelineCreateInfo& createInfo)
 {
-    
+
 }
 
 void Pipeline::Release()

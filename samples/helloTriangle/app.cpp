@@ -34,7 +34,7 @@ std::shared_ptr<Device> device;
 std::shared_ptr<Swapchain> swapchain;
 std::shared_ptr<Pipeline> rgbPipeline;
 
-std::shared_ptr<RenderFlowGraph> renderGraph;
+std::shared_ptr<RenderFlowGraph<CommandRecordingContext>> renderGraph;
 
 void initLettuce()
 {
@@ -65,8 +65,8 @@ void createRenderingObjects()
 
 void createRenderGraph()
 {
-    renderGraph = device->CreateGraph().value();
-    auto node = renderGraph->CreateNode(NodeKind::Graphics, [&](const CommandRecordingContext& ctx){
+    renderGraph = device->CreateGraph<CommandRecordingContext>().value();
+    auto node = renderGraph->CreateNode<CommandRecordingContext>(NodeKind::Graphics, [&](const CommandRecordingContext& ctx){
         
     });
     renderGraph->Compile();

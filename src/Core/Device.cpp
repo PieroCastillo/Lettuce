@@ -341,9 +341,13 @@ auto Device::CreateSwapchain(const SwapchainCreateInfo& createInfo) -> Result<Sw
         swapchain->Create(*this, createInfo);
         return swapchain;
     }
+    catch (LettuceException e)
+    {
+        return std::unexpected(e.result);
+    }
     catch (...)
     {
-        return std::unexpected(LettuceResult::InitializationFailed);
+        return std::unexpected(LettuceResult::Unknown);
     }
 }
 
@@ -357,26 +361,31 @@ auto Device::CreateContext(const DeviceExecutionContextCreateInfo& createInfo) -
         ctx->Create(*this, createInfo);
         return ctx;
     }
+    catch (LettuceException e)
+    {
+        return std::unexpected(e.result);
+    }
     catch (...)
     {
-        return std::unexpected(LettuceResult::InitializationFailed);
+        return std::unexpected(LettuceResult::Unknown);
     }
 }
 
-auto Device::CreateGraph() -> Result<RenderFlowGraph>
+auto Device::CreateShaderPack(const ShaderPackCreateInfo& createInfo) -> Result<ShaderPack>
 {
     try
     {
-        auto graph = std::make_shared<RenderFlowGraph>();
-        RenderFlowGraphCreateInfo ci = {
-
-        };
-        graph->Create(*this, ci);
-        return graph;
+        auto shaderPack = std::make_shared<ShaderPack>();
+        shaderPack->Create(*this, createInfo);
+        return shaderPack;
+    }
+    catch (LettuceException e)
+    {
+        return std::unexpected(e.result);
     }
     catch (...)
     {
-        return std::unexpected(LettuceResult::InitializationFailed);
+        return std::unexpected(LettuceResult::Unknown);
     }
 }
 
@@ -389,12 +398,12 @@ auto Device::CreateTextureDictionary(const TextureCreateData& createData) -> Res
         TextureDictionaryCreateInfo textureCI;
         std::vector<ktxTexture*> ktxTextures;
 
-        for(const auto& [name, path] : createData.namePathPairs)
+        for (const auto& [name, path] : createData.namePathPairs)
         {
             // get params
             ktxTexture* texture;
             auto res = ktxTexture_CreateFromNamedFile(path.c_str(), KTX_TEXTURE_CREATE_LOAD_IMAGE_DATA_BIT, &texture);
-            
+
             textureCI.names.push_back(std::move(name));
             textureCI.formats.push_back(ktxTexture_GetVkFormat(texture));
             textureCI.widths.push_back(texture->baseWidth);
@@ -410,15 +419,19 @@ auto Device::CreateTextureDictionary(const TextureCreateData& createData) -> Res
         // TODO: transfer data
 
         // destroy ktx data
-        for(const auto& tex : ktxTextures)
+        for (const auto& tex : ktxTextures)
         {
             ktxTexture_Destroy(tex);
         }
 
         return dict;
     }
-    catch(...)
+    catch (LettuceException e)
     {
-        throw LettuceException(LettuceResult::InitializationFailed);
+        return std::unexpected(e.result);
+    }
+    catch (...)
+    {
+        return std::unexpected(LettuceResult::Unknown);
     }
 }

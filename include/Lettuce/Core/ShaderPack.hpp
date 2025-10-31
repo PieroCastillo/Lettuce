@@ -22,7 +22,6 @@ namespace Lettuce::Core
         std::vector<VkDescriptorType> types;
     };
 
-
     struct ShaderPackCreateInfo
     {
         std::vector<uint32_t> shaderByteData;

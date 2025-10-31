@@ -35,7 +35,9 @@ namespace Lettuce::Core
     {
     public:
         std::vector<drawCommand> drawCommands; 
-        std::vector<computeCommand> computeCommands; 
+        std::vector<computeCommand> computeCommands;
+
+        void record(VkCommandBuffer cmd);
 
         // Graphics & Compute commands
         //void BindIndexBuffer(const std::shared_ptr<Buffer>& buffer);

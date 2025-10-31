@@ -29,7 +29,7 @@ end
 target("Lettuce")
     set_kind("shared")
     add_includedirs("include/")
-    add_headerfiles("include/Lettuce/**.hpp")
+    add_headerfiles("include/Lettuce/**.hpp", "inclue/Lettuce/*.inl")
     add_files("src/Core/**.cpp")
     add_packages("volk", "glfw", "ktx", "glm", "fastgltf", "slang", "spirv-reflect")
     add_rules("utils.symbols.export_all", {export_classes = true})

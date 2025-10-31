@@ -19,3 +19,4 @@
 #include "Core/RenderTarget.hpp"
 #include "Core/Sampler.hpp"
 #include "Core/Swapchain.hpp"
+#include "Core/ShaderPack.hpp"

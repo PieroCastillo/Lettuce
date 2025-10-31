@@ -23,6 +23,7 @@ Created by @PieroCastillo on 2025-07-20
 #include "RenderFlowGraph.hpp"
 #include "Swapchain.hpp"
 #include "Sampler.hpp"
+#include "ShaderPack.hpp"
 #include "TextureDictionary.hpp"
 
 namespace Lettuce::Core
@@ -153,13 +154,18 @@ namespace Lettuce::Core
         auto CreateSwapchain(const SwapchainCreateInfo& createInfo) -> Result<Swapchain>;
         // auto CreateDescriptorTable() -> Result<DescriptorTable>;
         auto CreateContext(const DeviceExecutionContextCreateInfo& createInfo) -> Result<DeviceExecutionContext>;
-        auto CreateGraph() -> Result<RenderFlowGraph>;
+
+        template<ICommandRecordingContext... Contexts>
+        auto CreateGraph() -> Result<RenderFlowGraph<Contexts...>>;
         // auto CreateRenderTarget() -> Result<RenderTarget>;
         // auto CreatePipelineLayout() -> Result<PipelineLayout>;
         // auto CreatePipeline() -> Result<Pipeline>;
         // auto CreateSampler() -> Result<Sampler>;
+        auto CreateShaderPack(const ShaderPackCreateInfo& createInfo) -> Result<ShaderPack>;
         // auto CreateTableGroup() -> Result<TableGroup>;
         auto CreateTextureDictionary(const TextureCreateData& createData) -> Result<TextureDictionary>;
     };
 }
+
+#include "Device.inl"
 #endif // LETTUCE_CORE_DEVICE_HPP
