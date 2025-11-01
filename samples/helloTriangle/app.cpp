@@ -67,7 +67,7 @@ void createRenderGraph()
 {
     renderGraph = device->CreateGraph<CommandRecordingContext>().value();
     auto node = renderGraph->CreateNode<CommandRecordingContext>(NodeKind::Graphics, [&](const CommandRecordingContext& ctx){
-        
+    
     });
     renderGraph->Compile();
 }
