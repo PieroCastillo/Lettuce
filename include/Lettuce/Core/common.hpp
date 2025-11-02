@@ -17,9 +17,10 @@
 
 enum class MemoryAccess
 {
-    FastGPUReadWrite, // DEVICE_LOCAL
-    FastGPUWriteCPURead, // HOST_VISIBLE+HOST_CACHED
-    FastCPUWriteGPURead, // DEVICE_LOCAL+HOST_CACHED
+    FastGPUReadWrite,    // DEVICE_LOCAL
+    FastCPUWriteGPURead, // DEVICE_LOCAL+HOST_VISIBLE+HOST_COHERENT
+    FastGPUWriteCPURead, // HOST_VISIBLE+HOST_COHERENT
+    FastCPUReadWrite,    // HOST_VISIBLE+HOST_COHERENT+HOST_CACHED
 };
 
 uint32_t findMemoryTypeIndex(VkDevice device, VkPhysicalDevice gpu, uint32_t typeFilter, MemoryAccess access);
@@ -44,6 +45,7 @@ enum class LettuceResult
     RequiredMemoryNotFound,
     ShaderReflectionFailed,
     ShaderCompilationFailed,
+    ShaderParametersMismatch,
     NotReady,
     NotFound,
     Unknown,

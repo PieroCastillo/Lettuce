@@ -11,11 +11,14 @@ uint32_t findMemoryTypeIndex(VkDevice device, VkPhysicalDevice gpu, uint32_t typ
     case MemoryAccess::FastGPUReadWrite:
         props = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
         break;
-    case MemoryAccess::FastGPUWriteCPURead:
-        props = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_CACHED_BIT;
-        break;
     case MemoryAccess::FastCPUWriteGPURead:
-        props = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT | VK_MEMORY_PROPERTY_HOST_CACHED_BIT;
+        props = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT | VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
+        break;
+    case MemoryAccess::FastGPUWriteCPURead:
+        props = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
+        break;
+    case MemoryAccess::FastCPUReadWrite:
+        props = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT | VK_MEMORY_PROPERTY_HOST_CACHED_BIT;
         break;
     }
 

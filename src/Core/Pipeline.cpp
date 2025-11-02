@@ -105,6 +105,7 @@ void Pipeline::Create(const IDevice& device, const GraphicsPipelineCreateInfo& c
     VkGraphicsPipelineCreateInfo gpipelineCI = {
         .sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
         .pNext = &renderingCI,
+        .flags = VK_PIPELINE_CREATE_DESCRIPTOR_BUFFER_BIT_EXT,
         // stages
         .stageCount = (uint32_t)stages.size(),
         .pStages = stages.data(),
@@ -131,5 +132,5 @@ void Pipeline::Create(const IDevice& device, const ComputePipelineCreateInfo& cr
 
 void Pipeline::Release()
 {
-
+    vkDestroyPipeline(m_device, m_pipeline, nullptr);
 }

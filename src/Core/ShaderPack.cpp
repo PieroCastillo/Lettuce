@@ -1,3 +1,6 @@
+// standard headers
+#include <print>
+
 // external headers
 #include "spirv_reflect.h"
 
@@ -23,9 +26,26 @@ VkDescriptorType mapReflectTypeToVk(SpvReflectDescriptorType rtype) {
     }
 }
 
+const std::string mapReflectTypeToString(SpvReflectDescriptorType rtype) {
+    switch (rtype) {
+    case SPV_REFLECT_DESCRIPTOR_TYPE_SAMPLER:              return "Sampler";
+    case SPV_REFLECT_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER: return "ImageSampler";
+    case SPV_REFLECT_DESCRIPTOR_TYPE_SAMPLED_IMAGE:        return "SampledImage";
+    case SPV_REFLECT_DESCRIPTOR_TYPE_STORAGE_IMAGE:        return "StorageImage";
+    case SPV_REFLECT_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER: return "UniformTexelBUuffer";
+    case SPV_REFLECT_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER: return "StorageTexelBUuffer";
+    case SPV_REFLECT_DESCRIPTOR_TYPE_UNIFORM_BUFFER:       return "UniformBuffer";
+    case SPV_REFLECT_DESCRIPTOR_TYPE_STORAGE_BUFFER:       return "StorageBuffer";
+    case SPV_REFLECT_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC: return "UniformBufferDynamic";
+    case SPV_REFLECT_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC: return "StorageBufferDynamic";
+    case SPV_REFLECT_DESCRIPTOR_TYPE_INPUT_ATTACHMENT:     return "InputAttachment";
+    default: return "MaxEnum";
+    }
+}
+
 inline void handleSpvResult(SpvReflectResult res)
 {
-    if(res != SPV_REFLECT_RESULT_SUCCESS)[[unlikely]]
+    if (res != SPV_REFLECT_RESULT_SUCCESS) [[unlikely]]
     {
         throw LettuceException(LettuceResult::ShaderReflectionFailed);
     }
@@ -58,6 +78,11 @@ void ShaderPack::Create(const IDevice& device, const ShaderPackCreateInfo& creat
             bindingsInfo.counts.push_back(binding->count);
             bindingsInfo.names.emplace_back(binding->name);
             bindingsInfo.types.push_back(mapReflectTypeToVk(binding->descriptor_type));
+
+            std::println("set: {}, binding: {}, name: {}, type: {}", set->set,
+                binding->binding,
+                binding->name,
+                mapReflectTypeToString(binding->descriptor_type));
         }
         setsInfo.push_back(std::move(bindingsInfo));
     }

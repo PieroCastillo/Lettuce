@@ -10,16 +10,18 @@
 #include <thread>
 #include <chrono>
 #include <print>
+#include <fstream>
+#include <filesystem>
 #include <source_location>
 
 void check(std::string_view message,
-           const std::source_location& loc = std::source_location::current())
+    const std::source_location& loc = std::source_location::current())
 {
     std::println("[{}:{}] {}: {}",
-                 loc.file_name(),
-                 loc.line(),
-                 loc.function_name(),
-                 message);
+        loc.file_name(),
+        loc.line(),
+        loc.function_name(),
+        message);
 }
 
 
@@ -47,7 +49,7 @@ void initLettuce()
     };
     device->Create(deviceCI);
     std::println("Device created successfully");
-    
+
     SwapchainCreateInfo swapchainCI = {
         .width = width,
         .height = height,
@@ -60,15 +62,30 @@ void initLettuce()
 
 void createRenderingObjects()
 {
+    auto shadersFile = std::ifstream("app.spv", std::ios::ate | std::ios::binary);
+    if (!shadersFile) throw std::runtime_error("app.spirv does not exist");
 
+    auto fileSize = (uint32_t)shadersFile.tellg();
+    std::vector<uint32_t> shadersBuffer;
+    shadersBuffer.resize(fileSize / sizeof(uint32_t));
+
+    shadersFile.seekg(0);
+    shadersFile.read((char*)shadersBuffer.data(), fileSize);
+
+    ShaderPackCreateInfo shadersCI = {
+        .shaderByteData = std::span<const uint32_t>(shadersBuffer.data(), shadersBuffer.size()),
+    };
+    auto shaders = device->CreateShaderPack(shadersCI).value();
+
+    shaders->Release();
 }
 
 void createRenderGraph()
 {
     renderGraph = device->CreateGraph<CommandRecordingContext>().value();
-    auto node = renderGraph->CreateNode<CommandRecordingContext>(NodeKind::Graphics, [&](const CommandRecordingContext& ctx){
-    
-    });
+    auto node = renderGraph->CreateNode<CommandRecordingContext>(NodeKind::Graphics, [&](const CommandRecordingContext& ctx) {
+
+        });
     renderGraph->Compile();
 }
 
@@ -109,6 +126,8 @@ int main()
 {
     initWindow();
     initLettuce();
+    createRenderingObjects();
+    createRenderGraph();
     mainLoop();
     cleanupLettuce();
     cleanupWindow();

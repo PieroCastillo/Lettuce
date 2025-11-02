@@ -5,9 +5,10 @@ Created by @PieroCastillo on 2025-10-29
 #define LETTUCE_CORE_SHADER_PACK
 
 // standard headers
-#include <vector>
 #include <cstdint>
+#include <span>
 #include <string>
+#include <vector>
 
 // project headers
 #include "common.hpp"
@@ -24,7 +25,7 @@ namespace Lettuce::Core
 
     struct ShaderPackCreateInfo
     {
-        std::vector<uint32_t> shaderByteData;
+        std::span<const uint32_t> shaderByteData;
     };
 
     class ShaderPack

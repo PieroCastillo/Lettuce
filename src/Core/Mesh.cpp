@@ -67,7 +67,7 @@ void MeshPool::setupMeshBufferMemory(VkDeviceMemory* memoryPtr, VkBuffer* buffer
 
     if (isStaging)
     {
-        memoryAI.memoryTypeIndex = findMemoryTypeIndex(m_device, m_gpu, memReqs.memoryTypeBits, MemoryAccess::FastCPUWriteGPURead);
+        memoryAI.memoryTypeIndex = findMemoryTypeIndex(m_device, m_gpu, memReqs.memoryTypeBits, MemoryAccess::FastCPUReadWrite);
     }
 
     handleResult(vkAllocateMemory(m_device, &memoryAI, nullptr, memoryPtr));
