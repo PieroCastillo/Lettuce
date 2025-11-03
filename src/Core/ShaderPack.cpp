@@ -63,7 +63,7 @@ void ShaderPack::Create(const IDevice& device, const ShaderPackCreateInfo& creat
     std::vector<SpvReflectDescriptorSet*> setsRefl(setCount);
     handleSpvResult(spvReflectEnumerateDescriptorSets(&mod, &setCount, setsRefl.data()));
 
-    std::vector<DescriptorBindingsInfo> setsInfo(setCount);
+    m_descriptorsInfo.reserve(setCount);
 
     // create descriptors set layouts
     // unordered map with name-binding is located in descriptor table
@@ -84,7 +84,7 @@ void ShaderPack::Create(const IDevice& device, const ShaderPackCreateInfo& creat
                 binding->name,
                 mapReflectTypeToString(binding->descriptor_type));
         }
-        setsInfo.push_back(std::move(bindingsInfo));
+        m_descriptorsInfo.push_back(std::move(bindingsInfo));
     }
 
     VkShaderModuleCreateInfo shaderCI = {
@@ -93,6 +93,8 @@ void ShaderPack::Create(const IDevice& device, const ShaderPackCreateInfo& creat
         .pCode = createInfo.shaderByteData.data(),
     };
     handleResult(vkCreateShaderModule(m_device, &shaderCI, nullptr, &m_shaderModule));
+
+    spvReflectDestroyShaderModule(&mod);
 }
 
 void ShaderPack::Release()

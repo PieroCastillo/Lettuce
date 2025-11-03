@@ -6,7 +6,6 @@
 #include "Core/TextureDictionary.hpp"
 
 //pipelines
-#include "Core/PipelineLayout.hpp"
 #include "Core/Pipeline.hpp"
 
 // other Lettuce objects

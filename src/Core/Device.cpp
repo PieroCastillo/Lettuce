@@ -1,20 +1,9 @@
 // standard headers
-#include <memory>
-#include <variant>
-#include <expected>
 #include <vector>
-#include <future>
-#include <unordered_map>
-#include <array>
 #include <iostream>
 
 // project headers
 #include "Lettuce/Core/Device.hpp"
-
-// external headers
-#include <ktx.h>
-#define VK_NO_PROTOTYPE
-#include <ktxvulkan.h>
 
 using namespace Lettuce::Core;
 
@@ -145,8 +134,10 @@ void Device::selectGPU(const DeviceCreateInfo& createInfo)
 void Device::setupFeaturesExtensions()
 {
     // required features/extensions
+    gpuFeatures11.variablePointersStorageBuffer = VK_TRUE;
     gpuFeatures11.variablePointers = VK_TRUE;
     gpuFeatures11.shaderDrawParameters = VK_TRUE;
+
     gpuFeatures12.samplerMirrorClampToEdge = VK_TRUE;
     gpuFeatures12.drawIndirectCount = VK_TRUE;
     gpuFeatures12.storageBuffer8BitAccess;
@@ -185,6 +176,7 @@ void Device::setupFeaturesExtensions()
     gpuFeatures12.vulkanMemoryModel = VK_TRUE;
     gpuFeatures12.vulkanMemoryModelDeviceScope = VK_TRUE;
     gpuFeatures12.vulkanMemoryModelAvailabilityVisibilityChains = VK_TRUE;
+    gpuFeatures12.pNext = &gpuFeatures11;
 
     gpuFeatures13.inlineUniformBlock = VK_TRUE;
     gpuFeatures13.descriptorBindingInlineUniformBlockUpdateAfterBind = VK_TRUE;
@@ -194,13 +186,18 @@ void Device::setupFeaturesExtensions()
     gpuFeatures13.dynamicRendering = VK_TRUE;
     gpuFeatures13.shaderIntegerDotProduct = VK_TRUE;
     gpuFeatures13.maintenance4 = VK_TRUE;
+    gpuFeatures13.pNext = &gpuFeatures12;
 
     descriptorBufferFeature.descriptorBuffer = VK_TRUE;
     descriptorBufferFeature.descriptorBufferCaptureReplay = VK_TRUE;
     descriptorBufferFeature.descriptorBufferImageLayoutIgnored = VK_TRUE;
     descriptorBufferFeature.descriptorBufferPushDescriptors = VK_TRUE;
+    descriptorBufferFeature.pNext = &gpuFeatures13;
 
     dynamicRenderingUnusedAttachmentsFeature.dynamicRenderingUnusedAttachments = VK_TRUE;
+    dynamicRenderingUnusedAttachmentsFeature.pNext = &descriptorBufferFeature;
+
+    next = &dynamicRenderingUnusedAttachmentsFeature;
 
     requestedExtensionsNames.push_back(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
     requestedExtensionsNames.push_back(VK_GOOGLE_HLSL_FUNCTIONALITY1_EXTENSION_NAME);
@@ -210,33 +207,37 @@ void Device::setupFeaturesExtensions()
     requestedExtensionsNames.push_back(VK_EXT_DESCRIPTOR_BUFFER_EXTENSION_NAME);
     requestedExtensionsNames.push_back(VK_EXT_DYNAMIC_RENDERING_UNUSED_ATTACHMENTS_EXTENSION_NAME);
 
-    next = &dynamicRenderingUnusedAttachmentsFeature;
-
     // recommended features/extensions
     if (exists<const char*>(availableExtensionsNames, VK_EXT_DEVICE_GENERATED_COMMANDS_EXTENSION_NAME))
     {
         enabledRecommendedFeatures.deviceGeneratedCommands = true;
+
         deviceGeneratedCommandsFeature.deviceGeneratedCommands = VK_TRUE;
         deviceGeneratedCommandsFeature.pNext = next;
         next = &deviceGeneratedCommandsFeature;
+
         requestedExtensionsNames.push_back(VK_EXT_DEVICE_GENERATED_COMMANDS_EXTENSION_NAME);
     }
 
     if (exists<const char*>(availableExtensionsNames, VK_EXT_GRAPHICS_PIPELINE_LIBRARY_EXTENSION_NAME))
     {
         enabledRecommendedFeatures.graphicsPipelineLibrary = true;
+
         graphicsPipelineLibraryFeature.graphicsPipelineLibrary = VK_TRUE;
         graphicsPipelineLibraryFeature.pNext = next;
         next = &graphicsPipelineLibraryFeature;
+
         requestedExtensionsNames.push_back(VK_EXT_GRAPHICS_PIPELINE_LIBRARY_EXTENSION_NAME);
     }
 
     if (exists<const char*>(availableExtensionsNames, VK_KHR_DYNAMIC_RENDERING_LOCAL_READ_EXTENSION_NAME))
     {
         enabledRecommendedFeatures.dynamicRenderingLocalRead = true;
+
         dynamicRenderingLocalReadFeature.dynamicRenderingLocalRead = VK_TRUE;
         dynamicRenderingLocalReadFeature.pNext = next;
         next = &dynamicRenderingLocalReadFeature;
+
         requestedExtensionsNames.push_back(VK_KHR_DYNAMIC_RENDERING_LOCAL_READ_EXTENSION_NAME);
     }
 
@@ -246,10 +247,9 @@ void Device::setupFeaturesExtensions()
         maintenance5Feature.maintenance5 = VK_TRUE;
         maintenance5Feature.pNext = next;
         next = &maintenance5Feature;
+
         requestedExtensionsNames.push_back(VK_KHR_MAINTENANCE_5_EXTENSION_NAME);
     }
-
-    next = &maintenance5Feature;
 
     // optional features/extensions
 
@@ -333,107 +333,4 @@ void Device::setupDevice()
     vkGetDeviceQueue(m_device, m_graphicsQueueFamilyIndex, 0, &m_graphicsQueue);
     vkGetDeviceQueue(m_device, m_computeQueueFamilyIndex, 0, &m_computeQueue);
     vkGetDeviceQueue(m_device, m_transferQueueFamilyIndex, 0, &m_transferQueue);
-}
-
-auto Device::CreateSwapchain(const SwapchainCreateInfo& createInfo) -> Result<Swapchain>
-{
-    try
-    {
-        auto swapchain = std::make_shared<Swapchain>();
-        swapchain->Create(*this, createInfo);
-        return swapchain;
-    }
-    catch (LettuceException e)
-    {
-        return std::unexpected(e.result);
-    }
-    catch (...)
-    {
-        return std::unexpected(LettuceResult::Unknown);
-    }
-}
-
-// here CreateDescriptorTable()
-
-auto Device::CreateContext(const DeviceExecutionContextCreateInfo& createInfo) -> Result<DeviceExecutionContext>
-{
-    try
-    {
-        auto ctx = std::make_shared<DeviceExecutionContext>();
-        ctx->Create(*this, createInfo);
-        return ctx;
-    }
-    catch (LettuceException e)
-    {
-        return std::unexpected(e.result);
-    }
-    catch (...)
-    {
-        return std::unexpected(LettuceResult::Unknown);
-    }
-}
-
-auto Device::CreateShaderPack(const ShaderPackCreateInfo& createInfo) -> Result<ShaderPack>
-{
-    try
-    {
-        auto shaderPack = std::make_shared<ShaderPack>();
-        shaderPack->Create(*this, createInfo);
-        return shaderPack;
-    }
-    catch (LettuceException e)
-    {
-        return std::unexpected(e.result);
-    }
-    catch (...)
-    {
-        return std::unexpected(LettuceResult::Unknown);
-    }
-}
-
-auto Device::CreateTextureDictionary(const TextureCreateData& createData) -> Result<TextureDictionary>
-{
-    try
-    {
-        auto dict = std::make_shared<TextureDictionary>();
-        // retrieve file names and info
-        TextureDictionaryCreateInfo textureCI;
-        std::vector<ktxTexture*> ktxTextures;
-
-        for (const auto& [name, path] : createData.namePathPairs)
-        {
-            // get params
-            ktxTexture* texture;
-            auto res = ktxTexture_CreateFromNamedFile(path.c_str(), KTX_TEXTURE_CREATE_LOAD_IMAGE_DATA_BIT, &texture);
-
-            textureCI.names.push_back(std::move(name));
-            textureCI.formats.push_back(ktxTexture_GetVkFormat(texture));
-            textureCI.widths.push_back(texture->baseWidth);
-            textureCI.heights.push_back(texture->baseHeight);
-            textureCI.layerCounts.push_back(texture->numLayers);
-            textureCI.levelCounts.push_back(texture->numLevels);
-            textureCI.isCubes.push_back(texture->isCubemap);
-
-            ktxTextures.push_back(texture);
-        }
-
-        dict->Create(*this, textureCI);
-        // TODO: transfer data
-
-        // destroy ktx data
-        for (const auto& tex : ktxTextures)
-        {
-            ktxTexture_Destroy(tex);
-        }
-
-        return dict;
-    }
-    catch (LettuceException e)
-    {
-        return std::unexpected(e.result);
-    }
-    catch (...)
-    {
-        return std::unexpected(LettuceResult::Unknown);
-    }
 }

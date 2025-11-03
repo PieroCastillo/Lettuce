@@ -15,14 +15,6 @@ Created by @PieroCastillo on 2025-10-29
 
 namespace Lettuce::Core
 {
-    struct DescriptorBindingsInfo {
-        uint32_t setId;
-        std::vector<uint32_t> bindingId;
-        std::vector<std::string> names;
-        std::vector<uint32_t> counts;
-        std::vector<VkDescriptorType> types;
-    };
-
     struct ShaderPackCreateInfo
     {
         std::span<const uint32_t> shaderByteData;

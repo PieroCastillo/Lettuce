@@ -35,6 +35,8 @@ void Pipeline::Create(const IDevice& device, const GraphicsPipelineCreateInfo& c
     VkPipelineViewportStateCreateInfo viewportState =
     {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO,
+        .viewportCount = 1,
+        .scissorCount = 1,
     };
     VkPipelineRasterizationStateCreateInfo rasterizationState =
     {
@@ -79,17 +81,19 @@ void Pipeline::Create(const IDevice& device, const GraphicsPipelineCreateInfo& c
         .sType = VK_STRUCTURE_TYPE_PIPELINE_FRAGMENT_SHADING_RATE_STATE_CREATE_INFO_KHR,
     };
 
+    // TODO: impl Depth Testing
     VkPipelineRenderingCreateInfo renderingCI = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO,
-        .pNext = createInfo.fragmentShadingRate ? nullptr : &fragmentShadingRate,
+        .pNext = createInfo.fragmentShadingRate ?  &fragmentShadingRate : nullptr,
         .viewMask = 0, // multiview disabled
         .colorAttachmentCount = (uint32_t)createInfo.colorAttachmentFormats.size(),
         .pColorAttachmentFormats = createInfo.colorAttachmentFormats.data(),
-        .depthAttachmentFormat = createInfo.depthAttachmentFormat,
-        .stencilAttachmentFormat = createInfo.stencilAttachmentFormat,
+        //.depthAttachmentFormat = createInfo.depthAttachmentFormat,
+        //.stencilAttachmentFormat = createInfo.stencilAttachmentFormat,
     };
 
-    std::vector<VkPipelineShaderStageCreateInfo> stages(createInfo.stages.size());
+    std::vector<VkPipelineShaderStageCreateInfo> stages;
+    stages.reserve(createInfo.stages.size());
     
     for(int i = 0; i < createInfo.shaderModules.size(); ++i)
     {
@@ -100,6 +104,7 @@ void Pipeline::Create(const IDevice& device, const GraphicsPipelineCreateInfo& c
             .pName = createInfo.entryPoints[i].c_str(),
             // TODO: impl specialization constants
         };
+        stages.push_back(std::move(stageCI));
     }
 
     VkGraphicsPipelineCreateInfo gpipelineCI = {
@@ -127,7 +132,20 @@ void Pipeline::Create(const IDevice& device, const GraphicsPipelineCreateInfo& c
 
 void Pipeline::Create(const IDevice& device, const ComputePipelineCreateInfo& createInfo)
 {
+    VkPipelineShaderStageCreateInfo stageCI = {
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
+        .stage = VK_SHADER_STAGE_COMPUTE_BIT,
+        .module = createInfo.shaderModule,
+        .pName = createInfo.entryPoint.c_str(),
+    };
 
+    VkComputePipelineCreateInfo cpipelineCI = {
+        .sType = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO,
+        .flags = VK_PIPELINE_CREATE_DESCRIPTOR_BUFFER_BIT_EXT,
+        .stage = stageCI,
+        .layout = createInfo.layout,
+    };
+    handleResult(vkCreateComputePipelines(m_device, VK_NULL_HANDLE, 1, &cpipelineCI, nullptr, &m_pipeline));
 }
 
 void Pipeline::Release()

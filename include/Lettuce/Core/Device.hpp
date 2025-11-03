@@ -7,10 +7,9 @@ Created by @PieroCastillo on 2025-07-20
 // standard headers
 #include <concepts>
 #include <expected>
-#include <future>
 #include <memory>
+#include <optional>
 #include <string>
-#include <unordered_map>
 #include <utility>
 #include <variant>
 #include <vector>
@@ -28,6 +27,43 @@ Created by @PieroCastillo on 2025-07-20
 
 namespace Lettuce::Core
 {
+    struct GraphicsPipelineCreateData
+    {
+        std::weak_ptr<ShaderPack> shaders;
+        std::weak_ptr<DescriptorTable> descriptorTable;
+        std::vector<std::weak_ptr<RenderTarget>> colorTargets;
+        std::weak_ptr<RenderTarget> depthTarget;
+        // "classic" rasterization pipeline
+        std::optional<std::string> vertexEntryPoint;
+        std::optional<std::string> tesselletionControlEntryPoint;
+        std::optional<std::string> tesselletionEvaluationEntryPoint;
+        std::optional<std::string> geometryEntryPoint;
+        // mesh rasterization pipeline
+        std::optional<std::string> taskEntryPoint;
+        std::optional<std::string> meshEntryPoint;
+        std::string fragmentEntryPoint;
+    };
+
+    // for the future
+    struct RayTracingPipelineCreateData
+    {
+        std::weak_ptr<ShaderPack> shaders;
+        std::weak_ptr<DescriptorTable> descriptorTable;
+        std::optional<std::string> rayGenEntryPoint;
+        std::optional<std::string> anyHitEntryPoint;
+        std::optional<std::string> closestHitEntryPoint;
+        std::optional<std::string> missEntryPoint;
+        std::optional<std::string> intersectionEntryPoint;
+        std::optional<std::string> callableEntryPoint;
+    };
+
+    struct ComputePipelineCreateData
+    {
+        std::weak_ptr<ShaderPack> shaders;
+        std::weak_ptr<DescriptorTable> descriptorTable;
+        std::string computeEntryPoint;
+    };
+
     struct TextureCreateData
     {
         std::vector<std::pair<std::string, std::string>> namePathPairs;
@@ -151,17 +187,17 @@ namespace Lettuce::Core
         using Result = std::expected<std::shared_ptr<T>, LettuceResult>;
         using Op = std::expected<void, LettuceResult>;
 
-        auto CreateSwapchain(const SwapchainCreateInfo& createInfo) -> Result<Swapchain>;
-        // auto CreateDescriptorTable() -> Result<DescriptorTable>;
         auto CreateContext(const DeviceExecutionContextCreateInfo& createInfo) -> Result<DeviceExecutionContext>;
+        auto CreateDescriptorTable(const DescriptorTableCreateInfo& createInfo) -> Result<DescriptorTable>;
 
         template<ICommandRecordingContext... Contexts>
         auto CreateGraph() -> Result<RenderFlowGraph<Contexts...>>;
         // auto CreateRenderTarget() -> Result<RenderTarget>;
-        // auto CreatePipelineLayout() -> Result<PipelineLayout>;
-        // auto CreatePipeline() -> Result<Pipeline>;
+        auto CreatePipeline(const ComputePipelineCreateData& data) -> Result<Pipeline>;
+        auto CreatePipeline(const GraphicsPipelineCreateData& data) -> Result<Pipeline>;
         // auto CreateSampler() -> Result<Sampler>;
         auto CreateShaderPack(const ShaderPackCreateInfo& createInfo) -> Result<ShaderPack>;
+        auto CreateSwapchain(const SwapchainCreateInfo& createInfo) -> Result<Swapchain>;
         // auto CreateTableGroup() -> Result<TableGroup>;
         auto CreateTextureDictionary(const TextureCreateData& createData) -> Result<TextureDictionary>;
     };

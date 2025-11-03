@@ -30,7 +30,7 @@ namespace Lettuce::Core
         uint32_t m_height;
         std::vector<VkImage> m_swapchainImages;
         std::vector<VkImageView> m_swapchainViews;
-        std::vector<std::unique_ptr<RenderTarget>> m_renderViews;
+        std::vector<std::shared_ptr<RenderTarget>> m_renderViews;
 
         void setupSurface(const SwapchainCreateInfo &createInfo);
         void setupSwapchain(const SwapchainCreateInfo &createInfo);
@@ -54,7 +54,8 @@ namespace Lettuce::Core
         void NextFrame();
         void DisplayFrame();
         void Resize(uint32_t newWidth, uint32_t newHeight);
-        RenderTarget& GetCurrentRenderView();
+        const RenderTarget& GetCurrentRenderView();
+        std::vector<std::weak_ptr<RenderTarget>> GetRenderViews();
 
         inline uint32_t GetHeight() { return m_height; }
         inline uint32_t GetWidth() { return m_width; }

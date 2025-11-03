@@ -21,15 +21,17 @@ namespace Lettuce::Core
         std::vector<std::string> entryPoints;
         std::vector<VkShaderStageFlagBits> stages;
         std::vector<VkShaderModule> shaderModules;
-        VkPipelineLayout layout;
         std::vector<VkFormat> colorAttachmentFormats;
         VkFormat depthAttachmentFormat;
         VkFormat stencilAttachmentFormat;
+        VkPipelineLayout layout;
     };
 
     struct ComputePipelineCreateInfo
     {
-
+        std::string entryPoint;
+        VkShaderModule shaderModule;
+        VkPipelineLayout layout;
     };
 
     class Pipeline

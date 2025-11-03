@@ -33,9 +33,9 @@ namespace Lettuce::Core
     private:
         friend class Swapchain;
         bool isViewOnly = false;
-        VkImageLayout _layout;
+        VkImageLayout m_layout;
         uint32_t p_width, p_height, p_depth;
-        VkFormat _format;
+        VkFormat m_format;
 
     public:
         VkDevice m_device;

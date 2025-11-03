@@ -9,4 +9,17 @@
 
 using namespace Lettuce::Core;
 
-//TODO: impl
+void RenderTarget::Create(const IDevice& device, const RenderTargetCreateInfo& createInfo)
+{
+
+}
+
+void RenderTarget::Release()
+{
+
+}
+
+VkFormat RenderTarget::GetFormat()
+{
+    return m_format;
+}

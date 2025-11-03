@@ -150,7 +150,7 @@ void Swapchain::setupImagesAndView(const SwapchainCreateInfo& createInfo)
         handleResult(vkCreateImageView(m_device, &viewCI, nullptr, &view));
         m_swapchainViews.push_back(view);
 
-        auto renderView = std::make_unique<RenderTarget>();
+        auto renderView = std::make_shared<RenderTarget>();
         renderView->isViewOnly = true;
         renderView->m_device = m_device;
         renderView->m_image = m_swapchainImages[i];
@@ -158,8 +158,8 @@ void Swapchain::setupImagesAndView(const SwapchainCreateInfo& createInfo)
         renderView->p_depth = 1;
         renderView->p_height = m_height;
         renderView->p_width = m_width;
-        renderView->_format = m_format;
-        renderView->_layout = VK_IMAGE_LAYOUT_PREINITIALIZED;
+        renderView->m_format = m_format;
+        renderView->m_layout = VK_IMAGE_LAYOUT_PREINITIALIZED;
 
         m_renderViews.push_back(std::move(renderView));
     }
@@ -226,4 +226,20 @@ void Swapchain::DisplayFrame()
 void Swapchain::Resize(uint32_t newWidth, uint32_t newHeight)
 {
     // TODO: impl
+}
+
+const RenderTarget& Swapchain::GetCurrentRenderView()
+{
+    return *m_renderViews.at(m_currentImageIndex);
+}
+
+std::vector<std::weak_ptr<RenderTarget>> Swapchain::GetRenderViews()
+{
+    std::vector<std::weak_ptr<RenderTarget>> observers;
+    observers.reserve(m_renderViews.size());
+    for(const auto& vw : m_renderViews)
+    {
+        observers.push_back(vw);
+    }
+    return observers;
 }

@@ -5,6 +5,7 @@ Created by @PieroCastillo on 2025-07-20
 #define LETTUCE_CORE_DESCRIPTOR_TABLE_HPP
 
 // standard headers
+#include <string_view>
 #include <vector>
 
 // project headers
@@ -12,46 +13,32 @@ Created by @PieroCastillo on 2025-07-20
 
 namespace Lettuce::Core
 {
-    enum class DescriptorAddressType
-    {
-        UniformBuffer = 6,
-        StorageBuffer = 7,
-        UniformTexelBuffer = 4,
-        StorageTexelBuffer = 5,
-    };
-
-    enum class DescriptorTextureType
-    {
-        StorageImage,
-        SampledImage, 
-        InputAttachment,
-    };
-
-    struct DescriptorBinding
-    {
-        VkDescriptorType type;
-        uint32_t count;
-        VkShaderStageFlags stages;
-    };
-
     struct DescriptorTableCreateInfo
     {
-        std::vector<std::vector<DescriptorBinding>> bindings;
+        std::vector<DescriptorBindingsInfo> bindings;
+        uint64_t maxDescriptorVariantsPerSet;
     };
 
+    /*
+    Descriptor Table Buffer Layout:
+    |                 Allocation                |
+    |-------------------------------------------|
+    |                  Buffer                   |
+    | Set0[max]  |  Set1[max] | ... | SetN[max] |
+    */
     class DescriptorTable
     {
     private:
+        uint32_t m_bufferSize;
     public:
         VkDevice m_device;
         VkDeviceMemory m_descriptorBufferMemory;
         VkBuffer m_descriptorBuffer;
+        VkPipelineLayout m_pipelineLayout;
+        std::vector<VkDescriptorSetLayout> m_setLayouts;
 
         void Create(const IDevice& device, const DescriptorTableCreateInfo& createInfo);
         void Release();
-
-        void SetBuffer(uint32_t set, uint32_t binding, VkBuffer buffer, DescriptorAddressType addressType);
-        void SetTexture(uint32_t set, uint32_t binding, VkImageView imageView, VkSampler sampler, DescriptorTextureType textureType);
     };
 }
 #endif // LETTUCE_CORE_DESCRIPTOR_TABLE_HPP

@@ -34,6 +34,7 @@ constexpr uint32_t height = 768;
 
 std::shared_ptr<Device> device;
 std::shared_ptr<Swapchain> swapchain;
+std::shared_ptr<DescriptorTable> descriptorTable;
 std::shared_ptr<Pipeline> rgbPipeline;
 
 std::shared_ptr<RenderFlowGraph<CommandRecordingContext>> renderGraph;
@@ -77,6 +78,21 @@ void createRenderingObjects()
     };
     auto shaders = device->CreateShaderPack(shadersCI).value();
 
+    DescriptorTableCreateInfo descriptorTableCI = {
+        .bindings = shaders->GetDescriptorsInfo(),
+        .maxDescriptorVariantsPerSet = 3,
+    };
+    descriptorTable = device->CreateDescriptorTable(descriptorTableCI).value();
+
+    GraphicsPipelineCreateData gpipelineData = {
+        .shaders = shaders,
+        .descriptorTable = descriptorTable,
+        .colorTargets = swapchain->GetRenderViews(),
+        .vertexEntryPoint = "vertexMain",
+        .fragmentEntryPoint = "fragmentMain",
+    };
+    rgbPipeline = device->CreatePipeline(gpipelineData).value();
+
     shaders->Release();
 }
 
@@ -103,6 +119,9 @@ void mainLoop()
 void cleanupLettuce()
 {
     renderGraph->Release();
+
+    rgbPipeline->Release();
+    descriptorTable->Release();
 
     swapchain->Release();
     device->Release();

@@ -4,6 +4,8 @@
 // standard headers
 #include <cstdint>
 #include <stdexcept>
+#include <string>
+#include <vector>
 
 // library headers
 #include <volk.h>
@@ -15,85 +17,7 @@
 #define __linux__
 #endif
 
-enum class MemoryAccess
-{
-    FastGPUReadWrite,    // DEVICE_LOCAL
-    FastCPUWriteGPURead, // DEVICE_LOCAL+HOST_VISIBLE+HOST_COHERENT
-    FastGPUWriteCPURead, // HOST_VISIBLE+HOST_COHERENT
-    FastCPUReadWrite,    // HOST_VISIBLE+HOST_COHERENT+HOST_CACHED
-};
-
-uint32_t findMemoryTypeIndex(VkDevice device, VkPhysicalDevice gpu, uint32_t typeFilter, MemoryAccess access);
-
-template <typename First, typename... Rest>
-bool haveSameSize(const First& first, const Rest&... rest)
-{
-    size_t size = first.size();
-    return ((rest.size() == size) && ...);
-}
-
 enum VkResult;
-
-enum class LettuceResult
-{
-    Success,
-    OutOfDeviceMemory,
-    OutOfHostMemory,
-    InvalidDevice,
-    InvalidOperation,
-    InitializationFailed,
-    RequiredMemoryNotFound,
-    ShaderReflectionFailed,
-    ShaderCompilationFailed,
-    ShaderParametersMismatch,
-    NotReady,
-    NotFound,
-    Unknown,
-};
-
-class LettuceException : public std::runtime_error {
-public:
-    explicit LettuceException(LettuceResult r)
-        : std::runtime_error(resultToString(r)), result(r) {}
-
-    explicit LettuceException(VkResult r)
-        : std::runtime_error(resultToString(r)), vkResult(r) {}
-
-    LettuceResult result;
-    VkResult vkResult;
-
-private:
-    static std::string resultToString(LettuceResult r) {
-        switch (r) {
-        case LettuceResult::OutOfDeviceMemory: return "Out of Device Memory";
-        case LettuceResult::OutOfHostMemory: return "Out of Host Memory";
-        default: return "Unknown error";
-        }
-    }
-
-    static std::string resultToString(VkResult r) {
-        switch (r) {
-            // VK_ERROR_OUT_OF_DEVICE_MEMORY
-        case -2: return "Out of Device Memory";
-            // VK_ERROR_OUT_OF_HOST_MEMORY
-        case -1: return "Out of Host Memory";
-        default: return "Unknown error";
-        }
-    }
-};
-
-
-/// @brief throws an LettuceException if vkResult is not VK_SUCCESS
-/// This method MUST NOT be called in performance critical paths
-/// @param vkResult the VkResult to check
-inline void handleResult(VkResult vkResult)
-{
-    // VK_SUCCESS
-    if (vkResult != 0) [[unlikely]]
-    {
-        throw LettuceException(vkResult);
-    }
-}
 
 template<typename T>
 struct VkHandle { using type = T*; };
@@ -177,19 +101,108 @@ struct VkImageSubresourceRange;
 
 #endif // VULKAN_H_
 
-class IDevice
+namespace Lettuce::Core
 {
-public:
-    VkDevice m_device;
-    VkInstance m_instance;
-    VkPhysicalDevice m_physicalDevice;
-    VkQueue m_graphicsQueue;
-    VkQueue m_computeQueue;
-    VkQueue m_transferQueue;
-    uint32_t m_graphicsQueueFamilyIndex;
-    uint32_t m_computeQueueFamilyIndex;
-    uint32_t m_transferQueueFamilyIndex;
-    bool supportBufferUsage2;
-};
+    enum class MemoryAccess
+    {
+        FastGPUReadWrite,    // DEVICE_LOCAL
+        FastCPUWriteGPURead, // DEVICE_LOCAL+HOST_VISIBLE+HOST_COHERENT
+        FastGPUWriteCPURead, // HOST_VISIBLE+HOST_COHERENT
+        FastCPUReadWrite,    // HOST_VISIBLE+HOST_COHERENT+HOST_CACHED
+    };
 
+    enum class LettuceResult
+    {
+        Success,
+        OutOfDeviceMemory,
+        OutOfHostMemory,
+        InvalidDevice,
+        InvalidOperation,
+        InvalidShaderEntryPoint,
+        InitializationFailed,
+        RequiredMemoryNotFound,
+        ShaderReflectionFailed,
+        ShaderCompilationFailed,
+        ShaderParametersMismatch,
+        NotReady,
+        NotFound,
+        Unknown,
+    };
+
+    uint32_t findMemoryTypeIndex(VkDevice device, VkPhysicalDevice gpu, uint32_t typeFilter, MemoryAccess access);
+
+    template <typename First, typename... Rest>
+    bool haveSameSize(const First& first, const Rest&... rest)
+    {
+        size_t size = first.size();
+        return ((rest.size() == size) && ...);
+    }
+
+    class LettuceException : public std::runtime_error {
+    public:
+        explicit LettuceException(LettuceResult r)
+            : std::runtime_error(resultToString(r)), result(r) {}
+
+        explicit LettuceException(VkResult r)
+            : std::runtime_error(resultToString(r)), vkResult(r) {}
+
+        LettuceResult result;
+        VkResult vkResult;
+
+    private:
+        static std::string resultToString(LettuceResult r) {
+            switch (r) {
+            case LettuceResult::OutOfDeviceMemory: return "Out of Device Memory";
+            case LettuceResult::OutOfHostMemory: return "Out of Host Memory";
+            default: return "Unknown error";
+            }
+        }
+
+        static std::string resultToString(VkResult r) {
+            switch (r) {
+                // VK_ERROR_OUT_OF_DEVICE_MEMORY
+            case -2: return "Out of Device Memory";
+                // VK_ERROR_OUT_OF_HOST_MEMORY
+            case -1: return "Out of Host Memory";
+            default: return "Unknown error";
+            }
+        }
+    };
+
+
+    /// @brief throws an LettuceException if vkResult is not VK_SUCCESS
+    /// This method MUST NOT be called in performance critical paths
+    /// @param vkResult the VkResult to check
+    inline void handleResult(VkResult vkResult)
+    {
+        // VK_SUCCESS
+        if (vkResult != 0) [[unlikely]]
+        {
+            throw LettuceException(vkResult);
+        }
+    }
+
+    class IDevice
+    {
+    public:
+        VkDevice m_device;
+        VkInstance m_instance;
+        VkPhysicalDevice m_physicalDevice;
+        VkQueue m_graphicsQueue;
+        VkQueue m_computeQueue;
+        VkQueue m_transferQueue;
+        uint32_t m_graphicsQueueFamilyIndex;
+        uint32_t m_computeQueueFamilyIndex;
+        uint32_t m_transferQueueFamilyIndex;
+        bool supportBufferUsage2;
+    };
+
+    struct DescriptorBindingsInfo {
+        uint32_t setId;
+        std::vector<uint32_t> bindingId;
+        std::vector<std::string> names;
+        std::vector<uint32_t> counts;
+        std::vector<VkDescriptorType> types;
+    };
+}
 #endif // COMMON_HPP
