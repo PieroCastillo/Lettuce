@@ -126,7 +126,7 @@ void MeshPool::Load(const fastgltf::Asset& asset)
             // find attributes
             auto* posIt = prim.findAttribute("POSITION"); // vec3<float>
             auto* norIt = prim.findAttribute("NORMAL");   // vec3<float>
-            auto* tanIt = prim.findAttribute("TANGET");   // vec4<float>
+            auto* tanIt = prim.findAttribute("TANGENT");   // vec4<float>
             // auto* tex0It = prim.findAttribute("TEXCOORD_0"); // vec2<float or ubyte or ushort>
 
             // get accessors

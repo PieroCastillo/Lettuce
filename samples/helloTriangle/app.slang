@@ -3,7 +3,9 @@ Created by @PieroCastillo on 2025-10-31
 */
 struct VertexInput
 {
-    float3 position;
+    float3 position : POSITION;
+    float3 normal   : NORMAL;
+    float4 tangent  : TANGENT;
 };
 
 struct VertexOutput

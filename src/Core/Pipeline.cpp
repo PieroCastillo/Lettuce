@@ -17,9 +17,26 @@ void Pipeline::Create(const IDevice& device, const GraphicsPipelineCreateInfo& c
         throw LettuceException(LettuceResult::InitializationFailed);
     }
 
+    std::vector<VkVertexInputBindingDescription> vertexInputs = {
+        {0, sizeof(float)*3, VK_VERTEX_INPUT_RATE_VERTEX},
+        {1, sizeof(float)*3, VK_VERTEX_INPUT_RATE_VERTEX},
+        {2, sizeof(float)*4, VK_VERTEX_INPUT_RATE_VERTEX},
+    };
+
+    std::vector<VkVertexInputAttributeDescription> vertexAttributes = {
+        {0, 0, VK_FORMAT_R32G32B32_SFLOAT}, // position
+        {1, 1, VK_FORMAT_R32G32B32_SFLOAT}, // normal
+        {2, 2, VK_FORMAT_R32G32B32A32_SFLOAT}, // tangent
+        // TODO: impl TexCoors
+    };
+
     VkPipelineVertexInputStateCreateInfo vertexInputState =
     {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO,
+        .vertexBindingDescriptionCount = (uint32_t)vertexInputs.size(),
+        .pVertexBindingDescriptions = vertexInputs.data(),
+        .vertexAttributeDescriptionCount = (uint32_t)vertexAttributes.size(),
+        .pVertexAttributeDescriptions = vertexAttributes.data(),
     };
     VkPipelineInputAssemblyStateCreateInfo inputAssemblyState =
     {
@@ -61,6 +78,7 @@ void Pipeline::Create(const IDevice& device, const GraphicsPipelineCreateInfo& c
     VkPipelineColorBlendStateCreateInfo colorBlendState =
     {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO,
+        .logicOpEnable = VK_FALSE,
     };
 
     std::array<VkDynamicState, 3> dynamicStates =
