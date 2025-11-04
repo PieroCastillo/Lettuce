@@ -11,11 +11,16 @@ struct VertexInput
 struct VertexOutput
 {
     float4 position : SV_Position;
+    float3 normal : NORMAL;
+    float4 tangent : TANGENT;
 };
 
 struct ShaderParams
 {
     float4 uColor;
+    float4x4 model;
+    float4x4 view;
+    float4x4 projection;
 }
 
 ParameterBlock<ShaderParams> params;
@@ -24,7 +29,9 @@ ParameterBlock<ShaderParams> params;
 VertexOutput vertexMain(VertexInput vin)
 {
     VertexOutput vout;
-    vout.position = float4(vin.position, 1.0);
+    vout.position = mul((params.projection * params.view * params.model), float4(vin.position, 1.0));
+    vout.normal = vin.normal;
+    vout.tangent = vin.tangent;
     return vout;
 }
 

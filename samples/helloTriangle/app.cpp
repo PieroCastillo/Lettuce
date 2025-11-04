@@ -143,6 +143,8 @@ void cleanupWindow()
 
 int main()
 {
+    std::ios::sync_with_stdio(true);
+    std::setvbuf(stdout, nullptr, _IONBF, 0);
     initWindow();
     initLettuce();
     createRenderingObjects();

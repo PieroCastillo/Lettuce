@@ -27,12 +27,12 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
 {
     // Warning
     if (messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT) {
-        std::cerr << COLOR_YELLOW << "[WARNING] " << COLOR_WHITE
+        std::cout << COLOR_YELLOW << "[WARNING] " << COLOR_WHITE
             << pCallbackData->pMessage << COLOR_RESET << std::endl;
     }
     // Error
     else if (messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT) {
-        std::cerr << COLOR_RED << "[ERROR] " << COLOR_WHITE
+        std::cout << COLOR_RED << "[ERROR] " << COLOR_WHITE
             << pCallbackData->pMessage << COLOR_RESET << std::endl;
     }
     // // Info or verbose messages
@@ -140,13 +140,13 @@ void Device::setupFeaturesExtensions()
 
     gpuFeatures12.samplerMirrorClampToEdge = VK_TRUE;
     gpuFeatures12.drawIndirectCount = VK_TRUE;
-    gpuFeatures12.storageBuffer8BitAccess;
-    gpuFeatures12.uniformAndStorageBuffer8BitAccess;
-    gpuFeatures12.storagePushConstant8;
+    gpuFeatures12.storageBuffer8BitAccess = VK_TRUE;
+    gpuFeatures12.uniformAndStorageBuffer8BitAccess = VK_TRUE;
+    gpuFeatures12.storagePushConstant8 = VK_FALSE;
     gpuFeatures12.shaderBufferInt64Atomics = VK_TRUE;
     gpuFeatures12.shaderSharedInt64Atomics = VK_TRUE;
-    gpuFeatures12.shaderFloat16;
-    gpuFeatures12.shaderInt8;
+    gpuFeatures12.shaderFloat16 = VK_FALSE;
+    gpuFeatures12.shaderInt8 = VK_FALSE;
     gpuFeatures12.descriptorIndexing = VK_TRUE;
     gpuFeatures12.shaderInputAttachmentArrayDynamicIndexing = VK_TRUE;
     gpuFeatures12.shaderUniformTexelBufferArrayDynamicIndexing = VK_TRUE;
@@ -175,7 +175,7 @@ void Device::setupFeaturesExtensions()
     gpuFeatures12.bufferDeviceAddress = VK_TRUE;
     gpuFeatures12.vulkanMemoryModel = VK_TRUE;
     gpuFeatures12.vulkanMemoryModelDeviceScope = VK_TRUE;
-    gpuFeatures12.vulkanMemoryModelAvailabilityVisibilityChains = VK_TRUE;
+    gpuFeatures12.vulkanMemoryModelAvailabilityVisibilityChains = VK_FALSE;
     gpuFeatures12.pNext = &gpuFeatures11;
 
     gpuFeatures13.inlineUniformBlock = VK_TRUE;
@@ -189,8 +189,8 @@ void Device::setupFeaturesExtensions()
     gpuFeatures13.pNext = &gpuFeatures12;
 
     descriptorBufferFeature.descriptorBuffer = VK_TRUE;
-    descriptorBufferFeature.descriptorBufferCaptureReplay = VK_TRUE;
-    descriptorBufferFeature.descriptorBufferImageLayoutIgnored = VK_TRUE;
+    descriptorBufferFeature.descriptorBufferCaptureReplay = VK_FALSE;
+    descriptorBufferFeature.descriptorBufferImageLayoutIgnored = VK_FALSE;
     descriptorBufferFeature.descriptorBufferPushDescriptors = VK_TRUE;
     descriptorBufferFeature.pNext = &gpuFeatures13;
 
