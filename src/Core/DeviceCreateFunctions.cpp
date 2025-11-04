@@ -1,10 +1,11 @@
 // standard headers
-#include <memory>
-#include <variant>
-#include <expected>
-#include <vector>
 #include <array>
+#include <expected>
 #include <iostream>
+#include <memory>
+#include <print>
+#include <variant>
+#include <vector>
 
 // project headers
 #include "Lettuce/Core/Device.hpp"
@@ -100,9 +101,17 @@ auto Device::CreatePipeline(const GraphicsPipelineCreateData& data) -> Result<Pi
     {
         auto pipeline = std::make_shared<Pipeline>();
 
+        std::vector<VkFormat> colorFormats;
+        colorFormats.reserve(data.colorTargets.size());
+        for(const auto& target : data.colorTargets)
+        {
+            colorFormats.push_back(target.lock()->GetFormat());
+        }
+
         GraphicsPipelineCreateInfo gpipelineCI = {
             .topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
             .fragmentShadingRate = false, // TODO: impl fragment shading rate
+            .colorAttachmentFormats = colorFormats,
             .layout = (data.descriptorTable.lock())->m_pipelineLayout,
         };
         auto shaderModule = data.shaders.lock()->m_shaderModule;

@@ -1,6 +1,7 @@
 // standard headers
 #include <memory>
 #include <array>
+#include <print>
 
 // project headers
 #include "Lettuce/Core/Pipeline.hpp"
@@ -74,11 +75,14 @@ void Pipeline::Create(const IDevice& device, const GraphicsPipelineCreateInfo& c
     VkPipelineDepthStencilStateCreateInfo depthStencilState =
     {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO,
+        .depthTestEnable = VK_FALSE,
+        .depthWriteEnable = VK_FALSE,
     };
     VkPipelineColorBlendStateCreateInfo colorBlendState =
     {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO,
         .logicOpEnable = VK_FALSE,
+        .attachmentCount = (uint32_t)createInfo.colorAttachmentFormats.size(),
     };
 
     std::array<VkDynamicState, 3> dynamicStates =
@@ -144,7 +148,10 @@ void Pipeline::Create(const IDevice& device, const GraphicsPipelineCreateInfo& c
         .pColorBlendState = &colorBlendState,
         .pDynamicState = &dynamicState,
         .layout = m_layout,
+        .subpass = 0,
+        .basePipelineHandle = VK_NULL_HANDLE,
     };
+    std::println("before vkCreateGraphicsPipelines");
     handleResult(vkCreateGraphicsPipelines(m_device, VK_NULL_HANDLE, 1, &gpipelineCI, nullptr, &m_pipeline));
 }
 
