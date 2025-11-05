@@ -15,6 +15,7 @@ Created by @PieroCastillo on 2025-07-20
 #include <vector>
 
 // project headers
+#include "Allocators/GPUMonotonicBufferResource.hpp"
 #include "common.hpp"
 #include "DescriptorTable.hpp"
 #include "DeviceExecutionContext.hpp"
@@ -106,7 +107,7 @@ namespace Lettuce::Core
         bool preferDedicated;
     };
 
-    class Device : IDevice
+    class Device : public IDevice
     {
     private:
         VkDebugUtilsMessengerEXT m_messenger;
@@ -192,6 +193,7 @@ namespace Lettuce::Core
 
         template<ICommandRecordingContext... Contexts>
         auto CreateGraph() -> Result<RenderFlowGraph<Contexts...>>;
+        auto CreateGPUMonotonicBufferResource(const Allocators::GPUMonotonicBufferResourceCreateInfo& createInfo) -> Result<Allocators::GPUMonotonicBufferResource>;
         // auto CreateRenderTarget() -> Result<RenderTarget>;
         auto CreatePipeline(const ComputePipelineCreateData& data) -> Result<Pipeline>;
         auto CreatePipeline(const GraphicsPipelineCreateData& data) -> Result<Pipeline>;

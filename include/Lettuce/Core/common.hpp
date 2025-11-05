@@ -2,9 +2,11 @@
 #define COMMON_HPP
 
 // standard headers
+#include <array>
 #include <cstdint>
 #include <stdexcept>
 #include <string>
+#include <utility>
 #include <vector>
 
 // library headers
@@ -103,6 +105,16 @@ struct VkImageSubresourceRange;
 
 namespace Lettuce::Core
 {
+    enum class AllocatorUsage
+    {
+        Staging,                 // TRANSFER_SRC
+        ShaderGeometry,          // VERTEX | INDEX | TRANSFER_DST
+        ShaderReadOnlyResource,  // UNIFORM | SHADER_DEVICE_ADDRESS
+        ShaderReadWriteResource, // STORAGE | SHADER_DEVICE_ADDRESS
+        Descriptors,             // RESOURCE_DESCRIPTOR_BUFFER | SAMPLER_DESCRIPTOR_BUFFER
+        Indirect,                // INDIRECT_BUFFER | SHADER_DEVICE_ADDRESS
+    };
+
     enum class MemoryAccess
     {
         FastGPUReadWrite,    // DEVICE_LOCAL
@@ -116,6 +128,8 @@ namespace Lettuce::Core
         Success,
         OutOfDeviceMemory,
         OutOfHostMemory,
+        AllocationFailed,
+        DoubleFree,
         InvalidDevice,
         InvalidOperation,
         InvalidShaderEntryPoint,
@@ -128,6 +142,21 @@ namespace Lettuce::Core
         NotFound,
         Unknown,
     };
+
+    [[nodiscard]] constexpr VkBufferUsageFlags mapAllocatorUsageToVk(AllocatorUsage usage) noexcept
+    {
+        using enum AllocatorUsage;
+        constexpr std::array<VkBufferUsageFlags, 6> table{
+            VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+            VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+            VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
+            VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
+            VK_BUFFER_USAGE_RESOURCE_DESCRIPTOR_BUFFER_BIT_EXT | VK_BUFFER_USAGE_SAMPLER_DESCRIPTOR_BUFFER_BIT_EXT,
+            VK_BUFFER_USAGE_INDIRECT_BUFFER_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT
+        };
+
+        return table[std::to_underlying(usage)];
+    }
 
     uint32_t findMemoryTypeIndex(VkDevice device, VkPhysicalDevice gpu, uint32_t typeFilter, MemoryAccess access);
 
@@ -181,6 +210,30 @@ namespace Lettuce::Core
             throw LettuceException(vkResult);
         }
     }
+
+    constexpr uint32_t align_up(uint32_t data, uint32_t alignment) {
+        if ((alignment & (alignment - 1)) != 0)
+            throw "alignment must be a power of two";
+
+        return (data + alignment - 1) & ~(alignment - 1);
+    }
+
+    using AllocationHandle = uint32_t;
+
+    struct BufferAllocation
+    {
+        VkBuffer buffer;
+        uint32_t size;
+        uint32_t offset;
+        void* data;
+        AllocationHandle handle;
+    };
+
+    struct ImageAllocation
+    {
+        VkImage image;
+        AllocationHandle handle;
+    };
 
     class IDevice
     {

@@ -71,6 +71,22 @@ auto Device::CreateContext(const DeviceExecutionContextCreateInfo& createInfo) -
     }
 }
 
+auto Device::CreateGPUMonotonicBufferResource(const Allocators::GPUMonotonicBufferResourceCreateInfo& createInfo) -> Result<Allocators::GPUMonotonicBufferResource>
+{
+    try
+    {
+        return std::make_shared<Allocators::GPUMonotonicBufferResource>(*this, createInfo);
+    }
+    catch (LettuceException e)
+    {
+        return std::unexpected(e.result);
+    }
+    catch (...)
+    {
+        return std::unexpected(LettuceResult::Unknown);
+    }
+}
+
 auto Device::CreatePipeline(const ComputePipelineCreateData& data) -> Result<Pipeline>
 {
     try
@@ -103,7 +119,7 @@ auto Device::CreatePipeline(const GraphicsPipelineCreateData& data) -> Result<Pi
 
         std::vector<VkFormat> colorFormats;
         colorFormats.reserve(data.colorTargets.size());
-        for(const auto& target : data.colorTargets)
+        for (const auto& target : data.colorTargets)
         {
             colorFormats.push_back(target.lock()->GetFormat());
         }

@@ -1,6 +1,12 @@
 #include "Core/common.hpp"
 
+// allocators
+#include "Core/Allocators/LinearBufferSubAlloc.hpp"
+#include "Core/Allocators/LinearImageAlloc.hpp"
+#include "Core/Allocators/GPUMonotonicBufferResource.hpp"
+
 // resource management
+#include "Core/DeviceVector.hpp"
 #include "Core/Mesh.hpp"
 #include "Core/TableGroup.hpp"
 #include "Core/TextureDictionary.hpp"

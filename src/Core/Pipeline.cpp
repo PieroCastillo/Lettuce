@@ -78,11 +78,21 @@ void Pipeline::Create(const IDevice& device, const GraphicsPipelineCreateInfo& c
         .depthTestEnable = VK_FALSE,
         .depthWriteEnable = VK_FALSE,
     };
+
+    VkPipelineColorBlendAttachmentState colorBlendAttachment = {
+        .blendEnable = VK_FALSE,
+        .colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT,
+    };
+
+    std::vector<VkPipelineColorBlendAttachmentState> colorBlendAttachments(createInfo.colorAttachmentFormats.size(), colorBlendAttachment);
+
+    // blending disabled, pipeline writes "directly" to the attachments
     VkPipelineColorBlendStateCreateInfo colorBlendState =
     {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO,
         .logicOpEnable = VK_FALSE,
-        .attachmentCount = (uint32_t)createInfo.colorAttachmentFormats.size(),
+        .attachmentCount = (uint32_t)colorBlendAttachments.size(),
+        .pAttachments = colorBlendAttachments.data(),
     };
 
     std::array<VkDynamicState, 3> dynamicStates =
@@ -151,7 +161,6 @@ void Pipeline::Create(const IDevice& device, const GraphicsPipelineCreateInfo& c
         .subpass = 0,
         .basePipelineHandle = VK_NULL_HANDLE,
     };
-    std::println("before vkCreateGraphicsPipelines");
     handleResult(vkCreateGraphicsPipelines(m_device, VK_NULL_HANDLE, 1, &gpipelineCI, nullptr, &m_pipeline));
 }
 
