@@ -183,6 +183,18 @@ namespace Lettuce::Core
             switch (r) {
             case LettuceResult::OutOfDeviceMemory: return "Out of Device Memory";
             case LettuceResult::OutOfHostMemory: return "Out of Host Memory";
+            case LettuceResult::AllocationFailed: return "Allocation Failed";
+            case LettuceResult::DoubleFree: return "Double Free Detected";
+            case LettuceResult::InvalidDevice: return "Invalid Device";
+            case LettuceResult::InvalidOperation: return "Invalid Operation";
+            case LettuceResult::InvalidShaderEntryPoint: return "Invalid Shader Entry Point";
+            case LettuceResult::InitializationFailed: return "Initialization Failed";
+            case LettuceResult::RequiredMemoryNotFound: return "Required Memory Not Found";
+            case LettuceResult::ShaderReflectionFailed: return "Shader Reflection Failed";
+            case LettuceResult::ShaderCompilationFailed: return "Shader Compilation Failed";
+            case LettuceResult::ShaderParametersMismatch: return "Shader Parameters Mismatch";
+            case LettuceResult::NotReady: return "Not Ready";
+            case LettuceResult::NotFound: return "Not Found";
             default: return "Unknown error";
             }
         }

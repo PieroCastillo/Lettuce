@@ -93,7 +93,7 @@ void createRenderingObjects()
     };
     rgbPipeline = device->CreatePipeline(gpipelineData).value();
 
-    //auto& set1 = descriptorTable->CreateSetInstance("params", "params1");
+    auto& set1 = descriptorTable->CreateSetInstance("params", "params1");
     //set1.Bind("res", nullptr);
 
     //descriptorTable->BuildSets();
