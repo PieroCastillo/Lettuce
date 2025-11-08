@@ -79,7 +79,7 @@ void createRenderingObjects()
     auto shaders = device->CreateShaderPack(shadersCI).value();
 
     DescriptorTableCreateInfo descriptorTableCI = {
-        .bindings = shaders->GetDescriptorsInfo(),
+        .setLayoutInfos = shaders->GetDescriptorsInfo(),
         .maxDescriptorVariantsPerSet = 3,
     };
     descriptorTable = device->CreateDescriptorTable(descriptorTableCI).value();
@@ -92,6 +92,11 @@ void createRenderingObjects()
         .fragmentEntryPoint = "fragmentMain",
     };
     rgbPipeline = device->CreatePipeline(gpipelineData).value();
+
+    //auto& set1 = descriptorTable->CreateSetInstance("params", "params1");
+    //set1.Bind("res", nullptr);
+
+    //descriptorTable->BuildSets();
 
     shaders->Release();
 }

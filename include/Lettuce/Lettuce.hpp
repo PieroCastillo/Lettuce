@@ -10,6 +10,7 @@
 #include "Core/Mesh.hpp"
 #include "Core/TableGroup.hpp"
 #include "Core/TextureDictionary.hpp"
+#include "Core/ResourceDictionary.hpp"
 
 //pipelines
 #include "Core/Pipeline.hpp"

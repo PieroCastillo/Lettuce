@@ -67,24 +67,37 @@ void ShaderPack::Create(const IDevice& device, const ShaderPackCreateInfo& creat
 
     // create descriptors set layouts
     // unordered map with name-binding is located in descriptor table
+    // spirv does not store set name, so to use it Lettuce use 
+    // the name of the first binding + "set" 
+    // example:
+    // set : { camera, ubo, normal  }
+    // -> setName = "cameraSet"
     for (const auto* set : setsRefl)
     {
-        DescriptorBindingsInfo bindingsInfo;
-        bindingsInfo.setId = set->set;
+        DescriptorSetLayoutInfo setLayoutInfo = {
+            .setIdx = set->set,
+        };
+        if (set->binding_count > 0)
+            setLayoutInfo.setName = std::string(set->bindings[0]->name) + "set";
+
         for (int i = 0; i < set->binding_count; ++i)
         {
             auto* binding = set->bindings[i];
-            bindingsInfo.bindingId.push_back(binding->binding);
-            bindingsInfo.counts.push_back(binding->count);
-            bindingsInfo.names.emplace_back(binding->name);
-            bindingsInfo.types.push_back(mapReflectTypeToVk(binding->descriptor_type));
+            DescriptorBindingInfo bindingInfo = {
+                .bindingName = binding->name,
+                .bindingIdx = binding->binding,
+                .type = mapReflectTypeToVk(binding->descriptor_type),
+                .count = binding->count,
+            };
 
             std::println("set: {}, binding: {}, name: {}, type: {}", set->set,
                 binding->binding,
                 binding->name,
                 mapReflectTypeToString(binding->descriptor_type));
+
+            setLayoutInfo.bindings.push_back(std::move(bindingInfo));
         }
-        m_descriptorsInfo.push_back(std::move(bindingsInfo));
+        m_descriptorsInfo.push_back(std::move(setLayoutInfo));
     }
 
     VkShaderModuleCreateInfo shaderCI = {
@@ -102,7 +115,7 @@ void ShaderPack::Release()
     vkDestroyShaderModule(m_device, m_shaderModule, nullptr);
 }
 
-auto ShaderPack::GetDescriptorsInfo() -> std::vector<DescriptorBindingsInfo>
+auto ShaderPack::GetDescriptorsInfo() -> std::vector<DescriptorSetLayoutInfo>
 {
     return m_descriptorsInfo;
 }

@@ -22,14 +22,14 @@ namespace Lettuce::Core
 
     class ShaderPack
     {
-        std::vector<DescriptorBindingsInfo> m_descriptorsInfo;
+        std::vector<DescriptorSetLayoutInfo> m_descriptorsInfo;
     public:
         VkDevice m_device;
         VkShaderModule m_shaderModule;
         void Create(const IDevice& device, const ShaderPackCreateInfo& createInfo);
         void Release();
 
-        auto GetDescriptorsInfo() -> std::vector<DescriptorBindingsInfo>;
+        auto GetDescriptorsInfo() -> std::vector<DescriptorSetLayoutInfo>;
     };
 };
 

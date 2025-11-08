@@ -235,6 +235,18 @@ namespace Lettuce::Core
         AllocationHandle handle;
     };
 
+    struct BufferHandle
+    {
+        VkDeviceAddress address;
+        uint32_t size;
+    };
+
+    struct TextureHandle
+    {
+        VkImageView view;
+        VkImageLayout layout;
+    };
+
     class IDevice
     {
     public:
@@ -249,13 +261,20 @@ namespace Lettuce::Core
         uint32_t m_transferQueueFamilyIndex;
         bool supportBufferUsage2;
     };
+    
+    struct DescriptorBindingInfo
+    {
+        std::string bindingName;
+        uint32_t bindingIdx;
+        VkDescriptorType type;
+        uint32_t count;
+    };
 
-    struct DescriptorBindingsInfo {
-        uint32_t setId;
-        std::vector<uint32_t> bindingId;
-        std::vector<std::string> names;
-        std::vector<uint32_t> counts;
-        std::vector<VkDescriptorType> types;
+    struct DescriptorSetLayoutInfo
+    {
+        std::string setName;
+        uint32_t setIdx;
+        std::vector<DescriptorBindingInfo> bindings;
     };
 }
 #endif // COMMON_HPP
