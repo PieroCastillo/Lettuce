@@ -18,9 +18,42 @@ Created by @PieroCastillo on 2025-07-28
 
 namespace Lettuce::Core
 {
+    /*
+    usually a valid Command Buffer has the next commands:
+        CmdBeginCmd()
+        CmdBeginRendering(Attachment[])
+        BindPipeline(Pipeline, PipelineLayout)
+        BindDescriptorBuffers(PipelineLayout, Buffer)
+        BindDecriptorBufferOffsets(Offset[])
+        SetViewport()
+        SetScissor()
+                    |-- Primitive Shading Pipeline ---|-- Mesh Shading Pipeline ----|
+                    BindVertexBuffers()               |            ------
+                    BindIndexBuffer()                 |            ------
+Direct:             Draw(vertexCount, iCount, firstV, firstI)  DrawMeshTasks(x,y,z)
+D Indexed           DrawIndexed()  -----
+Indirect:           DrawIndirect()               DrawMeshTasksIndirect
+I Indexed:          DrawIndexedIndirect() | -----
+IndirectCount:      DrawIndirectCount()                   DrawMeshTasksIndirectCount
+IC Indexed:         DrawIndexedIndirectCount()
+        CmdEndRendering()
+        CmdEndCmd()
+    
+    */
+
+    struct renderingStartCommand
+    {
+
+    };
+
     struct drawCommand
     {
-        
+        VkPipeline pipeline;
+        VkPipelineLayout pipelineLayout;
+        VkBuffer descriptorBuffer;
+        std::vector<uint64_t> offsets;
+        VkBuffer vertexBuffer;
+        VkBuffer indexBuffer;
     };
 
     struct computeCommand
