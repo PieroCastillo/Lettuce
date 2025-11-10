@@ -34,6 +34,7 @@ constexpr uint32_t height = 768;
 
 std::shared_ptr<Device> device;
 std::shared_ptr<Swapchain> swapchain;
+std::shared_ptr<DeviceExecutionContext> context;
 std::shared_ptr<DescriptorTable> descriptorTable;
 std::shared_ptr<Pipeline> rgbPipeline;
 
@@ -59,6 +60,12 @@ void initLettuce()
         .applicationPtr = &hmodule,
     };
     swapchain = device->CreateSwapchain(swapchainCI).value();
+
+    DeviceExecutionContextCreateInfo contextCI = {
+        .threadCount = 1,
+        .maxTasks = 1,
+    };
+    context = device->CreateContext(contextCI).value();
 }
 
 void createRenderingObjects()
@@ -93,7 +100,7 @@ void createRenderingObjects()
     };
     rgbPipeline = device->CreatePipeline(gpipelineData).value();
 
-    auto& set1 = descriptorTable->CreateSetInstance("params", "params1");
+    auto& set1 = descriptorTable->CreateSetInstance("paramsSet", "params1");
     //set1.Bind("res", nullptr);
 
     //descriptorTable->BuildSets();
@@ -128,6 +135,7 @@ void cleanupLettuce()
     rgbPipeline->Release();
     descriptorTable->Release();
 
+    context->Release(); 
     swapchain->Release();
     device->Release();
 }

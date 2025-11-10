@@ -77,7 +77,7 @@ void DescriptorTable::Create(const IDevice& device, const DescriptorTableCreateI
         m_setLayouts.push_back(dscSetLayout);
 
 
-        m_nameLayout_LayoutInfoMap[setLayoutInfo.setName] = std::make_tuple(dscSetLayout, std::move(setLayoutInfo));
+        m_nameLayout_LayoutInfoMap[setLayoutInfo.setName] = std::make_tuple(dscSetLayout, setLayoutInfo);
     }
     m_bufferSize *= createInfo.maxDescriptorVariantsPerSet;
 
@@ -146,6 +146,7 @@ void DescriptorTable::Release()
 DescriptorSetInstance& DescriptorTable::CreateSetInstance(const std::string& paramsBlockName, const std::string& instanceName)
 {
     auto it = m_nameLayout_LayoutInfoMap.find(paramsBlockName);
+    
     if (it == m_nameLayout_LayoutInfoMap.end())
     {
         throw LettuceException(LettuceResult::NotFound);

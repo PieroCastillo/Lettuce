@@ -9,9 +9,9 @@
 
 using namespace Lettuce::Core;
 
-void CommandRecordingContext::record(VkCommandBuffer cmd)
+CommandsList CommandRecordingContext::GetCommands()
 {
-    
+    return partialCommandList;
 }
 
 void CommandRecordingContext::BindPipeline(const std::shared_ptr<Pipeline>& pipeline)

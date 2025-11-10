@@ -10,6 +10,7 @@ Created by @PieroCastillo on 2025-07-28
 
 // project headers
 #include "common.hpp"
+#include "Commands.hpp"
 #include "DescriptorTable.hpp"
 #include "Mesh.hpp"
 #include "Pipeline.hpp"
@@ -18,59 +19,13 @@ Created by @PieroCastillo on 2025-07-28
 
 namespace Lettuce::Core
 {
-    /*
-    usually a valid Command Buffer has the next commands:
-        CmdBeginCmd()
-        CmdBeginRendering(Attachment[])
-        BindPipeline(Pipeline, PipelineLayout)
-        BindDescriptorBuffers(PipelineLayout, Buffer)
-        BindDecriptorBufferOffsets(Offset[])
-        SetViewport()
-        SetScissor()
-                    |-- Primitive Shading Pipeline ---|-- Mesh Shading Pipeline ----|
-                    BindVertexBuffers()               |            ------
-                    BindIndexBuffer()                 |            ------
-Direct:             Draw(vertexCount, iCount, firstV, firstI)  DrawMeshTasks(x,y,z)
-D Indexed           DrawIndexed()  -----
-Indirect:           DrawIndirect()               DrawMeshTasksIndirect
-I Indexed:          DrawIndexedIndirect() | -----
-IndirectCount:      DrawIndirectCount()                   DrawMeshTasksIndirectCount
-IC Indexed:         DrawIndexedIndirectCount()
-        CmdEndRendering()
-        CmdEndCmd()
-    
-    */
-
-    struct renderingStartCommand
-    {
-
-    };
-
-    struct drawCommand
-    {
-        VkPipeline pipeline;
-        VkPipelineLayout pipelineLayout;
-        VkBuffer descriptorBuffer;
-        std::vector<uint64_t> offsets;
-        VkBuffer vertexBuffer;
-        VkBuffer indexBuffer;
-    };
-
-    struct computeCommand
-    {
-
-    };
-
-    using CommandsList = std::vector<std::variant<drawCommand, computeCommand>>;
-
     /// @brief Stores commands for lazy recording
     class CommandRecordingContext
     {
+    private:
+        CommandsList partialCommandList;
     public:
-        std::vector<drawCommand> drawCommands; 
-        std::vector<computeCommand> computeCommands;
-
-        void record(VkCommandBuffer cmd);
+        CommandsList GetCommands();
 
         // Graphics & Compute commands
         //void BindIndexBuffer(const std::shared_ptr<Buffer>& buffer);

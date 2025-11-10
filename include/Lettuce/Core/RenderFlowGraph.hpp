@@ -25,9 +25,9 @@ namespace Lettuce::Core
     };
 
     template<typename T>
-    concept ICommandRecordingContext = requires(T ctx, VkCommandBuffer cmd)
+    concept ICommandRecordingContext = requires(T ctx)
     {
-        { ctx.record(cmd) } -> std::same_as<void>;
+        { ctx.GetCommands() } -> std::same_as<CommandsList>;
     };
 
     struct RenderFlowGraphCreateInfo

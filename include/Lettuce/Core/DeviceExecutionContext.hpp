@@ -18,7 +18,7 @@ Created by @PieroCastillo on 2025-08-11
 
 // project headers
 #include "common.hpp"
-#include "CommandRecordingContext.hpp"
+#include "Commands.hpp"
 
 namespace Lettuce::Core
 {
@@ -60,15 +60,23 @@ namespace Lettuce::Core
         - Manage synchronization primitives for threads
         - Manage command pools and command buffers
         - Manage Vulkan synchronization objects
+
+        Record():
+        batch 0: Cmd 0  Cmd 1  Cmd 2 
+        batch 1: Cmd 0
+        batch 2: Cmd 0  Cmd 1
+
     */
     class DeviceExecutionContext
     {
     private:
-        DeviceThreadPool threadPool;
-        std::vector<VkCommandPool> cmdPools;
-        std::vector<VkCommandBuffer> cmds;
-        std::vector<std::mutex> cmdPoolAccessMutexes;
+        DeviceThreadPool m_threadPool;
+        std::vector<VkCommandPool> m_cmdPools;
+        std::vector<VkCommandBuffer> m_cmds;
+        std::vector<std::mutex> m_cmdPoolAccessMutexes;
 
+        std::atomic<int> m_currentCmdIdx;
+        VkCommandBuffer nextCmd();
         // called one time
         void setupSynchronizationPrimitives(const DeviceExecutionContextCreateInfo& createInfo);
         void setupCommandPools(const DeviceExecutionContextCreateInfo& createInfo);
@@ -78,12 +86,14 @@ namespace Lettuce::Core
         VkQueue m_graphicsQueue;
         VkQueue m_computeQueue;
         VkQueue m_transferQueue;
+        VkFence m_fence;
 
         void Create(const IDevice& device, const DeviceExecutionContextCreateInfo& createInfo);
         void Release();
 
-        void Record(const CommandsList& cmds);
+        void Record(const std::vector<std::tuple<std::vector<Command>, BarriersInfo>>& waves);
         void Execute();
+        void WaitForExecution();
     };
 }
 #endif // LETTUCE_CORE_DEVICE_EXECUTION_CONTEXT_HPP

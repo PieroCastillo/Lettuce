@@ -1,4 +1,5 @@
 #include "Core/common.hpp"
+#include "Core/Commands.hpp"
 
 // allocators
 #include "Core/Allocators/LinearBufferSubAlloc.hpp"

@@ -74,11 +74,11 @@ void ShaderPack::Create(const IDevice& device, const ShaderPackCreateInfo& creat
     // -> setName = "cameraSet"
     for (const auto* set : setsRefl)
     {
+        auto setName = std::string(set->bindings[0]->name) + "Set";
         DescriptorSetLayoutInfo setLayoutInfo = {
+            .setName = setName,
             .setIdx = set->set,
         };
-        if (set->binding_count > 0)
-            setLayoutInfo.setName = std::string(set->bindings[0]->name) + "set";
 
         for (int i = 0; i < set->binding_count; ++i)
         {

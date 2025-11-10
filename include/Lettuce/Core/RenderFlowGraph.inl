@@ -46,7 +46,7 @@ void RenderFlowGraph<Contexts...>::RenderNode<T>::LinkTo(const RenderNode<U>& no
 template<ICommandRecordingContext... Contexts>
 void RenderFlowGraph<Contexts...>::Compile()
 {
-    // aquí puedes ordenar nodos topológicamente, etc.
+    // sort nodes
 }
 
 template<ICommandRecordingContext... Contexts>
