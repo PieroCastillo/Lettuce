@@ -48,7 +48,7 @@ namespace Lettuce::Core
     struct DeviceExecutionContextCreateInfo
     {
         uint32_t threadCount;
-        uint32_t maxTasks;
+        uint32_t maxDepth;
     };
 
 
@@ -73,6 +73,8 @@ namespace Lettuce::Core
         DeviceThreadPool m_threadPool;
         std::vector<VkCommandPool> m_cmdPools;
         std::vector<VkCommandBuffer> m_cmds;
+        std::vector<VkSemaphore> m_semaphores_g1;
+        std::vector<VkSemaphore> m_semaphores_g2;
         std::vector<std::mutex> m_cmdPoolAccessMutexes;
 
         std::atomic<int> m_currentCmdIdx;

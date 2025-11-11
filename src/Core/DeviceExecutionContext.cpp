@@ -11,8 +11,6 @@
 
 using namespace Lettuce::Core;
 
-
-
 inline void record(VkCommandBuffer cmd, VkPipeline& currentPipeline, VkDeviceAddress& currentDescriptorBufferAddress, const Command& command)
 {
     if (std::holds_alternative<renderingStartCommand>(command))
@@ -139,6 +137,34 @@ VkCommandBuffer DeviceExecutionContext::nextCmd()
     return  cmd;
 }
 
+void DeviceExecutionContext::setupSynchronizationPrimitives(const DeviceExecutionContextCreateInfo& createInfo)
+{
+    VkSemaphoreTypeCreateInfo semTypeCI = {
+        .sType = VK_STRUCTURE_TYPE_SEMAPHORE_TYPE_CREATE_INFO,
+        .semaphoreType = VK_SEMAPHORE_TYPE_TIMELINE,
+        .initialValue = 0,
+    };
+
+    VkSemaphoreCreateInfo semCI = {
+        .sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO,
+        .pNext = &semTypeCI,
+    };
+
+    int semaphoreCount = createInfo.threadCount;
+    m_semaphores_g1.reserve(semaphoreCount);
+    m_semaphores_g2.reserve(semaphoreCount);
+
+    for(int i = 0; i < semaphoreCount;i++)
+    {
+        VkSemaphore sem1, sem2;
+        vkCreateSemaphore(m_device, &semCI, nullptr, &sem1);
+        vkCreateSemaphore(m_device, &semCI, nullptr, &sem2);
+
+        m_semaphores_g1.push_back(sem1);
+        m_semaphores_g2.push_back(sem2);
+    }
+}
+
 void DeviceExecutionContext::setupCommandPools(const DeviceExecutionContextCreateInfo& createInfo)
 {
     // lock all cmd pools
@@ -149,10 +175,10 @@ void DeviceExecutionContext::setupCommandPools(const DeviceExecutionContextCreat
         locks.emplace_back(m);
     /////////////////////////////
 
-    uint32_t cmdCountPerThread = createInfo.maxTasks;
+    uint32_t maxDepth = createInfo.maxDepth;
 
     m_cmdPools.resize(createInfo.threadCount);
-    m_cmds.resize(createInfo.threadCount * cmdCountPerThread);
+    m_cmds.resize(createInfo.threadCount * maxDepth);
 
     for (uint32_t i = 0; i < createInfo.threadCount; ++i)
     {
@@ -167,9 +193,9 @@ void DeviceExecutionContext::setupCommandPools(const DeviceExecutionContextCreat
             .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
             .commandPool = m_cmdPools[i],
             .level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
-            .commandBufferCount = cmdCountPerThread,
+            .commandBufferCount = maxDepth,
         };
-        handleResult(vkAllocateCommandBuffers(m_device, &cmdAllocInfo, &m_cmds[i * cmdCountPerThread]));
+        handleResult(vkAllocateCommandBuffers(m_device, &cmdAllocInfo, &m_cmds[i * maxDepth]));
     }
 }
 
@@ -180,6 +206,7 @@ void DeviceExecutionContext::Create(const IDevice& device, const DeviceExecution
     m_computeQueue = device.m_computeQueue;
     m_transferQueue = device.m_transferQueue;
 
+    setupSynchronizationPrimitives(createInfo);
     setupCommandPools(createInfo);
     m_threadPool.Create(createInfo.threadCount);
 }
@@ -188,12 +215,23 @@ void DeviceExecutionContext::Release()
 {
     m_threadPool.Release();
 
-    uint32_t maxTasks = m_cmds.size() / m_cmdPools.size();
+    uint32_t maxDepth = m_cmds.size() / m_cmdPools.size();
     for (int i = 0; i < m_cmdPools.size(); ++i)
     {
-        vkFreeCommandBuffers(m_device, m_cmdPools[i], maxTasks, m_cmds.data() + (i * maxTasks));
+        vkFreeCommandBuffers(m_device, m_cmdPools[i], maxDepth, m_cmds.data() + (i * maxDepth));
         vkDestroyCommandPool(m_device, m_cmdPools[i], nullptr);
     }
+
+    // destroy semaphores
+    for(int i = 0; i < m_semaphores_g1.size();i++)
+    {
+        vkDestroySemaphore(m_device, m_semaphores_g1[i], nullptr);
+        vkDestroySemaphore(m_device, m_semaphores_g2[i], nullptr);
+    }
+    m_semaphores_g1.clear();
+    m_semaphores_g1.shrink_to_fit();
+    m_semaphores_g2.clear();
+    m_semaphores_g2.shrink_to_fit();
 
     m_cmds.clear();
     m_cmds.shrink_to_fit();
