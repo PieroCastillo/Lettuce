@@ -23,6 +23,7 @@ Created by @PieroCastillo on 2025-07-20
 #include "RenderFlowGraph.hpp"
 #include "Swapchain.hpp"
 #include "Sampler.hpp"
+#include "SequentialExecutionContext.hpp"
 #include "ShaderPack.hpp"
 #include "TextureDictionary.hpp"
 
@@ -198,6 +199,7 @@ namespace Lettuce::Core
         auto CreatePipeline(const ComputePipelineCreateData& data) -> Result<Pipeline>;
         auto CreatePipeline(const GraphicsPipelineCreateData& data) -> Result<Pipeline>;
         // auto CreateSampler() -> Result<Sampler>;
+        auto CreateSequentialContext() -> Result<SequentialExecutionContext>;
         auto CreateShaderPack(const ShaderPackCreateInfo& createInfo) -> Result<ShaderPack>;
         auto CreateSwapchain(const SwapchainCreateInfo& createInfo) -> Result<Swapchain>;
         // auto CreateTableGroup() -> Result<TableGroup>;

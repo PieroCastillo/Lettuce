@@ -204,6 +204,25 @@ auto Device::CreatePipeline(const GraphicsPipelineCreateData& data) -> Result<Pi
     }
 }
 
+auto Device::CreateSequentialContext() -> Result<SequentialExecutionContext>
+{
+    try
+    {
+        SequentialExecutionContextCreateInfo createInfo = {};
+        auto ctx = std::make_shared<SequentialExecutionContext>();
+        ctx->Create(*this, createInfo);
+        return ctx;
+    }
+    catch (LettuceException e)
+    {
+        return std::unexpected(e.result);
+    }
+    catch (...)
+    {
+        return std::unexpected(LettuceResult::Unknown);
+    }
+}
+
 auto Device::CreateShaderPack(const ShaderPackCreateInfo& createInfo) -> Result<ShaderPack>
 {
     try

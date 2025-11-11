@@ -78,7 +78,7 @@ ImageAllocation LinearBufferSubAlloc::do_ialloc(VkFormat format, VkExtent2D exte
 
 void LinearBufferSubAlloc::do_bdeallocate(const BufferAllocation& allocation)
 {
-    throw LettuceException(LettuceResult::InvalidOperation);
+    
 }
 
 void LinearBufferSubAlloc::do_ideallocate(const ImageAllocation& allocation)

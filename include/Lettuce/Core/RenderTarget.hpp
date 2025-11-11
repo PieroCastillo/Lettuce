@@ -10,22 +10,24 @@ Created by @PieroCastillo on 2025-07-20
 
 // project headers
 #include "common.hpp"
+#include "Allocators/IGPUMemoryResource.hpp"
 
 namespace Lettuce::Core
 {
     enum class RenderTargetType
     {
-        ColorRGB,
-        DepthU,
+        ColorRGB_sRGB,
+        ColorRGBA_sRGB,
+        DepthStencilDS40,
     };
 
     struct RenderTargetCreateInfo
     {
         uint32_t width;
         uint32_t height;
-        uint32_t depth;
         RenderTargetType type;
         bool tryCompression;
+        std::shared_ptr<Allocators::IGPUMemoryResource> allocator;
     };
 
     class RenderTarget
@@ -33,19 +35,23 @@ namespace Lettuce::Core
     private:
         friend class Swapchain;
         bool isViewOnly = false;
-        VkImageLayout m_layout;
-        uint32_t p_width, p_height, p_depth;
+        uint32_t p_width, p_height;
+        RenderTargetType m_renderTargetType;
         VkFormat m_format;
+        std::shared_ptr<Allocators::IGPUMemoryResource> m_allocator;
+        ImageAllocation m_allocation;
 
     public:
         VkDevice m_device;
         VkImage m_image;
+        VkImageLayout m_layout;
         VkImageView m_imageView;
 
         void Create(const IDevice& device, const RenderTargetCreateInfo& createInfo);
         void Release();
 
         VkFormat GetFormat();
+        RenderTargetType GetType();
     };
 }
 #endif // LETTUCE_CORE_RENDER_TARGET_HPP

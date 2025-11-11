@@ -34,11 +34,9 @@ constexpr uint32_t height = 768;
 
 std::shared_ptr<Device> device;
 std::shared_ptr<Swapchain> swapchain;
-std::shared_ptr<DeviceExecutionContext> context;
+std::shared_ptr<SequentialExecutionContext> context;
 std::shared_ptr<DescriptorTable> descriptorTable;
 std::shared_ptr<Pipeline> rgbPipeline;
-
-std::shared_ptr<RenderFlowGraph<CommandRecordingContext>> renderGraph;
 
 void initLettuce()
 {
@@ -61,11 +59,7 @@ void initLettuce()
     };
     swapchain = device->CreateSwapchain(swapchainCI).value();
 
-    DeviceExecutionContextCreateInfo contextCI = {
-        .threadCount = 1,
-        .maxTasks = 1,
-    };
-    context = device->CreateContext(contextCI).value();
+    context = device->CreateSequentialContext().value();
 }
 
 void createRenderingObjects()
@@ -108,21 +102,17 @@ void createRenderingObjects()
     shaders->Release();
 }
 
-void createRenderGraph()
-{
-    renderGraph = device->CreateGraph<CommandRecordingContext>().value();
-    auto node = renderGraph->CreateNode<CommandRecordingContext>(NodeKind::Graphics, [&](const CommandRecordingContext& ctx) {
-
-        });
-    renderGraph->Compile();
-}
-
 void mainLoop()
 {
     while (!glfwWindowShouldClose(window))
     {
         swapchain->NextFrame();
 
+        auto& cmd = context->GetCommandList();
+        
+
+        context->Execute();
+        context->Wait();
         swapchain->DisplayFrame();
         glfwPollEvents();
     }
@@ -130,8 +120,6 @@ void mainLoop()
 
 void cleanupLettuce()
 {
-    renderGraph->Release();
-
     rgbPipeline->Release();
     descriptorTable->Release();
 
@@ -161,7 +149,6 @@ int main()
     initWindow();
     initLettuce();
     createRenderingObjects();
-    createRenderGraph();
     mainLoop();
     cleanupLettuce();
     cleanupWindow();

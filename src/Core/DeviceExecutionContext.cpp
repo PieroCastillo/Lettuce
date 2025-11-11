@@ -154,7 +154,7 @@ void DeviceExecutionContext::setupSynchronizationPrimitives(const DeviceExecutio
     m_semaphores_g1.reserve(semaphoreCount);
     m_semaphores_g2.reserve(semaphoreCount);
 
-    for(int i = 0; i < semaphoreCount;i++)
+    for (int i = 0; i < semaphoreCount;i++)
     {
         VkSemaphore sem1, sem2;
         vkCreateSemaphore(m_device, &semCI, nullptr, &sem1);
@@ -223,7 +223,7 @@ void DeviceExecutionContext::Release()
     }
 
     // destroy semaphores
-    for(int i = 0; i < m_semaphores_g1.size();i++)
+    for (int i = 0; i < m_semaphores_g1.size();i++)
     {
         vkDestroySemaphore(m_device, m_semaphores_g1[i], nullptr);
         vkDestroySemaphore(m_device, m_semaphores_g2[i], nullptr);
@@ -285,16 +285,38 @@ void DeviceExecutionContext::Record(const std::vector<std::tuple<std::vector<Com
 
 void DeviceExecutionContext::Execute()
 {
-    // VkCommandBufferSubmitInfo cmdSubmitInfo = {
+    std::vector<std::vector<VkCommandBufferSubmitInfo>> cmdSubmits;
+    std::vector<VkSubmitInfo2> submits;
 
-    // };
+    uint32_t maxDepth = (m_cmdPools.size() / m_cmds.size());
 
-    // VkSubmitInfo2 submitInfo = {
-    //     .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO_2,
-    //     .commandBufferInfoCount = 1,
-    // };
-    // handleResult(vkResetFences(m_device, 1, &m_fence));
-    // handleResult(vkQueueSubmit2(m_graphicsQueue, 1, &submitInfo, m_fence));
+    VkCommandBufferSubmitInfo cmdSubmitInfo = {
+        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_SUBMIT_INFO,
+        .deviceMask = 0,
+    };
+
+    VkSubmitInfo2 submitInfo = {
+        .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO_2,
+    };
+    // VkSemaphoreSubmitInfo
+
+    // for (int i = 0; i < m_cmdPools.size(); ++i)
+    // {
+    //     for (int k = 0; k < maxDepth; ++k)
+    //     {
+    //         cmdSubmits[i][k].commandBuffer = m_cmds[(i * maxDepth) + k];
+    //     }
+    //     submits[i].commandBufferInfoCount = (uint32_t)cmdSubmits[i].size();
+    //     submits[i].pCommandBufferInfos = cmdSubmits[i].data();
+    //     submits[i].waitSemaphoreInfoCount = i % 2 == 0 ? (uint32_t)m_semaphores_g1.size() : (uint32_t)m_semaphores_g2.size();
+    //     submits[i].pWaitSemaphoreInfos = i % 2 == 0 ? m_semaphores_g1.data() : m_semaphores_g2.data();
+    //     submits[i].signalSemaphoreInfoCount = i % 2 == 0 ? (uint32_t)m_semaphores_g2.size() : (uint32_t)m_semaphores_g1.size();
+    //     submits[i].pSignalSemaphoreInfos = i % 2 == 0 ? m_semaphores_g2.data() : m_semaphores_g1.data();
+    // }
+
+
+    handleResult(vkResetFences(m_device, 1, &m_fence));
+    handleResult(vkQueueSubmit2(m_graphicsQueue, (uint32_t)submits.size(), submits.data(), m_fence));
 }
 
 void DeviceExecutionContext::WaitForExecution()

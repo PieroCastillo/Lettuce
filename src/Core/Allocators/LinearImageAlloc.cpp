@@ -89,9 +89,8 @@ void LinearImageAlloc::do_bdeallocate(const BufferAllocation& allocation)
 
 void LinearImageAlloc::do_ideallocate(const ImageAllocation& allocation)
 {
-    throw LettuceException(LettuceResult::InvalidOperation);
+    
 }
-
 
 MemoryAccess LinearImageAlloc::GetMemoryAccess()
 {

@@ -23,8 +23,12 @@ namespace Lettuce::Core
     class CommandRecordingContext
     {
     private:
-        CommandsList partialCommandList;
+        CommandsList m_partialCommandList;
+        drawCommand m_currentDraw;
+        computeCommand m_currentCompute;
     public:
+        CommandRecordingContext();
+
         CommandsList GetCommands();
 
         // Graphics & Compute commands
@@ -34,7 +38,10 @@ namespace Lettuce::Core
         void BindDescriptorTable(const std::shared_ptr<DescriptorTable>& table);
         void BindMesh(const MeshPool::Mesh& mesh);
 
-        void SetOutputs(const std::vector<std::weak_ptr<RenderTarget>>& targets);
+        void BeginRendering(uint32_t width, uint32_t height,
+                            const std::vector<std::weak_ptr<RenderTarget>>& colorTargets,
+                            const std::optional<std::weak_ptr<RenderTarget>> depthStencilTarget);
+        void EndRendering();
         // Graphics commands
         // void ClearColorImage();
         // void ClearDepthStencilImage();

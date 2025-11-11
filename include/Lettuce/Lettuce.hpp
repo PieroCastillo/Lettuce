@@ -21,6 +21,7 @@
 #include "Core/CommandRecordingContext.hpp"
 #include "Core/Device.hpp"
 #include "Core/DeviceExecutionContext.hpp"
+#include "Core/SequentialExecutionContext.hpp"
 #include "Core/DescriptorTable.hpp"
 #include "Core/RenderFlowGraph.hpp"
 #include "Core/RenderTarget.hpp"

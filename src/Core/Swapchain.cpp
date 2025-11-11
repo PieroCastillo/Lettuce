@@ -155,7 +155,6 @@ void Swapchain::setupImagesAndView(const SwapchainCreateInfo& createInfo)
         renderView->m_device = m_device;
         renderView->m_image = m_swapchainImages[i];
         renderView->m_imageView = view;
-        renderView->p_depth = 1;
         renderView->p_height = m_height;
         renderView->p_width = m_width;
         renderView->m_format = m_format;
