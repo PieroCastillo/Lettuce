@@ -36,7 +36,7 @@ void SequentialExecutionContext::record(VkCommandBuffer cmd, VkPipeline& current
             vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, currentPipeline);
         }
 
-        if (currentDescriptorBufferAddress != drawCmd.descriptorBufferAddress)
+        if (drawCmd.descriptorBufferAddress != 0 && currentDescriptorBufferAddress != drawCmd.descriptorBufferAddress)
         {
             currentDescriptorBufferAddress = drawCmd.descriptorBufferAddress;
             VkDescriptorBufferBindingInfoEXT  dbbInfo = {
@@ -48,17 +48,20 @@ void SequentialExecutionContext::record(VkCommandBuffer cmd, VkPipeline& current
         }
 
         // point to the same buffer (index: 0)
-        uint32_t setCount = drawCmd.descriptorBufferOffsets.size();
-        std::vector<uint32_t> bufferIndices(setCount, 0);
+        if (drawCmd.descriptorBufferAddress != 0)
+        {
+            uint32_t setCount = drawCmd.descriptorBufferOffsets.size();
+            std::vector<uint32_t> bufferIndices(setCount, 0);
 
-        vkCmdSetDescriptorBufferOffsetsEXT(cmd,
-            VK_PIPELINE_BIND_POINT_GRAPHICS,
-            drawCmd.pipelineLayout,
-            drawCmd.firstSet,
-            setCount,
-            bufferIndices.data(),
-            drawCmd.descriptorBufferOffsets.data()
-        );
+            vkCmdSetDescriptorBufferOffsetsEXT(cmd,
+                VK_PIPELINE_BIND_POINT_GRAPHICS,
+                drawCmd.pipelineLayout,
+                drawCmd.firstSet,
+                setCount,
+                bufferIndices.data(),
+                drawCmd.descriptorBufferOffsets.data()
+            );
+        }
 
         if (std::holds_alternative<VkDrawMeshTasksIndirectCommandEXT>(drawCmd.drawArgs))
         {
@@ -68,8 +71,19 @@ void SequentialExecutionContext::record(VkCommandBuffer cmd, VkPipeline& current
             return;
         }
 
-        // bind vertex/index buffers
-        vkCmdBindVertexBuffers(cmd, 0, 1, &(drawCmd.vertexBuffer), &(drawCmd.vertexBufferOffset));
+        // bind vertex buffers
+        if (drawCmd.vertexBuffers.size() >= 0) {
+            vkCmdBindVertexBuffers(cmd, 0, (uint32_t)drawCmd.vertexBuffers.size(), drawCmd.vertexBuffers.data(), drawCmd.vertexOffsets.data());
+        }
+
+        VkViewport viewport = {
+            0, 0, drawCmd.width, drawCmd.height, 0, 1
+        };
+        VkRect2D scissor = {
+            {0, 0}, {drawCmd.width, drawCmd.height}
+        };
+        vkCmdSetViewport(cmd, 0, 1, &viewport);
+        vkCmdSetScissor(cmd, 0, 1, &scissor);
 
         if (std::holds_alternative<VkDrawIndirectCommand>(drawCmd.drawArgs))
         {
@@ -78,7 +92,8 @@ void SequentialExecutionContext::record(VkCommandBuffer cmd, VkPipeline& current
         }
         else if (std::holds_alternative<VkDrawIndexedIndirectCommand>(drawCmd.drawArgs))
         {
-            vkCmdBindIndexBuffer(cmd, drawCmd.indexBuffer, drawCmd.indexBufferOffset, VK_INDEX_TYPE_UINT32);
+            if (drawCmd.indexBuffer != VK_NULL_HANDLE)
+                vkCmdBindIndexBuffer(cmd, drawCmd.indexBuffer, drawCmd.indexBufferOffset, VK_INDEX_TYPE_UINT32);
 
             auto drawArgs = std::get<VkDrawIndexedIndirectCommand>(drawCmd.drawArgs);
             vkCmdDrawIndexed(cmd, drawArgs.indexCount, drawArgs.instanceCount, drawArgs.firstIndex, drawArgs.vertexOffset, drawArgs.vertexOffset);
@@ -198,11 +213,11 @@ void SequentialExecutionContext::Execute()
         .commandBuffer = m_cmd,
         .deviceMask = 0,
     };
-    
+
     VkSemaphoreSubmitInfo semWaitInfo = {
         .sType = VK_STRUCTURE_TYPE_SEMAPHORE_SUBMIT_INFO,
         .semaphore = m_renderFinished,
-        .value = (m_currentWaitValue-1),
+        .value = (m_currentWaitValue - 1),
         .stageMask = VK_PIPELINE_STAGE_2_BOTTOM_OF_PIPE_BIT,
         .deviceIndex = 0,
     };

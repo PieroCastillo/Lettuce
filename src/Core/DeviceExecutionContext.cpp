@@ -38,59 +38,59 @@ inline void record(VkCommandBuffer cmd, VkPipeline& currentPipeline, VkDeviceAdd
     {
         auto drawCmd = std::get<drawCommand>(command);
 
-        if (currentPipeline != drawCmd.pipeline)
-        {
-            currentPipeline = drawCmd.pipeline;
-            vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, currentPipeline);
-        }
+        // if (currentPipeline != drawCmd.pipeline)
+        // {
+        //     currentPipeline = drawCmd.pipeline;
+        //     vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, currentPipeline);
+        // }
 
-        if (currentDescriptorBufferAddress != drawCmd.descriptorBufferAddress)
-        {
-            currentDescriptorBufferAddress = drawCmd.descriptorBufferAddress;
-            VkDescriptorBufferBindingInfoEXT  dbbInfo = {
-                .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_BUFFER_BINDING_INFO_EXT,
-                .address = currentDescriptorBufferAddress,
-                .usage = VK_BUFFER_USAGE_RESOURCE_DESCRIPTOR_BUFFER_BIT_EXT | VK_BUFFER_USAGE_SAMPLER_DESCRIPTOR_BUFFER_BIT_EXT,
-            };
-            vkCmdBindDescriptorBuffersEXT(cmd, 1, &dbbInfo);
-        }
+        // if (currentDescriptorBufferAddress != drawCmd.descriptorBufferAddress)
+        // {
+        //     currentDescriptorBufferAddress = drawCmd.descriptorBufferAddress;
+        //     VkDescriptorBufferBindingInfoEXT  dbbInfo = {
+        //         .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_BUFFER_BINDING_INFO_EXT,
+        //         .address = currentDescriptorBufferAddress,
+        //         .usage = VK_BUFFER_USAGE_RESOURCE_DESCRIPTOR_BUFFER_BIT_EXT | VK_BUFFER_USAGE_SAMPLER_DESCRIPTOR_BUFFER_BIT_EXT,
+        //     };
+        //     vkCmdBindDescriptorBuffersEXT(cmd, 1, &dbbInfo);
+        // }
 
-        // point to the same buffer (index: 0)
-        uint32_t setCount = drawCmd.descriptorBufferOffsets.size();
-        std::vector<uint32_t> bufferIndices(setCount, 0);
+        // // point to the same buffer (index: 0)
+        // uint32_t setCount = drawCmd.descriptorBufferOffsets.size();
+        // std::vector<uint32_t> bufferIndices(setCount, 0);
 
-        vkCmdSetDescriptorBufferOffsetsEXT(cmd,
-            VK_PIPELINE_BIND_POINT_GRAPHICS,
-            drawCmd.pipelineLayout,
-            drawCmd.firstSet,
-            setCount,
-            bufferIndices.data(),
-            drawCmd.descriptorBufferOffsets.data()
-        );
+        // vkCmdSetDescriptorBufferOffsetsEXT(cmd,
+        //     VK_PIPELINE_BIND_POINT_GRAPHICS,
+        //     drawCmd.pipelineLayout,
+        //     drawCmd.firstSet,
+        //     setCount,
+        //     bufferIndices.data(),
+        //     drawCmd.descriptorBufferOffsets.data()
+        // );
 
-        if (std::holds_alternative<VkDrawMeshTasksIndirectCommandEXT>(drawCmd.drawArgs))
-        {
-            auto meshArgs = std::get<VkDrawMeshTasksIndirectCommandEXT>(drawCmd.drawArgs);
-            vkCmdDrawMeshTasksEXT(cmd, meshArgs.groupCountX, meshArgs.groupCountY, meshArgs.groupCountZ);
-            // command recording finished here
-            return;
-        }
+        // if (std::holds_alternative<VkDrawMeshTasksIndirectCommandEXT>(drawCmd.drawArgs))
+        // {
+        //     auto meshArgs = std::get<VkDrawMeshTasksIndirectCommandEXT>(drawCmd.drawArgs);
+        //     vkCmdDrawMeshTasksEXT(cmd, meshArgs.groupCountX, meshArgs.groupCountY, meshArgs.groupCountZ);
+        //     // command recording finished here
+        //     return;
+        // }
 
-        // bind vertex/index buffers
-        vkCmdBindVertexBuffers(cmd, 0, 1, &(drawCmd.vertexBuffer), &(drawCmd.vertexBufferOffset));
+        // // bind vertex/index buffers
+        // vkCmdBindVertexBuffers(cmd, 0, 1, &(drawCmd.vertexBuffer), &(drawCmd.vertexBufferOffset));
 
-        if (std::holds_alternative<VkDrawIndirectCommand>(drawCmd.drawArgs))
-        {
-            auto drawArgs = std::get<VkDrawIndirectCommand>(drawCmd.drawArgs);
-            vkCmdDraw(cmd, drawArgs.vertexCount, drawArgs.instanceCount, drawArgs.firstVertex, drawArgs.firstInstance);
-        }
-        else if (std::holds_alternative<VkDrawIndexedIndirectCommand>(drawCmd.drawArgs))
-        {
-            vkCmdBindIndexBuffer(cmd, drawCmd.indexBuffer, drawCmd.indexBufferOffset, VK_INDEX_TYPE_UINT32);
+        // if (std::holds_alternative<VkDrawIndirectCommand>(drawCmd.drawArgs))
+        // {
+        //     auto drawArgs = std::get<VkDrawIndirectCommand>(drawCmd.drawArgs);
+        //     vkCmdDraw(cmd, drawArgs.vertexCount, drawArgs.instanceCount, drawArgs.firstVertex, drawArgs.firstInstance);
+        // }
+        // else if (std::holds_alternative<VkDrawIndexedIndirectCommand>(drawCmd.drawArgs))
+        // {
+        //     vkCmdBindIndexBuffer(cmd, drawCmd.indexBuffer, drawCmd.indexBufferOffset, VK_INDEX_TYPE_UINT32);
 
-            auto drawArgs = std::get<VkDrawIndexedIndirectCommand>(drawCmd.drawArgs);
-            vkCmdDrawIndexed(cmd, drawArgs.indexCount, drawArgs.instanceCount, drawArgs.firstIndex, drawArgs.vertexOffset, drawArgs.vertexOffset);
-        }
+        //     auto drawArgs = std::get<VkDrawIndexedIndirectCommand>(drawCmd.drawArgs);
+        //     vkCmdDrawIndexed(cmd, drawArgs.indexCount, drawArgs.instanceCount, drawArgs.firstIndex, drawArgs.vertexOffset, drawArgs.vertexOffset);
+        // }
 
     }
     else if (std::holds_alternative<computeCommand>(command))

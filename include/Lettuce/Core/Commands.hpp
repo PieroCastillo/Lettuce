@@ -54,12 +54,13 @@ IC Indexed:     DrawIndexedIndirectCount(indirectCountArgs)  |  -----
 
     struct drawCommand
     {
+        uint32_t width, height;
         VkPipeline pipeline;
         VkPipelineLayout pipelineLayout;
-        VkBuffer vertexBuffer;
+        std::vector<VkBuffer> vertexBuffers;
+        std::vector<uint64_t> vertexOffsets;
         VkBuffer indexBuffer;
         uint64_t descriptorBufferAddress;
-        uint64_t vertexBufferOffset;
         uint64_t indexBufferOffset;
         std::vector<uint64_t> descriptorBufferOffsets; // set count is embedded in offsets
         uint32_t firstSet;

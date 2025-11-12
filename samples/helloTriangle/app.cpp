@@ -13,6 +13,8 @@
 #include <fstream>
 #include <filesystem>
 #include <source_location>
+#include <optional>
+#include <functional>
 
 void check(std::string_view message,
     const std::source_location& loc = std::source_location::current())
@@ -93,8 +95,7 @@ void createRenderingObjects()
         .fragmentEntryPoint = "fragmentMain",
     };
     rgbPipeline = device->CreatePipeline(gpipelineData).value();
-
-    auto& set1 = descriptorTable->CreateSetInstance("paramsSet", "params1");
+    // auto& set1 = descriptorTable->CreateSetInstance("paramsSet", "params1");
     //set1.Bind("res", nullptr);
 
     //descriptorTable->BuildSets();
@@ -108,8 +109,13 @@ void mainLoop()
     {
         swapchain->NextFrame();
 
+        auto& frame = swapchain->GetCurrentRenderView();
         auto& cmd = context->GetCommandList();
-        
+        cmd.BeginRendering(width, height, { std::ref(frame) }, std::nullopt);
+        cmd.BindDescriptorTable(descriptorTable);
+        cmd.BindPipeline(rgbPipeline);
+        cmd.Draw(3, 1);
+        cmd.EndRendering();
 
         context->Execute();
         context->Wait();
@@ -123,7 +129,7 @@ void cleanupLettuce()
     rgbPipeline->Release();
     descriptorTable->Release();
 
-    context->Release(); 
+    context->Release();
     swapchain->Release();
     device->Release();
 }

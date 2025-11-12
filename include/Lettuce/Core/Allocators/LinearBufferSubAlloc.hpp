@@ -17,7 +17,7 @@ namespace Lettuce::Core::Allocators
         uint32_t maxSize;
     };
 
-    class LinearBufferSubAlloc : IGPUMemoryResource
+    class LinearBufferSubAlloc : public  IGPUMemoryResource
     {
         VkDevice m_device;
         VkBuffer m_buffer;

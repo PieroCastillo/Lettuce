@@ -38,6 +38,7 @@ namespace Lettuce::Core
         std::vector<std::weak_ptr<RenderTarget>> colorTargets;
         std::weak_ptr<RenderTarget> depthTarget;
         // "classic" rasterization pipeline
+        std::vector<VertexInput> inputs;
         std::optional<std::string> vertexEntryPoint;
         std::optional<std::string> tesselletionControlEntryPoint;
         std::optional<std::string> tesselletionEvaluationEntryPoint;

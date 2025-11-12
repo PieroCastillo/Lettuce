@@ -60,7 +60,7 @@ for _, name in ipairs(samples) do
             for _, f in ipairs(slang_files) do
                 local outfile = path.join(outdir, path.basename(f) .. ".spv")
 
-                local args = { '-fspv-reflect', '-preserve-params', f, "-profile", "glsl_450", "-target", "spirv", "-o", outfile }
+                local args = { '-fspv-reflect', '-fvk-use-scalar-layout', '-preserve-params', f, "-profile", "glsl_460", "-target", "spirv", "-o", outfile }
 
                 local proc = process.openv("slangc", args)
                 local ok, status = proc:wait()

@@ -114,6 +114,32 @@ auto Device::CreatePipeline(const GraphicsPipelineCreateData& data) -> Result<Pi
             .colorAttachmentFormats = colorFormats,
             .layout = (data.descriptorTable.lock())->m_pipelineLayout,
         };
+        // create vertex input & attributes
+        uint32_t idx = 0;
+        uint32_t elementSize = 0;
+        VkFormat format = VK_FORMAT_UNDEFINED;
+        for (const auto input : data.inputs)
+        {
+            switch (input)
+            {
+            case VertexInput::float32x2:
+                elementSize = sizeof(float) * 2;
+                format = VK_FORMAT_R32G32_SFLOAT;
+                break;
+            case VertexInput::float32x3:
+                elementSize = sizeof(float) * 3;
+                format = VK_FORMAT_R32G32B32_SFLOAT;
+                break;
+            case VertexInput::float32x4:
+                elementSize = sizeof(float) * 4;
+                format = VK_FORMAT_R32G32B32A32_SFLOAT;
+                break;
+            }
+            gpipelineCI.vertexAttributes.push_back({ idx, idx, format, 0 });
+            gpipelineCI.vertexBindings.push_back({ idx, elementSize, VK_VERTEX_INPUT_RATE_VERTEX });
+        }
+
+        // create shader module
         auto shaderModule = data.shaders.lock()->m_shaderModule;
 
         // define shaders for the pipeline

@@ -80,13 +80,15 @@ void DescriptorTable::Create(const IDevice& device, const DescriptorTableCreateI
         m_nameLayout_LayoutInfoMap[setLayoutInfo.setName] = std::make_tuple(dscSetLayout, setLayoutInfo);
     }
     m_bufferSize *= createInfo.maxDescriptorVariantsPerSet;
-
+    m_bufferSize = (std::max)((uint64_t)16, m_bufferSize); // if there's no descriptor sets
     // initialize descriptor buffer and its device memory
 
     VkBufferCreateInfo descriptorBufferCI = {
         .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
         .size = m_bufferSize,
-        .usage = VK_BUFFER_USAGE_RESOURCE_DESCRIPTOR_BUFFER_BIT_EXT | VK_BUFFER_USAGE_SAMPLER_DESCRIPTOR_BUFFER_BIT_EXT,
+        .usage = VK_BUFFER_USAGE_RESOURCE_DESCRIPTOR_BUFFER_BIT_EXT |
+                 VK_BUFFER_USAGE_SAMPLER_DESCRIPTOR_BUFFER_BIT_EXT |
+                 VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
         .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
     };
     handleResult(vkCreateBuffer(m_device, &descriptorBufferCI, nullptr, &m_descriptorBuffer));
@@ -106,8 +108,15 @@ void DescriptorTable::Create(const IDevice& device, const DescriptorTableCreateI
     m_descriptorTypeSizeMap[VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER] = dbProps.combinedImageSamplerDescriptorSize;
     m_descriptorTypeSizeMap[VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT] = dbProps.inputAttachmentDescriptorSize;
 
+    VkMemoryAllocateFlagsInfo memoryFlags = {
+        .sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_FLAGS_INFO,
+        .flags = VK_MEMORY_ALLOCATE_DEVICE_ADDRESS_BIT,
+        .deviceMask = 0,
+    };
+
     VkMemoryAllocateInfo memoryAI = {
         .sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
+        .pNext = &memoryFlags,
         .allocationSize = memReqs.size,
         .memoryTypeIndex = findMemoryTypeIndex(m_device, device.m_physicalDevice, memReqs.memoryTypeBits, MemoryAccess::FastCPUWriteGPURead),
     };
@@ -118,6 +127,13 @@ void DescriptorTable::Create(const IDevice& device, const DescriptorTableCreateI
 
     // prepare memory to be mapped
     vkMapMemory(m_device, m_descriptorBufferMemory, 0, m_bufferSize, 0, (void**)&m_mappedData);
+
+    // get address
+    VkBufferDeviceAddressInfo addressInfo = {
+        .sType = VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO,
+        .buffer = m_descriptorBuffer,
+    };
+    m_bufferAddress = vkGetBufferDeviceAddress(m_device, &addressInfo);
 
     // create pipeline layout
     VkPipelineLayoutCreateInfo pipelineLayoutCI = {
@@ -146,7 +162,7 @@ void DescriptorTable::Release()
 DescriptorSetInstance& DescriptorTable::CreateSetInstance(const std::string& paramsBlockName, const std::string& instanceName)
 {
     auto it = m_nameLayout_LayoutInfoMap.find(paramsBlockName);
-    
+
     if (it == m_nameLayout_LayoutInfoMap.end())
     {
         throw LettuceException(LettuceResult::NotFound);
@@ -240,10 +256,19 @@ void DescriptorTable::BuildSets()
     }
 }
 
-
 void DescriptorTable::Reset()
 {
     m_nameInstance_OffsetMap.clear();
     m_nameInstance_SetInstanceMap.clear();
     m_currentOffset = 0;
+}
+
+uint64_t DescriptorTable::GetAddress()
+{
+    return m_bufferAddress;
+}
+
+uint32_t DescriptorTable::GetDescriptorSetLayoutCount()
+{
+    return (uint32_t)m_setLayouts.size();
 }

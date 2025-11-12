@@ -16,7 +16,7 @@ namespace Lettuce::Core::Allocators
         uint32_t maxSize;
     };
 
-    class LinearImageAlloc : IGPUMemoryResource
+    class LinearImageAlloc : public IGPUMemoryResource
     {
         VkDevice m_device;
         VkDeviceMemory m_memory;

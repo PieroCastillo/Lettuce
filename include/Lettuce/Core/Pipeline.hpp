@@ -22,6 +22,8 @@ namespace Lettuce::Core
         std::vector<VkShaderStageFlagBits> stages;
         std::vector<VkShaderModule> shaderModules;
         std::vector<VkFormat> colorAttachmentFormats;
+        std::vector<VkVertexInputBindingDescription> vertexBindings;
+        std::vector<VkVertexInputAttributeDescription> vertexAttributes;
         VkFormat depthAttachmentFormat;
         VkFormat stencilAttachmentFormat;
         VkPipelineLayout layout;

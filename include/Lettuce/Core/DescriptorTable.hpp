@@ -52,6 +52,7 @@ namespace Lettuce::Core
     {
     private:
         // constant params
+        uint64_t m_bufferAddress;
         uint64_t m_bufferSize;
         uint64_t m_bufferAlignment;
         uint64_t m_mappedData;
@@ -79,6 +80,8 @@ namespace Lettuce::Core
         void BuildSets();
 
         void Reset();
+        uint64_t GetAddress();
+        uint32_t GetDescriptorSetLayoutCount();
     };
 }
 #endif // LETTUCE_CORE_DESCRIPTOR_TABLE_HPP

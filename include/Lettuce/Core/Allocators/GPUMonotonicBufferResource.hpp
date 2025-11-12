@@ -19,7 +19,7 @@ namespace Lettuce::Core::Allocators
         uint32_t maxSize;
     };
 
-    class GPUMonotonicBufferResource : std::pmr::memory_resource
+    class GPUMonotonicBufferResource : public std::pmr::memory_resource
     {
         VkDevice m_device;
         VkBuffer m_buffer;

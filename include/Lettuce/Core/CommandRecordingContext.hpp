@@ -26,6 +26,7 @@ namespace Lettuce::Core
         CommandsList m_partialCommandList;
         drawCommand m_currentDraw;
         computeCommand m_currentCompute;
+        uint32_t m_width, m_height;
     public:
         CommandRecordingContext();
 
@@ -39,15 +40,15 @@ namespace Lettuce::Core
         void BindMesh(const MeshPool::Mesh& mesh);
 
         void BeginRendering(uint32_t width, uint32_t height,
-                            const std::vector<std::weak_ptr<RenderTarget>>& colorTargets,
-                            const std::optional<std::weak_ptr<RenderTarget>> depthStencilTarget);
+                            const std::vector<std::reference_wrapper<const RenderTarget>>& colorTargets,
+                            const std::optional<std::reference_wrapper<const RenderTarget>> depthStencilTarget);
         void EndRendering();
         // Graphics commands
         // void ClearColorImage();
         // void ClearDepthStencilImage();
         // void ClearAttachments();
 
-        // void Draw();
+        void Draw(uint32_t vertexCount, uint32_t instanceCount);
         // void DrawMeshTasks();
 
         // void DrawIndexed(const DrawIndexedArgs& args);
