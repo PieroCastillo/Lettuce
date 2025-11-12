@@ -71,22 +71,6 @@ auto Device::CreateContext(const DeviceExecutionContextCreateInfo& createInfo) -
     }
 }
 
-auto Device::CreateGPUMonotonicBufferResource(const Allocators::GPUMonotonicBufferResourceCreateInfo& createInfo) -> Result<Allocators::GPUMonotonicBufferResource>
-{
-    try
-    {
-        return std::make_shared<Allocators::GPUMonotonicBufferResource>(*this, createInfo);
-    }
-    catch (LettuceException e)
-    {
-        return std::unexpected(e.result);
-    }
-    catch (...)
-    {
-        return std::unexpected(LettuceResult::Unknown);
-    }
-}
-
 auto Device::CreatePipeline(const ComputePipelineCreateData& data) -> Result<Pipeline>
 {
     try
@@ -204,6 +188,24 @@ auto Device::CreatePipeline(const GraphicsPipelineCreateData& data) -> Result<Pi
     }
 }
 
+auto Device::CreateRenderTarget(const RenderTargetCreateInfo& createInfo) -> Result<RenderTarget>
+{
+    try
+    {
+        auto rt = std::make_shared<RenderTarget>();
+        rt->Create(*this, createInfo);
+        return rt;
+    }
+    catch (LettuceException e)
+    {
+        return std::unexpected(e.result);
+    }
+    catch (...)
+    {
+        return std::unexpected(LettuceResult::Unknown);
+    }
+}
+
 auto Device::CreateSequentialContext() -> Result<SequentialExecutionContext>
 {
     try
@@ -286,4 +288,57 @@ auto Device::CreateTextureDictionary(const TextureCreateData& createData) -> Res
     {
         return std::unexpected(LettuceResult::Unknown);
     }
+}
+
+auto Device::CreateGPUMonotonicBufferResource(const Allocators::GPUMonotonicBufferResourceCreateInfo& createInfo) -> Result<Allocators::GPUMonotonicBufferResource>
+{
+    try
+    {
+        return std::make_shared<Allocators::GPUMonotonicBufferResource>(*this, createInfo);
+    }
+    catch (LettuceException e)
+    {
+        return std::unexpected(e.result);
+    }
+    catch (...)
+    {
+        return std::unexpected(LettuceResult::Unknown);
+    }
+}
+
+auto Device::CreateLinearImageAllocator(const Allocators::LinearImageAllocCreateInfo& createInfo) -> Result<Allocators::LinearImageAlloc>
+{
+    try
+    {
+        auto alloc = std::make_shared<Allocators::LinearImageAlloc>();
+        alloc->Create(*this, createInfo);
+        return alloc;
+    }
+    catch (LettuceException e)
+    {
+        return std::unexpected(e.result);
+    }
+    catch (...)
+    {
+        return std::unexpected(LettuceResult::Unknown);
+    }
+}
+
+auto Device::CreateLinearBufferSuballocator(const Allocators::LinearBufferSubAllocCreateInfo& createInfo) -> Result<Allocators::LinearBufferSubAlloc>
+{
+    try
+    {
+        auto alloc = std::make_shared<Allocators::LinearBufferSubAlloc>();
+        alloc->Create(*this, createInfo);
+        return alloc;
+    }
+    catch (LettuceException e)
+    {
+        return std::unexpected(e.result);
+    }
+    catch (...)
+    {
+        return std::unexpected(LettuceResult::Unknown);
+    }
+
 }

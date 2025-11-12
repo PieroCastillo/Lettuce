@@ -16,6 +16,8 @@ Created by @PieroCastillo on 2025-07-20
 
 // project headers
 #include "Allocators/GPUMonotonicBufferResource.hpp"
+#include "Allocators/LinearImageAlloc.hpp"
+#include "Allocators/LinearBufferSubAlloc.hpp"
 #include "common.hpp"
 #include "DescriptorTable.hpp"
 #include "DeviceExecutionContext.hpp"
@@ -194,16 +196,20 @@ namespace Lettuce::Core
 
         template<ICommandRecordingContext... Contexts>
         auto CreateGraph() -> Result<RenderFlowGraph<Contexts...>>;
-        auto CreateGPUMonotonicBufferResource(const Allocators::GPUMonotonicBufferResourceCreateInfo& createInfo) -> Result<Allocators::GPUMonotonicBufferResource>;
-        // auto CreateRenderTarget() -> Result<RenderTarget>;
         auto CreatePipeline(const ComputePipelineCreateData& data) -> Result<Pipeline>;
         auto CreatePipeline(const GraphicsPipelineCreateData& data) -> Result<Pipeline>;
+        auto CreateRenderTarget(const RenderTargetCreateInfo& createInfo) -> Result<RenderTarget>;
         // auto CreateSampler() -> Result<Sampler>;
         auto CreateSequentialContext() -> Result<SequentialExecutionContext>;
         auto CreateShaderPack(const ShaderPackCreateInfo& createInfo) -> Result<ShaderPack>;
         auto CreateSwapchain(const SwapchainCreateInfo& createInfo) -> Result<Swapchain>;
         // auto CreateTableGroup() -> Result<TableGroup>;
         auto CreateTextureDictionary(const TextureCreateData& createData) -> Result<TextureDictionary>;
+
+        // allocators:
+        auto CreateGPUMonotonicBufferResource(const Allocators::GPUMonotonicBufferResourceCreateInfo& createInfo) -> Result<Allocators::GPUMonotonicBufferResource>;
+        auto CreateLinearImageAllocator(const Allocators::LinearImageAllocCreateInfo& createInfo) -> Result<Allocators::LinearImageAlloc>;
+        auto CreateLinearBufferSuballocator(const Allocators::LinearBufferSubAllocCreateInfo& createInfo) -> Result<Allocators::LinearBufferSubAlloc>;
     };
 }
 
