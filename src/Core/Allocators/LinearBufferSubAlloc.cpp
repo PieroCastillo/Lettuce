@@ -23,9 +23,16 @@ void LinearBufferSubAlloc::Create(const IDevice& device, const LinearBufferSubAl
     VkMemoryRequirements memReqs;
     vkGetBufferMemoryRequirements(m_device, m_buffer, &memReqs);
 
+    VkMemoryAllocateFlagsInfo memoryFlags = {
+        .sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_FLAGS_INFO,
+        .flags = VK_MEMORY_ALLOCATE_DEVICE_ADDRESS_BIT,
+        .deviceMask = 0,
+    };
+
     VkMemoryAllocateInfo memoryAI =
     {
         .sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
+        .pNext = &memoryFlags,
         .allocationSize = m_size,
         .memoryTypeIndex = findMemoryTypeIndex(m_device, device.m_physicalDevice, memReqs.memoryTypeBits, createInfo.memoryAccess),
     };
@@ -78,7 +85,7 @@ ImageAllocation LinearBufferSubAlloc::do_ialloc(VkFormat format, VkExtent2D exte
 
 void LinearBufferSubAlloc::do_bdeallocate(const BufferAllocation& allocation)
 {
-    
+
 }
 
 void LinearBufferSubAlloc::do_ideallocate(const ImageAllocation& allocation)
@@ -86,7 +93,7 @@ void LinearBufferSubAlloc::do_ideallocate(const ImageAllocation& allocation)
     throw LettuceException(LettuceResult::InvalidOperation);
 }
 
-MemoryAccess LinearBufferSubAlloc::GetMemoryAccess() 
+MemoryAccess LinearBufferSubAlloc::GetMemoryAccess()
 {
     return m_access;
 }

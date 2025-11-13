@@ -87,6 +87,7 @@ void CommandRecordingContext::BeginRendering(uint32_t width, uint32_t height,
     m_partialCommandList.push_back(command);
     
     m_currentDraw = { m_width, m_height };
+    m_currentDraw.descriptorBufferAddress = 0;
 }
 
 void CommandRecordingContext::EndRendering()

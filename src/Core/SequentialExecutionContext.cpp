@@ -48,7 +48,7 @@ void SequentialExecutionContext::record(VkCommandBuffer cmd, VkPipeline& current
         }
 
         // point to the same buffer (index: 0)
-        if (drawCmd.descriptorBufferAddress != 0)
+        if (drawCmd.descriptorBufferAddress != 0 && drawCmd.descriptorBufferOffsets.size() > 0)
         {
             uint32_t setCount = drawCmd.descriptorBufferOffsets.size();
             std::vector<uint32_t> bufferIndices(setCount, 0);
@@ -72,7 +72,7 @@ void SequentialExecutionContext::record(VkCommandBuffer cmd, VkPipeline& current
         }
 
         // bind vertex buffers
-        if (drawCmd.vertexBuffers.size() >= 0) {
+        if (drawCmd.vertexBuffers.size() > 0) {
             vkCmdBindVertexBuffers(cmd, 0, (uint32_t)drawCmd.vertexBuffers.size(), drawCmd.vertexBuffers.data(), drawCmd.vertexOffsets.data());
         }
 

@@ -8,6 +8,25 @@ Created by @PieroCastillo on 2025-10-31
 
 using namespace Lettuce::Core;
 
+template<typename T>
+auto Device::CreateDeviceVector(const DeviceVectorCreateInfo& createInfo) -> Result<DeviceVector<T>>
+{
+    try
+    {
+        auto dv = std::make_shared<DeviceVector<T>>();
+        dv->Create(*this, createInfo);
+        return dv;
+    }
+    catch (LettuceException e)
+    {
+        return std::unexpected(e.result);
+    }
+    catch (...)
+    {
+        return std::unexpected(LettuceResult::Unknown);
+    }
+}
+
 template<ICommandRecordingContext... Contexts>
 auto Device::CreateGraph() -> Result<RenderFlowGraph<Contexts...>>
 {
@@ -20,11 +39,11 @@ auto Device::CreateGraph() -> Result<RenderFlowGraph<Contexts...>>
         graph->Create(*this, ci);
         return graph;
     }
-    catch(LettuceException e)
+    catch (LettuceException e)
     {
         return std::unexpected(e.result);
     }
-    catch(...)
+    catch (...)
     {
         return std::unexpected(LettuceResult::Unknown);
     }

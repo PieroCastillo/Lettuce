@@ -21,6 +21,7 @@ Created by @PieroCastillo on 2025-07-20
 #include "common.hpp"
 #include "DescriptorTable.hpp"
 #include "DeviceExecutionContext.hpp"
+#include "DeviceVector.hpp"
 #include "Pipeline.hpp"
 #include "RenderFlowGraph.hpp"
 #include "Swapchain.hpp"
@@ -194,6 +195,9 @@ namespace Lettuce::Core
 
         auto CreateContext(const DeviceExecutionContextCreateInfo& createInfo) -> Result<DeviceExecutionContext>;
         auto CreateDescriptorTable(const DescriptorTableCreateInfo& createInfo) -> Result<DescriptorTable>;
+
+        template<typename T>
+        auto CreateDeviceVector(const DeviceVectorCreateInfo& createInfo) -> Result<DeviceVector<T>>;
 
         template<ICommandRecordingContext... Contexts>
         auto CreateGraph() -> Result<RenderFlowGraph<Contexts...>>;

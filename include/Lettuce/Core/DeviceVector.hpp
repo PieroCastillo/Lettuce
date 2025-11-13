@@ -7,50 +7,52 @@ Created by @PieroCastillo on 2025-10-22
 // standard headers
 #include <optional>
 #include <memory>
-#include <vector>
+#include <span>
 #include <string>
 
 // project headers
 #include "common.hpp"
+#include "Allocators/IGPUMemoryResource.hpp"
 
 namespace Lettuce::Core
 {
-    // struct DeviceVectorCreateInfo
-    // {
-    //     uint32_t maxCount;
-    //     std::shared_ptr<Allocators::BlockAllocator> allocator;
-    // };
+    struct DeviceVectorCreateInfo
+    {
+        uint32_t maxCount;
+        std::shared_ptr<Allocators::IGPUMemoryResource> allocator;
+    };
 
-    // class DeviceVectorBase
-    // {
-    //     VkDevice m_device;
-    //     BufferAllocation m_allocation;
-    //     std::shared_ptr<Allocators::BlockAllocator> m_allocator;
-    //     uint32_t m_elementSize;
-    //     uint32_t m_maxSize;
+    class DeviceVectorBase
+    {
+        VkDevice m_device;
+        BufferAllocation m_allocation;
+        std::shared_ptr<Allocators::IGPUMemoryResource> m_allocator;
+        uint64_t m_elementSize;
+        uint64_t m_maxSize;
 
-    //     uint32_t m_offset;
-    // public:
-    //     void Create(const IDevice& device, const DeviceVectorCreateInfo& createInfo, uint32_t elementSize);
-    //     void Release();
+        uint64_t m_offset;
+    public:
+        void Create(const IDevice& device, const DeviceVectorCreateInfo& createInfo, uint32_t elementSize);
+        void Release();
 
-    //     void PushRange(void* src, uint32_t count);
-    //     void Flush();
-    //     void Reset();
-    // };
+        void PushRange(void* src, uint32_t count);
+        void Flush();
+        void Reset();
+    };
 
-    // template<typename T>
-    // class DeviceVector
-    // {    
-    //     DeviceVectorBase base;
-    // public:
-    //     void Create(const IDevice& device, const DeviceVectorCreateInfo& createInfo);
-    //     void Release();
+    template<typename T>
+    class DeviceVector
+    {    
+        DeviceVectorBase base;
+    public:
+        void Create(const IDevice& device, const DeviceVectorCreateInfo& createInfo);
+        void Release();
 
-    //     void Push(const T& element);
-    //     void Flush();
-    //     void Reset();
-    // };
+        void Push(const T& element);
+        void CopyFrom(const std::span<T>& dst);
+        void Flush();
+        void Reset();
+    };
 };
 
 #include "DeviceVector.inl"
