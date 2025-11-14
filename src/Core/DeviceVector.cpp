@@ -41,7 +41,7 @@ void DeviceVectorBase::PushRange(void* src, uint32_t count)
     }
 
     uint32_t newOffset = m_offset + (m_elementSize * count);
-    if (newOffset >= m_maxSize)
+    if (newOffset > m_maxSize)
     {
         throw LettuceException(LettuceResult::OutOfDeviceMemory);
     }

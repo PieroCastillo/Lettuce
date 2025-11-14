@@ -2,6 +2,7 @@
 #include "glfw/glfw3.h"
 #define GLFW_EXPOSE_NATIVE_WIN32
 #include "glfw/glfw3native.h"
+#include "glm/glm.hpp"
 #include <windows.h>
 
 #include <memory>
@@ -33,11 +34,27 @@ GLFWwindow* window;
 constexpr uint32_t width = 1366;
 constexpr uint32_t height = 768;
 
+struct CubeInstanceInfo
+{
+    glm::vec2 position;
+};
+
+struct WorldInfo
+{
+    glm::mat4 model;
+    glm::mat4 view;
+    glm::mat4 projection;
+};
+
 std::shared_ptr<Device> device;
 std::shared_ptr<Swapchain> swapchain;
 std::shared_ptr<SequentialExecutionContext> context;
 std::shared_ptr<DescriptorTable> descriptorTable;
 std::shared_ptr<Pipeline> rgbPipeline;
+
+std::shared_ptr<Allocators::LinearBufferSubAlloc> allocator;
+std::shared_ptr<DeviceVector<CubeInstanceInfo>> cubeBuffer;
+std::shared_ptr<DeviceVector<WorldInfo>> worldBuffer;
 
 void initLettuce()
 {
@@ -94,8 +111,31 @@ void createRenderingObjects()
         .fragmentEntryPoint = "fragmentMain",
     };
     rgbPipeline = device->CreatePipeline(gpipelineData).value();
-    
     shaders->Release();
+
+    Allocators::LinearBufferSubAllocCreateInfo allocatorCI = {
+        .memoryAccess = MemoryAccess::FastCPUWriteGPURead,
+        .memoryUsage = AllocatorUsage::ShaderReadOnlyResource,
+        .maxSize = 10 * 1024, // 10 KB    
+    };
+    allocator = device->CreateLinearBufferSuballocator(allocatorCI).value();
+
+    DeviceVectorCreateInfo dvectorCI = {
+        .maxCount = 4,
+        .allocator = allocator,
+    };
+    cubeBuffer = device->CreateDeviceVector<CubeInstanceInfo>(dvectorCI).value();
+
+    dvectorCI.maxCount = 1;
+    worldBuffer = device->CreateDeviceVector<WorldInfo>(dvectorCI).value();
+
+    std::vector<CubeInstanceInfo> dstInfos = {
+        {{0.75, 0.75}},
+        {{0.75, -0.75}},
+        {{-0.75, -0.75}},
+        {{-0.75, 0.75}}
+    };
+    cubeBuffer->CopyFrom(dstInfos);
 }
 
 void mainLoop()
@@ -121,6 +161,10 @@ void mainLoop()
 
 void cleanupLettuce()
 {
+    worldBuffer->Release();
+    cubeBuffer->Release();
+    allocator->Release();
+
     rgbPipeline->Release();
     descriptorTable->Release();
 

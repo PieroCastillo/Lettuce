@@ -36,6 +36,7 @@ target("Lettuce")
 
 local samples = {
     "helloTriangle",
+    "cubes",
 }
 
 for _, name in ipairs(samples) do 
