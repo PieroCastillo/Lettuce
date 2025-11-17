@@ -13,6 +13,7 @@ template<typename T>
 void DeviceVector<T>::Create(const IDevice& device, const DeviceVectorCreateInfo& createInfo)
 {
     base.Create(device, createInfo, sizeof(T));
+    base.typeIdx = typeid(T);
 }
 
 template<typename T>
@@ -43,5 +44,11 @@ template<typename T>
 void DeviceVector<T>::Reset()
 {
     base.Reset();
+}
+
+template<typename T>
+BufferHandle DeviceVector<T>::GetHandle()
+{
+    return base.GetHandle();
 }
 #endif // LETTUCE_CORE_DEVICE_VECTOR_INL

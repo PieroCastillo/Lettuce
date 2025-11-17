@@ -49,11 +49,15 @@ void Device::Create(const DeviceCreateInfo& createInfo)
     selectGPU(createInfo);
     setupFeaturesExtensions();
     setupDevice();
+    setupCopyObjects();
 }
 
 void Device::Release()
 {
     handleResult(vkDeviceWaitIdle(m_device));
+    vkDestroyFence(m_device, m_copyFence, nullptr);
+    vkFreeCommandBuffers(m_device, m_copyCmdPool, 1, &m_copyCmd);
+    vkDestroyCommandPool(m_device, m_copyCmdPool, nullptr);
     vkDestroyDevice(m_device, nullptr);
     vkDestroyDebugUtilsMessengerEXT(m_instance, m_messenger, nullptr);
     vkDestroyInstance(m_instance, nullptr);
@@ -118,7 +122,6 @@ void Device::setupInstance()
 
     handleResult(vkCreateDebugUtilsMessengerEXT(m_instance, &messengerCI, nullptr, &m_messenger));
 }
-
 
 void Device::selectGPU(const DeviceCreateInfo& createInfo)
 {
@@ -201,7 +204,7 @@ void Device::setupFeaturesExtensions()
 
     requestedExtensionsNames.push_back(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
     requestedExtensionsNames.push_back(VK_GOOGLE_HLSL_FUNCTIONALITY1_EXTENSION_NAME);
-    requestedExtensionsNames.push_back(VK_GOOGLE_USER_TYPE_EXTENSION_NAME);
+    // requestedExtensionsNames.push_back(VK_GOOGLE_USER_TYPE_EXTENSION_NAME);
 
     requestedExtensionsNames.push_back(VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME);
     requestedExtensionsNames.push_back(VK_EXT_DESCRIPTOR_BUFFER_EXTENSION_NAME);
@@ -333,4 +336,28 @@ void Device::setupDevice()
     vkGetDeviceQueue(m_device, m_graphicsQueueFamilyIndex, 0, &m_graphicsQueue);
     vkGetDeviceQueue(m_device, m_computeQueueFamilyIndex, 0, &m_computeQueue);
     vkGetDeviceQueue(m_device, m_transferQueueFamilyIndex, 0, &m_transferQueue);
+}
+
+void Device::setupCopyObjects()
+{
+    // use copy/transfer queue
+    VkCommandPoolCreateInfo cmdPoolCI = {
+        .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
+        .flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT,
+        .queueFamilyIndex = m_transferQueueFamilyIndex,
+    };
+    handleResult(vkCreateCommandPool(m_device, &cmdPoolCI, nullptr, &m_copyCmdPool));
+
+    VkCommandBufferAllocateInfo cmdAllocInfo = {
+        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
+        .commandPool = m_copyCmdPool,
+        .level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
+        .commandBufferCount = 1,
+    };
+    handleResult(vkAllocateCommandBuffers(m_device, &cmdAllocInfo, &m_copyCmd));
+
+    VkFenceCreateInfo fenceCI = {
+        .sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO,
+    };
+    handleResult(vkCreateFence(m_device, &fenceCI, nullptr, &m_copyFence));
 }

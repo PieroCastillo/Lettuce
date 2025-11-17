@@ -1,12 +1,16 @@
 // project headers
 #include "Lettuce/Core/SequentialExecutionContext.hpp"
 
+// standrad headers
+#include <print>
+
 using namespace Lettuce::Core;
 
 void SequentialExecutionContext::record(VkCommandBuffer cmd, VkPipeline& currentPipeline, VkDeviceAddress& currentDescriptorBufferAddress, const Command& command)
 {
     if (std::holds_alternative<renderingStartCommand>(command))
     {
+        std::println("renderingStartCommand");
         auto renderingCmd = std::get<renderingStartCommand>(command);
 
         VkRenderingInfo renderingInfo = {
@@ -28,6 +32,7 @@ void SequentialExecutionContext::record(VkCommandBuffer cmd, VkPipeline& current
     }
     else if (std::holds_alternative<drawCommand>(command))
     {
+        std::println("drawCommand");
         auto drawCmd = std::get<drawCommand>(command);
 
         if (currentPipeline != drawCmd.pipeline)
@@ -137,6 +142,7 @@ void SequentialExecutionContext::record(VkCommandBuffer cmd, VkPipeline& current
     }
     else if (std::holds_alternative<renderingEndCommand>(command))
     {
+        std::println("renderingEndCommand");
         vkCmdEndRendering(cmd);
     }
 }
@@ -207,6 +213,7 @@ void SequentialExecutionContext::Execute()
     }
 
     vkEndCommandBuffer(m_cmd);
+    m_cmdContext.Flush();
 
     VkCommandBufferSubmitInfo cmdSubmitInfo = {
         .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_SUBMIT_INFO,

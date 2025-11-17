@@ -65,8 +65,8 @@ void initLettuce()
 
 void createRenderingObjects()
 {
-    auto shadersFile = std::ifstream("app.spv", std::ios::ate | std::ios::binary);
-    if (!shadersFile) throw std::runtime_error("app.spirv does not exist");
+    auto shadersFile = std::ifstream("helloTriangle.spv", std::ios::ate | std::ios::binary);
+    if (!shadersFile) throw std::runtime_error("helloTriangle.spv does not exist");
 
     auto fileSize = (uint32_t)shadersFile.tellg();
     std::vector<uint32_t> shadersBuffer;

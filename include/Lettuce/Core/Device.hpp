@@ -10,6 +10,7 @@ Created by @PieroCastillo on 2025-07-20
 #include <memory>
 #include <optional>
 #include <string>
+#include <tuple>
 #include <utility>
 #include <variant>
 #include <vector>
@@ -127,6 +128,12 @@ namespace Lettuce::Core
         std::unordered_multimap<DeviceQueueType, VkQueue> queues;
         QueueFamilyIndices queuefamilyIndices;
 
+        // copy objects
+        VkCommandBuffer m_copyCmd;
+        VkCommandPool m_copyCmdPool;
+        VkFence m_copyFence;
+        std::vector<std::tuple<VkBuffer, VkBuffer, VkBufferCopy>> m_copies; // src, dst, copy
+
         // physical device features structs
         // required features/extensions
         VkPhysicalDeviceVulkan11Features gpuFeatures11 = {
@@ -179,6 +186,7 @@ namespace Lettuce::Core
         void selectGPU(const DeviceCreateInfo& createInfo);
         void setupFeaturesExtensions();
         void setupDevice();
+        void setupCopyObjects();
 
     public:
         void Create(const DeviceCreateInfo& createInfo);
@@ -215,6 +223,12 @@ namespace Lettuce::Core
         auto CreateGPUMonotonicBufferResource(const Allocators::GPUMonotonicBufferResourceCreateInfo& createInfo) -> Result<Allocators::GPUMonotonicBufferResource>;
         auto CreateLinearImageAllocator(const Allocators::LinearImageAllocCreateInfo& createInfo) -> Result<Allocators::LinearImageAlloc>;
         auto CreateLinearBufferSuballocator(const Allocators::LinearBufferSubAllocCreateInfo& createInfo) -> Result<Allocators::LinearBufferSubAlloc>;
+
+        auto MemoryCopy(const DeviceVectorBase& src, const DeviceVectorBase& dst, uint32_t srcIdx, uint32_t dstIdx, uint32_t count) -> void;
+        auto FlushCopies() -> void;
+
+        template<typename T>
+        auto MemoryCopy(const std::shared_ptr<DeviceVector<T>>& src, const std::shared_ptr<DeviceVector<T>>& dst, uint32_t count, uint32_t srcIdx = 0, uint32_t dstIdx = 0) -> void;
     };
 }
 

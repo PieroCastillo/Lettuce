@@ -26,19 +26,20 @@ namespace Lettuce::Core
     {
     private:
         friend DescriptorTable;
-        std::string layoutName;
+        VkDescriptorSetLayout layout;
         std::string instanceName;
-        std::vector<std::tuple<std::string, uint64_t, VkDescriptorType, VkDeviceAddress, VkDeviceSize>> bufferBindings;
-        std::vector<std::tuple<std::string, uint64_t, VkDescriptorType, VkSampler*, VkImageView, VkImageLayout>> textureBindings;
+        std::vector<std::tuple<std::string, std::vector<VkDeviceAddress>, std::vector<uint32_t>>> bufferBindings;
+        std::vector<std::tuple<std::string, std::vector<VkSampler*>, std::vector<VkImageView>, std::vector<VkImageLayout>>> textureBindings;
     public:
-        void Bind(const std::string& name, const BufferHandle& handle);
-        void Bind(const std::string& name, const TextureHandle& handle, const std::optional<std::shared_ptr<Sampler>> sampler);
+        void Register(const std::string& name, const std::vector<BufferHandle>& handle);
+        void Register(const std::string& name, const std::vector<TextureHandle>& handle);
     };
 
     struct DescriptorTableCreateInfo
     {
         std::vector<DescriptorSetLayoutInfo> setLayoutInfos;
         uint64_t maxDescriptorVariantsPerSet;
+        uint32_t defaultDescriptorCount;
     };
 
     /*
@@ -55,10 +56,11 @@ namespace Lettuce::Core
         uint64_t m_bufferAddress;
         uint64_t m_bufferSize;
         uint64_t m_bufferAlignment;
-        uint64_t m_mappedData;
+        void* m_mappedData;
         std::unordered_map<VkDescriptorType, uint64_t> m_descriptorTypeSizeMap;
         std::vector<VkDescriptorSetLayout> m_setLayouts;
-        std::unordered_map<std::string, std::tuple<VkDescriptorSetLayout, DescriptorSetLayoutInfo>> m_nameLayout_LayoutInfoMap;
+        std::unordered_map<VkDescriptorSetLayout, DescriptorSetLayoutInfo> m_layout_LayoutInfoMap;
+        std::unordered_map<std::string, VkDescriptorSetLayout> m_nameLayout_LayoutMap;
 
         // variable params
         uint64_t m_currentOffset;
@@ -82,6 +84,8 @@ namespace Lettuce::Core
         void Reset();
         uint64_t GetAddress();
         uint32_t GetDescriptorSetLayoutCount();
+
+        uint64_t GetInstanceOffset(const std::string& instanceName);
     };
 }
 #endif // LETTUCE_CORE_DESCRIPTOR_TABLE_HPP

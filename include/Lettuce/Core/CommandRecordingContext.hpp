@@ -5,6 +5,7 @@ Created by @PieroCastillo on 2025-07-28
 #define LETTUCE_CORE_COMMAND_RECORDING_CONTEXT_HPP
 
 // standard headers
+#include <string>
 #include <vector>
 #include <variant>
 
@@ -27,16 +28,18 @@ namespace Lettuce::Core
         drawCommand m_currentDraw;
         computeCommand m_currentCompute;
         uint32_t m_width, m_height;
+        std::shared_ptr<DescriptorTable> m_currentTable;
     public:
         CommandRecordingContext();
 
         CommandsList GetCommands();
 
         // Graphics & Compute commands
-        //void BindIndexBuffer(const std::shared_ptr<Buffer>& buffer);
-        //void BindVertexBuffers(const std::vector<std::shared_ptr<Buffer>>& buffers);
+        void BindIndexStream(const BufferHandle& buffer);
+        void BindVertexStreams(const std::vector<BufferHandle>& buffers);
         void BindPipeline(const std::shared_ptr<Pipeline>& pipeline);
         void BindDescriptorTable(const std::shared_ptr<DescriptorTable>& table);
+        void BindDescriptorSet(const std::string& setName);
         void BindMesh(const MeshPool::Mesh& mesh);
 
         void BeginRendering(uint32_t width, uint32_t height,
@@ -49,11 +52,13 @@ namespace Lettuce::Core
         // void ClearAttachments();
 
         void Draw(uint32_t vertexCount, uint32_t instanceCount);
+        void DrawIndexed(uint32_t indexCount, uint32_t instanceCount);
         // void DrawMeshTasks();
 
         // void DrawIndexed(const DrawIndexedArgs& args);
         // void DrawIndirect(const DrawIndirectArgs& args);
         // void Dispatch(const DispatchArgs& args);
+        void Flush();
     };
 }
 #endif // LETTUCE_CORE_COMMAND_RECORDING_CONTEXT_HPP

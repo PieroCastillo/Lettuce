@@ -51,7 +51,6 @@ namespace Lettuce::Core
         uint32_t maxDepth;
     };
 
-
     /*
         Responsabilities:
         - Create and manage recording threads

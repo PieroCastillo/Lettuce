@@ -50,7 +50,7 @@ for _, name in ipairs(samples) do
         after_build(function (target)
             import("core.base.process")
 
-            local slang_files = os.files("**/*.slang")
+            local slang_files = os.files("samples/" .. name .. "/*.slang")
             if #slang_files == 0 then
                 return
             end

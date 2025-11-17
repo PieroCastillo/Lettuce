@@ -6,6 +6,7 @@
 #include <cstdint>
 #include <stdexcept>
 #include <string>
+#include <tuple>
 #include <utility>
 #include <vector>
 
@@ -109,7 +110,7 @@ namespace Lettuce::Core
     {
         Staging,                 // TRANSFER_SRC
         ShaderGeometry,          // VERTEX | INDEX | TRANSFER_DST
-        ShaderReadOnlyResource,  // UNIFORM | SHADER_DEVICE_ADDRESS
+        ShaderReadOnlyResource,  // UNIFORM | SHADER_DEVICE_ADDRESS | TRANSFER_DST
         ShaderReadWriteResource, // STORAGE | SHADER_DEVICE_ADDRESS
         Descriptors,             // RESOURCE_DESCRIPTOR_BUFFER | SAMPLER_DESCRIPTOR_BUFFER
         Indirect,                // INDIRECT_BUFFER | SHADER_DEVICE_ADDRESS
@@ -128,6 +129,7 @@ namespace Lettuce::Core
         Success,
         OutOfDeviceMemory,
         OutOfHostMemory,
+        OutOfBounds,
         AllocationFailed,
         DoubleFree,
         InvalidDevice,
@@ -138,6 +140,7 @@ namespace Lettuce::Core
         ShaderReflectionFailed,
         ShaderCompilationFailed,
         ShaderParametersMismatch,
+        TypeMismatch,
         NotReady,
         NotFound,
         Unknown,
@@ -147,9 +150,9 @@ namespace Lettuce::Core
     {
         using enum AllocatorUsage;
         constexpr std::array<VkBufferUsageFlags, 6> table{
-            VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-            VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
-            VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
+            VK_BUFFER_USAGE_TRANSFER_SRC_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
+            VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
+            VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
             VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
             VK_BUFFER_USAGE_RESOURCE_DESCRIPTOR_BUFFER_BIT_EXT | VK_BUFFER_USAGE_SAMPLER_DESCRIPTOR_BUFFER_BIT_EXT,
             VK_BUFFER_USAGE_INDIRECT_BUFFER_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT
@@ -210,7 +213,6 @@ namespace Lettuce::Core
         }
     };
 
-
     /// @brief throws an LettuceException if vkResult is not VK_SUCCESS
     /// This method MUST NOT be called in performance critical paths
     /// @param vkResult the VkResult to check
@@ -228,6 +230,21 @@ namespace Lettuce::Core
             throw "alignment must be a power of two";
 
         return (data + alignment - 1) & ~(alignment - 1);
+    }
+
+    template <typename T, typename... Members>
+    auto unpack(const std::vector<T>& src, Members... members) {
+        std::tuple<std::vector<std::decay_t<decltype(src[0].*members)>>...> result;
+
+        (..., std::get<std::vector<std::decay_t<decltype(src[0].*members)>>>(result)
+            .reserve(src.size()));
+
+        for (const T& obj : src) {
+            (..., std::get<std::vector<std::decay_t<decltype(obj.*members)>>>(result)
+                .push_back(obj.*members));
+        }
+
+        return result;
     }
 
     using AllocationHandle = uint32_t;
@@ -249,12 +266,15 @@ namespace Lettuce::Core
 
     struct BufferHandle
     {
+        VkBuffer buffer;
+        uint64_t offset;
         VkDeviceAddress address;
         uint32_t size;
     };
 
     struct TextureHandle
     {
+        VkSampler* samplerPtr;
         VkImageView view;
         VkImageLayout layout;
     };
@@ -273,7 +293,7 @@ namespace Lettuce::Core
         uint32_t m_transferQueueFamilyIndex;
         bool supportBufferUsage2;
     };
-    
+
     struct DescriptorBindingInfo
     {
         std::string bindingName;

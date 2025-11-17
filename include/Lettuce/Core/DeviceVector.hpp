@@ -9,6 +9,7 @@ Created by @PieroCastillo on 2025-10-22
 #include <memory>
 #include <span>
 #include <string>
+#include <typeindex>
 
 // project headers
 #include "common.hpp"
@@ -16,6 +17,9 @@ Created by @PieroCastillo on 2025-10-22
 
 namespace Lettuce::Core
 {
+    // forward declarations
+    class Device;
+
     struct DeviceVectorCreateInfo
     {
         uint32_t maxCount;
@@ -24,25 +28,34 @@ namespace Lettuce::Core
 
     class DeviceVectorBase
     {
+    private:
+        friend class Device;
+        template<typename> friend class DeviceVector;
         VkDevice m_device;
         BufferAllocation m_allocation;
         std::shared_ptr<Allocators::IGPUMemoryResource> m_allocator;
+        std::type_index typeIdx;
         uint64_t m_elementSize;
         uint64_t m_maxSize;
+        uint64_t m_address;
 
         uint64_t m_offset;
     public:
+        DeviceVectorBase() : typeIdx(typeid(void)) {}
         void Create(const IDevice& device, const DeviceVectorCreateInfo& createInfo, uint32_t elementSize);
         void Release();
 
         void PushRange(void* src, uint32_t count);
         void Flush();
         void Reset();
+        
+        BufferHandle GetHandle();
     };
 
     template<typename T>
     class DeviceVector
     {    
+        friend class Device;
         DeviceVectorBase base;
     public:
         void Create(const IDevice& device, const DeviceVectorCreateInfo& createInfo);
@@ -52,6 +65,8 @@ namespace Lettuce::Core
         void CopyFrom(const std::span<T>& dst);
         void Flush();
         void Reset();
+
+        BufferHandle GetHandle();
     };
 };
 

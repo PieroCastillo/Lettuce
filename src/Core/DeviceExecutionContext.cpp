@@ -314,7 +314,6 @@ void DeviceExecutionContext::Execute()
     //     submits[i].pSignalSemaphoreInfos = i % 2 == 0 ? m_semaphores_g2.data() : m_semaphores_g1.data();
     // }
 
-
     handleResult(vkResetFences(m_device, 1, &m_fence));
     handleResult(vkQueueSubmit2(m_graphicsQueue, (uint32_t)submits.size(), submits.data(), m_fence));
 }

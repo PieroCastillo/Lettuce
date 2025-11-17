@@ -15,6 +15,12 @@ void DeviceVectorBase::Create(const IDevice& device, const DeviceVectorCreateInf
         VK_BUFFER_USAGE_STORAGE_BUFFER_BIT |
         VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT |
         VK_BUFFER_USAGE_TRANSFER_DST_BIT);
+    
+    VkBufferDeviceAddressInfo addressInfo = {
+        .sType = VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO,
+        .buffer = m_allocation.buffer,
+    };
+    m_address = vkGetBufferDeviceAddress(m_device, &addressInfo);
 
     if (m_allocator->GetMemoryAccess() == MemoryAccess::FastGPUReadWrite)
     {
@@ -61,4 +67,9 @@ void DeviceVectorBase::Flush()
 void DeviceVectorBase::Reset()
 {
     m_offset = 0;
+}
+
+BufferHandle DeviceVectorBase::GetHandle()
+{
+    return { m_allocation.buffer, m_allocation.offset, m_address, m_allocation.size };
 }

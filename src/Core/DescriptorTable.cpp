@@ -2,7 +2,10 @@
 #include <memory>
 #include <print>
 #include <unordered_map>
+#include <string>
+#include <string_view>
 #include <vector>
+#include <ranges>
 
 // external headers
 #include <volk.h>
@@ -12,15 +15,22 @@
 
 using namespace Lettuce::Core;
 
-
-void DescriptorSetInstance::Bind(const std::string& name, const BufferHandle& handle)
-{
-
+std::string prefixOrAdd(std::string_view prefix, std::string_view add) {
+    auto pos = prefix.find('.');
+    return pos != prefix.npos ? std::string{ prefix.substr(0,pos) }
+    : std::string{ prefix } + std::string{ add };
 }
 
-void DescriptorSetInstance::Bind(const std::string& name, const TextureHandle& handle, const std::optional<std::shared_ptr<Sampler>> sampler)
+void DescriptorSetInstance::Register(const std::string& name, const std::vector<BufferHandle>& handles)
 {
+    auto [addresses, sizes] = unpack(handles, &BufferHandle::address, &BufferHandle::size);
+    bufferBindings.emplace_back(name, addresses, sizes);
+}
 
+void DescriptorSetInstance::Register(const std::string& name, const std::vector<TextureHandle>& handles)
+{
+    auto [samplerPtrs, views, layouts] = unpack(handles, &TextureHandle::samplerPtr, &TextureHandle::view, &TextureHandle::layout);
+    textureBindings.emplace_back(name, samplerPtrs, views, layouts);
 }
 
 void DescriptorTable::Create(const IDevice& device, const DescriptorTableCreateInfo& createInfo)
@@ -54,7 +64,7 @@ void DescriptorTable::Create(const IDevice& device, const DescriptorTableCreateI
             VkDescriptorSetLayoutBinding vkBinding = {
                 .binding = setLayoutInfo.bindings[i].bindingIdx,
                 .descriptorType = setLayoutInfo.bindings[i].type,
-                .descriptorCount = setLayoutInfo.bindings[i].count,
+                .descriptorCount = setLayoutInfo.bindings[i].count == 0 ? createInfo.defaultDescriptorCount : setLayoutInfo.bindings[i].count,
                 .stageFlags = VK_SHADER_STAGE_ALL,
             };
             vkBindings.push_back(vkBinding);
@@ -76,8 +86,8 @@ void DescriptorTable::Create(const IDevice& device, const DescriptorTableCreateI
         // copy descriptor set layout
         m_setLayouts.push_back(dscSetLayout);
 
-
-        m_nameLayout_LayoutInfoMap[setLayoutInfo.setName] = std::make_tuple(dscSetLayout, setLayoutInfo);
+        m_nameLayout_LayoutMap[prefixOrAdd(setLayoutInfo.setName, "Set")] = dscSetLayout;
+        m_layout_LayoutInfoMap[dscSetLayout] = setLayoutInfo;
     }
     m_bufferSize *= createInfo.maxDescriptorVariantsPerSet;
     m_bufferSize = (std::max)((uint64_t)16, m_bufferSize); // if there's no descriptor sets
@@ -157,21 +167,34 @@ void DescriptorTable::Release()
     vkUnmapMemory(m_device, m_descriptorBufferMemory);
     vkDestroyBuffer(m_device, m_descriptorBuffer, nullptr);
     vkFreeMemory(m_device, m_descriptorBufferMemory, nullptr);
+
+    m_mappedData = nullptr;
+    m_currentOffset = 0;
+    m_descriptorTypeSizeMap.clear();
+    m_setLayouts.clear();
+    m_layout_LayoutInfoMap.clear();
+    m_nameLayout_LayoutMap.clear();
+    m_nameInstance_SetInstanceMap.clear();
+    m_nameInstance_OffsetMap.clear();
 }
 
-DescriptorSetInstance& DescriptorTable::CreateSetInstance(const std::string& paramsBlockName, const std::string& instanceName)
+DescriptorSetInstance& DescriptorTable::CreateSetInstance(const std::string& layoutName, const std::string& instanceName)
 {
-    auto it = m_nameLayout_LayoutInfoMap.find(paramsBlockName);
+    auto it = m_nameLayout_LayoutMap.find(layoutName);
 
-    if (it == m_nameLayout_LayoutInfoMap.end())
+    if (it == m_nameLayout_LayoutMap.end())
     {
         throw LettuceException(LettuceResult::NotFound);
     }
 
-    const auto& [layout, layoutInfo] = it->second;
+    auto layout = it->second;
+    auto layoutInfo = m_layout_LayoutInfoMap[layout];
+
+    uint64_t layoutSize;
+    vkGetDescriptorSetLayoutSizeEXT(m_device, layout, &layoutSize);
 
     auto instance = std::make_unique<DescriptorSetInstance>();
-    instance->layoutName = paramsBlockName;
+    instance->layout = layout;
     instance->instanceName = instanceName;
 
     auto& ref = *instance;
@@ -181,78 +204,112 @@ DescriptorSetInstance& DescriptorTable::CreateSetInstance(const std::string& par
 
 void DescriptorTable::BuildSets()
 {
+    // within the same descriptor set
     for (auto& [instanceName, instancePtr] : m_nameInstance_SetInstanceMap)
     {
+        // get descriptor set instance
         auto& instance = *instancePtr;
         uint64_t instanceOffset = m_currentOffset;
 
-        for (const auto& [name, offset, descriptorType, address, size] : instance.bufferBindings)
+        // next, get descriptor set layout information
+        auto layout = instance.layout;
+        auto& layoutInfo = m_layout_LayoutInfoMap[layout];
+
+        // now we can get layout size
+        uint64_t layoutSize;
+        vkGetDescriptorSetLayoutSizeEXT(m_device, layout, &layoutSize);
+
+        // iterate over bindings
+        // next get binding info
+        for (const auto& [name, addresses, sizes] : instance.bufferBindings)
         {
-            VkDescriptorAddressInfoEXT addressInfo = {
-                .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_ADDRESS_INFO_EXT,
-                .address = address,
-                .range = size,
-            };
+            auto bindingInfo = std::ranges::find_if(layoutInfo.bindings, [&](const auto& b) { return b.bindingName == name; });
+            auto descriptorType = bindingInfo->type;
+            auto bindingIdx = bindingInfo->bindingIdx;
 
-            VkDescriptorDataEXT data;
-            switch (descriptorType)
+            auto dSize = m_descriptorTypeSizeMap[descriptorType];
+
+            uint64_t offset;
+            vkGetDescriptorSetLayoutBindingOffsetEXT(m_device, layout, bindingIdx, &offset);
+
+            for (int i = 0; i < addresses.size(); ++i)
             {
-            case VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER:
-                data.pUniformBuffer = &addressInfo;
-                break;
-            case VK_DESCRIPTOR_TYPE_STORAGE_BUFFER:
-                data.pStorageBuffer = &addressInfo;
-                break;
+                auto address = addresses[i];
+                auto size = sizes[i];
+
+                VkDescriptorAddressInfoEXT addressInfo = {
+                    .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_ADDRESS_INFO_EXT,
+                    .address = address,
+                    .range = size,
+                };
+
+                VkDescriptorDataEXT data;
+                switch (descriptorType)
+                {
+                case VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER:
+                    data.pUniformBuffer = &addressInfo;
+                    break;
+                case VK_DESCRIPTOR_TYPE_STORAGE_BUFFER:
+                    data.pStorageBuffer = &addressInfo;
+                    break;
+                }
+
+                VkDescriptorGetInfoEXT getInfo = {
+                    .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_GET_INFO_EXT,
+                    .type = descriptorType,
+                    .data = data,
+                };
+
+                vkGetDescriptorEXT(m_device, &getInfo, dSize, ((uint8_t*)m_mappedData + instanceOffset) + offset + (i * dSize));
             }
-
-            VkDescriptorGetInfoEXT getInfo = {
-                .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_GET_INFO_EXT,
-                .type = descriptorType,
-                .data = data,
-            };
-
-            auto dSize = align_up(m_descriptorTypeSizeMap[descriptorType], m_bufferAlignment);
-            vkGetDescriptorEXT(m_device, &getInfo, dSize, (uint8_t*)m_mappedData + m_currentOffset);
-            m_currentOffset += dSize;
         }
 
-        for (const auto& [name, offset, descriptorType, samplerPtr, view, layout] : instance.textureBindings)
-        {
-            VkDescriptorImageInfo imageInfo = {
-                .sampler = *samplerPtr,
-                .imageView = view,
-                .imageLayout = layout,
-            };
+        //     for (const auto& [name, samplerPtrs, views, layouts] : instance.textureBindings)
+        //     {
+        //         uint64_t binding;
+        //         uint64_t offset;
+        //         VkDescriptorType descriptorType;
 
-            VkDescriptorDataEXT data;
-            switch (descriptorType)
-            {
-            case VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE:
-                data.pSampledImage = &imageInfo;
-                break;
-            case VK_DESCRIPTOR_TYPE_STORAGE_IMAGE:
-                data.pStorageImage = &imageInfo;
-                break;
-            case VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER:
-                data.pCombinedImageSampler = &imageInfo;
-                break;
-            case VK_DESCRIPTOR_TYPE_SAMPLER:
-                data.pSampler = samplerPtr;
-                break;
-            }
+        //         vkGetDescriptorSetLayoutBindingOffsetEXT(m_device, instance.m_layout, binding, &offset);
 
-            VkDescriptorGetInfoEXT getInfo = {
-                .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_GET_INFO_EXT,
-                .type = descriptorType,
-                .data = data,
-            };
+        //         for (int i = 0; i < views.size(); ++i)
+        //         {
+        //             VkDescriptorImageInfo imageInfo = {
+        //              .sampler = *samplerPtrs[i],
+        //              .imageView = views[i],
+        //              .imageLayout = layouts[i],
+        //             };
 
-            auto dSize = align_up(m_descriptorTypeSizeMap[descriptorType], m_bufferAlignment);
-            vkGetDescriptorEXT(m_device, &getInfo, dSize, (uint8_t*)m_mappedData + m_currentOffset);
-            m_currentOffset += dSize;
-        }
+        //             VkDescriptorDataEXT data;
+        //             switch (descriptorType)
+        //             {
+        //             case VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE:
+        //                 data.pSampledImage = &imageInfo;
+        //                 break;
+        //             case VK_DESCRIPTOR_TYPE_STORAGE_IMAGE:
+        //                 data.pStorageImage = &imageInfo;
+        //                 break;
+        //             case VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER:
+        //                 data.pCombinedImageSampler = &imageInfo;
+        //                 break;
+        //             case VK_DESCRIPTOR_TYPE_SAMPLER:
+        //                 data.pSampler = samplerPtrs[i];
+        //                 break;
+        //             }
+
+        //             VkDescriptorGetInfoEXT getInfo = {
+        //                 .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_GET_INFO_EXT,
+        //                 .type = descriptorType,
+        //                 .data = data,
+        //             };
+
+        //             auto dSize = align_up(m_descriptorTypeSizeMap[descriptorType], m_bufferAlignment);
+        //             vkGetDescriptorEXT(m_device, &getInfo, dSize, (uint8_t*)m_mappedData + instanceOffset + offset);
+        //         }
+        //     }
 
         m_nameInstance_OffsetMap[instanceName] = instanceOffset;
+        m_currentOffset += layoutSize;
     }
 }
 
@@ -271,4 +328,9 @@ uint64_t DescriptorTable::GetAddress()
 uint32_t DescriptorTable::GetDescriptorSetLayoutCount()
 {
     return (uint32_t)m_setLayouts.size();
+}
+
+uint64_t DescriptorTable::GetInstanceOffset(const std::string& instanceName)
+{
+    return m_nameInstance_OffsetMap[instanceName];
 }

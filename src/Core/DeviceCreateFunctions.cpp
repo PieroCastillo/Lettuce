@@ -137,6 +137,7 @@ auto Device::CreatePipeline(const GraphicsPipelineCreateData& data) -> Result<Pi
             }
             gpipelineCI.vertexAttributes.push_back({ idx, idx, format, 0 });
             gpipelineCI.vertexBindings.push_back({ idx, elementSize, VK_VERTEX_INPUT_RATE_VERTEX });
+            ++idx;
         }
 
         // create shader module

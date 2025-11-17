@@ -19,6 +19,19 @@ CommandsList CommandRecordingContext::GetCommands()
     return m_partialCommandList;
 }
 
+void CommandRecordingContext::BindIndexStream(const BufferHandle& buffer)
+{
+    m_currentDraw.indexBuffer = buffer.buffer;
+    m_currentDraw.indexBufferOffset = buffer.offset;
+}
+
+void CommandRecordingContext::BindVertexStreams(const std::vector<BufferHandle>& buffers)
+{
+    auto [vbuffers, offsets] = unpack(buffers, &BufferHandle::buffer, &BufferHandle::offset);
+    m_currentDraw.vertexBuffers = vbuffers;
+    m_currentDraw.vertexOffsets = offsets;
+}
+
 void CommandRecordingContext::BindPipeline(const std::shared_ptr<Pipeline>& pipeline)
 {
     m_currentDraw.pipeline = pipeline->m_pipeline;
@@ -26,12 +39,17 @@ void CommandRecordingContext::BindPipeline(const std::shared_ptr<Pipeline>& pipe
 
 void CommandRecordingContext::BindDescriptorTable(const std::shared_ptr<DescriptorTable>& table)
 {
+    m_currentTable = table;
     m_currentDraw.pipelineLayout = table->m_pipelineLayout;
     if (table->GetDescriptorSetLayoutCount() >= 0)
     {
         m_currentDraw.descriptorBufferAddress = table->GetAddress();
-        // m_currentDraw.descriptorBufferOffsets
     }
+}
+
+void CommandRecordingContext::BindDescriptorSet(const std::string& setName)
+{
+    m_currentDraw.descriptorBufferOffsets.push_back(m_currentTable->GetInstanceOffset(setName));
 }
 
 void CommandRecordingContext::BindMesh(const MeshPool::Mesh& mesh)
@@ -85,7 +103,7 @@ void CommandRecordingContext::BeginRendering(uint32_t width, uint32_t height,
     }
 
     m_partialCommandList.push_back(command);
-    
+
     m_currentDraw = { m_width, m_height };
     m_currentDraw.descriptorBufferAddress = 0;
 }
@@ -100,4 +118,16 @@ void CommandRecordingContext::Draw(uint32_t vertexCount, uint32_t instanceCount)
     m_currentDraw.drawArgs = VkDrawIndirectCommand{ vertexCount, instanceCount, 0, 0 };
     m_partialCommandList.push_back(m_currentDraw);
     m_currentDraw = { m_width, m_height };
+}
+
+void CommandRecordingContext::DrawIndexed(uint32_t indexCount, uint32_t instanceCount)
+{
+    m_currentDraw.drawArgs = VkDrawIndexedIndirectCommand{ indexCount, instanceCount, 0, 0, 0 };
+    m_partialCommandList.push_back(m_currentDraw);
+    m_currentDraw = { m_width, m_height };
+}
+
+void CommandRecordingContext::Flush()
+{
+    m_partialCommandList.clear();
 }

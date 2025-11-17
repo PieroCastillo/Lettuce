@@ -48,4 +48,10 @@ auto Device::CreateGraph() -> Result<RenderFlowGraph<Contexts...>>
         return std::unexpected(LettuceResult::Unknown);
     }
 }
+
+template<typename T>
+auto Device::MemoryCopy(const std::shared_ptr<DeviceVector<T>>& src, const std::shared_ptr<DeviceVector<T>>& dst, uint32_t count, uint32_t srcIdx, uint32_t dstIdx) -> void
+{
+    MemoryCopy(src->base, dst->base, srcIdx, dstIdx, count);
+}
 #endif // LETTUCE_CORE_DEVICE_INL

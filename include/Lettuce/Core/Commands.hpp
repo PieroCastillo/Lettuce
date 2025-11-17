@@ -80,7 +80,6 @@ IC Indexed:     DrawIndexedIndirectCount(indirectCountArgs)  |  -----
     using Command = std::variant<renderingStartCommand, renderingEndCommand, drawCommand, computeCommand>;
     using CommandsList = std::vector<Command>;
 
-
     struct BarriersInfo
     {
         std::vector<VkImageMemoryBarrier2> imageBarriers;

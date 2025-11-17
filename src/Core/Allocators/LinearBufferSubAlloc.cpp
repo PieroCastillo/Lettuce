@@ -10,6 +10,7 @@ void LinearBufferSubAlloc::Create(const IDevice& device, const LinearBufferSubAl
     m_size = createInfo.maxSize;
     m_access = createInfo.memoryAccess;
     m_offset = 0;
+    m_alignment = createInfo.alignment;
 
     VkBufferCreateInfo bufferCI = {
         .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
@@ -64,7 +65,7 @@ void LinearBufferSubAlloc::Reset()
 BufferAllocation LinearBufferSubAlloc::do_balloc(uint32_t size, VkBufferUsageFlags usage)
 {
     auto oldOffset = m_offset;
-    m_offset += (size + 1);
+    m_offset += align_up(size + 1, m_alignment);
     if (m_offset > (m_size + 1))
     {
         throw LettuceException(LettuceResult::OutOfHostMemory);

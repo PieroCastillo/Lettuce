@@ -15,6 +15,7 @@ namespace Lettuce::Core::Allocators
         MemoryAccess memoryAccess;
         AllocatorUsage memoryUsage;
         uint32_t maxSize;
+        uint32_t alignment;
     };
 
     class LinearBufferSubAlloc : public  IGPUMemoryResource
@@ -26,6 +27,7 @@ namespace Lettuce::Core::Allocators
         MemoryAccess m_access;
         void* m_mappedData;
         uint32_t m_offset;
+        uint32_t m_alignment;
     public:
         void Create(const IDevice& device, const LinearBufferSubAllocCreateInfo& createInfo);
         void Release();
