@@ -45,6 +45,9 @@ void LinearBufferSubAlloc::Create(const IDevice& device, const LinearBufferSubAl
     {
         handleResult(vkMapMemory(m_device, m_memory, 0, m_size, 0, &m_mappedData));
     }
+
+    setDebugName(device, VK_OBJECT_TYPE_DEVICE_MEMORY, (uint64_t)m_memory, createInfo.name + "Memory");
+    setDebugName(device, VK_OBJECT_TYPE_BUFFER, (uint64_t)m_buffer, createInfo.name + "Buffer");
 }
 
 void LinearBufferSubAlloc::Release()

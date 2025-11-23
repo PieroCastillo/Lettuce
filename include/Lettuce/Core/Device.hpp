@@ -191,6 +191,8 @@ namespace Lettuce::Core
     public:
         void Create(const DeviceCreateInfo& createInfo);
         void Release();
+        
+        bool isDebug() const override { return true; };
 
         EnabledRecommendedFeatures GetEnabledRecommendedFeatures()
         {

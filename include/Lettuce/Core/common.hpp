@@ -292,7 +292,10 @@ namespace Lettuce::Core
         uint32_t m_computeQueueFamilyIndex;
         uint32_t m_transferQueueFamilyIndex;
         bool supportBufferUsage2;
+        virtual bool isDebug() const = 0;
     };
+
+    void setDebugName(const IDevice& device, VkObjectType type, uint64_t handle, const std::string& name);
 
     struct DescriptorBindingInfo
     {

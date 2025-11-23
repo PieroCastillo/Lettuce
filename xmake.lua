@@ -35,8 +35,9 @@ target("Lettuce")
     add_rules("utils.symbols.export_all", {export_classes = true})
 
 local samples = {
-    "helloTriangle",
     "cubes",
+    "grass",
+    "helloTriangle",
 }
 
 for _, name in ipairs(samples) do 

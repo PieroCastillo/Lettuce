@@ -12,6 +12,7 @@ namespace Lettuce::Core::Allocators
 {
     struct LinearBufferSubAllocCreateInfo
     {
+        std::string name;
         MemoryAccess memoryAccess;
         AllocatorUsage memoryUsage;
         uint32_t maxSize;

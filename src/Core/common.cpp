@@ -1,6 +1,20 @@
 // project headers
 #include "Lettuce/Core/common.hpp"
 
+void Lettuce::Core::setDebugName(const IDevice& device, VkObjectType type, uint64_t handle, const std::string& name)
+{
+    if(device.isDebug())
+    {
+        VkDebugUtilsObjectNameInfoEXT nameInfo = {
+            .sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT,
+            .objectType = type,
+            .objectHandle = handle,
+            .pObjectName = name.c_str(),
+        };
+       handleResult(vkSetDebugUtilsObjectNameEXT(device.m_device, &nameInfo));
+    }
+}
+
 uint32_t Lettuce::Core::findMemoryTypeIndex(VkDevice device, VkPhysicalDevice gpu, uint32_t typeFilter, MemoryAccess access)
 {
     VkPhysicalDeviceMemoryProperties memProperties;
