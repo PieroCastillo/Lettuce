@@ -53,7 +53,7 @@ namespace Lettuce::Core
 
         void Draw(uint32_t vertexCount, uint32_t instanceCount);
         void DrawIndexed(uint32_t indexCount, uint32_t instanceCount);
-        // void DrawMeshTasks();
+        void DrawMeshTasks(uint32_t x, uint32_t y, uint32_t z);
 
         // void DrawIndexed(const DrawIndexedArgs& args);
         // void DrawIndirect(const DrawIndirectArgs& args);

@@ -127,6 +127,13 @@ void CommandRecordingContext::DrawIndexed(uint32_t indexCount, uint32_t instance
     m_currentDraw = { m_width, m_height };
 }
 
+void CommandRecordingContext::DrawMeshTasks(uint32_t x, uint32_t y, uint32_t z)
+{
+    m_currentDraw.drawArgs = VkDrawMeshTasksIndirectCommandEXT { x, y, z };
+    m_partialCommandList.push_back(m_currentDraw);
+    m_currentDraw = { m_width, m_height };
+}
+
 void CommandRecordingContext::Flush()
 {
     m_partialCommandList.clear();

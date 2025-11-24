@@ -117,7 +117,7 @@ namespace Lettuce::Core
     {
     private:
         VkDebugUtilsMessengerEXT m_messenger;
-        std::vector<const char*> availableExtensionsNames;
+        std::vector<std::string> availableExtensionsNames;
         std::vector<char*> availableLayersNames;
         std::vector<const char*> requestedExtensionsNames;
         std::vector<const char*> requestedLayersNames;
@@ -154,6 +154,9 @@ namespace Lettuce::Core
         VkPhysicalDeviceDynamicRenderingUnusedAttachmentsFeaturesEXT dynamicRenderingUnusedAttachmentsFeature = {
             .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DYNAMIC_RENDERING_UNUSED_ATTACHMENTS_FEATURES_EXT,
             .pNext = &descriptorBufferFeature,
+        };
+        VkPhysicalDeviceFragmentShaderBarycentricFeaturesKHR fragmentShaderBarycentricsFeature = {
+            .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADER_BARYCENTRIC_FEATURES_KHR,
         };
         // recommended features/extensions
 

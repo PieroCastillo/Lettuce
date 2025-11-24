@@ -38,6 +38,7 @@ local samples = {
     "cubes",
     "grass",
     "helloTriangle",
+    "helloTriangleMesh",
 }
 
 for _, name in ipairs(samples) do 
@@ -62,7 +63,23 @@ for _, name in ipairs(samples) do
             for _, f in ipairs(slang_files) do
                 local outfile = path.join(outdir, path.basename(f) .. ".spv")
 
-                local args = { '-fspv-reflect', '-fvk-use-scalar-layout', '-preserve-params', f, "-profile", "glsl_460", "-target", "spirv", "-o", outfile }
+                local args = { 
+                    '-matrix-layout-column-major',
+                    -- '-fspv-reflect', 
+                    -- '-fvk-use-scalar-layout', 
+                    -- '-preserve-params', 
+                    "-profile", 
+                    "spirv_1_4",
+                    -- "-capability", 
+                    -- "SPV_EXT_descriptor_indexing",
+                    -- "-capability", 
+                    -- "SPV_KHR_fragment_shader_barycentric",
+                    "-capability", 
+                    "meshshading",
+                    -- "-capability", 
+                    -- "vk_mem_model", 
+                    "-target", "spirv",
+                    "-o", outfile, f}
 
                 local proc = process.openv("slangc", args)
                 local ok, status = proc:wait()

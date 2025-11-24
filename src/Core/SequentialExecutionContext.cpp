@@ -68,13 +68,6 @@ void SequentialExecutionContext::record(VkCommandBuffer cmd, VkPipeline& current
             );
         }
 
-        if (std::holds_alternative<VkDrawMeshTasksIndirectCommandEXT>(drawCmd.drawArgs))
-        {
-            auto meshArgs = std::get<VkDrawMeshTasksIndirectCommandEXT>(drawCmd.drawArgs);
-            vkCmdDrawMeshTasksEXT(cmd, meshArgs.groupCountX, meshArgs.groupCountY, meshArgs.groupCountZ);
-            // command recording finished here
-            return;
-        }
 
         // bind vertex buffers
         if (drawCmd.vertexBuffers.size() > 0) {
@@ -103,7 +96,13 @@ void SequentialExecutionContext::record(VkCommandBuffer cmd, VkPipeline& current
             auto drawArgs = std::get<VkDrawIndexedIndirectCommand>(drawCmd.drawArgs);
             vkCmdDrawIndexed(cmd, drawArgs.indexCount, drawArgs.instanceCount, drawArgs.firstIndex, drawArgs.vertexOffset, drawArgs.vertexOffset);
         }
-
+        else if (std::holds_alternative<VkDrawMeshTasksIndirectCommandEXT>(drawCmd.drawArgs))
+        {
+            auto meshArgs = std::get<VkDrawMeshTasksIndirectCommandEXT>(drawCmd.drawArgs);
+            vkCmdDrawMeshTasksEXT(cmd, meshArgs.groupCountX, meshArgs.groupCountY, meshArgs.groupCountZ);
+            // command recording finished here
+            return;
+        }
     }
     else if (std::holds_alternative<computeCommand>(command))
     {

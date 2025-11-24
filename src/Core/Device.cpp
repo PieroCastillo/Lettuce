@@ -1,16 +1,19 @@
 // standard headers
 #include <vector>
 #include <iostream>
+#include <print>
 
 // project headers
 #include "Lettuce/Core/Device.hpp"
 
 using namespace Lettuce::Core;
 
-template <typename T>
-inline bool exists(const std::vector<T>& vec, const T& elem)
+auto exists(const std::vector<std::string>& list, const char* key) -> bool
 {
-    return std::find(vec.begin(), vec.end(), elem) != vec.end();
+    return std::find_if(list.begin(), list.end(),
+        [&](const std::string& s) {
+            return s == key;   // comparación por contenido
+        }) != list.end();
 }
 
 #define COLOR_RESET   "\033[0m"
@@ -136,6 +139,16 @@ void Device::selectGPU(const DeviceCreateInfo& createInfo)
 
 void Device::setupFeaturesExtensions()
 {
+    uint32_t extPropsCount;
+    vkEnumerateDeviceExtensionProperties(m_physicalDevice, nullptr, &extPropsCount, nullptr);
+    std::vector<VkExtensionProperties> extProps(extPropsCount);
+    vkEnumerateDeviceExtensionProperties(m_physicalDevice, nullptr, &extPropsCount, extProps.data());
+
+    for( const auto& extProp : extProps)
+    {
+        availableExtensionsNames.emplace_back(extProp.extensionName);
+    }
+
     // required features/extensions
     gpuFeatures11.variablePointersStorageBuffer = VK_TRUE;
     gpuFeatures11.variablePointers = VK_TRUE;
@@ -200,18 +213,23 @@ void Device::setupFeaturesExtensions()
     dynamicRenderingUnusedAttachmentsFeature.dynamicRenderingUnusedAttachments = VK_TRUE;
     dynamicRenderingUnusedAttachmentsFeature.pNext = &descriptorBufferFeature;
 
-    next = &dynamicRenderingUnusedAttachmentsFeature;
+    fragmentShaderBarycentricsFeature.fragmentShaderBarycentric = VK_TRUE;
+    fragmentShaderBarycentricsFeature.pNext = &dynamicRenderingUnusedAttachmentsFeature;
+
+    next = &fragmentShaderBarycentricsFeature;
 
     requestedExtensionsNames.push_back(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
     requestedExtensionsNames.push_back(VK_GOOGLE_HLSL_FUNCTIONALITY1_EXTENSION_NAME);
     // requestedExtensionsNames.push_back(VK_GOOGLE_USER_TYPE_EXTENSION_NAME);
 
+    requestedExtensionsNames.push_back(VK_KHR_PIPELINE_LIBRARY_EXTENSION_NAME);
     requestedExtensionsNames.push_back(VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME);
+    requestedExtensionsNames.push_back(VK_KHR_FRAGMENT_SHADER_BARYCENTRIC_EXTENSION_NAME);
     requestedExtensionsNames.push_back(VK_EXT_DESCRIPTOR_BUFFER_EXTENSION_NAME);
     requestedExtensionsNames.push_back(VK_EXT_DYNAMIC_RENDERING_UNUSED_ATTACHMENTS_EXTENSION_NAME);
 
     // recommended features/extensions
-    if (exists<const char*>(availableExtensionsNames, VK_EXT_DEVICE_GENERATED_COMMANDS_EXTENSION_NAME))
+    if (exists(availableExtensionsNames, VK_EXT_DEVICE_GENERATED_COMMANDS_EXTENSION_NAME))
     {
         enabledRecommendedFeatures.deviceGeneratedCommands = true;
 
@@ -222,7 +240,7 @@ void Device::setupFeaturesExtensions()
         requestedExtensionsNames.push_back(VK_EXT_DEVICE_GENERATED_COMMANDS_EXTENSION_NAME);
     }
 
-    if (exists<const char*>(availableExtensionsNames, VK_EXT_GRAPHICS_PIPELINE_LIBRARY_EXTENSION_NAME))
+    if (exists(availableExtensionsNames, VK_EXT_GRAPHICS_PIPELINE_LIBRARY_EXTENSION_NAME))
     {
         enabledRecommendedFeatures.graphicsPipelineLibrary = true;
 
@@ -233,7 +251,7 @@ void Device::setupFeaturesExtensions()
         requestedExtensionsNames.push_back(VK_EXT_GRAPHICS_PIPELINE_LIBRARY_EXTENSION_NAME);
     }
 
-    if (exists<const char*>(availableExtensionsNames, VK_KHR_DYNAMIC_RENDERING_LOCAL_READ_EXTENSION_NAME))
+    if (exists(availableExtensionsNames, VK_KHR_DYNAMIC_RENDERING_LOCAL_READ_EXTENSION_NAME))
     {
         enabledRecommendedFeatures.dynamicRenderingLocalRead = true;
 
@@ -244,7 +262,7 @@ void Device::setupFeaturesExtensions()
         requestedExtensionsNames.push_back(VK_KHR_DYNAMIC_RENDERING_LOCAL_READ_EXTENSION_NAME);
     }
 
-    if (exists<const char*>(availableExtensionsNames, VK_KHR_MAINTENANCE_5_EXTENSION_NAME))
+    if (exists(availableExtensionsNames, VK_KHR_MAINTENANCE_5_EXTENSION_NAME))
     {
         enabledRecommendedFeatures.maintenance5 = true;
         maintenance5Feature.maintenance5 = VK_TRUE;
@@ -256,7 +274,7 @@ void Device::setupFeaturesExtensions()
 
     // optional features/extensions
 
-    if (exists<const char*>(availableExtensionsNames, VK_KHR_FRAGMENT_SHADING_RATE_EXTENSION_NAME))
+    if (exists(availableExtensionsNames, VK_KHR_FRAGMENT_SHADING_RATE_EXTENSION_NAME))
     {
         fragmentShadingRateFeature.pipelineFragmentShadingRate = VK_TRUE;
         fragmentShadingRateFeature.pNext = next;
@@ -264,7 +282,7 @@ void Device::setupFeaturesExtensions()
         requestedExtensionsNames.push_back(VK_KHR_FRAGMENT_SHADING_RATE_EXTENSION_NAME);
     }
 
-    if (exists<const char*>(availableExtensionsNames, VK_EXT_MESH_SHADER_EXTENSION_NAME))
+    if (exists(availableExtensionsNames, VK_EXT_MESH_SHADER_EXTENSION_NAME))
     {
         meshShaderFeature.taskShader = VK_TRUE;
         meshShaderFeature.meshShader = VK_TRUE;
