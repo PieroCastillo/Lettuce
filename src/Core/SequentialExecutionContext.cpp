@@ -10,7 +10,6 @@ void SequentialExecutionContext::record(VkCommandBuffer cmd, VkPipeline& current
 {
     if (std::holds_alternative<renderingStartCommand>(command))
     {
-        std::println("renderingStartCommand");
         auto renderingCmd = std::get<renderingStartCommand>(command);
 
         VkRenderingInfo renderingInfo = {
@@ -32,7 +31,6 @@ void SequentialExecutionContext::record(VkCommandBuffer cmd, VkPipeline& current
     }
     else if (std::holds_alternative<drawCommand>(command))
     {
-        std::println("drawCommand");
         auto drawCmd = std::get<drawCommand>(command);
 
         if (currentPipeline != drawCmd.pipeline)
@@ -100,8 +98,6 @@ void SequentialExecutionContext::record(VkCommandBuffer cmd, VkPipeline& current
         {
             auto meshArgs = std::get<VkDrawMeshTasksIndirectCommandEXT>(drawCmd.drawArgs);
             vkCmdDrawMeshTasksEXT(cmd, meshArgs.groupCountX, meshArgs.groupCountY, meshArgs.groupCountZ);
-            // command recording finished here
-            return;
         }
     }
     else if (std::holds_alternative<computeCommand>(command))
@@ -138,11 +134,6 @@ void SequentialExecutionContext::record(VkCommandBuffer cmd, VkPipeline& current
         );
 
         vkCmdDispatch(cmd, computeCmd.x, computeCmd.y, computeCmd.z);
-    }
-    else if (std::holds_alternative<renderingEndCommand>(command))
-    {
-        std::println("renderingEndCommand");
-        vkCmdEndRendering(cmd);
     }
 }
 

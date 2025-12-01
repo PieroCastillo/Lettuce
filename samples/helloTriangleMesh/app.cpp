@@ -79,7 +79,7 @@ void createRenderingObjects()
         .shaders = shaders,
         .descriptorTable = descriptorTable,
         .colorTargets = swapchain->GetRenderViews(),
-        .taskEntryPoint = "amplificationMain",
+        //.taskEntryPoint = "amplificationMain",
         .meshEntryPoint = "meshMain",
         .fragmentEntryPoint = "fragmentMain",
     };

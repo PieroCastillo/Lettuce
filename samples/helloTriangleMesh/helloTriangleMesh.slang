@@ -12,9 +12,9 @@ struct VertexOutput
 };
 
 static float4 positions[3] = {
-    float4(0.0, -1.0, 0.0, 1.0),
-    float4(-1.0, 1.0, 0.0, 1.0),
-    float4(1.0, 1.0, 0.0, 1.0)
+    float4(0.0, -0.75, 0.0, 0.75),
+    float4(-0.75, 0.75, 0.0, 0.75),
+    float4(0.75, 0.75, 0.0, 0.75)
 };
 
 static float4 colors[3] = {
@@ -23,25 +23,10 @@ static float4 colors[3] = {
     float4(1.0, 0.0, 0.0, 1.0)
 };
 
-struct DummyPayLoad
-{
-    uint dummyData;
-};
-
-// We don't use pay loads in this sample, but the fn call requires one
-groupshared DummyPayLoad dummyPayLoad;
-
-[shader("amplification")]
-[numthreads(1, 1, 1)]
-void amplificationMain()
-{
-    DispatchMesh(3, 1, 1, dummyPayLoad);
-}
-
 [shader("mesh")]
 [outputtopology("triangle")]
-[numthreads(1, 1, 1)]
-void meshMain(out indices uint3 triangles[1], out vertices VertexOutput vertices[3], in payload DummyPayLoad ply, uint3 DispatchThreadID: SV_DispatchThreadID)
+[numthreads(3, 1, 1)]
+void meshMain(out indices uint3 triangles[1], out vertices VertexOutput vertices[3], uint3 DispatchThreadID: SV_DispatchThreadID)
 {
     SetMeshOutputCounts(3, 1);
 

@@ -27,6 +27,7 @@ namespace Lettuce::Core
         VkFormat depthAttachmentFormat;
         VkFormat stencilAttachmentFormat;
         VkPipelineLayout layout;
+        bool useMeshShader;
     };
 
     struct ComputePipelineCreateInfo

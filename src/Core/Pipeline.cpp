@@ -103,7 +103,7 @@ void Pipeline::Create(const IDevice& device, const GraphicsPipelineCreateInfo& c
     // TODO: impl Depth Testing
     VkPipelineRenderingCreateInfo renderingCI = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO,
-        .pNext = createInfo.fragmentShadingRate ?  &fragmentShadingRate : nullptr,
+        .pNext = createInfo.fragmentShadingRate ? &fragmentShadingRate : nullptr,
         .viewMask = 0, // multiview disabled
         .colorAttachmentCount = (uint32_t)createInfo.colorAttachmentFormats.size(),
         .pColorAttachmentFormats = createInfo.colorAttachmentFormats.data(),
@@ -113,8 +113,8 @@ void Pipeline::Create(const IDevice& device, const GraphicsPipelineCreateInfo& c
 
     std::vector<VkPipelineShaderStageCreateInfo> stages;
     stages.reserve(createInfo.stages.size());
-    
-    for(int i = 0; i < createInfo.shaderModules.size(); ++i)
+
+    for (int i = 0; i < createInfo.shaderModules.size(); ++i)
     {
         VkPipelineShaderStageCreateInfo stageCI = {
             .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
@@ -133,11 +133,6 @@ void Pipeline::Create(const IDevice& device, const GraphicsPipelineCreateInfo& c
         // stages
         .stageCount = (uint32_t)stages.size(),
         .pStages = stages.data(),
-        // vertex input state
-        .pVertexInputState = &vertexInputState,
-        .pInputAssemblyState = &inputAssemblyState,
-        // pre rasterization shader state
-        .pTessellationState = &tessellationState,
         .pViewportState = &viewportState,
         .pRasterizationState = &rasterizationState,
         .pMultisampleState = &multisampleState,
@@ -148,6 +143,16 @@ void Pipeline::Create(const IDevice& device, const GraphicsPipelineCreateInfo& c
         .subpass = 0,
         .basePipelineHandle = VK_NULL_HANDLE,
     };
+
+    if (!createInfo.useMeshShader)
+    {
+        // vertex input state
+        gpipelineCI.pVertexInputState = &vertexInputState;
+        gpipelineCI.pInputAssemblyState = &inputAssemblyState;
+        // pre rasterization shader state
+        gpipelineCI.pTessellationState = &tessellationState;
+    }
+
     handleResult(vkCreateGraphicsPipelines(m_device, VK_NULL_HANDLE, 1, &gpipelineCI, nullptr, &m_pipeline));
 }
 

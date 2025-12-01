@@ -154,6 +154,7 @@ auto Device::CreatePipeline(const GraphicsPipelineCreateData& data) -> Result<Pi
 
         if (data.meshEntryPoint.has_value())
         {
+            gpipelineCI.useMeshShader = true;
             gpipelineCI.entryPoints.push_back(data.meshEntryPoint.value());
             gpipelineCI.shaderModules.push_back(shaderModule);
             gpipelineCI.stages.push_back(VK_SHADER_STAGE_MESH_BIT_EXT);
@@ -167,6 +168,7 @@ auto Device::CreatePipeline(const GraphicsPipelineCreateData& data) -> Result<Pi
         }
         else if (data.vertexEntryPoint.has_value())
         {
+            gpipelineCI.useMeshShader = false;
             gpipelineCI.entryPoints.push_back(data.vertexEntryPoint.value());
             gpipelineCI.shaderModules.push_back(shaderModule);
             gpipelineCI.stages.push_back(VK_SHADER_STAGE_VERTEX_BIT);
