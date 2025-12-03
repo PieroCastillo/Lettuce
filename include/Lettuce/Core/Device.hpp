@@ -33,6 +33,8 @@ Created by @PieroCastillo on 2025-07-20
 
 namespace Lettuce::Core
 {
+    using shader = std::tuple<std::string, std::weak_ptr<ShaderPack>>;
+
     struct GraphicsPipelineCreateData
     {
         std::weak_ptr<ShaderPack> shaders;
@@ -41,14 +43,14 @@ namespace Lettuce::Core
         std::weak_ptr<RenderTarget> depthTarget;
         // "classic" rasterization pipeline
         std::vector<VertexInput> inputs;
-        std::optional<std::string> vertexEntryPoint;
-        std::optional<std::string> tesselletionControlEntryPoint;
-        std::optional<std::string> tesselletionEvaluationEntryPoint;
-        std::optional<std::string> geometryEntryPoint;
+        std::optional<shader> vertexShader;
+        std::optional<shader> tesselletionControlShader;
+        std::optional<shader> tesselletionEvaluationShader;
+        std::optional<shader> geometryShader;
         // mesh rasterization pipeline
-        std::optional<std::string> taskEntryPoint;
-        std::optional<std::string> meshEntryPoint;
-        std::string fragmentEntryPoint;
+        std::optional<shader> taskShader;
+        std::optional<shader> meshShader;
+        shader fragmentShader;
     };
 
     // for the future

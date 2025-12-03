@@ -28,7 +28,7 @@ void main(out indices uint3 triangles[1], out vertices VertexOutput vertices[3],
 {
 	// float4x4 mvp = mul(ubo.projection, mul(ubo.view, ubo.model));
 
-	float4 offset = float4(0.0, 0.0, (float)DispatchThreadID, 0.0);
+	float4 offset = float4(0.0, 0.0, (float)DispatchThreadID.x, 0.0);
 
 	SetMeshOutputCounts(3, 1);
 	for (uint i = 0; i < 3; i++) {

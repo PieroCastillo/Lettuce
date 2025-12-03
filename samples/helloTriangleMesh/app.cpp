@@ -15,6 +15,26 @@
 #include <optional>
 #include <functional>
 
+
+std::span<const uint32_t> loadSpirv(const std::string& path,
+    std::vector<uint32_t>& outBuffer)
+{
+    std::ifstream file(path, std::ios::ate | std::ios::binary);
+    if (!file)
+        throw std::runtime_error("File not found: " + path);
+
+    std::size_t fileSize = static_cast<std::size_t>(file.tellg());
+    if (fileSize % sizeof(uint32_t) != 0)
+        throw std::runtime_error("SPIR-V file size is not aligned: " + path);
+
+    outBuffer.resize(fileSize / sizeof(uint32_t));
+
+    file.seekg(0);
+    file.read(reinterpret_cast<char*>(outBuffer.data()), fileSize);
+
+    return std::span<const uint32_t>(outBuffer);
+}
+
 using namespace Lettuce::Core;
 
 GLFWwindow* window;
@@ -54,38 +74,41 @@ void initLettuce()
 
 void createRenderingObjects()
 {
-    auto shadersFile = std::ifstream("helloTriangleMesh.spv", std::ios::ate | std::ios::binary);
-    if (!shadersFile) throw std::runtime_error("helloTriangleMesh.spv does not exist");
+    std::vector<uint32_t> shaderBuffer;
 
-    auto fileSize = (uint32_t)shadersFile.tellg();
-    std::vector<uint32_t> shadersBuffer;
-    shadersBuffer.resize(fileSize / sizeof(uint32_t));
-
-    shadersFile.seekg(0);
-    shadersFile.read((char*)shadersBuffer.data(), fileSize);
-
-    ShaderPackCreateInfo shadersCI = {
-        .shaderByteData = std::span<const uint32_t>(shadersBuffer.data(), shadersBuffer.size()),
+    ShaderPackCreateInfo fragShaderCI = {
+        .shaderByteData = loadSpirv("helloTriangleMesh.frag.spv", shaderBuffer),
     };
-    auto shaders = device->CreateShaderPack(shadersCI).value();
+    auto fragShader = device->CreateShaderPack(fragShaderCI).value();
+
+    ShaderPackCreateInfo meshShaderCI = {
+      .shaderByteData = loadSpirv("helloTriangleMesh.mesh.spv", shaderBuffer),
+    };
+    auto meshShader = device->CreateShaderPack(meshShaderCI).value();
+
+    ShaderPackCreateInfo taskShaderCI = {
+        .shaderByteData = loadSpirv("helloTriangleMesh.task.spv", shaderBuffer),
+    };
+    auto taskShader = device->CreateShaderPack(taskShaderCI).value();
 
     DescriptorTableCreateInfo descriptorTableCI = {
-        .setLayoutInfos = shaders->GetDescriptorsInfo(),
+        .setLayoutInfos = fragShader->GetDescriptorsInfo(), // temporal solution
         .maxDescriptorVariantsPerSet = 3,
     };
     descriptorTable = device->CreateDescriptorTable(descriptorTableCI).value();
 
     GraphicsPipelineCreateData gpipelineData = {
-        .shaders = shaders,
         .descriptorTable = descriptorTable,
         .colorTargets = swapchain->GetRenderViews(),
-        //.taskEntryPoint = "amplificationMain",
-        .meshEntryPoint = "meshMain",
-        .fragmentEntryPoint = "fragmentMain",
+        .taskShader = std::make_tuple("main", taskShader),
+        .meshShader = std::make_tuple("main", meshShader),
+        .fragmentShader = std::make_tuple("main", fragShader),
     };
     rgbPipeline = device->CreatePipeline(gpipelineData).value();
 
-    shaders->Release();
+    fragShader->Release();
+    meshShader->Release();
+    taskShader->Release();
 }
 
 void mainLoop()

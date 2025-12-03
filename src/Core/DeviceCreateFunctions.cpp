@@ -17,6 +17,21 @@
 
 using namespace Lettuce::Core;
 
+inline void addShaderToCI(GraphicsPipelineCreateInfo& ci, const shader& shader, VkShaderStageFlagBits stageBit)
+{
+    auto ep = std::get<0>(shader);
+    auto sm = std::get<1>(shader).lock()->m_shaderModule;
+
+    if (ep.empty() || sm == VK_NULL_HANDLE)
+    {
+        throw LettuceException(LettuceResult::InvalidOperation);
+    }
+
+    ci.entryPoints.push_back(ep);
+    ci.stages.push_back(stageBit);
+    ci.shaderModules.push_back(sm);
+}
+
 auto Device::CreateSwapchain(const SwapchainCreateInfo& createInfo) -> Result<Swapchain>
 {
     try
@@ -140,58 +155,37 @@ auto Device::CreatePipeline(const GraphicsPipelineCreateData& data) -> Result<Pi
             ++idx;
         }
 
-        // create shader module
-        auto shaderModule = data.shaders.lock()->m_shaderModule;
-
         // define shaders for the pipeline
-        if (data.fragmentEntryPoint.empty())
-        {
-            throw LettuceException(LettuceResult::InvalidShaderEntryPoint);
-        }
-        gpipelineCI.entryPoints.push_back(data.fragmentEntryPoint);
-        gpipelineCI.shaderModules.push_back(shaderModule);
-        gpipelineCI.stages.push_back(VK_SHADER_STAGE_FRAGMENT_BIT);
+        addShaderToCI(gpipelineCI, data.fragmentShader, VK_SHADER_STAGE_FRAGMENT_BIT);
 
-        if (data.meshEntryPoint.has_value())
+        if (data.meshShader.has_value())
         {
             gpipelineCI.useMeshShader = true;
-            gpipelineCI.entryPoints.push_back(data.meshEntryPoint.value());
-            gpipelineCI.shaderModules.push_back(shaderModule);
-            gpipelineCI.stages.push_back(VK_SHADER_STAGE_MESH_BIT_EXT);
+            addShaderToCI(gpipelineCI, data.meshShader.value(), VK_SHADER_STAGE_MESH_BIT_EXT);
 
-            if (data.taskEntryPoint.has_value())
+            if (data.taskShader.has_value())
             {
-                gpipelineCI.entryPoints.push_back(data.taskEntryPoint.value());
-                gpipelineCI.shaderModules.push_back(shaderModule);
-                gpipelineCI.stages.push_back(VK_SHADER_STAGE_TASK_BIT_EXT);
+                addShaderToCI(gpipelineCI, data.taskShader.value(), VK_SHADER_STAGE_TASK_BIT_EXT);
             }
         }
-        else if (data.vertexEntryPoint.has_value())
+        else if (data.vertexShader.has_value())
         {
             gpipelineCI.useMeshShader = false;
-            gpipelineCI.entryPoints.push_back(data.vertexEntryPoint.value());
-            gpipelineCI.shaderModules.push_back(shaderModule);
-            gpipelineCI.stages.push_back(VK_SHADER_STAGE_VERTEX_BIT);
+            addShaderToCI(gpipelineCI, data.vertexShader.value(), VK_SHADER_STAGE_VERTEX_BIT);
 
-            if (data.geometryEntryPoint.has_value())
+            if (data.geometryShader.has_value())
             {
-                gpipelineCI.entryPoints.push_back(data.geometryEntryPoint.value());
-                gpipelineCI.shaderModules.push_back(shaderModule);
-                gpipelineCI.stages.push_back(VK_SHADER_STAGE_GEOMETRY_BIT);
+                addShaderToCI(gpipelineCI, data.geometryShader.value(), VK_SHADER_STAGE_GEOMETRY_BIT);
             }
 
-            if (data.tesselletionControlEntryPoint.has_value())
+            if (data.tesselletionControlShader.has_value())
             {
-                gpipelineCI.entryPoints.push_back(data.tesselletionControlEntryPoint.value());
-                gpipelineCI.shaderModules.push_back(shaderModule);
-                gpipelineCI.stages.push_back(VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT);
+                addShaderToCI(gpipelineCI, data.tesselletionControlShader.value(), VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT);
             }
 
-            if (data.tesselletionEvaluationEntryPoint.has_value())
+            if (data.tesselletionEvaluationShader.has_value())
             {
-                gpipelineCI.entryPoints.push_back(data.tesselletionEvaluationEntryPoint.value());
-                gpipelineCI.shaderModules.push_back(shaderModule);
-                gpipelineCI.stages.push_back(VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT);
+                addShaderToCI(gpipelineCI, data.tesselletionEvaluationShader.value(), VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT);
             }
         }
 
