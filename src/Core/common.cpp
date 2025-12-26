@@ -22,17 +22,11 @@ uint32_t Lettuce::Core::findMemoryTypeIndex(VkDevice device, VkPhysicalDevice gp
     VkMemoryPropertyFlags props;
     switch (access)
     {
-    case MemoryAccess::FastGPUReadWrite:
+    case MemoryAccess::GPUOnly:
         props = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
         break;
-    case MemoryAccess::FastCPUWriteGPURead:
+    case MemoryAccess::Shared:
         props = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT | VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
-        break;
-    case MemoryAccess::FastGPUWriteCPURead:
-        props = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
-        break;
-    case MemoryAccess::FastCPUReadWrite:
-        props = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT | VK_MEMORY_PROPERTY_HOST_CACHED_BIT;
         break;
     }
 

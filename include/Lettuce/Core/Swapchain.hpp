@@ -36,7 +36,6 @@ namespace Lettuce::Core
         void setupSwapchain(const SwapchainCreateInfo &createInfo);
         void setupImagesAndView(const SwapchainCreateInfo &createInfo);
 
-    public:
         VkInstance m_instance;
         VkPhysicalDevice m_gpu;
         VkDevice m_device;
@@ -47,7 +46,7 @@ namespace Lettuce::Core
         VkFence m_waitForAcquireFence;
         uint32_t m_imageCount;
         uint32_t m_currentImageIndex;
-
+    public:
         void Create(const IDevice& device, const SwapchainCreateInfo &createInfo);
         void Release();
 
@@ -59,6 +58,8 @@ namespace Lettuce::Core
 
         inline uint32_t GetHeight() { return m_height; }
         inline uint32_t GetWidth() { return m_width; }
+    
+        inline uint64_t GetSwapchainHandle(){ return m_swapchain; }
     };
 }
 #endif // LETTUCE_CORE_SWAPCHAIN_HPP

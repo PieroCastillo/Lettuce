@@ -32,12 +32,13 @@ namespace Lettuce::Core
     class Sampler
     {
     private:
-    public:
         VkDevice m_device;
         VkSampler m_sampler;
-
+    public:
         void Create(const IDevice& device, const SamplerCreateInfo& createInfo);
         void Release();
+
+        inline uint64_t GetSamplerHandle() { return (uint64_t)m_sampler; }
     };
 }
 #endif // LETTUCE_CORE_SAMPLER_HPP

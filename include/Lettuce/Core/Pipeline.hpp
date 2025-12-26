@@ -13,21 +13,33 @@ Created by @PieroCastillo on 2025-07-20
 
 namespace Lettuce::Core
 {
-    struct GraphicsPipelineCreateInfo
+    struct MeshShadingPipelineCreateInfo
     {
-        VkPrimitiveTopology topology;
-        uint32_t patchControlPoints;
         bool fragmentShadingRate;
-        std::vector<std::string> entryPoints;
-        std::vector<VkShaderStageFlagBits> stages;
-        std::vector<VkShaderModule> shaderModules;
+        std::string taskEntryPoint;
+        std::string meshEntryPoint;
+        std::string fragEntryPoint;
+        VkShaderModule taskShaderModule;
+        VkShaderModule meshShaderModule;
+        VkShaderModule fragShaderModule;
         std::vector<VkFormat> colorAttachmentFormats;
-        std::vector<VkVertexInputBindingDescription> vertexBindings;
-        std::vector<VkVertexInputAttributeDescription> vertexAttributes;
         VkFormat depthAttachmentFormat;
         VkFormat stencilAttachmentFormat;
         VkPipelineLayout layout;
-        bool useMeshShader;
+    };
+
+    struct PrimitiveShadingPipelineCreateInfo
+    {
+        VkPrimitiveTopology topology;
+        bool fragmentShadingRate;
+        std::string vertEntryPoint;
+        std::string fragEntryPoint;
+        VkShaderModule vertShaderModule;
+        VkShaderModule fragShaderModule;
+        std::vector<VkFormat> colorAttachmentFormats;
+        VkFormat depthAttachmentFormat;
+        VkFormat stencilAttachmentFormat;
+        VkPipelineLayout layout;
     };
 
     struct ComputePipelineCreateInfo
@@ -40,15 +52,17 @@ namespace Lettuce::Core
     class Pipeline
     {
     private:
-
-    public:
         VkDevice m_device;
         VkPipeline m_pipeline;
         VkPipelineLayout m_layout;
-
-        void Create(const IDevice& device, const GraphicsPipelineCreateInfo& createInfo);
+    public:
+        void Create(const IDevice& device, const MeshShadingPipelineCreateInfo& createInfo);
+        void Create(const IDevice& device, const PrimitiveShadingPipelineCreateInfo& createInfo);
         void Create(const IDevice& device, const ComputePipelineCreateInfo& createInfo);
         void Release();
+
+        inline uint64_t GetPipelineHandle() { return (uint64_t)m_pipeline; }
+        inline uint64_t GetPipelineLayoutHandle() { return (uint64_t)m_layout; }
     };
 }
 #endif // LETTUCE_CORE_PIPELINE_HPP

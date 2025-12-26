@@ -49,7 +49,6 @@ namespace Lettuce::Core
         void Flush();
         void Reset();
         
-        BufferHandle GetHandle();
     };
 
     template<typename T>

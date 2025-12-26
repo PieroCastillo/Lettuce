@@ -30,6 +30,7 @@ namespace Lettuce::Core
         void Release();
 
         auto GetDescriptorsInfo() -> std::vector<DescriptorSetLayoutInfo>;
+        inline uint64_t GetShaderModuleHandle() { return (uint64_t)m_shaderModule; }
     };
 };
 

@@ -108,20 +108,17 @@ namespace Lettuce::Core
 {
     enum class AllocatorUsage
     {
-        Staging,                 // TRANSFER_SRC
-        ShaderGeometry,          // VERTEX | INDEX | TRANSFER_DST
-        ShaderReadOnlyResource,  // UNIFORM | SHADER_DEVICE_ADDRESS | TRANSFER_DST
-        ShaderReadWriteResource, // STORAGE | SHADER_DEVICE_ADDRESS
-        Descriptors,             // RESOURCE_DESCRIPTOR_BUFFER | SAMPLER_DESCRIPTOR_BUFFER
+        General,                 // TRANSFER_SRC | TRANSFER_DST | SHADER_DEVICE_ADDRESS
+        ShaderReadOnlyResource,  // UNIFORM | TRANSFER_SRC | TRANSFER_DST | SHADER_DEVICE_ADDRESS
+        ShaderReadWriteResource, // STORAGE | TRANSFER_SRC | TRANSFER_DST | SHADER_DEVICE_ADDRESS
+        Descriptors,             // RESOURCE_DESCRIPTOR_BUFFER | SAMPLER_DESCRIPTOR_BUFFER | SHADER_DEVICE_ADDRESS
         Indirect,                // INDIRECT_BUFFER | SHADER_DEVICE_ADDRESS
     };
 
     enum class MemoryAccess
     {
-        FastGPUReadWrite,    // DEVICE_LOCAL
-        FastCPUWriteGPURead, // DEVICE_LOCAL+HOST_VISIBLE+HOST_COHERENT
-        FastGPUWriteCPURead, // HOST_VISIBLE+HOST_COHERENT
-        FastCPUReadWrite,    // HOST_VISIBLE+HOST_COHERENT+HOST_CACHED
+        GPUOnly, // DEVICE_LOCAL
+        Shared,  // DEVICE_LOCAL+HOST_VISIBLE+HOST_COHERENT
     };
 
     enum class LettuceResult
@@ -149,13 +146,12 @@ namespace Lettuce::Core
     [[nodiscard]] constexpr VkBufferUsageFlags mapAllocatorUsageToVk(AllocatorUsage usage) noexcept
     {
         using enum AllocatorUsage;
-        constexpr std::array<VkBufferUsageFlags, 6> table{
-            VK_BUFFER_USAGE_TRANSFER_SRC_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
-            VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
-            VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
-            VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
-            VK_BUFFER_USAGE_RESOURCE_DESCRIPTOR_BUFFER_BIT_EXT | VK_BUFFER_USAGE_SAMPLER_DESCRIPTOR_BUFFER_BIT_EXT,
-            VK_BUFFER_USAGE_INDIRECT_BUFFER_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT
+        constexpr std::array<VkBufferUsageFlags, 5> table{
+            VK_BUFFER_USAGE_TRANSFER_SRC_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
+            VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_SRC_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
+            VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_SRC_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
+            VK_BUFFER_USAGE_RESOURCE_DESCRIPTOR_BUFFER_BIT_EXT | VK_BUFFER_USAGE_SAMPLER_DESCRIPTOR_BUFFER_BIT_EXT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
+            VK_BUFFER_USAGE_INDIRECT_BUFFER_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
         };
 
         return table[std::to_underlying(usage)];
@@ -254,29 +250,13 @@ namespace Lettuce::Core
         VkBuffer buffer;
         uint32_t size;
         uint32_t offset;
-        void* data;
-        AllocationHandle handle;
+        void* cpuMappedPtr;
+        void* gpuPtr;
     };
 
     struct ImageAllocation
     {
         VkImage image;
-        AllocationHandle handle;
-    };
-
-    struct BufferHandle
-    {
-        VkBuffer buffer;
-        uint64_t offset;
-        VkDeviceAddress address;
-        uint32_t size;
-    };
-
-    struct TextureHandle
-    {
-        VkSampler* samplerPtr;
-        VkImageView view;
-        VkImageLayout layout;
     };
 
     class IDevice

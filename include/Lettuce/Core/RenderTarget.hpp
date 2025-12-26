@@ -41,17 +41,18 @@ namespace Lettuce::Core
         std::shared_ptr<Allocators::IGPUMemoryResource> m_allocator;
         ImageAllocation m_allocation;
 
-    public:
         VkDevice m_device;
         VkImage m_image;
         VkImageLayout m_layout;
         VkImageView m_imageView;
-
+    public:
         void Create(const IDevice& device, const RenderTargetCreateInfo& createInfo);
         void Release();
 
-        VkFormat GetFormat();
-        RenderTargetType GetType();
+        inline VkFormat GetFormat() { return m_format; }
+        inline RenderTargetType GetType() { return m_renderTargetType; }
+        inline uint64_t GetImageHandle() { return (uint64_t)m_image; }
+        inline uint64_t GetImageViewHandle() { return (uint64_t)m_imageView; }
     };
 }
 #endif // LETTUCE_CORE_RENDER_TARGET_HPP
