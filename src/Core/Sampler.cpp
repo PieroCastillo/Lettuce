@@ -1,26 +1,23 @@
-// standard headers
-#include <memory>
-
-// external headers
-#include <volk.h>
-
 // project headers
-#include "Lettuce/Core/Sampler.hpp"
+#include "Lettuce/Core/api.hpp"
+#include "Lettuce/Core/DeviceImpl.hpp"
+#include "Lettuce/Core/common.hpp"
 
 using namespace Lettuce::Core;
 
-void Sampler::Create(const IDevice& device, const SamplerCreateInfo& createInfo) 
+Sampler Device::CreateSampler(const SamplerDesc& desc)
 {
-    m_device = device.m_device;
-
     VkSamplerCreateInfo samplerCI = {
         .sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
     };
-    
-    handleResult(vkCreateSampler(m_device, &samplerCI, nullptr, &m_sampler));
+
+    VkSampler sampler;
+    handleResult(vkCreateSampler(impl->m_device, &samplerCI, nullptr, &sampler));
+    return impl->samplers.allocate(sampler);
 }
 
-void Sampler::Release() 
+void Device::Destroy(Sampler sampler)
 {
-    vkDestroySampler(m_device, m_sampler, nullptr);
+    vkDestroySampler(impl->m_device, impl->samplers.get(sampler), nullptr);
+    impl->samplers.free(sampler);
 }

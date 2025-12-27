@@ -35,7 +35,6 @@ constexpr uint32_t height = 768;
 
 std::shared_ptr<Device> device;
 std::shared_ptr<Swapchain> swapchain;
-std::shared_ptr<SequentialExecutionContext> context;
 std::shared_ptr<DescriptorTable> descriptorTable;
 std::shared_ptr<Pipeline> rgbPipeline;
 

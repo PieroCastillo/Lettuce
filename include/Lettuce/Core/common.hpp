@@ -143,19 +143,19 @@ namespace Lettuce::Core
         Unknown,
     };
 
-    [[nodiscard]] constexpr VkBufferUsageFlags mapAllocatorUsageToVk(AllocatorUsage usage) noexcept
-    {
-        using enum AllocatorUsage;
-        constexpr std::array<VkBufferUsageFlags, 5> table{
-            VK_BUFFER_USAGE_TRANSFER_SRC_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
-            VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_SRC_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
-            VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_SRC_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
-            VK_BUFFER_USAGE_RESOURCE_DESCRIPTOR_BUFFER_BIT_EXT | VK_BUFFER_USAGE_SAMPLER_DESCRIPTOR_BUFFER_BIT_EXT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
-            VK_BUFFER_USAGE_INDIRECT_BUFFER_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
-        };
+    // [[nodiscard]] constexpr VkBufferUsageFlags mapAllocatorUsageToVk(AllocatorUsage usage) noexcept
+    // {
+    //     using enum AllocatorUsage;
+    //     constexpr std::array<VkBufferUsageFlags, 5> table{
+    //         VK_BUFFER_USAGE_TRANSFER_SRC_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
+    //         VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_SRC_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
+    //         VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_SRC_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
+    //         VK_BUFFER_USAGE_RESOURCE_DESCRIPTOR_BUFFER_BIT_EXT | VK_BUFFER_USAGE_SAMPLER_DESCRIPTOR_BUFFER_BIT_EXT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
+    //         VK_BUFFER_USAGE_INDIRECT_BUFFER_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
+    //     };
 
-        return table[std::to_underlying(usage)];
-    }
+    //     return table[std::to_underlying(usage)];
+    // }
 
     uint32_t findMemoryTypeIndex(VkDevice device, VkPhysicalDevice gpu, uint32_t typeFilter, MemoryAccess access);
 
@@ -243,58 +243,58 @@ namespace Lettuce::Core
         return result;
     }
 
-    using AllocationHandle = uint32_t;
+    // using AllocationHandle = uint32_t;
 
-    struct BufferAllocation
-    {
-        VkBuffer buffer;
-        uint32_t size;
-        uint32_t offset;
-        void* cpuMappedPtr;
-        void* gpuPtr;
-    };
+    // struct BufferAllocation
+    // {
+    //     VkBuffer buffer;
+    //     uint32_t size;
+    //     uint32_t offset;
+    //     void* cpuMappedPtr;
+    //     void* gpuPtr;
+    // };
 
-    struct ImageAllocation
-    {
-        VkImage image;
-    };
+    // struct ImageAllocation
+    // {
+    //     VkImage image;
+    // };
 
-    class IDevice
-    {
-    public:
-        VkDevice m_device;
-        VkInstance m_instance;
-        VkPhysicalDevice m_physicalDevice;
-        VkQueue m_graphicsQueue;
-        VkQueue m_computeQueue;
-        VkQueue m_transferQueue;
-        uint32_t m_graphicsQueueFamilyIndex;
-        uint32_t m_computeQueueFamilyIndex;
-        uint32_t m_transferQueueFamilyIndex;
-        bool supportBufferUsage2;
-        virtual bool isDebug() const = 0;
-    };
+    // class IDevice
+    // {
+    // public:
+    //     VkDevice m_device;
+    //     VkInstance m_instance;
+    //     VkPhysicalDevice m_physicalDevice;
+    //     VkQueue m_graphicsQueue;
+    //     VkQueue m_computeQueue;
+    //     VkQueue m_transferQueue;
+    //     uint32_t m_graphicsQueueFamilyIndex;
+    //     uint32_t m_computeQueueFamilyIndex;
+    //     uint32_t m_transferQueueFamilyIndex;
+    //     bool supportBufferUsage2;
+    //     virtual bool isDebug() const = 0;
+    // };
 
     void setDebugName(const IDevice& device, VkObjectType type, uint64_t handle, const std::string& name);
 
-    struct DescriptorBindingInfo
-    {
-        std::string bindingName;
-        uint32_t bindingIdx;
-        VkDescriptorType type;
-        uint32_t count;
-    };
+    // struct DescriptorBindingInfo
+    // {
+    //     std::string bindingName;
+    //     uint32_t bindingIdx;
+    //     VkDescriptorType type;
+    //     uint32_t count;
+    // };
 
-    struct DescriptorSetLayoutInfo
-    {
-        std::string setName;
-        uint32_t setIdx;
-        std::vector<DescriptorBindingInfo> bindings;
-    };
+    // struct DescriptorSetLayoutInfo
+    // {
+    //     std::string setName;
+    //     uint32_t setIdx;
+    //     std::vector<DescriptorBindingInfo> bindings;
+    // };
 
-    enum class VertexInput
-    {
-        float32x2, float32x3, float32x4
-    };
+    // enum class VertexInput
+    // {
+    //     float32x2, float32x3, float32x4
+    // };
 }
 #endif // COMMON_HPP
