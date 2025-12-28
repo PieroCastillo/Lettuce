@@ -3,6 +3,7 @@
 
 // standard headers
 #include <vector>
+#include <cassert>
 
 namespace Lettuce::Core
 {

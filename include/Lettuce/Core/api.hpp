@@ -109,7 +109,7 @@ namespace Lettuce::Core
     };
 
     struct ShaderBinaryDesc {
-        std::span<const std::byte> bytecode;
+        std::span<uint32_t> bytecode;
     };
 
     struct MeshShadingPipelineDesc
@@ -150,13 +150,15 @@ namespace Lettuce::Core
 
     struct DescriptorTableDesc
     {
-        uint32_t textureDescriptorCount;
+        uint32_t sampledImageDescriptorCount;
         uint32_t samplerDescriptorCount;
+        uint32_t storageImageDescriptorCount;
         uint32_t bufferPointerCount;
     };
 
     struct IndirectSetDesc {
         IndirectType type;
+        Allocation backingBuffer;
         uint32_t maxCount;
         uint32_t stride;
     };
@@ -213,17 +215,12 @@ namespace Lettuce::Core
 
         void PushDescriptors(
             DescriptorTable,
-            std::span<const std::pair<uint32_t, Sampler>>,
             std::span<const std::pair<uint32_t, Texture>>,
-            std::span<const std::pair<uint32_t, Allocation>>
-        );
-        void Reset(DescriptorTable);
+            std::span<const std::pair<uint32_t, Sampler>>,
+            std::span<const std::pair<uint32_t, Texture>>);
 
         // Indirect Set
-        IndirectSet CreateIndirectSet(
-            const IndirectSetDesc&,
-            Allocation backingBuffer
-        );
+        IndirectSet CreateIndirectSet(const IndirectSetDesc&);
         void Destroy(IndirectSet);
 
         // Swapchain

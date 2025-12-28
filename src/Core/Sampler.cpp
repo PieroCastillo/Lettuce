@@ -13,7 +13,7 @@ Sampler Device::CreateSampler(const SamplerDesc& desc)
 
     VkSampler sampler;
     handleResult(vkCreateSampler(impl->m_device, &samplerCI, nullptr, &sampler));
-    return impl->samplers.allocate(sampler);
+    return impl->samplers.allocate(std::move(sampler));
 }
 
 void Device::Destroy(Sampler sampler)

@@ -275,8 +275,6 @@ namespace Lettuce::Core
     //     virtual bool isDebug() const = 0;
     // };
 
-    void setDebugName(const IDevice& device, VkObjectType type, uint64_t handle, const std::string& name);
-
     // struct DescriptorBindingInfo
     // {
     //     std::string bindingName;

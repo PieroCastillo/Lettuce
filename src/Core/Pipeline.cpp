@@ -139,12 +139,12 @@ using namespace Lettuce::Core;
 
 Pipeline Device::CreatePipeline(const PrimitiveShadingPipelineDesc& desc)
 {
-
+    return impl->pipelines.allocate({});
 }
 
 Pipeline Device::CreatePipeline(const MeshShadingPipelineDesc& desc)
 {
-
+    return impl->pipelines.allocate({});
 }
 
 Pipeline Device::CreatePipeline(const ComputePipelineDesc& desc)
@@ -163,6 +163,7 @@ Pipeline Device::CreatePipeline(const ComputePipelineDesc& desc)
     //     .layout = createInfo.layout,
     // };
     // handleResult(vkCreateComputePipelines(m_device, VK_NULL_HANDLE, 1, &cpipelineCI, nullptr, &m_pipeline));
+    return impl->pipelines.allocate({});
 }
 
 void Device::Destroy(Pipeline pipeline)

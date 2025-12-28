@@ -4,7 +4,7 @@
 #include <print>
 
 // project headers
-#include "Lettuce/Core/Device.hpp"
+#include "Lettuce/Core/DeviceImpl.hpp"
 
 using namespace Lettuce::Core;
 
@@ -46,28 +46,24 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
     return VK_FALSE;
 }
 
-void Device::Create(const DeviceCreateInfo& createInfo)
+void DeviceImpl::Create(const DeviceCreateInfo& createInfo)
 {
     setupInstance();
     selectGPU(createInfo);
     setupFeaturesExtensions();
     setupDevice();
-    setupCopyObjects();
 }
 
-void Device::Release()
+void DeviceImpl::Release()
 {
     handleResult(vkDeviceWaitIdle(m_device));
-    vkDestroyFence(m_device, m_copyFence, nullptr);
-    vkFreeCommandBuffers(m_device, m_copyCmdPool, 1, &m_copyCmd);
-    vkDestroyCommandPool(m_device, m_copyCmdPool, nullptr);
     vkDestroyDevice(m_device, nullptr);
     vkDestroyDebugUtilsMessengerEXT(m_instance, m_messenger, nullptr);
     vkDestroyInstance(m_instance, nullptr);
     volkFinalize();
 }
 
-void Device::setupInstance()
+void DeviceImpl::setupInstance()
 {
     VkResult res;
     try
@@ -126,7 +122,7 @@ void Device::setupInstance()
     handleResult(vkCreateDebugUtilsMessengerEXT(m_instance, &messengerCI, nullptr, &m_messenger));
 }
 
-void Device::selectGPU(const DeviceCreateInfo& createInfo)
+void DeviceImpl::selectGPU(const DeviceCreateInfo& createInfo)
 {
     uint32_t gpuCount;
     vkEnumeratePhysicalDevices(m_instance, &gpuCount, nullptr);
@@ -137,14 +133,14 @@ void Device::selectGPU(const DeviceCreateInfo& createInfo)
     m_physicalDevice = gpus[0];
 }
 
-void Device::setupFeaturesExtensions()
+void DeviceImpl::setupFeaturesExtensions()
 {
     uint32_t extPropsCount;
     vkEnumerateDeviceExtensionProperties(m_physicalDevice, nullptr, &extPropsCount, nullptr);
     std::vector<VkExtensionProperties> extProps(extPropsCount);
     vkEnumerateDeviceExtensionProperties(m_physicalDevice, nullptr, &extPropsCount, extProps.data());
 
-    for( const auto& extProp : extProps)
+    for (const auto& extProp : extProps)
     {
         availableExtensionsNames.emplace_back(extProp.extensionName);
     }
@@ -231,7 +227,7 @@ void Device::setupFeaturesExtensions()
     // recommended features/extensions
     if (exists(availableExtensionsNames, VK_EXT_DEVICE_GENERATED_COMMANDS_EXTENSION_NAME))
     {
-        enabledRecommendedFeatures.deviceGeneratedCommands = true;
+        features.DeviceGeneratedCommands = true;
 
         deviceGeneratedCommandsFeature.deviceGeneratedCommands = VK_TRUE;
         deviceGeneratedCommandsFeature.pNext = next;
@@ -242,7 +238,7 @@ void Device::setupFeaturesExtensions()
 
     if (exists(availableExtensionsNames, VK_EXT_GRAPHICS_PIPELINE_LIBRARY_EXTENSION_NAME))
     {
-        enabledRecommendedFeatures.graphicsPipelineLibrary = true;
+        features.GraphicsPipelineLibrary = true;
 
         graphicsPipelineLibraryFeature.graphicsPipelineLibrary = VK_TRUE;
         graphicsPipelineLibraryFeature.pNext = next;
@@ -253,7 +249,7 @@ void Device::setupFeaturesExtensions()
 
     if (exists(availableExtensionsNames, VK_KHR_DYNAMIC_RENDERING_LOCAL_READ_EXTENSION_NAME))
     {
-        enabledRecommendedFeatures.dynamicRenderingLocalRead = true;
+        features.DynamicRenderingLocalRead = true;
 
         dynamicRenderingLocalReadFeature.dynamicRenderingLocalRead = VK_TRUE;
         dynamicRenderingLocalReadFeature.pNext = next;
@@ -264,7 +260,8 @@ void Device::setupFeaturesExtensions()
 
     if (exists(availableExtensionsNames, VK_KHR_MAINTENANCE_5_EXTENSION_NAME))
     {
-        enabledRecommendedFeatures.maintenance5 = true;
+        features.Maintenance5 = true;
+
         maintenance5Feature.maintenance5 = VK_TRUE;
         maintenance5Feature.pNext = next;
         next = &maintenance5Feature;
@@ -276,6 +273,8 @@ void Device::setupFeaturesExtensions()
 
     if (exists(availableExtensionsNames, VK_KHR_FRAGMENT_SHADING_RATE_EXTENSION_NAME))
     {
+        features.FragmentShadingRate = true;
+
         fragmentShadingRateFeature.pipelineFragmentShadingRate = VK_TRUE;
         fragmentShadingRateFeature.pNext = next;
         next = &fragmentShadingRateFeature;
@@ -284,16 +283,17 @@ void Device::setupFeaturesExtensions()
 
     if (exists(availableExtensionsNames, VK_EXT_MESH_SHADER_EXTENSION_NAME))
     {
+        features.MeshShading = true;
+
         meshShaderFeature.taskShader = VK_TRUE;
         meshShaderFeature.meshShader = VK_TRUE;
         meshShaderFeature.pNext = next;
         next = &meshShaderFeature;
         requestedExtensionsNames.push_back(VK_EXT_MESH_SHADER_EXTENSION_NAME);
     }
-
 }
 
-void Device::setupDevice()
+void DeviceImpl::setupDevice()
 {
     // get queue families
     uint32_t queueFamiliesCount = 0;
@@ -315,28 +315,31 @@ void Device::setupDevice()
         .pQueuePriorities = &priority,
     };
 
+    uint32_t graphicsQueueFamilyIndex;
+    uint32_t computeQueueFamilyIndex;
+    uint32_t transferQueueFamilyIndex;
     uint32_t familyIdx = 0;
     for (const auto& queueFamily : queueFamiliesVec)
     {
         if (queueFamily.queueFlags == graphicsFlags)
         {
-            m_graphicsQueueFamilyIndex = familyIdx;
+            graphicsQueueFamilyIndex = familyIdx;
         }
         else if (queueFamily.queueFlags == computeFlags)
         {
-            m_computeQueueFamilyIndex = familyIdx;
+            computeQueueFamilyIndex = familyIdx;
         }
         else if (queueFamily.queueFlags == transferFlags)
         {
-            m_transferQueueFamilyIndex = familyIdx;
+            transferQueueFamilyIndex = familyIdx;
         }
         familyIdx++;
     }
-    queueCI.queueFamilyIndex = m_graphicsQueueFamilyIndex;
+    queueCI.queueFamilyIndex = graphicsQueueFamilyIndex;
     queueCIs.push_back(queueCI);
-    queueCI.queueFamilyIndex = m_computeQueueFamilyIndex;
+    queueCI.queueFamilyIndex = computeQueueFamilyIndex;
     queueCIs.push_back(queueCI);
-    queueCI.queueFamilyIndex = m_transferQueueFamilyIndex;
+    queueCI.queueFamilyIndex = transferQueueFamilyIndex;
     queueCIs.push_back(queueCI);
 
     VkDeviceCreateInfo deviceCI = {
@@ -351,31 +354,39 @@ void Device::setupDevice()
     volkLoadDevice(m_device);
 
     // get queues
-    vkGetDeviceQueue(m_device, m_graphicsQueueFamilyIndex, 0, &m_graphicsQueue);
-    vkGetDeviceQueue(m_device, m_computeQueueFamilyIndex, 0, &m_computeQueue);
-    vkGetDeviceQueue(m_device, m_transferQueueFamilyIndex, 0, &m_transferQueue);
+    vkGetDeviceQueue(m_device, graphicsQueueFamilyIndex, 0, &m_graphicsQueue);
+    vkGetDeviceQueue(m_device, computeQueueFamilyIndex, 0, &m_computeQueue);
+    vkGetDeviceQueue(m_device, transferQueueFamilyIndex, 0, &m_transferQueue);
+
+    VkPhysicalDeviceDescriptorBufferPropertiesEXT dbProps =
+    {
+        .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_BUFFER_PROPERTIES_EXT,
+    };
+
+    VkPhysicalDeviceProperties2 props2 = {
+        .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2,
+        .pNext = &dbProps,
+    };
+    vkGetPhysicalDeviceProperties2(m_physicalDevice, &props2);
+
+    props.sampledImageDescriptorSize = dbProps.sampledImageDescriptorSize;
+    props.samplerDescriptorSize = dbProps.samplerDescriptorSize;
+    props.storageImageDescriptorSize = dbProps.storageImageDescriptorSize;
+    props.graphicsQueueFamilyIdx = graphicsQueueFamilyIndex;
+    props.computeQueueFamilyIdx = computeQueueFamilyIndex;
+    props.transferQueueFamilyIdx = transferQueueFamilyIndex;
 }
 
-void Device::setupCopyObjects()
+void DeviceImpl::setDebugName(VkObjectType type, uint64_t handle, const std::string& name)
 {
-    // use copy/transfer queue
-    VkCommandPoolCreateInfo cmdPoolCI = {
-        .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
-        .flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT,
-        .queueFamilyIndex = m_transferQueueFamilyIndex,
-    };
-    handleResult(vkCreateCommandPool(m_device, &cmdPoolCI, nullptr, &m_copyCmdPool));
-
-    VkCommandBufferAllocateInfo cmdAllocInfo = {
-        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
-        .commandPool = m_copyCmdPool,
-        .level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
-        .commandBufferCount = 1,
-    };
-    handleResult(vkAllocateCommandBuffers(m_device, &cmdAllocInfo, &m_copyCmd));
-
-    VkFenceCreateInfo fenceCI = {
-        .sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO,
-    };
-    handleResult(vkCreateFence(m_device, &fenceCI, nullptr, &m_copyFence));
+    if (isDebug())
+    {
+        VkDebugUtilsObjectNameInfoEXT nameInfo = {
+            .sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT,
+            .objectType = type,
+            .objectHandle = handle,
+            .pObjectName = name.c_str(),
+        };
+        handleResult(vkSetDebugUtilsObjectNameEXT(m_device, &nameInfo));
+    }
 }

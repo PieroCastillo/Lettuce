@@ -17,63 +17,59 @@ namespace Lettuce::Core
 {
     struct PipelineVK
     {
-        VkPipeline m_pipeline;
-        VkPipelineLayout m_layout;
+        VkPipeline   pipeline;
+        VkPipelineLayout   layout;
     };
 
     struct TextureVK
     {
-        VkImage m_image;
-        VkImageView m_view;
+        VkImage   image;
+        VkImageView   view;
     };
 
     struct RenderTargetVK
     {
         bool isViewOnly;
-        uint32_t m_width, m_height;
-        RenderTargetType m_renderTargetType;
-        VkFormat m_format;
-        VkImage m_image;
-        VkImageView m_imageView;
+        uint32_t   width, height;
+        RenderTargetType   renderTargetType;
+        VkFormat   format;
+        VkImage   image;
+        VkImageView   imageView;
     };
 
     struct DescriptorTableVK
     {
-        VkDevice m_device;
-        VkDeviceMemory m_descriptorBufferMemory;
-        VkBuffer m_descriptorBuffer;
-        VkPipelineLayout m_pipelineLayout;
+        VkDeviceMemory descriptorBufferMemory;
+        VkBuffer descriptorBuffer;
+        VkDescriptorSetLayout setLayout;
+        VkPipelineLayout pipelineLayout;
 
-        uint64_t m_bufferSize;
-        uint64_t m_bufferAlignment;
-        uint32_t m_textureDescriptorCount;
-        uint32_t m_samplerDescriptorCount;
+        uint64_t bufferSize;
+        uint32_t sampledImageDescriptorCount;
+        uint32_t samplerDescriptorCount;
+        uint32_t storageImageDescriptorCount;
 
-        void* m_cpuAddress;
-        void* m_gpuAddress;
+        uint64_t* cpuAddress;
+        uint64_t  gpuAddress;
 
-        void* m_pushPayload;
-
-        std::unordered_map<VkDescriptorType, uint64_t> m_descriptorTypeSizeMap;
-        std::vector<VkDescriptorSetLayout> m_setLayouts;
-
-        // variable params
-        uint64_t m_currentOffset;
+        uint64_t pushPayloadSize;
+        void* pushPayloadAddress;
     };
 
     struct SwapchainVK
     {
-        uint32_t m_width;
-        uint32_t m_height;
-        std::vector<VkImage> m_swapchainImages;
-        std::vector<VkImageView> m_swapchainViews;
+        uint32_t width;
+        uint32_t height;
+        std::vector<VkImage> swapchainImages;
+        std::vector<VkImageView> swapchainViews;
+        std::vector<RenderTarget> renderTargets;
 
-        VkFormat m_format;
-        VkSwapchainKHR m_swapchain;
-        VkSurfaceKHR m_surface;
-        VkFence m_waitForAcquireFence;
-        uint32_t m_imageCount;
-        uint32_t m_currentImageIndex;
+        VkFormat format;
+        VkSwapchainKHR swapchain;
+        VkSurfaceKHR surface;
+        VkFence waitForAcquireFence;
+        uint32_t imageCount;
+        uint32_t currentImageIndex;
     };
-} 
+}
 #endif // LETTUCE_CORE_HELPER_STRUCTS_HPP

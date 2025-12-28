@@ -9,6 +9,8 @@
 
 // project headers
 #include "Lettuce/Core/api.hpp"
+#include "Lettuce/Core/DeviceImpl.hpp"
+#include "Lettuce/Core/common.hpp"
 
 using namespace Lettuce::Core;
 
@@ -45,6 +47,7 @@ Texture Device::CreateTexture(const TextureDesc& desc)
     //     .subresourceRange = { VK_IMAGE_ASPECT_COLOR_BIT, 0, createInfo.levelCount, 0, createInfo.layerCount},
     // };
     // handleResult(vkCreateImageView(m_device, &viewCI, nullptr, &m_view));
+    return impl->textures.allocate({});
 }
 
 void Device::Destroy(Texture texture)

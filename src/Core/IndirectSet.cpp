@@ -9,15 +9,15 @@
 
 // project headers
 #include "Lettuce/Core/api.hpp"
+#include "Lettuce/Core/DeviceImpl.hpp"
+#include "Lettuce/Core/common.hpp"
 
 using namespace Lettuce::Core;
 
-IndirectSet Device::CreateIndirectSet(
-    const IndirectSetDesc& desc,
-    Allocation backingBuffer
-)
+IndirectSet Device::CreateIndirectSet(const IndirectSetDesc& desc)
 {
-
+    // TODO: impl
+    return impl->indirectSets.allocate({});
 }
 
 void Device::Destroy(IndirectSet indirectSet)

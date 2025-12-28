@@ -1,20 +1,21 @@
 // project headers
 #include "Lettuce/Core/api.hpp"
+#include "Lettuce/Core/DeviceImpl.hpp"
 #include "Lettuce/Core/common.hpp"
 
 using namespace Lettuce::Core;
 
-ShaderBinary Device::CreateShader(const ShaderBinaryDesc& desc);
+ShaderBinary Device::CreateShader(const ShaderBinaryDesc& desc)
 {
     VkShaderModuleCreateInfo shaderCI = {
         .sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,
-        .codeSize = desc.shaderByteData.size() * sizeof(uint32_t),
-        .pCode = desc.shaderByteData.data(),
+        .codeSize = desc.bytecode.size() * sizeof(uint32_t),
+        .pCode = desc.bytecode.data(),
     };
     VkShaderModule shaderModule;
     handleResult(vkCreateShaderModule(impl->m_device, &shaderCI, nullptr, &shaderModule));
 
-    return impl->shaders.allocate(shaderModule);
+    return impl->shaders.allocate(std::move(shaderModule));
 }
 
 void Device::Destroy(ShaderBinary shader)

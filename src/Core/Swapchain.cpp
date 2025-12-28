@@ -13,6 +13,7 @@
 
 // project headers
 #include "Lettuce/Core/api.hpp"
+#include "Lettuce/Core/DeviceImpl.hpp"
 #include "Lettuce/Core/common.hpp"
 
 
@@ -181,6 +182,7 @@ Swapchain Device::CreateSwapchain(const SwapchainDesc& desc)
     //     .sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO,
     // };
     // handleResult(vkCreateFence(m_device, &fenceCI, nullptr, &m_waitForAcquireFence));
+    return impl->swapchains.allocate({});
 }
 void Device::Destroy(Swapchain swapchain)
 {
@@ -231,4 +233,6 @@ void Device::ResizeSwapchain(Swapchain swapchain, uint32_t w, uint32_t h)
 RenderTarget Device::GetCurrentRenderTarget(Swapchain swapchain) const
 {
     // return *m_renderViews.at(m_currentImageIndex);
+    auto& swc = impl->swapchains.get(swapchain);
+    return swc.renderTargets[(int)swc.currentImageIndex];
 }

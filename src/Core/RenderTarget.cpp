@@ -6,6 +6,7 @@
 
 // project headers
 #include "Lettuce/Core/api.hpp"
+#include "Lettuce/Core/DeviceImpl.hpp"
 #include "Lettuce/Core/common.hpp"
 
 using namespace Lettuce::Core;
@@ -59,6 +60,8 @@ RenderTarget Device::CreateRenderTarget(const RenderTargetDesc& desc)
     //     .subresourceRange = subresourceRange,
     // };
     // handleResult(vkCreateImageView(m_device, &viewCI, nullptr, &m_imageView));
+
+    return impl->renderTargets.allocate({});
 }
 
 void Device::Destroy(RenderTarget renderTarget)
