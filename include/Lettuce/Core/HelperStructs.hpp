@@ -49,11 +49,15 @@ namespace Lettuce::Core
         uint32_t samplerDescriptorCount;
         uint32_t storageImageDescriptorCount;
 
+        uint64_t sampledImagesBindingOffset;
+        uint64_t samplersBindingOffset;
+        uint64_t storageImagesBindingOffset;
+
         uint64_t* cpuAddress;
         uint64_t  gpuAddress;
 
         uint64_t pushPayloadSize;
-        void* pushPayloadAddress;
+        uint64_t* pushPayloadAddress;
     };
 
     struct SwapchainVK
@@ -71,5 +75,16 @@ namespace Lettuce::Core
         uint32_t imageCount;
         uint32_t currentImageIndex;
     };
+
+
+    struct AllocationVK
+    {
+        uint64_t size;
+        void* cpuAddress;
+        uint64_t gpuAddress;
+    };
+
+    struct IndirectSetVK {};
+    struct SwapchainVK {};
 }
 #endif // LETTUCE_CORE_HELPER_STRUCTS_HPP

@@ -173,6 +173,9 @@ namespace Lettuce::Core
     };
 
     struct DeviceImpl;
+    struct CommandPoolImpl;
+    struct CommandbufferImpl;
+
     struct Device {
     private:
         DeviceImpl* impl;
@@ -213,11 +216,16 @@ namespace Lettuce::Core
         DescriptorTable  CreateDescriptorTable(const DescriptorTableDesc&);
         void Destroy(DescriptorTable);
 
-        void PushDescriptors(
+        void PushResourceDescriptors(
             DescriptorTable,
             std::span<const std::pair<uint32_t, Texture>>,
             std::span<const std::pair<uint32_t, Sampler>>,
             std::span<const std::pair<uint32_t, Texture>>);
+
+        void PushAllocations(
+            DescriptorTable,
+            std::span<const std::pair<uint32_t, Allocation>>
+        );
 
         // Indirect Set
         IndirectSet CreateIndirectSet(const IndirectSetDesc&);
@@ -235,6 +243,8 @@ namespace Lettuce::Core
 
     struct CommandBuffer
     {
+    private:
+    public:
         void MemoryCopy(
             Allocation src,
             Allocation dst,
@@ -259,6 +269,8 @@ namespace Lettuce::Core
     };
 
     struct CommandPool {
+    private:
+    public:
         CommandBuffer Allocate();
         void Reset();
     };

@@ -23,6 +23,8 @@ using namespace Lettuce::Core;
     ----------------------------------------------------------
     |---                       Buffer                      --|
     |----Sampled Images -----|--Samplers--|--Storage Images--|
+
+    The Descriptor Table have 3 binding & 1 set
 */
 
 DescriptorTable Device::CreateDescriptorTable(const DescriptorTableDesc& desc)
@@ -39,10 +41,33 @@ DescriptorTable Device::CreateDescriptorTable(const DescriptorTableDesc& desc)
     uint32_t samplerDescriptorSize = impl->props.samplerDescriptorSize;
     uint32_t storageImageDescriptorSize = impl->props.storageImageDescriptorSize;
 
-    uint32_t bufferSize =
-        (desc.sampledImageDescriptorCount * sampledImageDescriptorSize) +
-        (desc.samplerDescriptorCount * samplerDescriptorSize) +
-        (desc.storageImageDescriptorCount * storageImageDescriptorSize);
+    uint64_t sampledImagesBindingOffset;
+    uint64_t samplersBindingOffset;
+    uint64_t storageImagesBindingOffset;
+
+    uint64_t bufferSize;
+    std::array<VkDescriptorSetLayoutBinding, 3> bindings;
+    VkMemoryRequirements memReqs = {};
+    void* cpuPtr;
+
+    // create descriptor set layout
+    bindings[0] = { 0, VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, desc.sampledImageDescriptorCount, VK_SHADER_STAGE_ALL, nullptr };
+    bindings[1] = { 1, VK_DESCRIPTOR_TYPE_SAMPLER, desc.samplerDescriptorCount, VK_SHADER_STAGE_ALL, nullptr };
+    bindings[2] = { 2, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, desc.storageImageDescriptorCount, VK_SHADER_STAGE_ALL, nullptr };
+
+    VkDescriptorSetLayoutCreateInfo setLayoutCreateInfo = {
+        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
+        .flags = VK_DESCRIPTOR_SET_LAYOUT_CREATE_DESCRIPTOR_BUFFER_BIT_EXT,
+        .bindingCount = (uint32_t)bindings.size(),
+        .pBindings = bindings.data(),
+    };
+    handleResult(vkCreateDescriptorSetLayout(device, &setLayoutCreateInfo, nullptr, &setLayout));
+
+    vkGetDescriptorSetLayoutBindingOffsetEXT(device, setLayout, 0, &sampledImagesBindingOffset);
+    vkGetDescriptorSetLayoutBindingOffsetEXT(device, setLayout, 1, &samplersBindingOffset);
+    vkGetDescriptorSetLayoutBindingOffsetEXT(device, setLayout, 2, &storageImagesBindingOffset);
+
+    vkGetDescriptorSetLayoutSizeEXT(device, setLayout, &bufferSize);
 
     // create buffer & device memory
     VkBufferCreateInfo bufferCI = {
@@ -53,7 +78,6 @@ DescriptorTable Device::CreateDescriptorTable(const DescriptorTableDesc& desc)
     };
     handleResult(vkCreateBuffer(device, &bufferCI, nullptr, &buffer));
 
-    VkMemoryRequirements memReqs = {};
     vkGetBufferMemoryRequirements(device, buffer, &memReqs);
 
     // MemoryAccess must be Shared, because we need the cpu to access gpu memory
@@ -65,7 +89,6 @@ DescriptorTable Device::CreateDescriptorTable(const DescriptorTableDesc& desc)
     handleResult(vkAllocateMemory(device, &memAlloc, nullptr, &memory));
     handleResult(vkBindBufferMemory(device, buffer, memory, 0));
 
-    void* cpuPtr;
     handleResult(vkMapMemory(device, memory, 0, bufferSize, 0, &cpuPtr));
 
     // get buffer device address
@@ -75,21 +98,7 @@ DescriptorTable Device::CreateDescriptorTable(const DescriptorTableDesc& desc)
     };
     uint64_t  gpuPtr = vkGetBufferDeviceAddress(device, &addressInfo);
 
-    std::array<VkDescriptorSetLayoutBinding, 3> bindings;
-    bindings[0] = { 0, VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, desc.sampledImageDescriptorCount, VK_SHADER_STAGE_ALL, nullptr };
-    bindings[1] = { 1, VK_DESCRIPTOR_TYPE_SAMPLER, desc.samplerDescriptorCount, VK_SHADER_STAGE_ALL, nullptr };
-    bindings[2] = { 2, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, desc.storageImageDescriptorCount, VK_SHADER_STAGE_ALL, nullptr };
-
-
-    // create desceiptor set layout & pipeline layout
-    VkDescriptorSetLayoutCreateInfo setLayoutCreateInfo = {
-        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
-        .flags = VK_DESCRIPTOR_SET_LAYOUT_CREATE_DESCRIPTOR_BUFFER_BIT_EXT,
-        .bindingCount = (uint32_t)bindings.size(),
-        .pBindings = bindings.data(),
-    };
-    handleResult(vkCreateDescriptorSetLayout(device, &setLayoutCreateInfo, nullptr, &setLayout));
-
+    // create pipeline layout
     // TODO: impl bounds checking
     VkPushConstantRange pushConstant = {
         .stageFlags = VK_SHADER_STAGE_ALL,
@@ -117,10 +126,13 @@ DescriptorTable Device::CreateDescriptorTable(const DescriptorTableDesc& desc)
         .sampledImageDescriptorCount = desc.sampledImageDescriptorCount,
         .samplerDescriptorCount = desc.samplerDescriptorCount,
         .storageImageDescriptorCount = desc.storageImageDescriptorCount,
+        .sampledImagesBindingOffset = sampledImagesBindingOffset,
+        .samplersBindingOffset = samplersBindingOffset,
+        .storageImagesBindingOffset = storageImagesBindingOffset,
         .cpuAddress = (uint64_t*)cpuPtr,
         .gpuAddress = gpuPtr,
         .pushPayloadSize = 128,
-        .pushPayloadAddress = pushPayloadPtr,
+        .pushPayloadAddress = (uint64_t*)pushPayloadPtr,
         });
 }
 
@@ -139,7 +151,7 @@ void Device::Destroy(DescriptorTable descriptorTable)
     impl->descriptorTables.free(descriptorTable);
 }
 
-void Device::PushDescriptors(
+void Device::PushResourceDescriptors(
     DescriptorTable descriptorTable,
     std::span<const std::pair<uint32_t, Texture>> sampledImages,
     std::span<const std::pair<uint32_t, Sampler>> samplers,
@@ -167,7 +179,7 @@ void Device::PushDescriptors(
             .data = {.pSampledImage = &imgInfo},
         };
         // TODO: impl bounds checking
-        uint64_t offset = idx * sampledImageDescriptorSize;
+        uint64_t offset = dt.sampledImagesBindingOffset + (idx * sampledImageDescriptorSize);
         vkGetDescriptorEXT(device, &getInfo, sampledImageDescriptorSize, (uint64_t*)(dt.cpuAddress + offset));
     }
 
@@ -182,10 +194,10 @@ void Device::PushDescriptors(
             .data = {.pSampler = &sampler},
         };
         // TODO: impl bounds checking
-        uint64_t offset = (dt.sampledImageDescriptorCount * sampledImageDescriptorSize) + (idx * samplerDescriptorSize);
+        uint64_t offset = dt.samplersBindingOffset + (idx * samplerDescriptorSize);
         vkGetDescriptorEXT(device, &getInfo, samplerDescriptorSize, (uint64_t*)(dt.cpuAddress + offset));
     }
-    
+
     for (auto& [idx, imgHandle] : storageImages)
     {
         auto& img = impl->textures.get(imgHandle);
@@ -199,9 +211,26 @@ void Device::PushDescriptors(
             .data = {.pStorageImage = &imgInfo},
         };
         // TODO: impl bounds checking
-        uint64_t offset = (dt.sampledImageDescriptorCount * sampledImageDescriptorSize) + (dt.samplerDescriptorCount * samplerDescriptorSize) + (idx * storageImageDescriptorSize);
+        uint64_t offset = dt.storageImagesBindingOffset + (idx * storageImageDescriptorSize);
         vkGetDescriptorEXT(device, &getInfo, sampledImageDescriptorSize, (uint64_t*)(dt.cpuAddress + offset));
     }
 
     // TODO: in the future, enable acceleration structures
+}
+
+void Device::PushAllocations(DescriptorTable descriptorTable, std::span<const std::pair<uint32_t, Allocation>> allocations)
+{
+    auto& dt = impl->descriptorTables.get(descriptorTable);
+    auto& allocs = impl->allocations;
+    auto* dstAddress = dt.pushPayloadAddress;
+
+    // at least 16 buffers (because 128 bytes is the minimum)
+    // TODO: impl 256 bytes for push constant
+    for (const auto& [idx, alloc] : allocations)
+    {
+        if (idx > 16)
+            continue;
+
+        dstAddress[idx] = allocs.get(alloc).gpuAddress;
+    }
 }

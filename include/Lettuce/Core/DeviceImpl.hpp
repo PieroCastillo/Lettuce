@@ -21,13 +21,6 @@ Created by @PieroCastillo on 2025-07-20
 #include "HelperStructs.hpp"
 #include "ResourcePool.hpp"
 
-
-struct AllocationVK {};
-struct TextureVK {};
-struct DescriptorTableVK {};
-struct IndirectSetVK {};
-struct SwapchainVK {};
-
 namespace Lettuce::Core
 {
     struct Features
