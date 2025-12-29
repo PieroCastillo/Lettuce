@@ -15,6 +15,12 @@ Created by @PieroCastillo on 2025-12-26
 
 namespace Lettuce::Core
 {
+    struct PipelineVK
+    {
+        VkPipeline pipeline;
+        VkPipelineBindPoint bindPoint;
+    };
+
     struct TextureVK
     {
         VkImage image;
@@ -70,7 +76,6 @@ namespace Lettuce::Core
         uint32_t currentImageIndex;
     };
 
-
     struct AllocationVK
     {
         uint64_t size;
@@ -102,6 +107,21 @@ namespace Lettuce::Core
         return index < static_cast<uint32_t>(Format::COUNT)
             ? kFormatTable[index]
             : VK_FORMAT_UNDEFINED;
+    }
+
+    constexpr VkPipelineBindPoint kPipelineBindPointTable[] =
+    {
+        VK_PIPELINE_BIND_POINT_GRAPHICS,
+        VK_PIPELINE_BIND_POINT_COMPUTE,
+        VK_PIPELINE_BIND_POINT_RAY_TRACING_KHR,
+    };
+
+    constexpr VkPipelineBindPoint ToVkPipelineBindPoint(PipelineBindPoint bindPoint)
+    {
+        const uint32_t index = static_cast<uint32_t>(bindPoint);
+        return index < static_cast<uint32_t>(PipelineBindPoint::Count)
+            ? kPipelineBindPointTable[index]
+            : VK_PIPELINE_BIND_POINT_MAX_ENUM;
     }
 }
 #endif // LETTUCE_CORE_HELPER_STRUCTS_HPP

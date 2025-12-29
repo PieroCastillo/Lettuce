@@ -64,6 +64,7 @@ namespace Lettuce::Core
     enum class CompareOp : uint8_t {};
     enum class BorderColor : uint8_t {};
     enum class PrimitiveTopology : uint8_t {};
+    enum class PipelineBindPoint : uint8_t { Graphics, Compute, RayTracing, Count};
 
     enum class RenderTargetType : uint8_t {};
     enum class IndirectType : uint8_t { Draw, DrawIndexed, DrawMesh, Dispatch, DeviceGenerated };
@@ -189,7 +190,7 @@ namespace Lettuce::Core
 
     struct DeviceImpl;
     struct CommandPoolImpl;
-    struct CommandbufferImpl;
+    struct CommandBufferImpl;
 
     struct Device {
     private:
@@ -259,6 +260,7 @@ namespace Lettuce::Core
     struct CommandBuffer
     {
     private:
+        CommandBufferImpl* impl;
     public:
         void MemoryCopy(
             Allocation src,
@@ -272,7 +274,7 @@ namespace Lettuce::Core
         void EndRendering();
 
         void BindPipeline(Pipeline);
-        void BindDescriptorTable(DescriptorTable);
+        void BindDescriptorTable(DescriptorTable, PipelineBindPoint);
 
         void Draw(uint32_t vertexCount, uint32_t instanceCount);
         void DrawIndexed(uint32_t indexCount, uint32_t instanceCount);

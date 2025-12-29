@@ -15,7 +15,7 @@ using namespace Lettuce::Core;
 
 Pipeline Device::CreatePipeline(const PrimitiveShadingPipelineDesc& desc)
 {
- VkPipelineViewportStateCreateInfo viewportState =
+    VkPipelineViewportStateCreateInfo viewportState =
     {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO,
         .viewportCount = 1,
@@ -97,7 +97,7 @@ Pipeline Device::CreatePipeline(const PrimitiveShadingPipelineDesc& desc)
     };
 
     auto& shaders = impl->shaders;
-    std::array<VkPipelineShaderStageCreateInfo,2> stages;
+    std::array<VkPipelineShaderStageCreateInfo, 2> stages;
     stages[0] = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
         .stage = VK_SHADER_STAGE_MESH_BIT_EXT,
@@ -132,7 +132,7 @@ Pipeline Device::CreatePipeline(const PrimitiveShadingPipelineDesc& desc)
 
     VkPipeline pipeline;
     handleResult(vkCreateGraphicsPipelines(impl->m_device, VK_NULL_HANDLE, 1, &gpipelineCI, nullptr, &pipeline));
-    return impl->pipelines.allocate(std::move(pipeline));
+    return impl->pipelines.allocate({ pipeline, VK_PIPELINE_BIND_POINT_GRAPHICS });
 }
 
 Pipeline Device::CreatePipeline(const MeshShadingPipelineDesc& desc)
@@ -263,7 +263,7 @@ Pipeline Device::CreatePipeline(const MeshShadingPipelineDesc& desc)
 
     VkPipeline pipeline;
     handleResult(vkCreateGraphicsPipelines(impl->m_device, VK_NULL_HANDLE, 1, &gpipelineCI, nullptr, &pipeline));
-    return impl->pipelines.allocate(std::move(pipeline));
+    return impl->pipelines.allocate({ pipeline, VK_PIPELINE_BIND_POINT_GRAPHICS });
 }
 
 Pipeline Device::CreatePipeline(const ComputePipelineDesc& desc)
@@ -283,12 +283,12 @@ Pipeline Device::CreatePipeline(const ComputePipelineDesc& desc)
     };
     VkPipeline pipeline;
     handleResult(vkCreateComputePipelines(impl->m_device, VK_NULL_HANDLE, 1, &cpipelineCI, nullptr, &pipeline));
-    return impl->pipelines.allocate(std::move(pipeline));
+    return impl->pipelines.allocate({ pipeline, VK_PIPELINE_BIND_POINT_COMPUTE });
 }
 
 void Device::Destroy(Pipeline pipeline)
 {
     auto vkPipeline = impl->pipelines.get(pipeline);
-    vkDestroyPipeline(impl->m_device, vkPipeline, nullptr);
+    vkDestroyPipeline(impl->m_device, vkPipeline.pipeline, nullptr);
     impl->pipelines.free(pipeline);
 }

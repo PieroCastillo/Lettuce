@@ -1,8 +1,8 @@
 /*
 Created by @PieroCastillo on 2025-07-20
 */
-#ifndef LETTUCE_CORE_DEVICE_HPP
-#define LETTUCE_CORE_DEVICE_HPP
+#ifndef LETTUCE_CORE_DEVICE_IMPL_HPP
+#define LETTUCE_CORE_DEVICE_IMPL_HPP
 
 // standard headers
 #include <concepts>
@@ -88,7 +88,7 @@ namespace Lettuce::Core
         ResourcePool<RenderTarget, RenderTargetVK> renderTargets;
         ResourcePool<Sampler, VkSampler> samplers;
         ResourcePool<ShaderBinary, VkShaderModule> shaders;
-        ResourcePool<Pipeline, VkPipeline> pipelines;
+        ResourcePool<Pipeline, PipelineVK> pipelines;
         ResourcePool<DescriptorTable, DescriptorTableVK> descriptorTables;
         ResourcePool<IndirectSet, IndirectSetVK> indirectSets;
         ResourcePool<Swapchain, SwapchainVK> swapchains;
@@ -156,4 +156,4 @@ namespace Lettuce::Core
         bool isDebug() { return true; };
     };
 }
-#endif // LETTUCE_CORE_DEVICE_HPP
+#endif // LETTUCE_CORE_DEVICE_IMPL_HPP
