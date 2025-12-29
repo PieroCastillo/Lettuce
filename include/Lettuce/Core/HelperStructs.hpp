@@ -15,26 +15,20 @@ Created by @PieroCastillo on 2025-12-26
 
 namespace Lettuce::Core
 {
-    struct PipelineVK
-    {
-        VkPipeline   pipeline;
-        VkPipelineLayout   layout;
-    };
-
     struct TextureVK
     {
-        VkImage   image;
-        VkImageView   view;
+        VkImage image;
+        VkImageView view;
     };
 
     struct RenderTargetVK
     {
         bool isViewOnly;
-        uint32_t   width, height;
-        RenderTargetType   renderTargetType;
-        VkFormat   format;
-        VkImage   image;
-        VkImageView   imageView;
+        uint32_t width, height;
+        RenderTargetType renderTargetType;
+        VkFormat format;
+        VkImage image;
+        VkImageView imageView;
     };
 
     struct DescriptorTableVK
@@ -56,7 +50,7 @@ namespace Lettuce::Core
         uint64_t* cpuAddress;
         uint64_t  gpuAddress;
 
-        uint64_t pushPayloadSize;
+        uint64_t  pushPayloadSize;
         uint64_t* pushPayloadAddress;
     };
 
@@ -85,6 +79,29 @@ namespace Lettuce::Core
     };
 
     struct IndirectSetVK {};
-    struct SwapchainVK {};
+
+    constexpr VkFormat kFormatTable[] =
+    {
+        VK_FORMAT_R8G8B8A8_UNORM,          // RGBA8_UNORM
+        VK_FORMAT_R8G8B8A8_SRGB,           // RGBA8_SRGB
+        VK_FORMAT_B8G8R8A8_UNORM,          // BGRA8_UNORM
+        VK_FORMAT_B8G8R8A8_SRGB,           // BGRA8_SRGB
+        VK_FORMAT_R16G16B16A16_SFLOAT,     // RGBA16_FLOAT
+        VK_FORMAT_D16_UNORM,               // D16
+        VK_FORMAT_D32_SFLOAT,              // D32
+        VK_FORMAT_D24_UNORM_S8_UINT,       // D24S8
+        VK_FORMAT_D32_SFLOAT_S8_UINT,      // D32S8
+        VK_FORMAT_R8_UNORM,                // R8
+        VK_FORMAT_R8G8_UNORM,              // RG8
+        VK_FORMAT_R16G16_SFLOAT            // RG16_FLOAT
+    };
+
+    constexpr VkFormat ToVkFormat(Format format)
+    {
+        const uint32_t index = static_cast<uint32_t>(format);
+        return index < static_cast<uint32_t>(Format::COUNT)
+            ? kFormatTable[index]
+            : VK_FORMAT_UNDEFINED;
+    }
 }
 #endif // LETTUCE_CORE_HELPER_STRUCTS_HPP

@@ -4,9 +4,10 @@ Created by @PieroCastillo on 2025-12-26
 #ifndef LETTUCE_CORE_API_HPP
 #define LETTUCE_CORE_API_HPP
 
-#include <span>
 #include <cstdint>
+#include <span>
 #include <string_view>
+#include <optional>
 
 namespace Lettuce::Core
 {
@@ -43,7 +44,21 @@ namespace Lettuce::Core
     using Swapchain = Handle<SwapchainTag>;
 
     // Enums
-    enum class Format : uint8_t {};
+    enum class Format : uint8_t {
+        RGBA8_UNORM = 0,
+        RGBA8_SRGB,
+        BGRA8_UNORM,
+        BGRA8_SRGB,
+        RGBA16_FLOAT,
+        D16,
+        D32,
+        D24S8,
+        D32S8,
+        R8,
+        RG8,
+        RG16_FLOAT,
+        COUNT
+    };
     enum class Filter : uint8_t {};
     enum class SamplerAddressMode : uint8_t {};
     enum class CompareOp : uint8_t {};
@@ -115,10 +130,10 @@ namespace Lettuce::Core
     struct MeshShadingPipelineDesc
     {
         bool fragmentShadingRate;
-        std::string_view taskEntryPoint;
+        std::optional<std::string_view> taskEntryPoint;
         std::string_view meshEntryPoint;
         std::string_view fragEntryPoint;
-        ShaderBinary  taskShaderBinary;
+        std::optional<ShaderBinary>  taskShaderBinary;
         ShaderBinary  meshShaderBinary;
         ShaderBinary  fragShaderBinary;
         std::span<Format> colorAttachmentFormats;
