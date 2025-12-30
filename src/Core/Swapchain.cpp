@@ -16,213 +16,221 @@
 #include "Lettuce/Core/DeviceImpl.hpp"
 #include "Lettuce/Core/common.hpp"
 
-
 using namespace Lettuce::Core;
 
-// void Swapchain::setupSurface(const SwapchainCreateInfo& createInfo)
-// {
-// #if defined(WIN32_) || defined(_WIN32) || defined(WIN32)
-//     VkWin32SurfaceCreateInfoKHR win32surfaceCI = {
-//         .sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR,
-//         .hinstance = *(HINSTANCE*)(createInfo.applicationPtr),
-//         .hwnd = *(HWND*)(createInfo.windowPtr),
-//     };
+void setupVkSurface(SwapchainVK& swapchainVK, VkInstance instance, const SwapchainDesc& createInfo)
+{
+    VkSurfaceKHR surface;
+#if defined(WIN32_) || defined(_WIN32) || defined(WIN32)
+    VkWin32SurfaceCreateInfoKHR win32surfaceCI = {
+        .sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR,
+        .hinstance = *(HINSTANCE*)(createInfo.applicationPtr),
+        .hwnd = *(HWND*)(createInfo.windowPtr),
+    };
 
-//     handleResult(vkCreateWin32SurfaceKHR(m_instance, &win32surfaceCI, nullptr, &m_surface));
-// #endif
-// #if defined(__linux__)
-//     VkWaylandSurfaceCreateInfoKHR waylandsurfaceCI = {
-//         .sType = VK_STRUCTURE_TYPE_WAYLAND_SURFACE_CREATE_INFO_KHR,
-//         .display = (wl_display*)createInfo.applicationPtr,
-//         .surface = (wl_surface*)createInfo.windowPtr,
-//     };
+    handleResult(vkCreateWin32SurfaceKHR(instance, &win32surfaceCI, nullptr, &surface));
+#endif
+#if defined(__linux__)
+    VkWaylandSurfaceCreateInfoKHR waylandsurfaceCI = {
+        .sType = VK_STRUCTURE_TYPE_WAYLAND_SURFACE_CREATE_INFO_KHR,
+        .display = (wl_display*)createInfo.applicationPtr,
+        .surface = (wl_surface*)createInfo.windowPtr,
+    };
 
-//     handleResult(vkCreateWaylandSurfaceKHR(m_instance, &waylandsurfaceCI, nullptr, &m_surface));
-// #endif
-// }
+    handleResult(vkCreateWaylandSurfaceKHR(instance, &waylandsurfaceCI, nullptr, &surface));
+#endif
+    swapchainVK.surface = surface;
+}
 
-// void Swapchain::setupSwapchain(const SwapchainCreateInfo& createInfo)
-// {
-//     // query surface capabilities
-//     VkSurfaceCapabilitiesKHR sc;
-//     vkGetPhysicalDeviceSurfaceCapabilitiesKHR(m_gpu, m_surface, &sc);
+void setupVkSwapchain(SwapchainVK& swapchainVK, VkDevice device, VkPhysicalDevice gpu, const SwapchainDesc& createInfo)
+{
+    VkSurfaceKHR surface = swapchainVK.surface;
 
-//     // get surface format and present modes
-//     uint32_t formatCount;
-//     uint32_t presentModeCount;
-//     vkGetPhysicalDeviceSurfaceFormatsKHR(m_gpu, m_surface, &formatCount, nullptr);
-//     vkGetPhysicalDeviceSurfacePresentModesKHR(m_gpu, m_surface, &presentModeCount, nullptr);
-//     std::vector<VkSurfaceFormatKHR> formats(formatCount);
-//     std::vector<VkPresentModeKHR> presentModes(presentModeCount);
-//     vkGetPhysicalDeviceSurfaceFormatsKHR(m_gpu, m_surface, &formatCount, formats.data());
-//     vkGetPhysicalDeviceSurfacePresentModesKHR(m_gpu, m_surface, &presentModeCount, presentModes.data());
+    // query surface capabilities
+    VkSurfaceCapabilitiesKHR sc;
+    vkGetPhysicalDeviceSurfaceCapabilitiesKHR(gpu, surface, &sc);
 
-//     VkSurfaceFormatKHR surfaceFormat;
-//     VkExtent2D surfaceExtent;
-//     VkPresentModeKHR surfacePresentMode;
+    // get surface format and present modes
+    uint32_t formatCount;
+    uint32_t presentModeCount;
+    vkGetPhysicalDeviceSurfaceFormatsKHR(gpu, surface, &formatCount, nullptr);
+    vkGetPhysicalDeviceSurfacePresentModesKHR(gpu, surface, &presentModeCount, nullptr);
+    std::vector<VkSurfaceFormatKHR> formats(formatCount);
+    std::vector<VkPresentModeKHR> presentModes(presentModeCount);
+    vkGetPhysicalDeviceSurfaceFormatsKHR(gpu, surface, &formatCount, formats.data());
+    vkGetPhysicalDeviceSurfacePresentModesKHR(gpu, surface, &presentModeCount, presentModes.data());
 
-//     surfaceFormat = formats[0];
-//     m_format = surfaceFormat.format;
+    VkSurfaceFormatKHR surfaceFormat;
+    VkExtent2D surfaceExtent;
+    VkPresentModeKHR surfacePresentMode;
 
-//     surfaceExtent.width = std::clamp(createInfo.width, sc.minImageExtent.width, sc.maxImageExtent.width);
-//     surfaceExtent.height = std::clamp(createInfo.height, sc.minImageExtent.height, sc.maxImageExtent.height);
+    surfaceFormat = formats[0];
 
-//     // set internal extent
-//     m_width = surfaceExtent.width;
-//     m_height = surfaceExtent.height;
+    surfaceExtent.width = std::clamp(createInfo.width, sc.minImageExtent.width, sc.maxImageExtent.width);
+    surfaceExtent.height = std::clamp(createInfo.height, sc.minImageExtent.height, sc.maxImageExtent.height);
 
-//     // get most appropiate present mode
-//     for (int i = 0; i < presentModeCount; i++)
-//     {
-//         if (presentModes[i] == VK_PRESENT_MODE_MAILBOX_KHR)
-//         {
-//             surfacePresentMode = VK_PRESENT_MODE_MAILBOX_KHR;
-//             break;
-//         }
-//         else if (presentModes[i] == VK_PRESENT_MODE_FIFO_KHR)
-//         {
-//             surfacePresentMode = VK_PRESENT_MODE_FIFO_KHR;
-//         }
-//         else
-//         {
-//             surfacePresentMode = presentModes[0];
-//         }
-//     }
+    swapchainVK.format = surfaceFormat.format;
+    swapchainVK.width = surfaceExtent.width;
+    swapchainVK.height = surfaceExtent.height;
 
-//     // init values for swapchain creation
-//     VkSwapchainCreateInfoKHR swapchainCI =
-//     {
-//         .sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR,
-//         .surface = m_surface,
-//         .minImageCount = sc.minImageCount + 1,
-//         .imageFormat = surfaceFormat.format,
-//         .imageColorSpace = surfaceFormat.colorSpace,
-//         .imageExtent = surfaceExtent,
-//         .imageArrayLayers = 1,
-//         .imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
-//         .imageSharingMode = VK_SHARING_MODE_EXCLUSIVE,
-//         .preTransform = sc.currentTransform ,
-//         .compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR ,
-//         .presentMode = surfacePresentMode,
-//         .clipped = VK_FALSE,
-//         .oldSwapchain = VK_NULL_HANDLE,
-//     };
+    // get most appropiate present mode
+    for (int i = 0; i < presentModeCount; i++)
+    {
+        if (presentModes[i] == VK_PRESENT_MODE_MAILBOX_KHR)
+        {
+            surfacePresentMode = VK_PRESENT_MODE_MAILBOX_KHR;
+            break;
+        }
+        else if (presentModes[i] == VK_PRESENT_MODE_FIFO_KHR)
+        {
+            surfacePresentMode = VK_PRESENT_MODE_FIFO_KHR;
+        }
+        else
+        {
+            surfacePresentMode = presentModes[0];
+        }
+    }
 
-//     // TODO: handle errors (as OUT_OF_DATE or SUBOPTIMAL)
-//     m_swapchain = VK_NULL_HANDLE;
+    // init values for swapchain creation
+    VkSwapchainCreateInfoKHR swapchainCI =
+    {
+        .sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR,
+        .surface = surface,
+        .minImageCount = sc.minImageCount + 1,
+        .imageFormat = surfaceFormat.format,
+        .imageColorSpace = surfaceFormat.colorSpace,
+        .imageExtent = surfaceExtent,
+        .imageArrayLayers = 1,
+        .imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
+        .imageSharingMode = VK_SHARING_MODE_EXCLUSIVE,
+        .preTransform = sc.currentTransform ,
+        .compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR ,
+        .presentMode = surfacePresentMode,
+        .clipped = VK_FALSE,
+        .oldSwapchain = VK_NULL_HANDLE,
+    };
 
-//     auto res = vkCreateSwapchainKHR(m_device, &swapchainCI, nullptr, &m_swapchain);
-//     switch (res)
-//     {
-//     case VK_SUCCESS:
-//         std::println("swapchain created successfully");
-//         break;
-//     case VK_ERROR_OUT_OF_DATE_KHR:
-//     case VK_SUBOPTIMAL_KHR:
-//         break;
-//     default:
-//         //std::println("vk error code: {0}", (int)res);
-//         //handleResult(res);
-//         break;
-//     }
+    // TODO: handle errors (as OUT_OF_DATE or SUBOPTIMAL)
+    VkSwapchainKHR swapchain;
+    auto res = vkCreateSwapchainKHR(device, &swapchainCI, nullptr, &swapchain);
+    switch (res)
+    {
+    case VK_SUCCESS:
+        std::println("swapchain created successfully");
+        break;
+    case VK_ERROR_OUT_OF_DATE_KHR:
+    case VK_SUBOPTIMAL_KHR:
+        break;
+    default:
+        //std::println("vk error code: {0}", (int)res);
+        //handleResult(res);
+        break;
+    }
+    swapchainVK.swapchain = swapchain;
+}
 
-// }
+void setupImagesAndView(SwapchainVK& swapchainVK, ResourcePool<RenderTarget, RenderTargetVK>& renderTargets, VkDevice device, VkPhysicalDevice gpu, const SwapchainDesc& createInfo)
+{
+    auto swapchain = swapchainVK.swapchain;
+    // get swapchain images
+    uint32_t imageCount;
+    vkGetSwapchainImagesKHR(device, swapchain, &imageCount, nullptr);
+    swapchainVK.swapchainImages.resize(imageCount, VK_NULL_HANDLE);
+    vkGetSwapchainImagesKHR(device, swapchain, &imageCount, swapchainVK.swapchainImages.data());
 
-// void Swapchain::setupImagesAndView(const SwapchainCreateInfo& createInfo)
-// {
-//     // get swapchain images
-//     vkGetSwapchainImagesKHR(m_device, m_swapchain, &m_imageCount, nullptr);
-//     m_swapchainImages.resize(m_imageCount, VK_NULL_HANDLE);
-//     vkGetSwapchainImagesKHR(m_device, m_swapchain, &m_imageCount, m_swapchainImages.data());
+    // create views
+    VkImageViewCreateInfo viewCI = {
+        .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
+        .viewType = VK_IMAGE_VIEW_TYPE_2D,
+        .format = swapchainVK.format,
+        .components = { VK_COMPONENT_SWIZZLE_IDENTITY , VK_COMPONENT_SWIZZLE_IDENTITY , VK_COMPONENT_SWIZZLE_IDENTITY ,VK_COMPONENT_SWIZZLE_IDENTITY },
+        .subresourceRange = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 },// 1 mipmap, 1 layer
+    };
 
-//     // create views
-//     VkImageViewCreateInfo viewCI = {
-//         .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
-//         .viewType = VK_IMAGE_VIEW_TYPE_2D,
-//         .format = m_format,
-//         .components = { VK_COMPONENT_SWIZZLE_IDENTITY , VK_COMPONENT_SWIZZLE_IDENTITY , VK_COMPONENT_SWIZZLE_IDENTITY ,VK_COMPONENT_SWIZZLE_IDENTITY },
-//         .subresourceRange = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 },// 1 mipmap, 1 layer
-//     };
+    // create Swapchain Image Views
+    swapchainVK.swapchainViews.resize(swapchainVK.imageCount);
+    swapchainVK.renderTargets.resize(swapchainVK.imageCount);
 
-//     // create Swapchain Image Views
-//     m_swapchainViews.reserve(m_imageCount);
-//     for (uint32_t i = 0; i < m_imageCount; ++i)
-//     {
-//         viewCI.image = m_swapchainImages[i];
-//         VkImageView view;
-//         handleResult(vkCreateImageView(m_device, &viewCI, nullptr, &view));
-//         m_swapchainViews.push_back(view);
+    VkImageView view;
+    for (uint32_t i = 0; i < swapchainVK.imageCount; ++i)
+    {
+        viewCI.image = swapchainVK.swapchainImages[i];
+        handleResult(vkCreateImageView(device, &viewCI, nullptr, &view));
 
-//         auto renderView = std::make_shared<RenderTarget>();
-//         renderView->isViewOnly = true;
-//         renderView->m_device = m_device;
-//         renderView->m_image = m_swapchainImages[i];
-//         renderView->m_imageView = view;
-//         renderView->p_height = m_height;
-//         renderView->p_width = m_width;
-//         renderView->m_format = m_format;
-//         renderView->m_layout = VK_IMAGE_LAYOUT_PREINITIALIZED;
+        auto renderView = renderTargets.allocate({
+            true, swapchainVK.width, swapchainVK.height, swapchainVK.format, swapchainVK.swapchainImages[i], view,
+            VK_NULL_HANDLE, 0, 0
+            });
 
-//         m_renderViews.push_back(std::move(renderView));
-//     }
-// }
+        swapchainVK.swapchainViews[i] = view;
+        swapchainVK.renderTargets[i] = renderView;
+    }
+}
 
 Swapchain Device::CreateSwapchain(const SwapchainDesc& desc)
 {
-    // m_device = device.m_device;
-    // m_gpu = device.m_physicalDevice;
-    // m_instance = device.m_instance;
-    // // graphics queue always support present
+    auto device = impl->m_device;
+    auto gpu = impl->m_physicalDevice;
+    auto instance = impl->m_instance;
+    // graphics queue always support present
     // m_presentQueue = device.m_graphicsQueue;
-    // m_currentImageIndex = 0;
-    // setupSurface(createInfo);
-    // setupSwapchain(createInfo);
-    // setupImagesAndView(createInfo);
-    // VkFenceCreateInfo fenceCI = {
-    //     .sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO,
-    // };
-    // handleResult(vkCreateFence(m_device, &fenceCI, nullptr, &m_waitForAcquireFence));
-    return impl->swapchains.allocate({});
+    SwapchainVK swapchainVK = {};
+    swapchainVK.currentImageIndex = 0;
+    setupVkSurface(swapchainVK, instance, desc);
+    setupVkSwapchain(swapchainVK, device, gpu, desc);
+    setupImagesAndView(swapchainVK, impl->renderTargets, device, gpu, desc);
+    VkFenceCreateInfo fenceCI = {
+        .sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO,
+    };
+    handleResult(vkCreateFence(device, &fenceCI, nullptr, &swapchainVK.waitForAcquireFence));
+    return impl->swapchains.allocate(std::move(swapchainVK));
 }
 void Device::Destroy(Swapchain swapchain)
 {
-    // vkDestroyFence(m_device, m_waitForAcquireFence, nullptr);
-    // for (const auto& view : m_swapchainViews)
-    // {
-    //     vkDestroyImageView(m_device, view, nullptr);
-    // }
-    // m_swapchainViews.clear();
-    // m_swapchainImages.clear();
-    // vkDestroySwapchainKHR(m_device, m_swapchain, nullptr);
-    // vkDestroySurfaceKHR(m_instance, m_surface, nullptr);
+    auto info = impl->swapchains.get(swapchain);
+    auto device = impl->m_device;
+    vkDestroyFence(device, info.waitForAcquireFence, nullptr);
+    for (int i = 0; i < info.swapchainViews.size(); ++i)
+    {
+        vkDestroyImageView(device, info.swapchainViews[i], nullptr);
+        impl->renderTargets.free(info.renderTargets[i]);
+    }
+    info.swapchainViews.clear();
+    info.swapchainImages.clear();
+    vkDestroySwapchainKHR(device, info.swapchain, nullptr);
+    vkDestroySurfaceKHR(impl->m_instance, info.surface, nullptr);
 }
 
 void Device::NextFrame(Swapchain swapchain)
 {
-    // vkResetFences(m_device, 1, &m_waitForAcquireFence);
-    // constexpr auto timeout = (std::numeric_limits<uint32_t>::max)();
-    // if (auto res = vkAcquireNextImageKHR(m_device, m_swapchain, timeout, VK_NULL_HANDLE, m_waitForAcquireFence, &m_currentImageIndex); res != VK_SUCCESS)
+    auto info = impl->swapchains.get(swapchain);
+    auto device = impl->m_device;
+    vkResetFences(device, 1, &info.waitForAcquireFence);
+    constexpr auto timeout = (std::numeric_limits<uint32_t>::max)();
+    vkAcquireNextImageKHR(device, info.swapchain, timeout, VK_NULL_HANDLE, info.waitForAcquireFence, &info.currentImageIndex);
+    // if (auto res = vkAcquireNextImageKHR(device, info.swapchain, timeout, VK_NULL_HANDLE, info.waitForAcquireFence, &info.currentImageIndex); res != VK_SUCCESS)
     // {
 
     // }
-    // handleResult(vkWaitForFences(m_device, 1, &m_waitForAcquireFence, VK_TRUE, timeout));
+    handleResult(vkWaitForFences(device, 1, &info.waitForAcquireFence, VK_TRUE, timeout));
 }
 
 void Device::DisplayFrame(Swapchain swapchain)
 {
+    auto info = impl->swapchains.get(swapchain);
     // TODO: Manage Global Synchronization
-    // VkPresentInfoKHR presentI = {
-    //     .sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
-    //     .waitSemaphoreCount = 0,
-    //     .pWaitSemaphores = nullptr,
-    //     .swapchainCount = 1,
-    //     .pSwapchains = &m_swapchain,
-    //     .pImageIndices = &m_currentImageIndex,
-    // };
-    // handleResult(vkQueuePresentKHR(m_presentQueue, &presentI));
-    // // wait for present complete
-    // handleResult(vkQueueWaitIdle(m_presentQueue));
-    // m_currentImageIndex = (m_currentImageIndex + 1) % m_imageCount;
+    VkPresentInfoKHR presentI = {
+        .sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
+        .waitSemaphoreCount = 0,
+        .pWaitSemaphores = nullptr,
+        .swapchainCount = 1,
+        .pSwapchains = &info.swapchain,
+        .pImageIndices = &info.currentImageIndex,
+    };
+    handleResult(vkQueuePresentKHR(impl->m_graphicsQueue, &presentI));
+    // wait for present complete
+    handleResult(vkQueueWaitIdle(impl->m_graphicsQueue));
+    info.currentImageIndex = (info.currentImageIndex + 1) % info.imageCount;
 }
 
 void Device::ResizeSwapchain(Swapchain swapchain, uint32_t w, uint32_t h)
