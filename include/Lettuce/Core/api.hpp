@@ -64,7 +64,20 @@ namespace Lettuce::Core
     enum class CompareOp : uint8_t {};
     enum class BorderColor : uint8_t {};
     enum class PrimitiveTopology : uint8_t {};
-    enum class PipelineBindPoint : uint8_t { Graphics, Compute, RayTracing, Count};
+    enum class PipelineBindPoint : uint8_t { Graphics, Compute, RayTracing, Count };
+    enum class PipelineAccess : uint8_t { Read, Write };
+    enum class PipelineStage : uint8_t {
+        None,
+        DrawIndirect,
+        TaskShader, MeshShader, VertexShader, FragmentShader,
+        EarlyFragmentTests, LateFragmentTests,
+        ColorAttachmentOutput,
+        ComputeShader,
+        Copy, Blit, Resolve, Clear,
+        RayTracingShader,
+        CommandPreprocess,
+        Count,
+    };
 
     enum class RenderTargetType : uint8_t {};
     enum class IndirectType : uint8_t { Draw, DrawIndexed, DrawMesh, Dispatch, DeviceGenerated };
@@ -188,6 +201,13 @@ namespace Lettuce::Core
         void* applicationPtr;
     };
 
+    struct BarrierDesc {
+        PipelineAccess srcAccess;
+        PipelineStage srcStage;
+        PipelineAccess dstAccess;
+        PipelineStage dstStage;
+    };
+
     struct DeviceImpl;
     struct CommandPoolImpl;
     struct CommandBufferImpl;
@@ -283,6 +303,8 @@ namespace Lettuce::Core
         void ExecuteIndirect(IndirectSet);
 
         void Dispatch(uint32_t x, uint32_t y, uint32_t z);
+
+        void Barrier(std::span<const BarrierDesc> barriers);
     };
 
     struct CommandPool {

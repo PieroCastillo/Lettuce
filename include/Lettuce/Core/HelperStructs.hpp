@@ -123,5 +123,37 @@ namespace Lettuce::Core
             ? kPipelineBindPointTable[index]
             : VK_PIPELINE_BIND_POINT_MAX_ENUM;
     }
+
+    constexpr VkAccessFlags2 ToVkAccess(PipelineAccess access)
+    {
+        return access == PipelineAccess::Read ? VK_ACCESS_MEMORY_READ_BIT : VK_ACCESS_MEMORY_WRITE_BIT;
+    }
+
+    constexpr VkPipelineStageFlags2 kPipelineStageTable[] =
+    {
+        VK_PIPELINE_STAGE_2_NONE,
+        VK_PIPELINE_STAGE_2_DRAW_INDIRECT_BIT,
+        VK_PIPELINE_STAGE_2_TASK_SHADER_BIT_EXT,
+        VK_PIPELINE_STAGE_2_MESH_SHADER_BIT_EXT,
+        VK_PIPELINE_STAGE_2_VERTEX_SHADER_BIT,
+        VK_PIPELINE_STAGE_2_FRAGMENT_SHADER_BIT,
+        VK_PIPELINE_STAGE_2_EARLY_FRAGMENT_TESTS_BIT,
+        VK_PIPELINE_STAGE_2_LATE_FRAGMENT_TESTS_BIT,
+        VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT,
+        VK_PIPELINE_STAGE_2_COMPUTE_SHADER_BIT,
+        VK_PIPELINE_STAGE_2_COPY_BIT,
+        VK_PIPELINE_STAGE_2_BLIT_BIT,
+        VK_PIPELINE_STAGE_2_RESOLVE_BIT,
+        VK_PIPELINE_STAGE_2_CLEAR_BIT,
+        VK_PIPELINE_STAGE_2_RAY_TRACING_SHADER_BIT_KHR,
+        VK_PIPELINE_STAGE_2_COMMAND_PREPROCESS_BIT_EXT,
+    };
+    constexpr VkPipelineStageFlags2 ToVkPipelineStageFlags(PipelineStage stage)
+    {
+        const uint32_t index = static_cast<uint32_t>(stage);
+        return index < static_cast<uint64_t>(PipelineStage::Count)
+            ? kPipelineStageTable[index]
+            : VK_PIPELINE_STAGE_2_NONE;
+    }
 }
 #endif // LETTUCE_CORE_HELPER_STRUCTS_HPP

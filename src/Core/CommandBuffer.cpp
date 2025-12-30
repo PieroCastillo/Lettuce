@@ -94,3 +94,31 @@ void CommandBuffer::Dispatch(uint32_t x, uint32_t y, uint32_t z)
 {
     vkCmdDispatch(impl->vkCmd, x, y, z);
 }
+
+void CommandBuffer::Barrier(std::span<const BarrierDesc> barriers)
+{
+    uint32_t count = barriers.size();
+    if (count == 0) [[unlikely]] return;
+
+    VkMemoryBarrier2* memBarriers = (VkMemoryBarrier2*)alloca(count * sizeof(VkMemoryBarrier2));
+
+    for (int i = 0; i < count; ++i)
+    {
+        const auto& barrier = barriers[i];
+        memBarriers[i]  =
+        {
+            .sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER_2,
+            .srcStageMask = ToVkPipelineStageFlags(barrier.srcStage),
+            .srcAccessMask = ToVkAccess(barrier.srcAccess),
+            .dstStageMask = ToVkPipelineStageFlags(barrier.dstStage),
+            .dstAccessMask = ToVkAccess(barrier.dstAccess),
+        };
+    }
+
+    VkDependencyInfo  depInfo = {
+        .sType = VK_STRUCTURE_TYPE_DEPENDENCY_INFO,
+        .memoryBarrierCount = count,
+        .pMemoryBarriers = memBarriers,
+    };
+    vkCmdPipelineBarrier2(impl->vkCmd, &depInfo);
+}
