@@ -23,7 +23,8 @@ namespace Lettuce::Core
         auto operator<=>(const Handle&) const = default;
     };
 
-    struct AllocationTag {};
+    struct MemoryHeapTag {};
+    struct BufferTag {};
     struct TextureTag {};
     struct RenderTargetTag {};
     struct SamplerTag {};
@@ -33,7 +34,8 @@ namespace Lettuce::Core
     struct IndirectSetTag {};
     struct SwapchainTag {};
 
-    using Allocation = Handle<AllocationTag>;
+    using MemoryHeap = Handle<MemoryHeapTag>;
+    using Buffer = Handle<BufferTag>;
     using Texture = Handle<TextureTag>;
     using RenderTarget = Handle<RenderTargetTag>;
     using Sampler = Handle<SamplerTag>;
@@ -79,7 +81,7 @@ namespace Lettuce::Core
         Count,
     };
 
-    enum class RenderTargetType : uint8_t {};
+    enum class RenderTargetType : uint8_t { ColorRGB_sRGB, ColorRGBA_sRGB, DepthStencilDS40 };
     enum class IndirectType : uint8_t { Draw, DrawIndexed, DrawMesh, Dispatch, DeviceGenerated };
 
     // Resources
@@ -102,9 +104,18 @@ namespace Lettuce::Core
     };
 
     // Descriptions
-    struct AllocationDesc {
+    struct MemoryHeapDesc {
         uint64_t size;
         bool cpuVisible;
+    };
+
+    struct MemoryBindDesc {
+        MemoryHeap heap;
+        uint64_t heapOffset;
+    };
+
+    struct BufferDesc {
+        uint64_t size;
     };
 
     struct TextureDesc {
@@ -112,7 +123,8 @@ namespace Lettuce::Core
         uint32_t height;
         uint32_t depth;
         Format format;
-        uint32_t mipLevels;
+        uint32_t mipCount;
+        uint32_t layerCount;
     };
 
     struct RenderTargetDesc {
@@ -187,7 +199,6 @@ namespace Lettuce::Core
 
     struct IndirectSetDesc {
         IndirectType type;
-        Allocation backingBuffer;
         uint32_t maxCount;
         uint32_t stride;
     };
@@ -208,6 +219,13 @@ namespace Lettuce::Core
         PipelineStage dstStage;
     };
 
+    struct MemoryView
+    {
+        uint64_t size;
+        void* cpuAddress;
+        uint64_t gpuAddress;
+    };
+
     struct DeviceImpl;
     struct CommandPoolImpl;
     struct CommandBufferImpl;
@@ -217,19 +235,19 @@ namespace Lettuce::Core
         DeviceImpl* impl;
     public:
         // Memory 
-        Allocation CreateAllocation(const AllocationDesc&);
-        void Destroy(Allocation);
+        MemoryHeap CreateMemoryHeap(const MemoryHeapDesc&);
+        void Destroy(MemoryHeap);
 
-        AllocationInfo GetAllocationInfo(Allocation) const;
+        // Buffer
+        Buffer CreateBuffer(const BufferDesc&, const MemoryBindDesc&);
+        void Destroy(Buffer);
 
-        // Textures 
-        Texture  CreateTexture(const TextureDesc&);
+        // Texture
+        Texture CreateTexture(const TextureDesc&, const MemoryBindDesc&);
         void Destroy(Texture);
 
-        TextureInfo GetTextureInfo(Texture) const;
-
-        // Render Targets
-        RenderTarget CreateRenderTarget(const RenderTargetDesc&);
+        // Render Target
+        RenderTarget CreateRenderTarget(const RenderTargetDesc&, const MemoryBindDesc&);
         void Destroy(RenderTarget);
 
         RenderTargetInfo GetRenderTargetInfo(RenderTarget) const;
@@ -260,7 +278,7 @@ namespace Lettuce::Core
 
         void PushAllocations(
             DescriptorTable,
-            std::span<const std::pair<uint32_t, Allocation>>
+            std::span<const std::pair<uint32_t, const MemoryView&>>
         );
 
         // Indirect Set
@@ -283,8 +301,8 @@ namespace Lettuce::Core
         CommandBufferImpl* impl;
     public:
         void MemoryCopy(
-            Allocation src,
-            Allocation dst,
+            const MemoryView& src,
+            const MemoryView& dst,
             uint64_t srcOffset,
             uint64_t dstOffset,
             uint64_t size

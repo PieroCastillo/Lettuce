@@ -21,20 +21,43 @@ namespace Lettuce::Core
         VkPipelineBindPoint bindPoint;
     };
 
+    struct MemoryHeapVK
+    {
+        VkDeviceMemory memory;
+        uint64_t size;
+        MemoryAccess access;
+    };
+
+    struct BufferVK
+    {
+        VkBuffer buffer;
+        VkDeviceMemory memory;
+        uint64_t size;
+        uint64_t memoryOffset;
+    };
+
     struct TextureVK
     {
+        uint32_t width, height;
+        uint32_t mipCount, layerCount;
+        VkFormat format;
         VkImage image;
-        VkImageView view;
+        VkImageView imageView;
+        VkDeviceMemory memory;
+        uint64_t size;
+        uint64_t memoryOffset;
     };
 
     struct RenderTargetVK
     {
         bool isViewOnly;
         uint32_t width, height;
-        RenderTargetType renderTargetType;
         VkFormat format;
         VkImage image;
         VkImageView imageView;
+        VkDeviceMemory memory;
+        uint64_t size;
+        uint64_t memoryOffset;
     };
 
     struct DescriptorTableVK

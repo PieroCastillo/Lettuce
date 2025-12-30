@@ -170,7 +170,7 @@ void Device::PushResourceDescriptors(
     {
         auto& img = impl->textures.get(imgHandle);
 
-        VkDescriptorImageInfo imgInfo = { .imageView = img.view };
+        VkDescriptorImageInfo imgInfo = { .imageView = img.imageView };
 
         VkDescriptorGetInfoEXT getInfo = {
             .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_GET_INFO_EXT,
@@ -202,7 +202,7 @@ void Device::PushResourceDescriptors(
     {
         auto& img = impl->textures.get(imgHandle);
 
-        VkDescriptorImageInfo imgInfo = { .imageView = img.view };
+        VkDescriptorImageInfo imgInfo = { .imageView = img.imageView };
 
         VkDescriptorGetInfoEXT getInfo = {
             .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_GET_INFO_EXT,
@@ -218,10 +218,9 @@ void Device::PushResourceDescriptors(
     // TODO: in the future, enable acceleration structures
 }
 
-void Device::PushAllocations(DescriptorTable descriptorTable, std::span<const std::pair<uint32_t, Allocation>> allocations)
+void Device::PushAllocations(DescriptorTable descriptorTable, std::span<const std::pair<uint32_t, const MemoryView&>> allocations)
 {
     auto& dt = impl->descriptorTables.get(descriptorTable);
-    auto& allocs = impl->allocations;
     auto* dstAddress = dt.pushPayloadAddress;
 
     // at least 16 buffers (because 128 bytes is the minimum)
@@ -231,6 +230,6 @@ void Device::PushAllocations(DescriptorTable descriptorTable, std::span<const st
         if (idx > 16)
             continue;
 
-        dstAddress[idx] = allocs.get(alloc).gpuAddress;
+        dstAddress[idx] = alloc.gpuAddress;
     }
 }

@@ -81,9 +81,10 @@ namespace Lettuce::Core
         std::unordered_multimap<DeviceQueueType, VkQueue> queues;
 
         Features features;
-        Properties props; 
+        Properties props;
 
-        ResourcePool<Allocation, AllocationVK> allocations;
+        ResourcePool<MemoryHeap, MemoryHeapVK> memoryHeaps;
+        ResourcePool<Buffer, BufferVK> buffers;
         ResourcePool<Texture, TextureVK> textures;
         ResourcePool<RenderTarget, RenderTargetVK> renderTargets;
         ResourcePool<Sampler, VkSampler> samplers;

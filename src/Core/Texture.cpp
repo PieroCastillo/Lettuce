@@ -14,43 +14,63 @@
 
 using namespace Lettuce::Core;
 
-Texture Device::CreateTexture(const TextureDesc& desc)
+Texture Device::CreateTexture(const TextureDesc& desc, const MemoryBindDesc& bindDesc)
 {
-    // if (device.m_device == VK_NULL_HANDLE) {
-    //     throw LettuceException(LettuceResult::InvalidDevice);
-    // }
+    auto device = impl->m_device;
 
-    // m_device = device.m_device;
-    // m_transferQueue = device.m_transferQueue;
-    // m_allocator = createInfo.allocator;
+    VkFormat format = ToVkFormat(desc.format);
+    
+    // TODO: impl tryCompression
+    VkImageSubresourceRange subresourceRange = {
+        VK_IMAGE_ASPECT_COLOR_BIT,
+        0,desc.mipCount,0,desc.layerCount
+    };
 
-    // bool isArray = createInfo.layerCount > 1;
+    VkImage image;
+    VkImageCreateInfo imageCI = {
+        .sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
+        .imageType = VK_IMAGE_TYPE_2D,
+        .format = format,
+        .extent = {desc.width, desc.height, 1},
+        .mipLevels = desc.mipCount,
+        .arrayLayers = desc.layerCount,
+        .samples = VK_SAMPLE_COUNT_1_BIT,
+        .tiling = VK_IMAGE_TILING_OPTIMAL,
+        .usage = VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_STORAGE_BIT,
+        .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
+    };
+    handleResult(vkCreateImage(device, &imageCI, nullptr, &image));
 
-    // auto flags = (isArray ? VK_IMAGE_CREATE_2D_ARRAY_COMPATIBLE_BIT : 0) | (createInfo.isCube ? VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT : 0);
+    VkImageView imageView;
+    VkImageViewCreateInfo viewCI = {
+        .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
+        .image = image,
+        .viewType = VK_IMAGE_VIEW_TYPE_2D,
+        .format = format,
+        .components = {VK_COMPONENT_SWIZZLE_IDENTITY, VK_COMPONENT_SWIZZLE_IDENTITY,VK_COMPONENT_SWIZZLE_IDENTITY,VK_COMPONENT_SWIZZLE_IDENTITY},
+        .subresourceRange = subresourceRange,
+    };
+    handleResult(vkCreateImageView(device, &viewCI, nullptr, &imageView));
 
-    // m_image = createInfo.allocator->do_ialloc(
-    //     createInfo.format,
-    //     { std::move(createInfo.width), std::move(createInfo.height) },
-    //     createInfo.levelCount,
-    //     createInfo.layerCount,
-    //     createInfo.sampled ? VK_IMAGE_USAGE_SAMPLED_BIT : VK_IMAGE_USAGE_STORAGE_BIT
-    // ).image;
+    auto mem = impl->memoryHeaps.get(bindDesc.heap).memory;
+    handleResult(vkBindImageMemory(device, image, mem, bindDesc.heapOffset));
 
-    // VkImageViewCreateInfo viewCI = {
-    //     .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
-    //     .image = m_image,
-    //     .viewType = createInfo.isCube
-    //         ? (isArray ? VK_IMAGE_VIEW_TYPE_CUBE_ARRAY : VK_IMAGE_VIEW_TYPE_CUBE)
-    //         : (isArray ? VK_IMAGE_VIEW_TYPE_2D_ARRAY : VK_IMAGE_VIEW_TYPE_2D),
-    //     .format = createInfo.format,
-    //     .components = { VK_COMPONENT_SWIZZLE_IDENTITY , VK_COMPONENT_SWIZZLE_IDENTITY , VK_COMPONENT_SWIZZLE_IDENTITY ,VK_COMPONENT_SWIZZLE_IDENTITY },
-    //     .subresourceRange = { VK_IMAGE_ASPECT_COLOR_BIT, 0, createInfo.levelCount, 0, createInfo.layerCount},
-    // };
-    // handleResult(vkCreateImageView(m_device, &viewCI, nullptr, &m_view));
-    return impl->textures.allocate({});
+    VkMemoryRequirements memReqs;
+    vkGetImageMemoryRequirements(device, image, &memReqs);
+
+    return impl->textures.allocate({ desc.width, desc.height, desc.mipCount, desc.layerCount, format, image, imageView, mem, memReqs.size, bindDesc.heapOffset });
 }
 
 void Device::Destroy(Texture texture)
 {
-    
+    if (!impl->textures.isValid(texture))
+        return;
+
+    auto device = impl->m_device;
+    auto info = impl->textures.get(texture);
+
+    vkDestroyImageView(device, info.imageView, nullptr);
+    vkDestroyImage(device, info.image, nullptr);
+
+    impl->textures.free(texture);
 }

@@ -15,8 +15,8 @@
 using namespace Lettuce::Core;
 
 void CommandBuffer::MemoryCopy(
-    Allocation src,
-    Allocation dst,
+    const MemoryView& src,
+    const MemoryView& dst,
     uint64_t srcOffset,
     uint64_t dstOffset,
     uint64_t size
@@ -105,7 +105,7 @@ void CommandBuffer::Barrier(std::span<const BarrierDesc> barriers)
     for (int i = 0; i < count; ++i)
     {
         const auto& barrier = barriers[i];
-        memBarriers[i]  =
+        memBarriers[i] =
         {
             .sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER_2,
             .srcStageMask = ToVkPipelineStageFlags(barrier.srcStage),
