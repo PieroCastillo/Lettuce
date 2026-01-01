@@ -7,6 +7,7 @@ Created by @PieroCastillo on 2025-12-26
 // standard headers
 #include <unordered_map>
 #include <vector>
+#include <type_traits>
 
 // project headers
 #include "api.hpp"
@@ -26,6 +27,7 @@ namespace Lettuce::Core
         VkDeviceMemory memory;
         uint64_t size;
         MemoryAccess access;
+        void* baseCpuAddress;
     };
 
     struct BufferVK
@@ -34,6 +36,9 @@ namespace Lettuce::Core
         VkDeviceMemory memory;
         uint64_t size;
         uint64_t memoryOffset;
+
+        void* cpuAddress;
+        uint64_t gpuAddress;
     };
 
     struct TextureVK
@@ -58,6 +63,7 @@ namespace Lettuce::Core
         VkDeviceMemory memory;
         uint64_t size;
         uint64_t memoryOffset;
+        VkClearValue defaultClearValue;
     };
 
     struct DescriptorTableVK
@@ -177,6 +183,46 @@ namespace Lettuce::Core
         return index < static_cast<uint64_t>(PipelineStage::Count)
             ? kPipelineStageTable[index]
             : VK_PIPELINE_STAGE_2_NONE;
+    }
+
+    constexpr VkAttachmentLoadOp kLoadOpTable[] =
+    {
+        VK_ATTACHMENT_LOAD_OP_LOAD,
+        VK_ATTACHMENT_LOAD_OP_CLEAR,
+        VK_ATTACHMENT_LOAD_OP_NONE,
+    };
+    constexpr VkAttachmentLoadOp ToVkAttachmentLoadOp(LoadOp loadOp)
+    {
+        const uint32_t index = static_cast<uint32_t>(loadOp);
+        return index < static_cast<uint64_t>(LoadOp::Count)
+            ? kLoadOpTable[index]
+            : VK_ATTACHMENT_LOAD_OP_NONE;
+    };
+
+
+    inline VkClearValue ToVkClearValue(const ClearValue& clear)
+    {
+        return std::visit(
+            [](const auto& value) -> VkClearValue {
+                VkClearValue vk{};
+
+                using T = std::decay_t<decltype(value)>;
+
+                if constexpr (std::is_same_v<T, ColorClear>) {
+                    vk.color.float32[0] = value.value[0];
+                    vk.color.float32[1] = value.value[1];
+                    vk.color.float32[2] = value.value[2];
+                    vk.color.float32[3] = value.value[3];
+                }
+                else if constexpr (std::is_same_v<T, DepthStencilClear>) {
+                    vk.depthStencil.depth = value.depth;
+                    vk.depthStencil.stencil = value.stencil;
+                }
+
+                return vk;
+            },
+            clear
+        );
     }
 }
 #endif // LETTUCE_CORE_HELPER_STRUCTS_HPP

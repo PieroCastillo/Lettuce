@@ -185,6 +185,7 @@ Swapchain Device::CreateSwapchain(const SwapchainDesc& desc)
     handleResult(vkCreateFence(device, &fenceCI, nullptr, &swapchainVK.waitForAcquireFence));
     return impl->swapchains.allocate(std::move(swapchainVK));
 }
+
 void Device::Destroy(Swapchain swapchain)
 {
     auto info = impl->swapchains.get(swapchain);

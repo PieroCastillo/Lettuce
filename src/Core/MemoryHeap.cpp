@@ -33,7 +33,14 @@ MemoryHeap Device::CreateMemoryHeap(const MemoryHeapDesc& desc)
     };
     VkDeviceMemory mem;
     handleResult(vkAllocateMemory(device, &memAlloc, nullptr, &mem));
-    return impl->memoryHeaps.allocate({ mem, desc.size, access });
+
+    void* cpuAddress;
+    if(desc.cpuVisible)
+    {
+        vkMapMemory(impl->m_device, mem, 0, desc.size, 0, &cpuAddress);
+    }
+
+    return impl->memoryHeaps.allocate({ mem, desc.size, access, cpuAddress });
 }
 
 void Device::Destroy(MemoryHeap heap)
@@ -42,6 +49,11 @@ void Device::Destroy(MemoryHeap heap)
         return;
 
     auto heapInfo = impl->memoryHeaps.get(heap);
+    
+    if(heapInfo.access == MemoryAccess::Shared)
+    {
+        vkUnmapMemory(impl->m_device, heapInfo.memory);
+    }
     vkFreeMemory(impl->m_device, heapInfo.memory, nullptr);
 
     impl->memoryHeaps.free(heap);

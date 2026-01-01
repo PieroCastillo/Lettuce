@@ -77,7 +77,7 @@ RenderTarget Device::CreateRenderTarget(const RenderTargetDesc& desc, const Memo
     VkMemoryRequirements memReqs;
     vkGetImageMemoryRequirements(device, image, &memReqs);
 
-    return impl->renderTargets.allocate({ false, desc.width, desc.height, format, image, imageView, mem, memReqs.size, bindDesc.heapOffset });
+    return impl->renderTargets.allocate({ false, desc.width, desc.height, format, image, imageView, mem, memReqs.size, bindDesc.heapOffset, ToVkClearValue(desc.defaultClearValue) });
 }
 
 void Device::Destroy(RenderTarget renderTarget)

@@ -4,10 +4,12 @@ Created by @PieroCastillo on 2025-12-26
 #ifndef LETTUCE_CORE_API_HPP
 #define LETTUCE_CORE_API_HPP
 
+#include <array>
 #include <cstdint>
 #include <span>
 #include <string_view>
 #include <optional>
+#include <variant>
 
 namespace Lettuce::Core
 {
@@ -80,27 +82,23 @@ namespace Lettuce::Core
         CommandPreprocess,
         Count,
     };
+    enum class LoadOp : uint8_t { Load, Clear, None, Count };
 
     enum class RenderTargetType : uint8_t { ColorRGB_sRGB, ColorRGBA_sRGB, DepthStencilDS40 };
     enum class IndirectType : uint8_t { Draw, DrawIndexed, DrawMesh, Dispatch, DeviceGenerated };
 
     // Resources
-    struct TextureInfo {
-        uint64_t size;
-        Format format;
-    };
-
-    struct AllocationInfo {
+    struct BufferInfo {
         uint64_t size;
         void* cpuAddress;
         uint64_t gpuAddress;
     };
 
-    struct RenderTargetInfo
+    struct ResourceInfo
     {
+        uint64_t size;
         uint32_t width;
         uint32_t height;
-        RenderTargetType type;
     };
 
     // Descriptions
@@ -127,10 +125,22 @@ namespace Lettuce::Core
         uint32_t layerCount;
     };
 
+    struct ColorClear {
+        std::array<float, 4> value;
+    };
+
+    struct DepthStencilClear {
+        float depth;
+        uint32_t stencil;
+    };
+
+    using ClearValue = std::variant<ColorClear, DepthStencilClear>;
+
     struct RenderTargetDesc {
         uint32_t width;
         uint32_t height;
         RenderTargetType type;
+        ClearValue defaultClearValue;
     };
 
     struct SamplerDesc {
@@ -163,8 +173,7 @@ namespace Lettuce::Core
         ShaderBinary  meshShaderBinary;
         ShaderBinary  fragShaderBinary;
         std::span<Format> colorAttachmentFormats;
-        Format depthAttachmentFormat;
-        Format stencilAttachmentFormat;
+        Format depthStencilAttachmentFormat;
         DescriptorTable  descriptorTable;
     };
 
@@ -177,8 +186,7 @@ namespace Lettuce::Core
         ShaderBinary  vertShaderBinary;
         ShaderBinary  fragShaderBinary;
         std::span<Format> colorAttachmentFormats;
-        Format depthAttachmentFormat;
-        Format stencilAttachmentFormat;
+        Format depthStencilAttachmentFormat;
         DescriptorTable  descriptorTable;
     };
 
@@ -226,6 +234,19 @@ namespace Lettuce::Core
         uint64_t gpuAddress;
     };
 
+    struct AttachmentDesc
+    {
+        RenderTarget renderTarget;
+        LoadOp loadOp;
+    };
+
+    struct RenderPassDesc
+    {
+        uint32_t width, height;
+        std::span<const AttachmentDesc> colorAttachments;
+        std::optional<const AttachmentDesc> depthStencilAttachment;
+    };
+
     struct DeviceImpl;
     struct CommandPoolImpl;
     struct CommandBufferImpl;
@@ -250,7 +271,9 @@ namespace Lettuce::Core
         RenderTarget CreateRenderTarget(const RenderTargetDesc&, const MemoryBindDesc&);
         void Destroy(RenderTarget);
 
-        RenderTargetInfo GetRenderTargetInfo(RenderTarget) const;
+        BufferInfo GetBufferInfo(Buffer) const;
+        ResourceInfo GetResourceInfo(Texture) const;
+        ResourceInfo GetResourceInfo(RenderTarget) const;
 
         // Sampler 
         Sampler CreateSampler(const SamplerDesc&);
@@ -266,8 +289,8 @@ namespace Lettuce::Core
         Pipeline CreatePipeline(const ComputePipelineDesc&);
         void Destroy(Pipeline);
 
-        //  Descriptor Table
-        DescriptorTable  CreateDescriptorTable(const DescriptorTableDesc&);
+        // Descriptor Table
+        DescriptorTable CreateDescriptorTable(const DescriptorTableDesc&);
         void Destroy(DescriptorTable);
 
         void PushResourceDescriptors(
@@ -308,7 +331,7 @@ namespace Lettuce::Core
             uint64_t size
         );
 
-        void BeginRendering(std::span<RenderTarget>);
+        void BeginRendering(const RenderPassDesc&);
         void EndRendering();
 
         void BindPipeline(Pipeline);

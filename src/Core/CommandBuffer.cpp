@@ -25,12 +25,54 @@ void CommandBuffer::MemoryCopy(
 
 }
 
-void CommandBuffer::BeginRendering(std::span<RenderTarget> renderTargets)
+void CommandBuffer::BeginRendering(const RenderPassDesc& desc)
 {
-    // TODO: impl attachments
+    auto& renderTargets = impl->device->renderTargets;
+
+    int colorCount = desc.colorAttachments.size();
+    VkRenderingAttachmentInfo* colorAttachments = (VkRenderingAttachmentInfo*)alloca(sizeof(VkRenderingAttachmentInfo) * colorCount);
+
+    for (int i = 0; i < colorCount; ++i)
+    {
+        const auto& attachment = desc.colorAttachments[i];
+        const auto& rt = renderTargets.get(attachment.renderTarget);
+
+        colorAttachments[i] = {
+            .sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
+            .imageView = rt.imageView,
+            .imageLayout = VK_IMAGE_LAYOUT_GENERAL,
+            .loadOp = ToVkAttachmentLoadOp(attachment.loadOp),
+            .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
+            .clearValue = rt.defaultClearValue,
+        };
+    }
+
     VkRenderingInfo renderingInfo = {
         .sType = VK_STRUCTURE_TYPE_RENDERING_INFO,
+        .renderArea = {{0,0},{ desc.width, desc.height }},
+        .layerCount = 1,
+        .viewMask = 0,
+        .colorAttachmentCount = (uint32_t)colorCount,
+        .pColorAttachments = colorAttachments,
     };
+
+    VkRenderingAttachmentInfo attachmentInfo;
+    if (desc.depthStencilAttachment)
+    {
+        const auto& rt = renderTargets.get(desc.depthStencilAttachment->renderTarget);
+
+        attachmentInfo = {
+            .sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
+            .imageView = rt.imageView,
+            .imageLayout = VK_IMAGE_LAYOUT_GENERAL,
+            .loadOp = ToVkAttachmentLoadOp(desc.depthStencilAttachment->loadOp),
+            .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
+            .clearValue = rt.defaultClearValue,
+        };
+        renderingInfo.pDepthAttachment = &attachmentInfo;
+        renderingInfo.pStencilAttachment = &attachmentInfo;
+    }
+
     vkCmdBeginRendering(impl->vkCmd, &renderingInfo);
 }
 

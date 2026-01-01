@@ -92,8 +92,8 @@ Pipeline Device::CreatePipeline(const PrimitiveShadingPipelineDesc& desc)
         .viewMask = 0, // multiview disabled
         .colorAttachmentCount = (uint32_t)tmp.size(),
         .pColorAttachmentFormats = tmp.data(),
-        .depthAttachmentFormat = ToVkFormat(desc.depthAttachmentFormat),
-        .stencilAttachmentFormat = ToVkFormat(desc.stencilAttachmentFormat),
+        .depthAttachmentFormat = ToVkFormat(desc.depthStencilAttachmentFormat),
+        .stencilAttachmentFormat = ToVkFormat(desc.depthStencilAttachmentFormat),
     };
 
     auto& shaders = impl->shaders;
@@ -214,8 +214,8 @@ Pipeline Device::CreatePipeline(const MeshShadingPipelineDesc& desc)
         .viewMask = 0, // multiview disabled
         .colorAttachmentCount = (uint32_t)tmp.size(),
         .pColorAttachmentFormats = tmp.data(),
-        .depthAttachmentFormat = ToVkFormat(desc.depthAttachmentFormat),
-        .stencilAttachmentFormat = ToVkFormat(desc.stencilAttachmentFormat),
+        .depthAttachmentFormat = ToVkFormat(desc.depthStencilAttachmentFormat),
+        .stencilAttachmentFormat = ToVkFormat(desc.depthStencilAttachmentFormat),
     };
 
     auto& shaders = impl->shaders;

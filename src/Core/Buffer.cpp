@@ -16,7 +16,7 @@ using namespace Lettuce::Core;
 
 Buffer Device::CreateBuffer(const BufferDesc& desc, const MemoryBindDesc& bindDesc)
 {
-    VkDeviceMemory mem = impl->memoryHeaps.get(bindDesc.heap).memory;
+    auto memInfo = impl->memoryHeaps.get(bindDesc.heap);
 
     VkBufferCreateInfo bufferCI = {
         .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
@@ -26,13 +26,23 @@ Buffer Device::CreateBuffer(const BufferDesc& desc, const MemoryBindDesc& bindDe
     };
     VkBuffer buffer;
     handleResult(vkCreateBuffer(impl->m_device, &bufferCI, nullptr, &buffer));
-    handleResult(vkBindBufferMemory(impl->m_device, buffer, mem, bindDesc.heapOffset));
+    handleResult(vkBindBufferMemory(impl->m_device, buffer, memInfo.memory, bindDesc.heapOffset));
 
-    return impl->buffers.allocate({ buffer, mem, desc.size, bindDesc.heapOffset });
+    VkBufferDeviceAddressInfo addressInfo = {
+        .sType = VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO,
+        .buffer = buffer,
+    };
+
+    void* cpuAddress = memInfo.access == MemoryAccess::Shared ? ((uint64_t*)memInfo.baseCpuAddress + bindDesc.heapOffset) : nullptr;
+    uint64_t gpuAddress = vkGetBufferDeviceAddress(impl->m_device, &addressInfo);
+
+    return impl->buffers.allocate({ buffer, memInfo.memory, desc.size, bindDesc.heapOffset, cpuAddress, gpuAddress });
 }
 
 void Device::Destroy(Buffer buffer)
 {
+    auto info = impl->buffers.get(buffer);
+
     vkDestroyBuffer(impl->m_device, impl->buffers.get(buffer).buffer, nullptr);
     impl->buffers.free(buffer);
 }
