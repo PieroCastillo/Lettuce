@@ -97,6 +97,7 @@ namespace Lettuce::Core
         std::vector<VkImageView> swapchainViews;
         std::vector<RenderTarget> renderTargets;
 
+        Format ltFormat;
         VkFormat format;
         VkSwapchainKHR swapchain;
         VkSurfaceKHR surface;
@@ -142,6 +143,27 @@ namespace Lettuce::Core
             ? kFormatTable[index]
             : VK_FORMAT_UNDEFINED;
     }
+
+    constexpr Format FromVkFormat(VkFormat vkFormat)
+    {
+        switch (vkFormat)
+        {
+        case VK_FORMAT_R8G8B8A8_UNORM:      return Format::RGBA8_UNORM;
+        case VK_FORMAT_R8G8B8A8_SRGB:       return Format::RGBA8_SRGB;
+        case VK_FORMAT_B8G8R8A8_UNORM:      return Format::BGRA8_UNORM;
+        case VK_FORMAT_B8G8R8A8_SRGB:       return Format::BGRA8_SRGB;
+        case VK_FORMAT_R16G16B16A16_SFLOAT: return Format::RGBA16_FLOAT;
+        case VK_FORMAT_D16_UNORM:           return Format::D16;
+        case VK_FORMAT_D32_SFLOAT:          return Format::D32;
+        case VK_FORMAT_D24_UNORM_S8_UINT:   return Format::D24S8;
+        case VK_FORMAT_D32_SFLOAT_S8_UINT:  return Format::D32S8;
+        case VK_FORMAT_R8_UNORM:            return Format::R8;
+        case VK_FORMAT_R8G8_UNORM:          return Format::RG8;
+        case VK_FORMAT_R16G16_SFLOAT:       return Format::RG16_FLOAT;
+        default:                            return Format::COUNT;
+        }
+    }
+
 
     constexpr VkPipelineBindPoint kPipelineBindPointTable[] =
     {

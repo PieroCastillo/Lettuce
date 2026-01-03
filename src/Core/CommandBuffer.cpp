@@ -21,7 +21,7 @@ void CommandBuffer::MemoryCopy(
     uint64_t size
 )
 {
-    
+
 }
 
 void CommandBuffer::BeginRendering(const RenderPassDesc& desc)
@@ -72,7 +72,13 @@ void CommandBuffer::BeginRendering(const RenderPassDesc& desc)
         renderingInfo.pStencilAttachment = &attachmentInfo;
     }
 
-    vkCmdBeginRendering((VkCommandBuffer)impl.handle, &renderingInfo);
+    auto cmd = (VkCommandBuffer)impl.handle;
+    vkCmdBeginRendering(cmd, &renderingInfo);
+
+    VkViewport vw = { 0, 0, desc.width, desc.height, 0, 1 };
+    VkRect2D scissor = { { 0,0 }, { desc.width, desc.height } };
+    vkCmdSetViewport(cmd, 0, 1, &vw);
+    vkCmdSetScissor(cmd, 0, 1, &scissor);
 }
 
 void CommandBuffer::EndRendering()

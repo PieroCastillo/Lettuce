@@ -69,6 +69,7 @@ void setupVkSwapchain(SwapchainVK& swapchainVK, VkDevice device, VkPhysicalDevic
     surfaceExtent.width = std::clamp(createInfo.width, sc.minImageExtent.width, sc.maxImageExtent.width);
     surfaceExtent.height = std::clamp(createInfo.height, sc.minImageExtent.height, sc.maxImageExtent.height);
 
+    swapchainVK.ltFormat = FromVkFormat(surfaceFormat.format);
     swapchainVK.format = surfaceFormat.format;
     swapchainVK.width = surfaceExtent.width;
     swapchainVK.height = surfaceExtent.height;
@@ -136,6 +137,7 @@ void setupImagesAndView(SwapchainVK& swapchainVK, ResourcePool<RenderTarget, Ren
     uint32_t imageCount;
     vkGetSwapchainImagesKHR(device, swapchain, &imageCount, nullptr);
     swapchainVK.swapchainImages.resize(imageCount, VK_NULL_HANDLE);
+    swapchainVK.imageCount = imageCount;
     vkGetSwapchainImagesKHR(device, swapchain, &imageCount, swapchainVK.swapchainImages.data());
 
     // create views
@@ -172,8 +174,7 @@ Swapchain Device::CreateSwapchain(const SwapchainDesc& desc)
     auto device = impl->m_device;
     auto gpu = impl->m_physicalDevice;
     auto instance = impl->m_instance;
-    // graphics queue always support present
-    // m_presentQueue = device.m_graphicsQueue;
+    
     SwapchainVK swapchainVK = {};
     swapchainVK.currentImageIndex = 0;
     setupVkSurface(swapchainVK, instance, desc);
@@ -204,7 +205,7 @@ void Device::Destroy(Swapchain swapchain)
 
 void Device::NextFrame(Swapchain swapchain)
 {
-    auto info = impl->swapchains.get(swapchain);
+    auto& info = impl->swapchains.get(swapchain);
     auto device = impl->m_device;
     vkResetFences(device, 1, &info.waitForAcquireFence);
     constexpr auto timeout = (std::numeric_limits<uint32_t>::max)();
@@ -218,7 +219,7 @@ void Device::NextFrame(Swapchain swapchain)
 
 void Device::DisplayFrame(Swapchain swapchain)
 {
-    auto info = impl->swapchains.get(swapchain);
+    auto& info = impl->swapchains.get(swapchain);
     // TODO: Manage Global Synchronization
     VkPresentInfoKHR presentI = {
         .sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
@@ -234,6 +235,12 @@ void Device::DisplayFrame(Swapchain swapchain)
     info.currentImageIndex = (info.currentImageIndex + 1) % info.imageCount;
 }
 
+Format Device::GetRenderTargetFormat(Swapchain swapchain)
+{
+    auto& swp = impl->swapchains.get(swapchain);
+    return swp.ltFormat;
+}
+
 void Device::ResizeSwapchain(Swapchain swapchain, uint32_t w, uint32_t h)
 {
     // TODO: impl
@@ -241,7 +248,6 @@ void Device::ResizeSwapchain(Swapchain swapchain, uint32_t w, uint32_t h)
 
 RenderTarget Device::GetCurrentRenderTarget(Swapchain swapchain) const
 {
-    // return *m_renderViews.at(m_currentImageIndex);
     auto& swc = impl->swapchains.get(swapchain);
     return swc.renderTargets[(int)swc.currentImageIndex];
 }

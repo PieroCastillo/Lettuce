@@ -5,6 +5,5 @@
 #include "Core/ResourcePool.hpp"
 
 // allocators
-#include "Core/Allocators/LinearBufferSubAlloc.hpp"
-#include "Core/Allocators/LinearImageAlloc.hpp"
+#include "Core/Allocators/LinearAllocator.hpp"
 #include "Core/Allocators/IGPUMemoryResource.hpp"

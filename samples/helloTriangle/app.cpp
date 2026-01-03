@@ -16,16 +16,6 @@
 #include <optional>
 #include <functional>
 
-void check(std::string_view message,
-    const std::source_location& loc = std::source_location::current())
-{
-    std::println("[{}:{}] {}: {}",
-        loc.file_name(),
-        loc.line(),
-        loc.function_name(),
-        message);
-}
-
 using namespace Lettuce::Core;
 
 GLFWwindow* window;
@@ -33,33 +23,35 @@ GLFWwindow* window;
 constexpr uint32_t width = 1366;
 constexpr uint32_t height = 768;
 
-std::shared_ptr<Device> device;
-std::shared_ptr<Swapchain> swapchain;
-std::shared_ptr<DescriptorTable> descriptorTable;
-std::shared_ptr<Pipeline> rgbPipeline;
+Device device;
+Swapchain swapchain;
+DescriptorTable descriptorTable;
+Pipeline rgbPipeline;
+CommandAllocator cmdAlloc;
 
 void initLettuce()
 {
     auto hwnd = glfwGetWin32Window(window);
     auto hmodule = GetModuleHandle(NULL);
 
-    device = std::make_shared<Device>();
-    DeviceCreateInfo deviceCI = {
-        .preferDedicated = false,
+    DeviceDesc deviceCI = {
+        .preferDedicated = true,
     };
-    device->Create(deviceCI);
-    std::println("Device created successfully");
+    device.Create(deviceCI);
 
-    SwapchainCreateInfo swapchainCI = {
+    SwapchainDesc swapchainDesc = {
         .width = width,
         .height = height,
         .clipped = true,
         .windowPtr = &hwnd,
         .applicationPtr = &hmodule,
     };
-    swapchain = device->CreateSwapchain(swapchainCI).value();
+    swapchain = device.CreateSwapchain(swapchainDesc);
 
-    context = device->CreateSequentialContext().value();
+    CommandAllocatorDesc cmdAllocDesc = {
+        .queueType = QueueType::Graphics,
+    };
+    cmdAlloc = device.CreateCommandAllocator(cmdAllocDesc);
 }
 
 void createRenderingObjects()
@@ -74,58 +66,63 @@ void createRenderingObjects()
     shadersFile.seekg(0);
     shadersFile.read((char*)shadersBuffer.data(), fileSize);
 
-    ShaderPackCreateInfo shadersCI = {
-        .shaderByteData = std::span<const uint32_t>(shadersBuffer.data(), shadersBuffer.size()),
+    ShaderBinaryDesc shaderDesc = {
+        .bytecode = std::span<uint32_t>(shadersBuffer.data(), shadersBuffer.size()),
     };
-    auto shaders = device->CreateShaderPack(shadersCI).value();
+    auto shaders = device.CreateShader(shaderDesc);
 
-    DescriptorTableCreateInfo descriptorTableCI = {
-        .setLayoutInfos = shaders->GetDescriptorsInfo(),
-        .maxDescriptorVariantsPerSet = 3,
-    };
-    descriptorTable = device->CreateDescriptorTable(descriptorTableCI).value();
+    DescriptorTableDesc descriptorTableDesc = { 4,4,4,2 };
+    descriptorTable = device.CreateDescriptorTable(descriptorTableDesc);
 
-    GraphicsPipelineCreateData gpipelineData = {
-        .shaders = shaders,
+    std::array<Format, 1> formatArr =  {device.GetRenderTargetFormat(swapchain) };
+    PrimitiveShadingPipelineDesc pipelineDesc = {
+        .fragmentShadingRate = false,
+        .vertEntryPoint = "vertexMain",
+        .fragEntryPoint = "fragmentMain",
+        .vertShaderBinary = shaders,
+        .fragShaderBinary = shaders,
+        .colorAttachmentFormats = std::span(formatArr),
         .descriptorTable = descriptorTable,
-        .colorTargets = swapchain->GetRenderViews(),
-        .vertexEntryPoint = "vertexMain",
-        .fragmentEntryPoint = "fragmentMain",
     };
-    rgbPipeline = device->CreatePipeline(gpipelineData).value();
-    
-    shaders->Release();
+    rgbPipeline = device.CreatePipeline(pipelineDesc);
+
+    device.Destroy(shaders);
 }
 
 void mainLoop()
 {
     while (!glfwWindowShouldClose(window))
     {
-        swapchain->NextFrame();
+        device.NextFrame(swapchain);
 
-        auto& frame = swapchain->GetCurrentRenderView();
-        auto& cmd = context->GetCommandList();
-        cmd.BeginRendering(width, height, { std::ref(frame) }, std::nullopt);
-        cmd.BindDescriptorTable(descriptorTable);
-        cmd.BindPipeline(rgbPipeline);
-        cmd.Draw(3, 1);
-        cmd.EndRendering();
+        // device.Reset(cmdAlloc);
+        // auto frame = device.GetCurrentRenderTarget(swapchain);
+        // auto& cmd = device.AllocateCommandBuffer(cmdAlloc);
 
-        context->Execute();
-        context->Wait();
-        swapchain->DisplayFrame();
+        // RenderPassDesc renderPassDesc = {
+        //     .width = width,
+        //     .height = height,
+        //     .colorAttachments = { frame },
+        // };
+        // cmd.BeginRendering(renderPassDesc);
+        // cmd.BindDescriptorTable(descriptorTable);
+        // cmd.BindPipeline(rgbPipeline);
+        // cmd.Draw(3, 1);
+        // cmd.EndRendering();
+
+        device.DisplayFrame(swapchain);
         glfwPollEvents();
     }
 }
 
 void cleanupLettuce()
 {
-    rgbPipeline->Release();
-    descriptorTable->Release();
+    device.Destroy(rgbPipeline);
+    device.Destroy(descriptorTable);
 
-    context->Release();
-    swapchain->Release();
-    device->Release();
+    device.Destroy(cmdAlloc);
+    device.Destroy(swapchain);
+    device.Destroy();
 }
 
 void initWindow()

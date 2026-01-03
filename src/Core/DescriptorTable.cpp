@@ -80,9 +80,16 @@ DescriptorTable Device::CreateDescriptorTable(const DescriptorTableDesc& desc)
 
     vkGetBufferMemoryRequirements(device, buffer, &memReqs);
 
+    VkMemoryAllocateFlagsInfo flagsInfo = {
+        .sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_FLAGS_INFO,
+        .flags = VK_MEMORY_ALLOCATE_DEVICE_ADDRESS_BIT,
+        .deviceMask = 0,
+    };
+
     // MemoryAccess must be Shared, because we need the cpu to access gpu memory
     VkMemoryAllocateInfo memAlloc = {
         .sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
+        .pNext = &flagsInfo,
         .allocationSize = memReqs.size,
         .memoryTypeIndex = findMemoryTypeIndex(device, gpu, memReqs.memoryTypeBits, MemoryAccess::Shared),
     };
@@ -96,7 +103,7 @@ DescriptorTable Device::CreateDescriptorTable(const DescriptorTableDesc& desc)
         .sType = VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO,
         .buffer = buffer,
     };
-    uint64_t  gpuPtr = vkGetBufferDeviceAddress(device, &addressInfo);
+    uint64_t gpuPtr = vkGetBufferDeviceAddress(device, &addressInfo);
 
     // create pipeline layout
     // TODO: impl bounds checking

@@ -92,23 +92,30 @@ Pipeline Device::CreatePipeline(const PrimitiveShadingPipelineDesc& desc)
         .viewMask = 0, // multiview disabled
         .colorAttachmentCount = (uint32_t)tmp.size(),
         .pColorAttachmentFormats = tmp.data(),
-        .depthAttachmentFormat = ToVkFormat(desc.depthStencilAttachmentFormat),
-        .stencilAttachmentFormat = ToVkFormat(desc.depthStencilAttachmentFormat),
     };
+
+    if (desc.depthStencilAttachmentFormat)
+    {
+        auto format = ToVkFormat(*desc.depthStencilAttachmentFormat);
+        renderingCI.depthAttachmentFormat = format;
+        renderingCI.stencilAttachmentFormat = format;
+    }
 
     auto& shaders = impl->shaders;
     std::array<VkPipelineShaderStageCreateInfo, 2> stages;
+    auto vertEntryPoint = std::string(desc.vertEntryPoint);
+    auto fragEntryPoint = std::string(desc.fragEntryPoint);
     stages[0] = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
-        .stage = VK_SHADER_STAGE_MESH_BIT_EXT,
+        .stage = VK_SHADER_STAGE_VERTEX_BIT,
         .module = shaders.get(desc.vertShaderBinary),
-        .pName = std::string(desc.vertEntryPoint).c_str(),
+        .pName = vertEntryPoint.c_str(),
     };
     stages[1] = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
         .stage = VK_SHADER_STAGE_FRAGMENT_BIT,
         .module = shaders.get(desc.fragShaderBinary),
-        .pName = std::string(desc.fragEntryPoint).c_str(),
+        .pName = fragEntryPoint.c_str(),
     };
 
     auto layout = impl->descriptorTables.get(desc.descriptorTable).pipelineLayout;
@@ -214,9 +221,14 @@ Pipeline Device::CreatePipeline(const MeshShadingPipelineDesc& desc)
         .viewMask = 0, // multiview disabled
         .colorAttachmentCount = (uint32_t)tmp.size(),
         .pColorAttachmentFormats = tmp.data(),
-        .depthAttachmentFormat = ToVkFormat(desc.depthStencilAttachmentFormat),
-        .stencilAttachmentFormat = ToVkFormat(desc.depthStencilAttachmentFormat),
     };
+
+    if (desc.depthStencilAttachmentFormat)
+    {
+        auto format = ToVkFormat(*desc.depthStencilAttachmentFormat);
+        renderingCI.depthAttachmentFormat = format;
+        renderingCI.stencilAttachmentFormat = format;
+    }
 
     auto& shaders = impl->shaders;
     std::vector<VkPipelineShaderStageCreateInfo> stages(2);

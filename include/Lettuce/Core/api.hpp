@@ -176,20 +176,19 @@ namespace Lettuce::Core
         ShaderBinary  meshShaderBinary;
         ShaderBinary  fragShaderBinary;
         std::span<Format> colorAttachmentFormats;
-        Format depthStencilAttachmentFormat;
+        std::optional<Format> depthStencilAttachmentFormat;
         DescriptorTable  descriptorTable;
     };
 
     struct PrimitiveShadingPipelineDesc
     {
-        PrimitiveTopology topology;
         bool fragmentShadingRate;
         std::string_view vertEntryPoint;
         std::string_view fragEntryPoint;
         ShaderBinary  vertShaderBinary;
         ShaderBinary  fragShaderBinary;
         std::span<Format> colorAttachmentFormats;
-        Format depthStencilAttachmentFormat;
+        std::optional<Format> depthStencilAttachmentFormat;
         DescriptorTable  descriptorTable;
     };
 
@@ -338,6 +337,7 @@ namespace Lettuce::Core
 
         void NextFrame(Swapchain);
         void DisplayFrame(Swapchain);
+        Format GetRenderTargetFormat(Swapchain);
         RenderTarget GetCurrentRenderTarget(Swapchain) const;
         void ResizeSwapchain(Swapchain, uint32_t w, uint32_t h);
 

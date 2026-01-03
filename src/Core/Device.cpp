@@ -12,10 +12,12 @@ using namespace Lettuce::Core;
 
 void Device::Create(const DeviceDesc& desc)
 {
+    impl = new DeviceImpl;
     impl->Create({ desc.preferDedicated });
 }
 
 void Device::Destroy()
 {
     impl->Release();
+    delete impl;
 }
