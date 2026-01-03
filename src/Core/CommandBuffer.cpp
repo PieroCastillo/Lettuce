@@ -8,9 +8,8 @@
 
 // project headers
 #include "Lettuce/Core/api.hpp"
-#include "Lettuce/Core/DeviceImpl.hpp"
-#include "Lettuce/Core/CommandBufferImpl.hpp"
 #include "Lettuce/Core/common.hpp"
+#include "Lettuce/Core/DeviceImpl.hpp"
 
 using namespace Lettuce::Core;
 
@@ -22,12 +21,12 @@ void CommandBuffer::MemoryCopy(
     uint64_t size
 )
 {
-
+    
 }
 
 void CommandBuffer::BeginRendering(const RenderPassDesc& desc)
 {
-    auto& renderTargets = impl->device->renderTargets;
+    auto& renderTargets = impl.device->renderTargets;
 
     int colorCount = desc.colorAttachments.size();
     VkRenderingAttachmentInfo* colorAttachments = (VkRenderingAttachmentInfo*)alloca(sizeof(VkRenderingAttachmentInfo) * colorCount);
@@ -73,34 +72,34 @@ void CommandBuffer::BeginRendering(const RenderPassDesc& desc)
         renderingInfo.pStencilAttachment = &attachmentInfo;
     }
 
-    vkCmdBeginRendering(impl->vkCmd, &renderingInfo);
+    vkCmdBeginRendering((VkCommandBuffer)impl.handle, &renderingInfo);
 }
 
 void CommandBuffer::EndRendering()
 {
-    vkCmdEndRendering(impl->vkCmd);
+    vkCmdEndRendering((VkCommandBuffer)impl.handle);
 }
 
 void CommandBuffer::BindPipeline(Pipeline pipeline)
 {
-    auto pipelineInfo = impl->device->pipelines.get(pipeline);
-    vkCmdBindPipeline(impl->vkCmd, pipelineInfo.bindPoint, pipelineInfo.pipeline);
+    auto pipelineInfo = impl.device->pipelines.get(pipeline);
+    vkCmdBindPipeline((VkCommandBuffer)impl.handle, pipelineInfo.bindPoint, pipelineInfo.pipeline);
 }
 
 void CommandBuffer::BindDescriptorTable(DescriptorTable descriptorTable, PipelineBindPoint bindPoint)
 {
-    auto& dt = impl->device->descriptorTables.get(descriptorTable);
+    auto& dt = impl.device->descriptorTables.get(descriptorTable);
     VkDescriptorBufferBindingInfoEXT bindingInfo = {
         .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_BUFFER_BINDING_INFO_EXT,
         .address = dt.gpuAddress,
         .usage = VK_BUFFER_USAGE_RESOURCE_DESCRIPTOR_BUFFER_BIT_EXT | VK_BUFFER_USAGE_SAMPLER_DESCRIPTOR_BUFFER_BIT_EXT,
     };
-    vkCmdBindDescriptorBuffersEXT(impl->vkCmd, 1, &bindingInfo);
+    vkCmdBindDescriptorBuffersEXT((VkCommandBuffer)impl.handle, 1, &bindingInfo);
 
     uint32_t bufferIdx = 0;
     uint64_t bufferOffset = 0;
     vkCmdSetDescriptorBufferOffsetsEXT(
-        impl->vkCmd,
+        (VkCommandBuffer)impl.handle,
         ToVkPipelineBindPoint(bindPoint),
         dt.pipelineLayout,
         0,
@@ -109,22 +108,22 @@ void CommandBuffer::BindDescriptorTable(DescriptorTable descriptorTable, Pipelin
         &bufferOffset);
 
     // push buffer addresses
-    vkCmdPushConstants(impl->vkCmd, dt.pipelineLayout, VK_SHADER_STAGE_ALL, 0, dt.pushPayloadSize, dt.pushPayloadAddress);
+    vkCmdPushConstants((VkCommandBuffer)impl.handle, dt.pipelineLayout, VK_SHADER_STAGE_ALL, 0, dt.pushPayloadSize, dt.pushPayloadAddress);
 }
 
 void CommandBuffer::Draw(uint32_t vertexCount, uint32_t instanceCount)
 {
-    vkCmdDraw(impl->vkCmd, vertexCount, instanceCount, 0, 0);
+    vkCmdDraw((VkCommandBuffer)impl.handle, vertexCount, instanceCount, 0, 0);
 }
 
 void CommandBuffer::DrawIndexed(uint32_t indexCount, uint32_t instanceCount)
 {
-    vkCmdDrawIndexed(impl->vkCmd, indexCount, instanceCount, 0, 0, 0);
+    vkCmdDrawIndexed((VkCommandBuffer)impl.handle, indexCount, instanceCount, 0, 0, 0);
 }
 
 void CommandBuffer::DrawMesh(uint32_t x, uint32_t y, uint32_t z)
 {
-    vkCmdDrawMeshTasksEXT(impl->vkCmd, x, y, z);
+    vkCmdDrawMeshTasksEXT((VkCommandBuffer)impl.handle, x, y, z);
 }
 
 void CommandBuffer::ExecuteIndirect(IndirectSet indirectSet)
@@ -134,7 +133,7 @@ void CommandBuffer::ExecuteIndirect(IndirectSet indirectSet)
 
 void CommandBuffer::Dispatch(uint32_t x, uint32_t y, uint32_t z)
 {
-    vkCmdDispatch(impl->vkCmd, x, y, z);
+    vkCmdDispatch((VkCommandBuffer)impl.handle, x, y, z);
 }
 
 void CommandBuffer::Barrier(std::span<const BarrierDesc> barriers)
@@ -162,5 +161,5 @@ void CommandBuffer::Barrier(std::span<const BarrierDesc> barriers)
         .memoryBarrierCount = count,
         .pMemoryBarriers = memBarriers,
     };
-    vkCmdPipelineBarrier2(impl->vkCmd, &depInfo);
+    vkCmdPipelineBarrier2((VkCommandBuffer)impl.handle, &depInfo);
 }

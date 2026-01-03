@@ -50,13 +50,6 @@ namespace Lettuce::Core
         Transfer,
     };
 
-    struct QueueFamilyIndices
-    {
-        uint32_t graphics;
-        uint32_t compute;
-        uint32_t transfer;
-    };
-
     struct DeviceCreateInfo
     {
         bool preferDedicated;
@@ -93,6 +86,7 @@ namespace Lettuce::Core
         ResourcePool<DescriptorTable, DescriptorTableVK> descriptorTables;
         ResourcePool<IndirectSet, IndirectSetVK> indirectSets;
         ResourcePool<Swapchain, SwapchainVK> swapchains;
+        ResourcePool<CommandAllocator, CommandAllocatorVK> commandAllocators;
 
         // physical device features structs
         // required features/extensions

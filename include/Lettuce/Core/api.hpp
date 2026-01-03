@@ -35,6 +35,7 @@ namespace Lettuce::Core
     struct DescriptorTableTag {};
     struct IndirectSetTag {};
     struct SwapchainTag {};
+    struct CommandAllocatorTag {};
 
     using MemoryHeap = Handle<MemoryHeapTag>;
     using Buffer = Handle<BufferTag>;
@@ -46,6 +47,7 @@ namespace Lettuce::Core
     using DescriptorTable = Handle<DescriptorTableTag>;
     using IndirectSet = Handle<IndirectSetTag>;
     using Swapchain = Handle<SwapchainTag>;
+    using CommandAllocator = Handle<CommandAllocatorTag>;
 
     // Enums
     enum class Format : uint8_t {
@@ -84,6 +86,7 @@ namespace Lettuce::Core
     };
     enum class LoadOp : uint8_t { Load, Clear, None, Count };
 
+    enum class QueueType : uint8_t { Graphics, Compute, Copy };
     enum class RenderTargetType : uint8_t { ColorRGB_sRGB, ColorRGBA_sRGB, DepthStencilDS40 };
     enum class IndirectType : uint8_t { Draw, DrawIndexed, DrawMesh, Dispatch, DeviceGenerated };
 
@@ -247,14 +250,35 @@ namespace Lettuce::Core
         std::optional<const AttachmentDesc> depthStencilAttachment;
     };
 
+    struct DeviceDesc
+    {
+        bool preferDedicated;
+    };
+
+    struct CommandAllocatorDesc
+    {
+        QueueType queueType;
+    };
+
+    struct Device;
+    struct CommandBuffer;
+
+    struct CommandBufferSubmitDesc
+    {
+        QueueType queueType;
+        std::span<const CommandBuffer> commandBuffers;
+    };
+
     struct DeviceImpl;
-    struct CommandPoolImpl;
-    struct CommandBufferImpl;
+    struct CommandBufferImpl { DeviceImpl* device; uint64_t handle; };
 
     struct Device {
     private:
         DeviceImpl* impl;
     public:
+        void Create(const DeviceDesc&);
+        void Destroy();
+
         // Memory 
         MemoryHeap CreateMemoryHeap(const MemoryHeapDesc&);
         void Destroy(MemoryHeap);
@@ -316,12 +340,23 @@ namespace Lettuce::Core
         void DisplayFrame(Swapchain);
         RenderTarget GetCurrentRenderTarget(Swapchain) const;
         void ResizeSwapchain(Swapchain, uint32_t w, uint32_t h);
+
+        // Command Allocator
+        CommandAllocator CreateCommandAllocator(const CommandAllocatorDesc&);
+        void Destroy(CommandAllocator);
+
+        void Reset(CommandAllocator);
+        CommandBuffer AllocateCommandBuffer(CommandAllocator);
+
+        void Submit(const CommandBufferSubmitDesc&);
     };
 
     struct CommandBuffer
     {
     private:
-        CommandBufferImpl* impl;
+        friend class Device;
+        CommandBufferImpl impl;
+        explicit CommandBuffer(CommandBufferImpl cmdImpl): impl(cmdImpl) {}
     public:
         void MemoryCopy(
             const MemoryView& src,
@@ -346,13 +381,6 @@ namespace Lettuce::Core
         void Dispatch(uint32_t x, uint32_t y, uint32_t z);
 
         void Barrier(std::span<const BarrierDesc> barriers);
-    };
-
-    struct CommandPool {
-    private:
-    public:
-        CommandBuffer Allocate();
-        void Reset();
     };
 }
 #endif // LETTUCE_CORE_API_HPP

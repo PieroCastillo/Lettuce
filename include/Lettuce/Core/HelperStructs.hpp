@@ -105,6 +105,11 @@ namespace Lettuce::Core
         uint32_t currentImageIndex;
     };
 
+    struct CommandAllocatorVK
+    {
+        VkCommandPool pool;
+    };
+
     struct AllocationVK
     {
         uint64_t size;
@@ -198,7 +203,6 @@ namespace Lettuce::Core
             ? kLoadOpTable[index]
             : VK_ATTACHMENT_LOAD_OP_NONE;
     };
-
 
     inline VkClearValue ToVkClearValue(const ClearValue& clear)
     {
