@@ -12,28 +12,9 @@
 #include <print>
 #include <fstream>
 #include <filesystem>
+#include <source_location>
 #include <optional>
 #include <functional>
-
-
-std::span<const uint32_t> loadSpirv(const std::string& path,
-    std::vector<uint32_t>& outBuffer)
-{
-    std::ifstream file(path, std::ios::ate | std::ios::binary);
-    if (!file)
-        throw std::runtime_error("File not found: " + path);
-
-    std::size_t fileSize = static_cast<std::size_t>(file.tellg());
-    if (fileSize % sizeof(uint32_t) != 0)
-        throw std::runtime_error("SPIR-V file size is not aligned: " + path);
-
-    outBuffer.resize(fileSize / sizeof(uint32_t));
-
-    file.seekg(0);
-    file.read(reinterpret_cast<char*>(outBuffer.data()), fileSize);
-
-    return std::span<const uint32_t>(outBuffer);
-}
 
 using namespace Lettuce::Core;
 
@@ -42,104 +23,142 @@ GLFWwindow* window;
 constexpr uint32_t width = 1366;
 constexpr uint32_t height = 768;
 
-std::shared_ptr<Device> device;
-std::shared_ptr<Swapchain> swapchain;
-std::shared_ptr<SequentialExecutionContext> context;
-std::shared_ptr<DescriptorTable> descriptorTable;
-std::shared_ptr<Pipeline> rgbPipeline;
+Device device;
+Swapchain swapchain;
+DescriptorTable descriptorTable;
+Pipeline rgbPipeline;
+CommandAllocator cmdAlloc;
+
+std::vector<uint32_t> loadSpv(std::string path)
+{
+    auto shadersFile = std::ifstream(path, std::ios::ate | std::ios::binary);
+    if (!shadersFile) throw std::runtime_error(path + " does not exist");
+
+    auto fileSize = (uint32_t)shadersFile.tellg();
+    std::vector<uint32_t> shadersBuffer;
+    shadersBuffer.resize(fileSize / sizeof(uint32_t));
+
+    shadersFile.seekg(0);
+    shadersFile.read((char*)shadersBuffer.data(), fileSize);
+
+    return shadersBuffer;
+}
+
 
 void initLettuce()
 {
     auto hwnd = glfwGetWin32Window(window);
     auto hmodule = GetModuleHandle(NULL);
 
-    device = std::make_shared<Device>();
-    DeviceCreateInfo deviceCI = {
-        .preferDedicated = false,
+    DeviceDesc deviceCI = {
+        .preferDedicated = true,
     };
-    device->Create(deviceCI);
-    std::println("Device created successfully");
+    device.Create(deviceCI);
 
-    SwapchainCreateInfo swapchainCI = {
+    SwapchainDesc swapchainDesc = {
         .width = width,
         .height = height,
         .clipped = true,
         .windowPtr = &hwnd,
         .applicationPtr = &hmodule,
     };
-    swapchain = device->CreateSwapchain(swapchainCI).value();
+    swapchain = device.CreateSwapchain(swapchainDesc);
 
-    context = device->CreateSequentialContext().value();
+    CommandAllocatorDesc cmdAllocDesc = {
+        .queueType = QueueType::Graphics,
+    };
+    cmdAlloc = device.CreateCommandAllocator(cmdAllocDesc);
 }
 
 void createRenderingObjects()
 {
-    std::vector<uint32_t> shaderBuffer;
+    auto taskShaderBuffer = loadSpv("hellotriangleMesh.task.spv");
+    auto meshShaderBuffer = loadSpv("hellotriangleMesh.mesh.spv");
+    auto fragShaderBuffer = loadSpv("hellotriangleMesh.frag.spv");
 
-    ShaderPackCreateInfo fragShaderCI = {
-        .shaderByteData = loadSpirv("helloTriangleMesh.frag.spv", shaderBuffer),
+    ShaderBinaryDesc shaderDesc = {
+        .bytecode = std::span(taskShaderBuffer),
     };
-    auto fragShader = device->CreateShaderPack(fragShaderCI).value();
+    auto taskShader = device.CreateShader(shaderDesc);
 
-    ShaderPackCreateInfo meshShaderCI = {
-      .shaderByteData = loadSpirv("helloTriangleMesh.mesh.spv", shaderBuffer),
-    };
-    auto meshShader = device->CreateShaderPack(meshShaderCI).value();
+    shaderDesc.bytecode = std::span(meshShaderBuffer);
+    auto meshShader = device.CreateShader(shaderDesc);
+    
+    shaderDesc.bytecode = std::span(fragShaderBuffer);
+    auto fragShader = device.CreateShader(shaderDesc);
 
-    ShaderPackCreateInfo taskShaderCI = {
-        .shaderByteData = loadSpirv("helloTriangleMesh.task.spv", shaderBuffer),
-    };
-    auto taskShader = device->CreateShaderPack(taskShaderCI).value();
+    DescriptorTableDesc descriptorTableDesc = { 4,4,4,2 };
+    descriptorTable = device.CreateDescriptorTable(descriptorTableDesc);
 
-    DescriptorTableCreateInfo descriptorTableCI = {
-        .setLayoutInfos = fragShader->GetDescriptorsInfo(), // temporal solution
-        .maxDescriptorVariantsPerSet = 3,
-    };
-    descriptorTable = device->CreateDescriptorTable(descriptorTableCI).value();
-
-    GraphicsPipelineCreateData gpipelineData = {
+    std::array<Format, 1> formatArr = { device.GetRenderTargetFormat(swapchain) };
+    MeshShadingPipelineDesc pipelineDesc = {
+        .fragmentShadingRate = false,
+        .taskEntryPoint = "main",
+        .meshEntryPoint = "main",
+        .fragEntryPoint = "main",
+        .taskShaderBinary = taskShader,
+        .meshShaderBinary = meshShader,
+        .fragShaderBinary = fragShader,
+        .colorAttachmentFormats = std::span(formatArr),
         .descriptorTable = descriptorTable,
-        .colorTargets = swapchain->GetRenderViews(),
-        .taskShader = std::make_tuple("main", taskShader),
-        .meshShader = std::make_tuple("main", meshShader),
-        .fragmentShader = std::make_tuple("main", fragShader),
     };
-    rgbPipeline = device->CreatePipeline(gpipelineData).value();
+    rgbPipeline = device.CreatePipeline(pipelineDesc);
 
-    fragShader->Release();
-    meshShader->Release();
-    taskShader->Release();
+    device.Destroy(fragShader);
+    device.Destroy(meshShader);
+    device.Destroy(taskShader);
 }
 
 void mainLoop()
 {
     while (!glfwWindowShouldClose(window))
     {
-        swapchain->NextFrame();
+        device.NextFrame(swapchain);
 
-        auto& frame = swapchain->GetCurrentRenderView();
-        auto& cmd = context->GetCommandList();
-        cmd.BeginRendering(width, height, { std::ref(frame) }, std::nullopt);
-        cmd.BindDescriptorTable(descriptorTable);
+        device.Reset(cmdAlloc);
+        auto frame = device.GetCurrentRenderTarget(swapchain);
+        auto cmd = device.AllocateCommandBuffer(cmdAlloc);
+
+        AttachmentDesc colorAttachment[1] = {
+            {
+                .renderTarget = frame,
+                .loadOp = LoadOp::Clear,
+            }
+        };
+
+        RenderPassDesc renderPassDesc = {
+            .width = width,
+            .height = height,
+            .colorAttachments = std::span(colorAttachment),
+        };
+        cmd.BeginRendering(renderPassDesc);
+        cmd.BindDescriptorTable(descriptorTable, PipelineBindPoint::Graphics);
         cmd.BindPipeline(rgbPipeline);
-        cmd.DrawMeshTasks(1, 1, 1);
+        cmd.DrawMesh(3, 1, 1),
         cmd.EndRendering();
 
-        context->Execute();
-        context->Wait();
-        swapchain->DisplayFrame();
+        std::array<std::span<CommandBuffer>, 1> cmds = { std::span(&cmd, 1) };
+
+        CommandBufferSubmitDesc submitDesc = {
+            .queueType = QueueType::Graphics,
+            .commandBuffers = std::span(cmds),
+            .presentSwapchain = swapchain,
+        };
+        device.Submit(submitDesc);
+
+        device.DisplayFrame(swapchain);
         glfwPollEvents();
     }
 }
 
 void cleanupLettuce()
 {
-    rgbPipeline->Release();
-    descriptorTable->Release();
+    device.Destroy(rgbPipeline);
+    device.Destroy(descriptorTable);
 
-    context->Release();
-    swapchain->Release();
-    device->Release();
+    device.Destroy(cmdAlloc);
+    device.Destroy(swapchain);
+    device.Destroy();
 }
 
 void initWindow()

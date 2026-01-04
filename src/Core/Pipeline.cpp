@@ -235,19 +235,23 @@ Pipeline Device::CreatePipeline(const MeshShadingPipelineDesc& desc)
         renderingCI.stencilAttachmentFormat = format;
     }
 
+    auto taskEntryPoint = desc.taskEntryPoint ? std::string(*desc.taskEntryPoint) : "";
+    auto meshEntryPoint = std::string(desc.meshEntryPoint);
+    auto fragEntryPoint = std::string(desc.fragEntryPoint);
+
     auto& shaders = impl->shaders;
     std::vector<VkPipelineShaderStageCreateInfo> stages(2);
     stages[0] = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
         .stage = VK_SHADER_STAGE_MESH_BIT_EXT,
         .module = shaders.get(desc.meshShaderBinary),
-        .pName = std::string(desc.meshEntryPoint).c_str(),
+        .pName = meshEntryPoint.c_str(),
     };
     stages[1] = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
         .stage = VK_SHADER_STAGE_FRAGMENT_BIT,
         .module = shaders.get(desc.fragShaderBinary),
-        .pName = std::string(desc.fragEntryPoint).c_str(),
+        .pName = fragEntryPoint.c_str(),
     };
     if (desc.taskShaderBinary != std::nullopt && desc.taskEntryPoint != std::nullopt)
     {
@@ -255,8 +259,8 @@ Pipeline Device::CreatePipeline(const MeshShadingPipelineDesc& desc)
         stages[2] = {
             .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
             .stage = VK_SHADER_STAGE_TASK_BIT_EXT,
-            .module = shaders.get(desc.taskShaderBinary.value()),
-            .pName = std::string(desc.taskEntryPoint.value()).c_str(),
+            .module = shaders.get(*desc.taskShaderBinary),
+            .pName = taskEntryPoint.c_str(),
         };
     }
     auto layout = impl->descriptorTables.get(desc.descriptorTable).pipelineLayout;
