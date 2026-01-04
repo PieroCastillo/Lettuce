@@ -74,7 +74,7 @@ void createRenderingObjects()
     DescriptorTableDesc descriptorTableDesc = { 4,4,4,2 };
     descriptorTable = device.CreateDescriptorTable(descriptorTableDesc);
 
-    std::array<Format, 1> formatArr =  {device.GetRenderTargetFormat(swapchain) };
+    std::array<Format, 1> formatArr = { device.GetRenderTargetFormat(swapchain) };
     PrimitiveShadingPipelineDesc pipelineDesc = {
         .fragmentShadingRate = false,
         .vertEntryPoint = "vertexMain",
@@ -95,20 +95,36 @@ void mainLoop()
     {
         device.NextFrame(swapchain);
 
-        // device.Reset(cmdAlloc);
-        // auto frame = device.GetCurrentRenderTarget(swapchain);
-        // auto& cmd = device.AllocateCommandBuffer(cmdAlloc);
+        device.Reset(cmdAlloc);
+        auto frame = device.GetCurrentRenderTarget(swapchain);
+        auto cmd = device.AllocateCommandBuffer(cmdAlloc);
 
-        // RenderPassDesc renderPassDesc = {
-        //     .width = width,
-        //     .height = height,
-        //     .colorAttachments = { frame },
-        // };
-        // cmd.BeginRendering(renderPassDesc);
-        // cmd.BindDescriptorTable(descriptorTable);
-        // cmd.BindPipeline(rgbPipeline);
-        // cmd.Draw(3, 1);
-        // cmd.EndRendering();
+        AttachmentDesc colorAttachment[1] = {
+            {
+                .renderTarget = frame,
+                .loadOp = LoadOp::Clear,
+            }
+        };
+
+        RenderPassDesc renderPassDesc = {
+            .width = width,
+            .height = height,
+            .colorAttachments = std::span(colorAttachment),
+        };
+        cmd.BeginRendering(renderPassDesc);
+        cmd.BindDescriptorTable(descriptorTable, PipelineBindPoint::Graphics);
+        cmd.BindPipeline(rgbPipeline);
+        cmd.Draw(3, 1);
+        cmd.EndRendering();
+
+        std::array<std::span<CommandBuffer>, 1> cmds = { std::span(&cmd, 1) };
+
+        CommandBufferSubmitDesc submitDesc = {
+            .queueType = QueueType::Graphics,
+            .commandBuffers = std::span(cmds),
+            .presentSwapchain = swapchain,
+        };
+        device.Submit(submitDesc);
 
         device.DisplayFrame(swapchain);
         glfwPollEvents();

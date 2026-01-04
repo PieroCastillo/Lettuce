@@ -265,7 +265,8 @@ namespace Lettuce::Core
     struct CommandBufferSubmitDesc
     {
         QueueType queueType;
-        std::span<const CommandBuffer> commandBuffers;
+        std::span<std::span<CommandBuffer>> commandBuffers;
+        std::optional<Swapchain> presentSwapchain;
     };
 
     struct DeviceImpl;

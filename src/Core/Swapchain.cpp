@@ -174,7 +174,7 @@ Swapchain Device::CreateSwapchain(const SwapchainDesc& desc)
     auto device = impl->m_device;
     auto gpu = impl->m_physicalDevice;
     auto instance = impl->m_instance;
-    
+
     SwapchainVK swapchainVK = {};
     swapchainVK.currentImageIndex = 0;
     setupVkSurface(swapchainVK, instance, desc);
@@ -184,6 +184,16 @@ Swapchain Device::CreateSwapchain(const SwapchainDesc& desc)
         .sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO,
     };
     handleResult(vkCreateFence(device, &fenceCI, nullptr, &swapchainVK.waitForAcquireFence));
+    VkSemaphoreCreateInfo semCI = {
+        .sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO,
+    };
+
+    swapchainVK.presentSemaphores.resize(swapchainVK.imageCount);
+    for (int i = 0; i < swapchainVK.presentSemaphores.size(); ++i)
+    {
+        handleResult(vkCreateSemaphore(device, &semCI, nullptr, &swapchainVK.presentSemaphores[i]));
+    }
+
     return impl->swapchains.allocate(std::move(swapchainVK));
 }
 
@@ -191,6 +201,10 @@ void Device::Destroy(Swapchain swapchain)
 {
     auto info = impl->swapchains.get(swapchain);
     auto device = impl->m_device;
+    for (const auto& sem : info.presentSemaphores)
+    {
+        vkDestroySemaphore(device, sem, nullptr);
+    }
     vkDestroyFence(device, info.waitForAcquireFence, nullptr);
     for (int i = 0; i < info.swapchainViews.size(); ++i)
     {
@@ -223,15 +237,15 @@ void Device::DisplayFrame(Swapchain swapchain)
     // TODO: Manage Global Synchronization
     VkPresentInfoKHR presentI = {
         .sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
-        .waitSemaphoreCount = 0,
-        .pWaitSemaphores = nullptr,
+        .waitSemaphoreCount = 1,
+        .pWaitSemaphores = &info.presentSemaphores[(int)(info.currentImageIndex)],
         .swapchainCount = 1,
         .pSwapchains = &info.swapchain,
         .pImageIndices = &info.currentImageIndex,
     };
+    handleResult(vkQueueWaitIdle(impl->m_graphicsQueue));
     handleResult(vkQueuePresentKHR(impl->m_graphicsQueue, &presentI));
     // wait for present complete
-    handleResult(vkQueueWaitIdle(impl->m_graphicsQueue));
     info.currentImageIndex = (info.currentImageIndex + 1) % info.imageCount;
 }
 

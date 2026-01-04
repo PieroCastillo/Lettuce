@@ -64,6 +64,10 @@ namespace Lettuce::Core
         VkQueue m_graphicsQueue;
         VkQueue m_computeQueue;
         VkQueue m_transferQueue;
+
+        VkSemaphore graphicsSemaphore, computeSemaphore, transferSemaphore;
+        uint64_t graphicsCurrentValue, computeCurrentValue, transferCurrentValue;
+
         bool supportBufferUsage2;
         VkDebugUtilsMessengerEXT m_messenger;
         std::vector<std::string> availableExtensionsNames;

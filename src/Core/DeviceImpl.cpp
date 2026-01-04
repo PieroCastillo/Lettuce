@@ -57,6 +57,9 @@ void DeviceImpl::Create(const DeviceCreateInfo& createInfo)
 void DeviceImpl::Release()
 {
     handleResult(vkDeviceWaitIdle(m_device));
+    vkDestroySemaphore(m_device, graphicsSemaphore, nullptr);
+    vkDestroySemaphore(m_device, computeSemaphore, nullptr);
+    vkDestroySemaphore(m_device, transferSemaphore, nullptr);
     vkDestroyDevice(m_device, nullptr);
     vkDestroyDebugUtilsMessengerEXT(m_instance, m_messenger, nullptr);
     vkDestroyInstance(m_instance, nullptr);
@@ -376,6 +379,23 @@ void DeviceImpl::setupDevice()
     props.graphicsQueueFamilyIdx = graphicsQueueFamilyIndex;
     props.computeQueueFamilyIdx = computeQueueFamilyIndex;
     props.transferQueueFamilyIdx = transferQueueFamilyIndex;
+
+    graphicsCurrentValue = 0;
+    computeCurrentValue = 0;
+    transferCurrentValue = 0;
+
+    VkSemaphoreTypeCreateInfo semTypeCI = {
+        .sType = VK_STRUCTURE_TYPE_SEMAPHORE_TYPE_CREATE_INFO,
+        .semaphoreType = VK_SEMAPHORE_TYPE_TIMELINE,
+        .initialValue = 0,
+    };
+    VkSemaphoreCreateInfo semCI = {
+        .sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO,
+        .pNext = &semTypeCI,
+    };
+    handleResult(vkCreateSemaphore(m_device, &semCI, nullptr, &graphicsSemaphore));
+    handleResult(vkCreateSemaphore(m_device, &semCI, nullptr, &computeSemaphore));
+    handleResult(vkCreateSemaphore(m_device, &semCI, nullptr, &transferSemaphore));
 }
 
 void DeviceImpl::setDebugName(VkObjectType type, uint64_t handle, const std::string& name)

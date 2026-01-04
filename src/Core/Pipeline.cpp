@@ -15,6 +15,10 @@ using namespace Lettuce::Core;
 
 Pipeline Device::CreatePipeline(const PrimitiveShadingPipelineDesc& desc)
 {
+    VkPipelineInputAssemblyStateCreateInfo inputAssemblyState = {
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO,
+        .topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, 
+    };
     VkPipelineViewportStateCreateInfo viewportState =
     {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO,
@@ -126,6 +130,7 @@ Pipeline Device::CreatePipeline(const PrimitiveShadingPipelineDesc& desc)
         // stages
         .stageCount = (uint32_t)stages.size(),
         .pStages = stages.data(),
+        .pInputAssemblyState = &inputAssemblyState,
         .pViewportState = &viewportState,
         .pRasterizationState = &rasterizationState,
         .pMultisampleState = &multisampleState,

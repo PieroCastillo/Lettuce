@@ -102,6 +102,7 @@ namespace Lettuce::Core
         VkSwapchainKHR swapchain;
         VkSurfaceKHR surface;
         VkFence waitForAcquireFence;
+        std::vector<VkSemaphore> presentSemaphores;
         uint32_t imageCount;
         uint32_t currentImageIndex;
     };
