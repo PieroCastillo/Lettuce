@@ -251,5 +251,25 @@ namespace Lettuce::Core
             clear
         );
     }
+
+    constexpr VkFilter ToVkFilter(Filter f) {
+        return f == Filter::Linear ? VK_FILTER_LINEAR : VK_FILTER_NEAREST;
+    }
+
+    constexpr VkSamplerMipmapMode ToVkMipmapMode(Filter m) {
+        return m == Filter::Linear
+            ? VK_SAMPLER_MIPMAP_MODE_LINEAR
+            : VK_SAMPLER_MIPMAP_MODE_NEAREST;
+    }
+
+    constexpr VkSamplerAddressMode ToVkAddressMode(SamplerAddressMode m) {
+        switch (m) {
+        case SamplerAddressMode::Repeat:          return VK_SAMPLER_ADDRESS_MODE_REPEAT;
+        case SamplerAddressMode::ClampToEdge:     return VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+        case SamplerAddressMode::ClampToBorder:   return VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
+        case SamplerAddressMode::MirroredRepeat:  return VK_SAMPLER_ADDRESS_MODE_MIRRORED_REPEAT;
+        }
+        return VK_SAMPLER_ADDRESS_MODE_REPEAT;
+    }
 }
 #endif // LETTUCE_CORE_HELPER_STRUCTS_HPP

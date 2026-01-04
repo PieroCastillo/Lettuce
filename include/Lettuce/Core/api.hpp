@@ -65,11 +65,9 @@ namespace Lettuce::Core
         RG16_FLOAT,
         COUNT
     };
-    enum class Filter : uint8_t {};
-    enum class SamplerAddressMode : uint8_t {};
-    enum class CompareOp : uint8_t {};
-    enum class BorderColor : uint8_t {};
-    enum class PrimitiveTopology : uint8_t {};
+    enum class Filter : uint8_t { Nearest, Linear };
+    enum class SamplerAddressMode : uint8_t { Repeat, ClampToEdge, ClampToBorder, MirroredRepeat };
+    enum class CompareOp : uint8_t { Never, Less, Equal, LessOrEqual, Greater, NotEqual, GreaterOrEqual, Always };
     enum class PipelineBindPoint : uint8_t { Graphics, Compute, RayTracing, Count };
     enum class PipelineAccess : uint8_t { Read, Write };
     enum class PipelineStage : uint8_t {
@@ -149,17 +147,12 @@ namespace Lettuce::Core
     struct SamplerDesc {
         Filter magFilter;
         Filter minFilter;
+        Filter mipmap;
         SamplerAddressMode addressModeU;
         SamplerAddressMode addressModeV;
         SamplerAddressMode addressModeW;
-        float mipLodBias;
-        bool anisotropyEnable;
-        float maxAnisotropy;
-        bool compareEnable;
-        CompareOp compareOp;
-        float minLod;
-        float maxLod;
-        BorderColor borderColor;
+        float anisotropy;
+        bool depthCompare;
     };
 
     struct ShaderBinaryDesc {
@@ -357,7 +350,7 @@ namespace Lettuce::Core
     private:
         friend class Device;
         CommandBufferImpl impl;
-        explicit CommandBuffer(CommandBufferImpl cmdImpl): impl(cmdImpl) {}
+        explicit CommandBuffer(CommandBufferImpl cmdImpl) : impl(cmdImpl) {}
     public:
         void MemoryCopy(
             const MemoryView& src,

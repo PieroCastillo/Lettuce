@@ -379,6 +379,7 @@ void DeviceImpl::setupDevice()
     props.graphicsQueueFamilyIdx = graphicsQueueFamilyIndex;
     props.computeQueueFamilyIdx = computeQueueFamilyIndex;
     props.transferQueueFamilyIdx = transferQueueFamilyIndex;
+    props.maxSamplerAnisotropy = props2.properties.limits.maxSamplerAnisotropy;
 
     graphicsCurrentValue = 0;
     computeCurrentValue = 0;

@@ -41,6 +41,7 @@ namespace Lettuce::Core
         uint32_t graphicsQueueFamilyIdx;
         uint32_t computeQueueFamilyIdx;
         uint32_t transferQueueFamilyIdx;
+        float maxSamplerAnisotropy;
     };
 
     enum class DeviceQueueType
