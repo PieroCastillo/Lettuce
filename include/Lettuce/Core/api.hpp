@@ -262,6 +262,14 @@ namespace Lettuce::Core
         std::optional<Swapchain> presentSwapchain;
     };
 
+    struct PushResourceDescriptorsDesc
+    {
+        std::span<const std::pair<uint32_t, Texture>> sampledTextures;
+        std::span<const std::pair<uint32_t, Sampler>> samplers;
+        std::span<const std::pair<uint32_t, Texture>> storageTextures;
+        DescriptorTable  descriptorTable;
+    };
+
     struct DeviceImpl;
     struct CommandBufferImpl { DeviceImpl* device; uint64_t handle; };
 
@@ -310,15 +318,11 @@ namespace Lettuce::Core
         DescriptorTable CreateDescriptorTable(const DescriptorTableDesc&);
         void Destroy(DescriptorTable);
 
-        void PushResourceDescriptors(
-            DescriptorTable,
-            std::span<const std::pair<uint32_t, Texture>>,
-            std::span<const std::pair<uint32_t, Sampler>>,
-            std::span<const std::pair<uint32_t, Texture>>);
+        void PushResourceDescriptors(const PushResourceDescriptorsDesc&);
 
         void PushAllocations(
             DescriptorTable,
-            std::span<const std::pair<uint32_t, const MemoryView&>>
+            std::span<const std::pair<uint32_t, MemoryView>>
         );
 
         // Indirect Set

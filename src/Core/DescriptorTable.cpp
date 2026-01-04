@@ -158,14 +158,13 @@ void Device::Destroy(DescriptorTable descriptorTable)
     impl->descriptorTables.free(descriptorTable);
 }
 
-void Device::PushResourceDescriptors(
-    DescriptorTable descriptorTable,
-    std::span<const std::pair<uint32_t, Texture>> sampledImages,
-    std::span<const std::pair<uint32_t, Sampler>> samplers,
-    std::span<const std::pair<uint32_t, Texture>> storageImages
-)
+void Device::PushResourceDescriptors(const PushResourceDescriptorsDesc& desc)
 {
-    auto& dt = impl->descriptorTables.get(descriptorTable);
+    auto& dt = impl->descriptorTables.get(desc.descriptorTable);
+
+    auto& sampledImages = desc.sampledTextures;
+    auto& samplers = desc.samplers;
+    auto& storageImages = desc.storageTextures;
 
     VkDevice device = impl->m_device;
     uint32_t sampledImageDescriptorSize = impl->props.sampledImageDescriptorSize;
@@ -225,7 +224,7 @@ void Device::PushResourceDescriptors(
     // TODO: in the future, enable acceleration structures
 }
 
-void Device::PushAllocations(DescriptorTable descriptorTable, std::span<const std::pair<uint32_t, const MemoryView&>> allocations)
+void Device::PushAllocations(DescriptorTable descriptorTable, std::span<const std::pair<uint32_t, MemoryView>> allocations)
 {
     auto& dt = impl->descriptorTables.get(descriptorTable);
     auto* dstAddress = dt.pushPayloadAddress;

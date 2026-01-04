@@ -57,10 +57,12 @@ MemoryView Allocators::LinearAllocator::AllocateMemory(uint64_t size)
         return {};
     }
 
+    MemoryView mv = { size, currentBufferCPUAddress, currentBufferGPUAddress };
+
     currentBufferCPUAddress += ((currentBufferCPUAddress != nullptr) ? size : 0);
     currentBufferGPUAddress += size;
 
-    return { size, currentBufferCPUAddress, currentBufferGPUAddress };
+    return mv;
 }
 
 Texture Allocators::LinearAllocator::AllocateTexture(const TextureDesc& desc)

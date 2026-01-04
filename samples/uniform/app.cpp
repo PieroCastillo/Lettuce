@@ -12,9 +12,10 @@
 #include <print>
 #include <fstream>
 #include <filesystem>
-#include <source_location>
 #include <optional>
 #include <functional>
+#include <cmath>
+#include <numbers>
 
 using namespace Lettuce::Core;
 
@@ -28,6 +29,8 @@ Swapchain swapchain;
 DescriptorTable descriptorTable;
 Pipeline rgbPipeline;
 CommandAllocator cmdAlloc;
+Allocators::LinearAllocator linAllocator;
+MemoryView uniformData;
 
 std::vector<uint32_t> loadSpv(std::string path)
 {
@@ -67,46 +70,58 @@ void initLettuce()
         .queueType = QueueType::Graphics,
     };
     cmdAlloc = device.CreateCommandAllocator(cmdAllocDesc);
+
+    Allocators::LinearAllocatorDesc linAllocDesc = {
+        .bufferSize = 4096,
+        .imageSize = 16,
+        .cpuVisible = true,
+    };
+    linAllocator.Create(device, linAllocDesc);
+    uniformData = linAllocator.AllocateMemory(3 * sizeof(float));
+
+    std::println("uniform gpu address: ", uniformData.gpuAddress);
 }
 
 void createRenderingObjects()
 {
-    auto taskShaderBuffer = loadSpv("hellotriangleMesh.task.spv");
-    auto meshShaderBuffer = loadSpv("hellotriangleMesh.mesh.spv");
-    auto fragShaderBuffer = loadSpv("hellotriangleMesh.frag.spv");
+    auto shadersBuffer = loadSpv("uniform.spv");
 
     ShaderBinaryDesc shaderDesc = {
-        .bytecode = std::span(taskShaderBuffer),
+        .bytecode = std::span<uint32_t>(shadersBuffer.data(), shadersBuffer.size()),
     };
-    auto taskShader = device.CreateShader(shaderDesc);
-
-    shaderDesc.bytecode = std::span(meshShaderBuffer);
-    auto meshShader = device.CreateShader(shaderDesc);
-    
-    shaderDesc.bytecode = std::span(fragShaderBuffer);
-    auto fragShader = device.CreateShader(shaderDesc);
+    auto shaders = device.CreateShader(shaderDesc);
 
     DescriptorTableDesc descriptorTableDesc = { 4,4,4,2 };
     descriptorTable = device.CreateDescriptorTable(descriptorTableDesc);
 
+    device.PushAllocations(descriptorTable, std::array{ std::pair(0u, uniformData) });
+
     std::array<Format, 1> formatArr = { device.GetRenderTargetFormat(swapchain) };
-    MeshShadingPipelineDesc pipelineDesc = {
+    PrimitiveShadingPipelineDesc pipelineDesc = {
         .fragmentShadingRate = false,
-        .taskEntryPoint = "main",
-        .meshEntryPoint = "main",
-        .fragEntryPoint = "main",
-        .taskShaderBinary = taskShader,
-        .meshShaderBinary = meshShader,
-        .fragShaderBinary = fragShader,
+        .vertEntryPoint = "vertexMain",
+        .fragEntryPoint = "fragmentMain",
+        .vertShaderBinary = shaders,
+        .fragShaderBinary = shaders,
         .colorAttachmentFormats = std::span(formatArr),
         .descriptorTable = descriptorTable,
     };
     rgbPipeline = device.CreatePipeline(pipelineDesc);
 
-    device.Destroy(fragShader);
-    device.Destroy(meshShader);
-    device.Destroy(taskShader);
+    device.Destroy(shaders);
 }
+
+double delta_time()
+{
+    static auto last = std::chrono::steady_clock::now();
+    auto now = std::chrono::steady_clock::now();
+
+    std::chrono::duration<double> dt = now - last;
+    last = now;
+
+    return dt.count();
+}
+double timeT = 0;
 
 void mainLoop()
 {
@@ -132,8 +147,16 @@ void mainLoop()
         };
         cmd.BeginRendering(renderPassDesc);
         cmd.BindDescriptorTable(descriptorTable, PipelineBindPoint::Graphics);
+
+        // set uniform value, it could be set anytime
+        timeT += delta_time();
+        constexpr auto tpi = 2 * std::numbers::pi;
+        ((float*)uniformData.cpuAddress)[0] = 0.5f + (0.5 * std::sin(timeT));
+        ((float*)uniformData.cpuAddress)[1] = 0.5f + (0.5 * std::sin(timeT + (tpi / 3)));
+        ((float*)uniformData.cpuAddress)[2] = 0.5f + (0.5 * std::sin(timeT + (2 * tpi / 3)));
+
         cmd.BindPipeline(rgbPipeline);
-        cmd.DrawMesh(3, 1, 1),
+        cmd.Draw(6, 1);
         cmd.EndRendering();
 
         std::array<std::span<CommandBuffer>, 1> cmds = { std::span(&cmd, 1) };
@@ -155,6 +178,7 @@ void cleanupLettuce()
     device.Destroy(rgbPipeline);
     device.Destroy(descriptorTable);
 
+    linAllocator.Destroy();
     device.Destroy(cmdAlloc);
     device.Destroy(swapchain);
     device.Destroy();
