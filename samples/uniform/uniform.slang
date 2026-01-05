@@ -20,7 +20,6 @@ VSOutput vertexMain(uint vertexID: SV_VertexID)
 {
     VSOutput out;
 
-    // 4 vértices únicos
     float2 positions[4] = {
         float2(-0.75, -0.75),
         float2(0.75, -0.75),
@@ -35,14 +34,13 @@ VSOutput vertexMain(uint vertexID: SV_VertexID)
         float3(0, 1, 0),
     };
 
-    // Índices (2 triángulos)
     uint indices[6] = {
         0, 1, 2,
         0, 2, 3
     };
 
     uint idx = indices[vertexID];
-    
+
     out.position = float4(positions[idx], 0.0, 1.0);
     out.color = *pc.uniformAddress;
     return out;
