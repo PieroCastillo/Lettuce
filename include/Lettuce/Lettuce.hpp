@@ -7,3 +7,9 @@
 // allocators
 #include "Core/Allocators/LinearAllocator.hpp"
 #include "Core/Allocators/IGPUMemoryResource.hpp"
+
+// rendering
+#include "Rendering/api.hpp"
+
+// utils
+#include "Utils/api.hpp"
