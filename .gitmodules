@@ -1,0 +1,3 @@
+[submodule "external/KTX2-Samples"]
+	path = external/KTX2-Samples
+	url = https://github.com/donmccurdy/KTX2-Samples.git
