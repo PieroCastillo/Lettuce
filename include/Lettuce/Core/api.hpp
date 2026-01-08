@@ -10,6 +10,7 @@ Created by @PieroCastillo on 2025-12-26
 #include <string_view>
 #include <optional>
 #include <variant>
+#include "formats.hpp"
 
 namespace Lettuce::Core
 {
@@ -50,21 +51,7 @@ namespace Lettuce::Core
     using CommandAllocator = Handle<CommandAllocatorTag>;
 
     // Enums
-    enum class Format : uint8_t {
-        RGBA8_UNORM = 0,
-        RGBA8_SRGB,
-        BGRA8_UNORM,
-        BGRA8_SRGB,
-        RGBA16_FLOAT,
-        D16,
-        D32,
-        D24S8,
-        D32S8,
-        R8,
-        RG8,
-        RG16_FLOAT,
-        COUNT
-    };
+    enum class Format : uint8_t;
     enum class Filter : uint8_t { Nearest, Linear };
     enum class SamplerAddressMode : uint8_t { Repeat, ClampToEdge, ClampToBorder, MirroredRepeat };
     enum class CompareOp : uint8_t { Never, Less, Equal, LessOrEqual, Greater, NotEqual, GreaterOrEqual, Always };
@@ -124,6 +111,7 @@ namespace Lettuce::Core
         Format format;
         uint32_t mipCount;
         uint32_t layerCount;
+        bool isCubeMap;
     };
 
     struct ColorClear {
@@ -227,6 +215,9 @@ namespace Lettuce::Core
         uint64_t size;
         void* cpuAddress;
         uint64_t gpuAddress;
+
+        Buffer buffer;
+        uint64_t offset;
     };
 
     struct AttachmentDesc
@@ -270,6 +261,22 @@ namespace Lettuce::Core
         DescriptorTable  descriptorTable;
     };
 
+    struct MemoryToMemoryCopy
+    {
+        MemoryView srcMemory;
+        MemoryView dstMemory;
+        uint64_t size;
+    };
+
+    struct MemoryToTextureCopy
+    {
+        MemoryView srcMemory;
+        Texture dstTexture;
+        uint32_t mipmapLevel;
+        uint32_t layerBaseLevel;
+        uint32_t layerCount;
+    };
+
     struct DeviceImpl;
     struct CommandBufferImpl { DeviceImpl* device; uint64_t handle; };
 
@@ -279,6 +286,8 @@ namespace Lettuce::Core
     public:
         void Create(const DeviceDesc&);
         void Destroy();
+
+        void WaitFor(QueueType);
 
         // Memory 
         MemoryHeap CreateMemoryHeap(const MemoryHeapDesc&);
@@ -356,13 +365,8 @@ namespace Lettuce::Core
         CommandBufferImpl impl;
         explicit CommandBuffer(CommandBufferImpl cmdImpl) : impl(cmdImpl) {}
     public:
-        void MemoryCopy(
-            const MemoryView& src,
-            const MemoryView& dst,
-            uint64_t srcOffset,
-            uint64_t dstOffset,
-            uint64_t size
-        );
+        void MemoryCopy(const MemoryToMemoryCopy&);
+        void MemoryCopy(const MemoryToTextureCopy&);
 
         void BeginRendering(const RenderPassDesc&);
         void EndRendering();

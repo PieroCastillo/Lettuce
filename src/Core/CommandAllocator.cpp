@@ -70,7 +70,6 @@ CommandBuffer Device::AllocateCommandBuffer(CommandAllocator cmdAlloc)
     return CommandBuffer{ CommandBufferImpl{ impl,  (uint64_t)cmd } };
 }
 
-
 void Device::Submit(const CommandBufferSubmitDesc& desc)
 {
     VkQueue queue;

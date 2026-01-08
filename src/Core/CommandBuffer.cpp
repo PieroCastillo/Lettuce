@@ -13,15 +13,41 @@
 
 using namespace Lettuce::Core;
 
-void CommandBuffer::MemoryCopy(
-    const MemoryView& src,
-    const MemoryView& dst,
-    uint64_t srcOffset,
-    uint64_t dstOffset,
-    uint64_t size
-)
+void CommandBuffer::MemoryCopy(const MemoryToMemoryCopy& copy)
 {
+    VkBufferCopy bufferCopy = {
+        .srcOffset = copy.srcMemory.offset,
+        .dstOffset = copy.dstMemory.offset,
+        .size = copy.size,
+    };
 
+    auto& buffers = impl.device->buffers;
+    vkCmdCopyBuffer(
+        (VkCommandBuffer)impl.handle,
+        buffers.get(copy.srcMemory.buffer).buffer,
+        buffers.get(copy.dstMemory.buffer).buffer,
+        1, &bufferCopy);
+}
+
+void CommandBuffer::MemoryCopy(const MemoryToTextureCopy& copy)
+{
+    auto& dev = impl.device;
+    auto& imgInfo = dev->textures.get(copy.dstTexture);
+
+    VkBufferImageCopy imageCopy = {
+        .bufferOffset = copy.srcMemory.offset,
+        .bufferRowLength = 0,
+        .bufferImageHeight = 0,
+        .imageSubresource = {VK_IMAGE_ASPECT_COLOR_BIT, copy.mipmapLevel, copy.layerBaseLevel, copy.layerCount},
+        .imageOffset = {0,0,0},
+        .imageExtent = {imgInfo.width, imgInfo.height, 1 },
+    };
+
+    vkCmdCopyBufferToImage(
+        (VkCommandBuffer)impl.handle,
+        dev->buffers.get(copy.srcMemory.buffer).buffer,
+        imgInfo.image,
+        VK_IMAGE_LAYOUT_GENERAL, 1, &imageCopy);
 }
 
 void CommandBuffer::BeginRendering(const RenderPassDesc& desc)

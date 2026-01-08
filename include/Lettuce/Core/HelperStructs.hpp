@@ -121,50 +121,51 @@ namespace Lettuce::Core
 
     struct IndirectSetVK {};
 
-    constexpr VkFormat kFormatTable[] =
-    {
-        VK_FORMAT_R8G8B8A8_UNORM,          // RGBA8_UNORM
-        VK_FORMAT_R8G8B8A8_SRGB,           // RGBA8_SRGB
-        VK_FORMAT_B8G8R8A8_UNORM,          // BGRA8_UNORM
-        VK_FORMAT_B8G8R8A8_SRGB,           // BGRA8_SRGB
-        VK_FORMAT_R16G16B16A16_SFLOAT,     // RGBA16_FLOAT
-        VK_FORMAT_D16_UNORM,               // D16
-        VK_FORMAT_D32_SFLOAT,              // D32
-        VK_FORMAT_D24_UNORM_S8_UINT,       // D24S8
-        VK_FORMAT_D32_SFLOAT_S8_UINT,      // D32S8
-        VK_FORMAT_R8_UNORM,                // R8
-        VK_FORMAT_R8G8_UNORM,              // RG8
-        VK_FORMAT_R16G16_SFLOAT            // RG16_FLOAT
+    constexpr std::array<std::uint8_t, 64> kFormatTable = {
+        9, 10, 13, 14, 16, 17, 20, 21,
+        37, 38, 41, 42,
+        44, 50, 51, 55,
+        58, 64, 68,
+        70, 71, 74, 75, 76, 77, 78,
+        81, 82, 83,
+        91, 92, 95, 96, 97,
+        98, 99, 100,
+        101, 102, 103,
+        107, 108, 109,
+        110, 111,
+        122, 123,
+        130,
+        131, 132, 133, 134,
+        135, 136, 137, 138,
+        139, 140, 141, 142,
+        143, 144, 145, 146
     };
+
+    consteval std::array<bool, 256> make_format_lut() {
+        std::array<bool, 256> lut{};
+        for (auto f : kFormatTable)
+        {
+            lut[f] = true;
+        }
+        return lut;
+    }
+    constexpr auto format_lut = make_format_lut();
+    constexpr bool is_valid_format_value(std::uint8_t v) noexcept {
+        return format_lut[v];
+    }
 
     constexpr VkFormat ToVkFormat(Format format)
     {
-        const uint32_t index = static_cast<uint32_t>(format);
-        return index < static_cast<uint32_t>(Format::COUNT)
-            ? kFormatTable[index]
-            : VK_FORMAT_UNDEFINED;
+        return static_cast<VkFormat>(format);
     }
 
     constexpr Format FromVkFormat(VkFormat vkFormat)
     {
-        switch (vkFormat)
-        {
-        case VK_FORMAT_R8G8B8A8_UNORM:      return Format::RGBA8_UNORM;
-        case VK_FORMAT_R8G8B8A8_SRGB:       return Format::RGBA8_SRGB;
-        case VK_FORMAT_B8G8R8A8_UNORM:      return Format::BGRA8_UNORM;
-        case VK_FORMAT_B8G8R8A8_SRGB:       return Format::BGRA8_SRGB;
-        case VK_FORMAT_R16G16B16A16_SFLOAT: return Format::RGBA16_FLOAT;
-        case VK_FORMAT_D16_UNORM:           return Format::D16;
-        case VK_FORMAT_D32_SFLOAT:          return Format::D32;
-        case VK_FORMAT_D24_UNORM_S8_UINT:   return Format::D24S8;
-        case VK_FORMAT_D32_SFLOAT_S8_UINT:  return Format::D32S8;
-        case VK_FORMAT_R8_UNORM:            return Format::R8;
-        case VK_FORMAT_R8G8_UNORM:          return Format::RG8;
-        case VK_FORMAT_R16G16_SFLOAT:       return Format::RG16_FLOAT;
-        default:                            return Format::COUNT;
-        }
-    }
+        if(!is_valid_format_value(vkFormat))
+            return Format::Undefined;
 
+        return static_cast<Format>(vkFormat);
+    }
 
     constexpr VkPipelineBindPoint kPipelineBindPointTable[] =
     {

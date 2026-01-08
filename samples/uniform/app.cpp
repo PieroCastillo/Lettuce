@@ -4,18 +4,16 @@
 #include "glfw/glfw3native.h"
 #include <windows.h>
 
-#include <memory>
-#include <vector>
-#include <expected>
-#include <thread>
 #include <chrono>
-#include <print>
-#include <fstream>
-#include <filesystem>
-#include <optional>
-#include <functional>
 #include <cmath>
+#include <vector>
+#include <filesystem>
+#include <fstream>
+#include <functional>
 #include <numbers>
+#include <optional>
+#include <print>
+#include <thread>
 
 using namespace Lettuce::Core;
 

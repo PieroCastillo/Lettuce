@@ -29,6 +29,7 @@ Texture Device::CreateTexture(const TextureDesc& desc, const MemoryBindDesc& bin
     VkImage image;
     VkImageCreateInfo imageCI = {
         .sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
+        .flags = desc.isCubeMap ? VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT : (VkImageCreateFlags)0,
         .imageType = VK_IMAGE_TYPE_2D,
         .format = format,
         .extent = {desc.width, desc.height, 1},
@@ -45,7 +46,7 @@ Texture Device::CreateTexture(const TextureDesc& desc, const MemoryBindDesc& bin
     VkImageViewCreateInfo viewCI = {
         .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
         .image = image,
-        .viewType = VK_IMAGE_VIEW_TYPE_2D,
+        .viewType = desc.isCubeMap ? VK_IMAGE_VIEW_TYPE_CUBE : VK_IMAGE_VIEW_TYPE_2D,
         .format = format,
         .components = {VK_COMPONENT_SWIZZLE_IDENTITY, VK_COMPONENT_SWIZZLE_IDENTITY,VK_COMPONENT_SWIZZLE_IDENTITY,VK_COMPONENT_SWIZZLE_IDENTITY},
         .subresourceRange = subresourceRange,
