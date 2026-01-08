@@ -35,10 +35,10 @@ target("Lettuce")
     add_rules("utils.symbols.export_all", {export_classes = true})
 
 local samples = {
-    "cubes",
     "grass",
     "helloTriangle",
     "helloTriangleMesh",
+    "textureLoad",
     "uniform",
 }
 
