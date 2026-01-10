@@ -17,17 +17,17 @@ using namespace Lettuce::Core;
 BufferInfo Device::GetBufferInfo(Buffer buffer) const
 {
     auto res = impl->buffers.get(buffer);
-    return { res.size, res.cpuAddress, res.gpuAddress };
+    return { res.size, res.cpuAddress, res.gpuAddress, res.memoryOffset };
 }
 
 ResourceInfo Device::GetResourceInfo(Texture texture) const
 {
     auto res = impl->textures.get(texture);
-    return { res.size, res.width, res.height };
+    return { res.size, res.width, res.height, res.memoryOffset };
 }
 
 ResourceInfo Device::GetResourceInfo(RenderTarget renderTarget) const
 {
     auto res = impl->renderTargets.get(renderTarget);
-    return { res.size, res.width, res.height };
+    return { res.size, res.width, res.height, res.memoryOffset };
 }

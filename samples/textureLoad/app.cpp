@@ -17,6 +17,7 @@
 #include <functional>
 
 using namespace Lettuce::Core;
+using namespace Lettuce::Utils;
 
 GLFWwindow* window;
 
@@ -28,21 +29,14 @@ Swapchain swapchain;
 DescriptorTable descriptorTable;
 Pipeline rgbPipeline;
 CommandAllocator cmdAlloc;
+Sampler sampler;
 
-std::vector<uint32_t> loadSpv(std::string path)
-{
-    auto shadersFile = std::ifstream(path, std::ios::ate | std::ios::binary);
-    if (!shadersFile) throw std::runtime_error(path + " does not exist");
+AssetLoader loader;
 
-    auto fileSize = (uint32_t)shadersFile.tellg();
-    std::vector<uint32_t> shadersBuffer;
-    shadersBuffer.resize(fileSize / sizeof(uint32_t));
-
-    shadersFile.seekg(0);
-    shadersFile.read((char*)shadersBuffer.data(), fileSize);
-
-    return shadersBuffer;
-}
+Texture texRgba8;
+Texture texRgba32;
+Texture texBC7;
+Texture texB10G11R11;
 
 void initLettuce()
 {
@@ -67,16 +61,18 @@ void initLettuce()
         .queueType = QueueType::Graphics,
     };
     cmdAlloc = device.CreateCommandAllocator(cmdAllocDesc);
+
+    AssetLoaderDesc loaderDesc = {
+        .maxTempMemory = 2 * 1024 * 1024, // 2 MB
+        .maxResourceMemory = 2 * 1024 * 1024, // 32 MB
+    };
+    loader.Create(device, loaderDesc);
 }
 
 void createRenderingObjects()
 {
-    auto shadersBuffer = loadSpv("textureLoad.spv");
-
-    ShaderBinaryDesc shaderDesc = {
-        .bytecode = std::span<uint32_t>(shadersBuffer.data(), shadersBuffer.size()),
-    };
-    auto shaders = device.CreateShader(shaderDesc);
+    // load shaders
+    auto shaders = loader.LoadSpirv("textureLoad.spv");
 
     DescriptorTableDesc descriptorTableDesc = { 4,4,4,2 };
     descriptorTable = device.CreateDescriptorTable(descriptorTableDesc);
@@ -94,6 +90,35 @@ void createRenderingObjects()
     rgbPipeline = device.CreatePipeline(pipelineDesc);
 
     device.Destroy(shaders);
+
+    // create sampler
+    SamplerDesc samplerDesc = {
+
+    };
+    sampler = device.CreateSampler(samplerDesc);
+
+    // load textures
+    texRgba8 = loader.LoadKtx2Texture("../../../../external/KTX2-Samples/ktx2/2d_rgba8_linear.ktx2");
+    texRgba32 = loader.LoadKtx2Texture("../../../../external/KTX2-Samples/ktx2/2d_rgba32_linear.ktx2");
+    texBC7 = loader.LoadKtx2Texture("../../../../external/KTX2-Samples/ktx2/2d_bc7.ktx2");
+    texB10G11R11 = loader.LoadKtx2Texture("../../../../external/KTX2-Samples/ktx2/2d_r11g11b10_linear.ktx2");
+
+    std::array<std::pair<uint32_t, Texture>, 4> texDescs;
+    texDescs[0] = { 0, texRgba8 };
+    texDescs[1] = { 1, texRgba32 };
+    texDescs[2] = { 2, texBC7 };
+    texDescs[3] = { 3, texB10G11R11 };
+
+    std::array<std::pair<uint32_t, Sampler>, 1> samplers;
+    samplers[0] = { 0, sampler };
+
+    // push texture descriptors
+    PushResourceDescriptorsDesc pushDesc = {
+        .sampledTextures = std::span(texDescs),
+        .samplers = std::span(samplers),
+        .descriptorTable = descriptorTable,
+    };
+    device.PushResourceDescriptors(pushDesc);
 }
 
 void mainLoop()
@@ -140,6 +165,15 @@ void mainLoop()
 
 void cleanupLettuce()
 {
+    device.Destroy(texRgba8);
+    device.Destroy(texRgba32);
+    device.Destroy(texBC7);
+    device.Destroy(texB10G11R11);
+
+    device.Destroy(sampler);
+
+    loader.Destroy();
+
     device.Destroy(rgbPipeline);
     device.Destroy(descriptorTable);
 

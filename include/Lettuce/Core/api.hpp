@@ -80,6 +80,7 @@ namespace Lettuce::Core
         uint64_t size;
         void* cpuAddress;
         uint64_t gpuAddress;
+        uint64_t alignment;
     };
 
     struct ResourceInfo
@@ -87,6 +88,7 @@ namespace Lettuce::Core
         uint64_t size;
         uint32_t width;
         uint32_t height;
+        uint64_t alignment;
     };
 
     // Descriptions

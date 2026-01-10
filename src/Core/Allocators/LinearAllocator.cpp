@@ -3,8 +3,10 @@
 #include <memory>
 #include <vector>
 #include <algorithm>
+#include <print>
 
 // project headers
+#include "Lettuce/helper.hpp"
 #include "Lettuce/Core/api.hpp"
 #include "Lettuce/Core/Allocators/LinearAllocator.hpp"
 
@@ -35,6 +37,9 @@ void Allocators::LinearAllocator::Create(Device dev, const LinearAllocatorDesc& 
     memoryHeapSize = desc.bufferSize + desc.imageSize;
 
     auto bufferInfo = device.GetBufferInfo(buffer);
+    bufferCPUAddress = (uint64_t*)bufferInfo.cpuAddress;
+    bufferGPUAddress = bufferInfo.gpuAddress;
+
     currentBufferCPUAddress = (uint64_t*)bufferInfo.cpuAddress;
     currentBufferGPUAddress = bufferInfo.gpuAddress;
 }
@@ -52,12 +57,12 @@ void Allocators::LinearAllocator::Destroy()
 
 MemoryView Allocators::LinearAllocator::AllocateMemory(uint64_t size)
 {
-    if (currentBufferOffset + size > texturesMemoryOffset)
+    if ((currentBufferOffset + size) > texturesMemoryOffset)
     {
         return {};
     }
 
-    MemoryView mv = { size, currentBufferCPUAddress, currentBufferGPUAddress };
+    MemoryView mv = { size, currentBufferCPUAddress, currentBufferGPUAddress, buffer, currentBufferOffset };
 
     currentBufferCPUAddress += ((currentBufferCPUAddress != nullptr) ? size : 0);
     currentBufferGPUAddress += size;
@@ -72,12 +77,14 @@ Texture Allocators::LinearAllocator::AllocateTexture(const TextureDesc& desc)
         .heapOffset = currentTextureOffset,
     };
     auto tex = device.CreateTexture(desc, bindDesc);
+    DebugPrint("[LINEAR ALLOCATOR]", "Texture allocated successfully");
     auto texInfo = device.GetResourceInfo(tex);
     auto newOffset = currentTextureOffset + texInfo.size;
 
-    if (newOffset > (memoryHeapSize - texturesMemoryOffset))
+    if (newOffset > memoryHeapSize)
     {
-        device.Destroy(tex);
+        // TODO: error checking
+        DebugPrint("[LINEAR ALLOCATOR]", "Error Texture");
         return {};
     }
 
@@ -93,4 +100,11 @@ void Allocators::LinearAllocator::ReleaseMemory(const MemoryView& view)
 void Allocators::LinearAllocator::ReleaseTexture(Texture texture)
 {
     // NO OP
+}
+
+void Allocators::LinearAllocator::ResetMemory()
+{
+    currentBufferOffset = 0;
+    currentBufferCPUAddress = bufferCPUAddress;
+    currentBufferGPUAddress = bufferGPUAddress;
 }

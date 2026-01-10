@@ -17,6 +17,12 @@ using namespace Lettuce::Core::Allocators;
 
 namespace Lettuce::Utils
 {
+    struct AssetLoaderDesc
+    {
+        uint64_t maxTempMemory;
+        uint64_t maxResourceMemory;
+    };
+
     struct AssetLoader
     {
     private:
@@ -25,9 +31,11 @@ namespace Lettuce::Utils
         std::unique_ptr<IGPUMemoryResource> m_tempMem;
         std::unique_ptr<IGPUMemoryResource> m_resAlloc;
     public:
+        void Create(Device, const AssetLoaderDesc&);
+        void Destroy();
         ShaderBinary LoadSpirv(std::string_view path);
-        Texture LoadKtx2Texture(std::string_view path);
-        // LoadGltfModel()
+        Texture LoadKtx2Texture(std::string_view path, uint32_t levels = 1);
+        // LoadGltfModel(std::string_view);
     };
 };
 

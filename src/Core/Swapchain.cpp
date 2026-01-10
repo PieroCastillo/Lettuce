@@ -2,7 +2,6 @@
 #include <limits>
 #include <memory>
 #include <vector>
-#include <print>
 #include <algorithm>
 
 // external headers
@@ -117,13 +116,10 @@ void setupVkSwapchain(SwapchainVK& swapchainVK, VkDevice device, VkPhysicalDevic
     switch (res)
     {
     case VK_SUCCESS:
-        std::println("swapchain created successfully");
-        break;
     case VK_ERROR_OUT_OF_DATE_KHR:
     case VK_SUBOPTIMAL_KHR:
         break;
     default:
-        //std::println("vk error code: {0}", (int)res);
         //handleResult(res);
         break;
     }
