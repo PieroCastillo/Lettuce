@@ -72,7 +72,8 @@ void initLettuce()
 void createRenderingObjects()
 {
     // load shaders
-    auto shaders = loader.LoadSpirv("textureLoad.spv");
+    auto vertShader = loader.LoadSpirv("textureLoad.vert.spv");
+    auto fragShader = loader.LoadSpirv("textureLoad.frag.spv");
 
     DescriptorTableDesc descriptorTableDesc = { 4,4,4,2 };
     descriptorTable = device.CreateDescriptorTable(descriptorTableDesc);
@@ -80,20 +81,27 @@ void createRenderingObjects()
     std::array<Format, 1> formatArr = { device.GetRenderTargetFormat(swapchain) };
     PrimitiveShadingPipelineDesc pipelineDesc = {
         .fragmentShadingRate = false,
-        .vertEntryPoint = "vertexMain",
-        .fragEntryPoint = "fragmentMain",
-        .vertShaderBinary = shaders,
-        .fragShaderBinary = shaders,
+        .vertEntryPoint = "main",
+        .fragEntryPoint = "main",
+        .vertShaderBinary = vertShader,
+        .fragShaderBinary = fragShader,
         .colorAttachmentFormats = std::span(formatArr),
         .descriptorTable = descriptorTable,
     };
     rgbPipeline = device.CreatePipeline(pipelineDesc);
 
-    device.Destroy(shaders);
+    device.Destroy(vertShader);
+    device.Destroy(fragShader);
 
     // create sampler
     SamplerDesc samplerDesc = {
-
+        .magFilter = Filter::Nearest,
+        .minFilter = Filter::Linear,
+        .mipmap = Filter::Nearest,
+        .addressModeU = SamplerAddressMode::ClampToBorder,
+        .addressModeV =  SamplerAddressMode::ClampToBorder,
+        .addressModeW =  SamplerAddressMode::ClampToBorder,
+        .anisotropy = 2.0f
     };
     sampler = device.CreateSampler(samplerDesc);
 
@@ -146,7 +154,7 @@ void mainLoop()
         cmd.BeginRendering(renderPassDesc);
         cmd.BindDescriptorTable(descriptorTable, PipelineBindPoint::Graphics);
         cmd.BindPipeline(rgbPipeline);
-        cmd.Draw(3, 1);
+        cmd.Draw(6, 4);
         cmd.EndRendering();
 
         std::array<std::span<CommandBuffer>, 1> cmds = { std::span(&cmd, 1) };
@@ -165,6 +173,8 @@ void mainLoop()
 
 void cleanupLettuce()
 {
+    device.WaitFor(QueueType::Graphics);
+
     device.Destroy(texRgba8);
     device.Destroy(texRgba32);
     device.Destroy(texBC7);

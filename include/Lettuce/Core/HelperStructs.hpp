@@ -82,11 +82,11 @@ namespace Lettuce::Core
         uint64_t samplersBindingOffset;
         uint64_t storageImagesBindingOffset;
 
-        uint64_t* cpuAddress;
+        uint8_t* cpuAddress;
         uint64_t  gpuAddress;
 
         uint64_t  pushPayloadSize;
-        uint64_t* pushPayloadAddress;
+        uint8_t* pushPayloadAddress;
     };
 
     struct SwapchainVK

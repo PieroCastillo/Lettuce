@@ -119,15 +119,21 @@ Texture AssetLoader::LoadKtx2Texture(std::string_view path, uint32_t levelCount)
     // may cause UB if it's not correct
     Format format = Core::FromVkFormat((VkFormat)(kTexture->vkFormat));
 
+    uint64_t mainMipOffset;
+    ktxTexture2_GetImageOffset(kTexture, 0, 0, 0, &mainMipOffset);
+
     // create long resource
+    // TODO: impl kTexture->numLevels / mipLevels
     TextureDesc desc = {
-        texWidth, texHeight, kTexture->baseDepth, format, kTexture->numLevels, kTexture->numLayers, kTexture->isCubemap,
+        texWidth, texHeight, kTexture->baseDepth, format, 1, kTexture->numLayers, kTexture->isCubemap,
     };
     auto tex = m_resAlloc->AllocateTexture(desc);
 
     auto cmd = m_device.AllocateCommandBuffer(m_cmds);
 
+    cmd.PrepareTexture(tex);
     // create copies for the first mipmap, next blit levels
+    staging.offset += mainMipOffset;
     MemoryToTextureCopy copy = {
         .srcMemory = staging,
         .dstTexture = tex,
@@ -150,7 +156,7 @@ Texture AssetLoader::LoadKtx2Texture(std::string_view path, uint32_t levelCount)
     static_cast<LinearAllocator*>(m_tempMem.get())->ResetMemory();
     ktxTexture2_Destroy(kTexture);
 
-    DebugPrint("[ASSET LOADER]", "texture: {} loaded succesfully", path);
+    DebugPrint("[ASSET LOADER]", "texture: {} loaded successfully", path);
 
     return tex;
 }

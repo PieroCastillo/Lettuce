@@ -165,14 +165,15 @@ void mainLoop()
             .presentSwapchain = swapchain,
         };
         device.Submit(submitDesc);
-
         device.DisplayFrame(swapchain);
+
         glfwPollEvents();
     }
 }
 
 void cleanupLettuce()
 {
+    device.WaitFor(QueueType::Graphics);
     device.Destroy(rgbPipeline);
     device.Destroy(descriptorTable);
 

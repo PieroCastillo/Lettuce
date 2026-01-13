@@ -239,6 +239,7 @@ void Device::DisplayFrame(Swapchain swapchain)
         .pSwapchains = &info.swapchain,
         .pImageIndices = &info.currentImageIndex,
     };
+    // TODO: further, we need to replace this usign a better sync system
     handleResult(vkQueueWaitIdle(impl->m_graphicsQueue));
     handleResult(vkQueuePresentKHR(impl->m_graphicsQueue, &presentI));
     // wait for present complete
@@ -260,4 +261,10 @@ RenderTarget Device::GetCurrentRenderTarget(Swapchain swapchain) const
 {
     auto& swc = impl->swapchains.get(swapchain);
     return swc.renderTargets[(int)swc.currentImageIndex];
+}
+
+uint32_t Device::GetFrameCount(Swapchain swapchain)
+{
+    auto& swc = impl->swapchains.get(swapchain);
+    return swc.swapchainImages.size();
 }

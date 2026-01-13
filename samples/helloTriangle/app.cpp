@@ -140,6 +140,7 @@ void mainLoop()
 
 void cleanupLettuce()
 {
+    device.WaitFor(QueueType::Graphics);
     device.Destroy(rgbPipeline);
     device.Destroy(descriptorTable);
 

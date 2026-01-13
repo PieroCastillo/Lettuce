@@ -349,6 +349,7 @@ namespace Lettuce::Core
         Format GetRenderTargetFormat(Swapchain);
         RenderTarget GetCurrentRenderTarget(Swapchain) const;
         void ResizeSwapchain(Swapchain, uint32_t w, uint32_t h);
+        uint32_t GetFrameCount(Swapchain);
 
         // Command Allocator
         CommandAllocator CreateCommandAllocator(const CommandAllocatorDesc&);
@@ -385,6 +386,7 @@ namespace Lettuce::Core
         void Dispatch(uint32_t x, uint32_t y, uint32_t z);
 
         void Barrier(std::span<const BarrierDesc> barriers);
+        void PrepareTexture(Texture);
     };
 }
 #endif // LETTUCE_CORE_API_HPP

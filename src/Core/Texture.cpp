@@ -121,6 +121,7 @@ Texture Device::CreateTexture(const TextureDesc& desc, const MemoryBindDesc& bin
         .tiling = VK_IMAGE_TILING_OPTIMAL,
         .usage = usageFlags,
         .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
+        .initialLayout = VK_IMAGE_LAYOUT_PREINITIALIZED,
     };
     handleResult(vkCreateImage(device, &imageCI, nullptr, &image));
 
