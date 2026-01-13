@@ -380,6 +380,7 @@ void DeviceImpl::setupDevice()
     props.computeQueueFamilyIdx = computeQueueFamilyIndex;
     props.transferQueueFamilyIdx = transferQueueFamilyIndex;
     props.maxSamplerAnisotropy = props2.properties.limits.maxSamplerAnisotropy;
+    props.maxPushAllocationsCount = props2.properties.limits.maxPushConstantsSize / sizeof(uint64_t);
 
     graphicsCurrentValue = 0;
     computeCurrentValue = 0;

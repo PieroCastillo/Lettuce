@@ -78,7 +78,7 @@ void createRenderingObjects()
     };
     auto shaders = device.CreateShader(shaderDesc);
 
-    DescriptorTableDesc descriptorTableDesc = { 4,4,4,2 };
+    DescriptorTableDesc descriptorTableDesc = { 4,4,4 };
     descriptorTable = device.CreateDescriptorTable(descriptorTableDesc);
 
     std::array<Format, 1> formatArr = { device.GetRenderTargetFormat(swapchain) };

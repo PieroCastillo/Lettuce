@@ -187,7 +187,6 @@ namespace Lettuce::Core
         uint32_t sampledImageDescriptorCount;
         uint32_t samplerDescriptorCount;
         uint32_t storageImageDescriptorCount;
-        uint32_t bufferPointerCount;
     };
 
     struct IndirectSetDesc {
@@ -278,6 +277,13 @@ namespace Lettuce::Core
         uint32_t layerBaseLevel;
         uint32_t layerCount;
     };
+    
+    struct PushAllocationsDesc 
+    {
+        std::span<const std::pair<uint32_t, MemoryView>> allocations;
+        DescriptorTable descriptorTable;
+    };
+
 
     struct DeviceImpl;
     struct CommandBufferImpl { DeviceImpl* device; uint64_t handle; };
@@ -376,6 +382,7 @@ namespace Lettuce::Core
 
         void BindPipeline(Pipeline);
         void BindDescriptorTable(DescriptorTable, PipelineBindPoint);
+        void PushAllocations(const PushAllocationsDesc&);
 
         void Draw(uint32_t vertexCount, uint32_t instanceCount);
         void DrawIndexed(uint32_t indexCount, uint32_t instanceCount);

@@ -113,7 +113,7 @@ DescriptorTable Device::CreateDescriptorTable(const DescriptorTableDesc& desc)
     VkPushConstantRange pushConstant = {
         .stageFlags = VK_SHADER_STAGE_ALL,
         .offset = 0,
-        .size = 128,
+        .size = impl->props.maxPushAllocationsCount * sizeof(uint64_t),
     };
 
     VkPipelineLayoutCreateInfo pipelineLayoutCI = {
@@ -124,8 +124,6 @@ DescriptorTable Device::CreateDescriptorTable(const DescriptorTableDesc& desc)
         .pPushConstantRanges = &pushConstant,
     };
     handleResult(vkCreatePipelineLayout(device, &pipelineLayoutCI, nullptr, &pipelineLayout));
-
-    void* pushPayloadPtr = malloc(128);
 
     DebugPrint("[DESCRIPTOR TABLE]", R"(buffer size: {}
 sampler descriptor size:       {}
@@ -146,8 +144,6 @@ storage image descriptor size: {})", bufferSize, samplerDescriptorSize, sampledI
         .storageImagesBindingOffset = storageImagesBindingOffset,
         .cpuAddress = (uint8_t*)cpuPtr,
         .gpuAddress = gpuPtr,
-        .pushPayloadSize = 128,
-        .pushPayloadAddress = (uint8_t*)pushPayloadPtr,
         });
 }
 
@@ -156,7 +152,6 @@ void Device::Destroy(DescriptorTable descriptorTable)
     VkDevice device = impl->m_device;
     auto& dt = impl->descriptorTables.get(descriptorTable);
 
-    free(dt.pushPayloadAddress);
     vkDestroyPipelineLayout(device, dt.pipelineLayout, nullptr);
     vkDestroyDescriptorSetLayout(device, dt.setLayout, nullptr);
     vkUnmapMemory(device, dt.descriptorBufferMemory);
@@ -236,22 +231,4 @@ void Device::PushResourceDescriptors(const PushResourceDescriptorsDesc& desc)
     DebugPrint("[DESCRIPTOR BUFFER]", "data: {}", hexData(dt.cpuAddress, dt.bufferSize));
 
     // TODO: in the future, enable acceleration structures
-}
-
-void Device::PushAllocations(DescriptorTable descriptorTable, std::span<const std::pair<uint32_t, MemoryView>> allocations)
-{
-    auto& dt = impl->descriptorTables.get(descriptorTable);
-    auto* dstAddress = dt.pushPayloadAddress;
-
-    // at least 16 buffers (because 128 bytes is the minimum)
-    // TODO: impl 256 bytes for push constant
-    for (const auto& [idx, alloc] : allocations)
-    {
-        if (idx > 16)
-            continue;
-
-        //dstAddress[idx] = alloc.gpuAddress;
-        auto bytes = std::bit_cast<std::array<uint8_t, 8>>(alloc.gpuAddress);
-        std::copy(bytes.begin(), bytes.end(), dstAddress+idx);
-    }
 }

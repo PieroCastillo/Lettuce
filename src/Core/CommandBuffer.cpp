@@ -140,7 +140,21 @@ void CommandBuffer::BindDescriptorTable(DescriptorTable descriptorTable, Pipelin
         &bufferOffset);
 
     // push buffer addresses
-    vkCmdPushConstants((VkCommandBuffer)impl.handle, dt.pipelineLayout, VK_SHADER_STAGE_ALL, 0, dt.pushPayloadSize, dt.pushPayloadAddress);
+    // vkCmdPushConstants((VkCommandBuffer)impl.handle, dt.pipelineLayout, VK_SHADER_STAGE_ALL, 0, dt.pushPayloadSize, dt.pushPayloadAddress);
+}
+
+void CommandBuffer::PushAllocations(const PushAllocationsDesc& desc)
+{
+    auto& dt = impl.device->descriptorTables.get(desc.descriptorTable);
+    auto payloadSize =  impl.device->props.maxPushAllocationsCount * sizeof(uint64_t);
+    uint64_t* data = (uint64_t*)alloca(payloadSize);
+
+    for(auto const& [idx, memView] : desc.allocations)
+    {
+        data[idx] = memView.gpuAddress;
+    }
+    
+    vkCmdPushConstants((VkCommandBuffer)impl.handle, dt.pipelineLayout, VK_SHADER_STAGE_ALL, 0, payloadSize, data);
 }
 
 void CommandBuffer::Draw(uint32_t vertexCount, uint32_t instanceCount)

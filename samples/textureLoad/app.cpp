@@ -75,7 +75,7 @@ void createRenderingObjects()
     auto vertShader = loader.LoadSpirv("textureLoad.vert.spv");
     auto fragShader = loader.LoadSpirv("textureLoad.frag.spv");
 
-    DescriptorTableDesc descriptorTableDesc = { 4,4,4,2 };
+    DescriptorTableDesc descriptorTableDesc = { 4,4,4 };
     descriptorTable = device.CreateDescriptorTable(descriptorTableDesc);
 
     std::array<Format, 1> formatArr = { device.GetRenderTargetFormat(swapchain) };

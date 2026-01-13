@@ -84,9 +84,6 @@ namespace Lettuce::Core
 
         uint8_t* cpuAddress;
         uint64_t  gpuAddress;
-
-        uint64_t  pushPayloadSize;
-        uint8_t* pushPayloadAddress;
     };
 
     struct SwapchainVK

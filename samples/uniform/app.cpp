@@ -89,11 +89,9 @@ void createRenderingObjects()
     };
     auto shaders = device.CreateShader(shaderDesc);
 
-    DescriptorTableDesc descriptorTableDesc = { 4,4,4,2 };
+    DescriptorTableDesc descriptorTableDesc = { 4,4,4 };
     descriptorTable = device.CreateDescriptorTable(descriptorTableDesc);
-
-    device.PushAllocations(descriptorTable, std::array{ std::pair(0u, uniformData) });
-
+    
     std::array<Format, 1> formatArr = { device.GetRenderTargetFormat(swapchain) };
     PrimitiveShadingPipelineDesc pipelineDesc = {
         .fragmentShadingRate = false,
@@ -145,6 +143,12 @@ void mainLoop()
         };
         cmd.BeginRendering(renderPassDesc);
         cmd.BindDescriptorTable(descriptorTable, PipelineBindPoint::Graphics);
+        
+        PushAllocationsDesc pushDesc = {
+           .allocations = std::array{ std::pair(0u, uniformData) }, 
+           .descriptorTable = descriptorTable,  
+        };
+        cmd.PushAllocations(pushDesc);
 
         // set uniform value, it could be set anytime
         timeT += delta_time();
