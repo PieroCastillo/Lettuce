@@ -116,7 +116,20 @@ namespace Lettuce::Core
         uint64_t gpuAddress;
     };
 
-    struct IndirectSetVK {};
+    struct IndirectSetVK
+    {
+        VkDeviceMemory indirectSetMemory;
+        VkBuffer indirectSetBuffer;
+        IndirectType type;
+        uint32_t stride;
+
+        uint32_t size;
+        uint64_t gpuAddress;
+
+        // if VK_EXT_device_generated_commands is enable
+        VkIndirectCommandsLayoutEXT commandsLayout;
+        VkIndirectExecutionSetEXT executionSet;
+    };
 
     constexpr std::array<std::uint8_t, 64> kFormatTable = {
         9, 10, 13, 14, 16, 17, 20, 21,

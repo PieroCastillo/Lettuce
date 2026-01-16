@@ -35,9 +35,11 @@ target("Lettuce")
     add_rules("utils.symbols.export_all", {export_classes = true})
 
 local samples = {
+    "cubemap",
     "grass",
     "helloTriangle",
     "helloTriangleMesh",
+    "indirectDrawing",
     "textureLoad",
     "uniform",
 }
@@ -64,20 +66,12 @@ for _, name in ipairs(samples) do
 
                     local args = { 
                         '-matrix-layout-column-major',
-                        -- '-fspv-reflect', 
-                        -- '-fvk-use-scalar-layout', 
-                        -- '-preserve-params', 
-                        "-verbose-paths",
+                        '-fvk-use-entrypoint-name',
+                        '-fvk-use-scalar-layout', 
                         "-profile", 
                         "spirv_1_6",
                         "-capability", 
                         "SPV_EXT_descriptor_indexing",
-                        "-capability", 
-                        "SPV_KHR_fragment_shader_barycentric",
-                        "-capability", 
-                        "meshshading",
-                        -- "-capability", 
-                        -- "vk_mem_model", 
                         "-target", "spirv",
                         "-o", outfile, f}
 

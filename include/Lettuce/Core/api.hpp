@@ -73,7 +73,7 @@ namespace Lettuce::Core
 
     enum class QueueType : uint8_t { Graphics, Compute, Copy };
     enum class RenderTargetType : uint8_t { ColorRGB_sRGB, ColorRGBA_sRGB, DepthStencilDS40 };
-    enum class IndirectType : uint8_t { Draw, DrawIndexed, DrawMesh, Dispatch, DeviceGenerated };
+    enum class IndirectType : uint8_t { Draw, DrawIndexed, DrawMesh, Dispatch }; // TraceRays, DeviceGenerated
 
     // Resources
     struct BufferInfo {
@@ -192,7 +192,7 @@ namespace Lettuce::Core
     struct IndirectSetDesc {
         IndirectType type;
         uint32_t maxCount;
-        uint32_t stride;
+        uint32_t userDataSize;
     };
 
     struct SwapchainDesc
@@ -284,6 +284,11 @@ namespace Lettuce::Core
         DescriptorTable descriptorTable;
     };
 
+    struct ExecuteIndirectDesc
+    {
+        IndirectSet indirectSet;
+        uint32_t maxDrawCount;
+    };
 
     struct DeviceImpl;
     struct CommandBufferImpl { DeviceImpl* device; uint64_t handle; };
@@ -346,6 +351,8 @@ namespace Lettuce::Core
         IndirectSet CreateIndirectSet(const IndirectSetDesc&);
         void Destroy(IndirectSet);
 
+        MemoryView GetIndirectSetView(IndirectSet);
+
         // Swapchain
         Swapchain CreateSwapchain(const SwapchainDesc&);
         void Destroy(Swapchain);
@@ -388,7 +395,7 @@ namespace Lettuce::Core
         void DrawIndexed(uint32_t indexCount, uint32_t instanceCount);
         void DrawMesh(uint32_t x, uint32_t y, uint32_t z);
 
-        void ExecuteIndirect(IndirectSet);
+        void ExecuteIndirect(const ExecuteIndirectDesc&);
 
         void Dispatch(uint32_t x, uint32_t y, uint32_t z);
 

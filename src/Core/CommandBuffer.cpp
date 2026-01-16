@@ -146,14 +146,14 @@ void CommandBuffer::BindDescriptorTable(DescriptorTable descriptorTable, Pipelin
 void CommandBuffer::PushAllocations(const PushAllocationsDesc& desc)
 {
     auto& dt = impl.device->descriptorTables.get(desc.descriptorTable);
-    auto payloadSize =  impl.device->props.maxPushAllocationsCount * sizeof(uint64_t);
+    auto payloadSize = impl.device->props.maxPushAllocationsCount * sizeof(uint64_t);
     uint64_t* data = (uint64_t*)alloca(payloadSize);
 
-    for(auto const& [idx, memView] : desc.allocations)
+    for (auto const& [idx, memView] : desc.allocations)
     {
         data[idx] = memView.gpuAddress;
     }
-    
+
     vkCmdPushConstants((VkCommandBuffer)impl.handle, dt.pipelineLayout, VK_SHADER_STAGE_ALL, 0, payloadSize, data);
 }
 
@@ -172,9 +172,30 @@ void CommandBuffer::DrawMesh(uint32_t x, uint32_t y, uint32_t z)
     vkCmdDrawMeshTasksEXT((VkCommandBuffer)impl.handle, x, y, z);
 }
 
-void CommandBuffer::ExecuteIndirect(IndirectSet indirectSet)
+void CommandBuffer::ExecuteIndirect(const ExecuteIndirectDesc& desc)
 {
     // TODO: impl execute indirect
+    auto& set = impl.device->indirectSets.get(desc.indirectSet);
+    auto cmd = (VkCommandBuffer)impl.handle;
+    auto buffer = set.indirectSetBuffer;
+
+    switch (set.type)
+    {
+    case IndirectType::Draw:
+        vkCmdDrawIndirectCount(cmd, buffer, 4, buffer, 0, desc.maxDrawCount, set.stride);
+        break;
+    case IndirectType::DrawIndexed:
+        vkCmdDrawIndexedIndirectCount(cmd, buffer, 4, buffer, 0, desc.maxDrawCount, set.stride);
+        break;
+    case IndirectType::DrawMesh:
+        vkCmdDrawMeshTasksIndirectCountEXT(cmd, buffer, 4, buffer, 0, desc.maxDrawCount, set.stride);
+        break;
+    case IndirectType::Dispatch:
+        vkCmdDispatchIndirect(cmd, buffer, 4);
+        break;
+    default:
+        break;
+    }
 }
 
 void CommandBuffer::Dispatch(uint32_t x, uint32_t y, uint32_t z)

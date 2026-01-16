@@ -289,11 +289,12 @@ Pipeline Device::CreatePipeline(const MeshShadingPipelineDesc& desc)
 
 Pipeline Device::CreatePipeline(const ComputePipelineDesc& desc)
 {
+    auto entryName = std::string(desc.compEntryPoint);
     VkPipelineShaderStageCreateInfo stageCI = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
         .stage = VK_SHADER_STAGE_COMPUTE_BIT,
         .module = impl->shaders.get(desc.compShaderBinary),
-        .pName = std::string(desc.compEntryPoint).c_str(),
+        .pName = entryName.c_str(),
     };
 
     VkComputePipelineCreateInfo cpipelineCI = {

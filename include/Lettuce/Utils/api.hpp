@@ -34,7 +34,7 @@ namespace Lettuce::Utils
         void Create(Device, const AssetLoaderDesc&);
         void Destroy();
         ShaderBinary LoadSpirv(std::string_view path);
-        Texture LoadKtx2Texture(std::string_view path, uint32_t levels = 1);
+        Texture LoadKtx2Texture(std::string_view path, uint32_t levels = 1, bool highQuality = false);
         // LoadGltfModel(std::string_view);
     };
 };

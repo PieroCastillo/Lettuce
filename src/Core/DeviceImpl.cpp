@@ -346,9 +346,21 @@ void DeviceImpl::setupDevice()
     queueCI.queueFamilyIndex = transferQueueFamilyIndex;
     queueCIs.push_back(queueCI);
 
+    VkPhysicalDeviceFeatures features = {
+        .multiDrawIndirect = VK_TRUE,
+        .samplerAnisotropy = VK_TRUE,
+        .textureCompressionBC = VK_TRUE,
+    };
+
+    VkPhysicalDeviceFeatures2 deviceFeatures2 = {
+        .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2,
+        .pNext = next,
+        .features = features,
+    };
+
     VkDeviceCreateInfo deviceCI = {
         .sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
-        .pNext = next,
+        .pNext = &deviceFeatures2,
         .queueCreateInfoCount = (uint32_t)queueCIs.size(),
         .pQueueCreateInfos = queueCIs.data(),
         .enabledExtensionCount = (uint32_t)requestedExtensionsNames.size(),
