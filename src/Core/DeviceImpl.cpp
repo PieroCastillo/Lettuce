@@ -350,6 +350,9 @@ void DeviceImpl::setupDevice()
         .multiDrawIndirect = VK_TRUE,
         .samplerAnisotropy = VK_TRUE,
         .textureCompressionBC = VK_TRUE,
+        .shaderFloat64 = VK_TRUE,
+        .shaderInt64 = VK_TRUE,
+        .shaderInt16 = VK_TRUE,
     };
 
     VkPhysicalDeviceFeatures2 deviceFeatures2 = {

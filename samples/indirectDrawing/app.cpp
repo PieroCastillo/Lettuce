@@ -20,6 +20,12 @@ using namespace Lettuce::Core;
 
 GLFWwindow* window;
 
+struct ParticleOut
+{
+    float color[3];
+    float pos[2];
+};
+
 constexpr uint32_t width = 1366;
 constexpr uint32_t height = 768;
 
@@ -30,6 +36,10 @@ IndirectSet indirectSet;
 Pipeline cullPipeline;
 Pipeline rgbPipeline;
 CommandAllocator cmdAlloc;
+
+Allocators::LinearAllocator alloc;
+MemoryView indirectView;
+MemoryView particlesView;
 
 std::vector<uint32_t> loadSpv(std::string path)
 {
@@ -72,10 +82,18 @@ void initLettuce()
 
     IndirectSetDesc indirectSetDesc = {
         .type = IndirectType::Draw,
-        .maxCount = 256,
-        .userDataSize = 3 * sizeof(float),
+        .maxCount = 128,
+        .userDataSize = 0,
     };
     indirectSet = device.CreateIndirectSet(indirectSetDesc);
+    indirectView = device.GetIndirectSetView(indirectSet);
+
+    Allocators::LinearAllocatorDesc linAllocDesc = {
+        .bufferSize = 128 * sizeof(ParticleOut),
+        .imageSize = 16,
+    };
+    alloc.Create(device, linAllocDesc);
+    particlesView = alloc.AllocateMemory(128 * sizeof(ParticleOut));
 }
 
 void createRenderingObjects()
@@ -124,7 +142,11 @@ void mainLoop()
 
         cmd.BindDescriptorTable(descriptorTable, PipelineBindPoint::Compute);
         cmd.BindPipeline(cullPipeline);
-        cmd.Dispatch(256 / 32, 1, 1);
+        PushAllocationsDesc pushDesc;
+        pushDesc.allocations = std::array{ std::pair(0u, indirectView),  std::pair(1u, particlesView) };
+        pushDesc.descriptorTable = descriptorTable;
+        cmd.PushAllocations(pushDesc);
+        cmd.Dispatch(8, 1, 1);
 
         BarrierDesc compVertBarrier[] = { {
             .srcAccess = PipelineAccess::Write,
@@ -148,9 +170,10 @@ void mainLoop()
         cmd.BeginRendering(renderPassDesc);
         cmd.BindDescriptorTable(descriptorTable, PipelineBindPoint::Graphics);
         cmd.BindPipeline(rgbPipeline);
+        cmd.PushAllocations(pushDesc);
         ExecuteIndirectDesc execIndirectDesc = {
             .indirectSet = indirectSet,
-            .maxDrawCount = 256,
+            .maxDrawCount = 128,
         };
         cmd.ExecuteIndirect(execIndirectDesc);
         cmd.EndRendering();
@@ -171,6 +194,7 @@ void mainLoop()
 
 void cleanupLettuce()
 {
+    alloc.Destroy();
     device.WaitFor(QueueType::Graphics);
     device.Destroy(rgbPipeline);
     device.Destroy(cullPipeline);

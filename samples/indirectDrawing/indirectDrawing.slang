@@ -11,6 +11,7 @@ struct VSOutput
 {
     float4 position : SV_Position;
     float3 color : COLOR0;
+    int idx;
 };
 
 struct VkDrawIndirectCommand
@@ -23,8 +24,8 @@ struct VkDrawIndirectCommand
 
 struct ParticleOut
 {
-    float3 color;
-    float2 pos; // NDC: [-1, 1]
+    float32_t3 color;
+    float32_t2 pos; // NDC: [-1, 1]
 };
 
 uint hash_u32(uint x)
@@ -56,39 +57,78 @@ ParticleOut generateParticle(uint tid_x)
 
     outv.pos = float2(
         r3 * 2.0 - 1.0,
-        r4 * 2.0 - 1.0
-    );
+        r4 * 2.0 - 1.0);
 
     return outv;
 }
 
-[require(compute, spirv)]
+struct IndirectBuffer
+{
+    uint count;
+    VkDrawIndirectCommand cmds[256];
+};
+
+struct ParticleBuffer
+{
+    ParticleOut particles[256];
+};
+
+struct PushConstants
+{
+    uint64_t indirectAddress;
+    uint64_t particleAddress;
+};
+
+[[vk::push_constant]]
+PushConstants pc;
+
+[require(compute, spirv_1_6)]
 [numthreads(32, 1, 1)]
 void compMain(uint3 DTid: SV_DispatchThreadID)
 {
     uint globalID = DTid.x;
+
+    if (globalID == 0 || globalID >= 128)
+        return;
+
+    Ptr<IndirectBuffer> indirect = reinterpret<Ptr<IndirectBuffer>>(pc.indirectAddress);
+    Ptr<ParticleOut> particles = reinterpret<Ptr<ParticleOut>>(pc.particleAddress);
+
+    var particle = generateParticle(globalID);
+
+    float padding = 0.8;
+    if (particle.pos.x < -padding || particle.pos.x > padding ||
+        particle.pos.y < -padding || particle.pos.y > padding)
+    {
+        // culled
+        return;
+    }
+
+    int val;
+    InterlockedAdd(indirect->count, 1, val);
+
+    indirect->cmds[globalID] = VkDrawIndirectCommand(3, 1, 0, 0);
+    particles[globalID] = particle;
 }
 
 [require(vertex, spirv)]
 [shader("vertex")]
-VSOutput vertexMain(uint vertexID: SV_VulkanVertexID)
+VSOutput vertexMain(uint vertexID: SV_VulkanVertexID, uint drawID: SV_DrawIndex)
 {
     VSOutput out;
 
+    float val = 0.1;
     float2 positions[3] = {
-        float2(0.0, -0.75),
-        float2(0.75, 0.75),
-        float2(-0.75, 0.75)
+        float2(0.0, -val),
+        float2(val, val),
+        float2(-val, val)
     };
 
-    out.position = float4(positions[vertexID % 3], 0.0, 1.0);
+    Ptr<ParticleOut> particles = reinterpret<Ptr<ParticleOut>>(pc.particleAddress);
+    var particle = particles[drawID];
 
-    float3 colors[3] = {
-        float3(1.0, 0.0, 0.0),
-        float3(0.0, 1.0, 0.0),
-        float3(0.0, 0.0, 1.0)
-    };
-    out.color = colors[vertexID % 3];
+    out.position = float4(positions[vertexID % 3] + particle.pos, 0.0, 1.0);
+    out.color = particle.color;
 
     return out;
 }

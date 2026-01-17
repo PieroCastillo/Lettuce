@@ -8,6 +8,7 @@
 #include <volk.h>
 
 // project headers
+#include "Lettuce/helper.hpp"
 #include "Lettuce/Core/api.hpp"
 #include "Lettuce/Core/DeviceImpl.hpp"
 #include "Lettuce/Core/common.hpp"
@@ -47,7 +48,7 @@ IndirectSet Device::CreateIndirectSet(const IndirectSetDesc& desc)
     VkBufferCreateInfo bufferCI = {
         .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
         .size = bufferSize,
-        .usage = VK_BUFFER_USAGE_INDIRECT_BUFFER_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
+        .usage = VK_BUFFER_USAGE_INDIRECT_BUFFER_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
         .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
     };
     handleResult(vkCreateBuffer(dev, &bufferCI, nullptr, &buffer));
@@ -69,11 +70,17 @@ IndirectSet Device::CreateIndirectSet(const IndirectSetDesc& desc)
         .memoryTypeIndex = findMemoryTypeIndex(dev, gpu, memReqs.memoryTypeBits, MemoryAccess::GPUOnly),
     };
     handleResult(vkAllocateMemory(dev, &memAlloc, nullptr, &mem));
-
     handleResult(vkBindBufferMemory(dev, buffer, mem, 0));
 
+    VkBufferDeviceAddressInfo addressInfo = {
+        .sType= VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO,
+        .buffer = buffer,
+    };
+    uint64_t address = vkGetBufferDeviceAddress(dev, &addressInfo);
+
+    DebugPrint("[INDIRECT SET]", "memory size: {}", bufferSize);
     // TODO: impl
-    return impl->indirectSets.allocate({ mem, buffer, desc.type, stride });
+    return impl->indirectSets.allocate({ mem, buffer, desc.type, stride, bufferSize, address });
 }
 
 void Device::Destroy(IndirectSet indirectSet)

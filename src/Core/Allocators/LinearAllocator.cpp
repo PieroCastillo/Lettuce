@@ -42,6 +42,9 @@ void Allocators::LinearAllocator::Create(Device dev, const LinearAllocatorDesc& 
 
     currentBufferCPUAddress = (uint64_t*)bufferInfo.cpuAddress;
     currentBufferGPUAddress = bufferInfo.gpuAddress;
+
+    
+    DebugPrint("[LINEAR ALLOCATOR]", "memory size: {}", bufferInfo.size);
 }
 
 void Allocators::LinearAllocator::Destroy()
