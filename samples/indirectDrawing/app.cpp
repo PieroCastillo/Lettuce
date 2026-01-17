@@ -152,7 +152,7 @@ void mainLoop()
             .srcAccess = PipelineAccess::Write,
             .srcStage = PipelineStage::ComputeShader,
             .dstAccess = PipelineAccess::Read,
-            .dstStage = PipelineStage::VertexShader,
+            .dstStage = PipelineStage::DrawIndirect,
         }, };
         cmd.Barrier(compVertBarrier);
 
