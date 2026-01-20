@@ -14,6 +14,7 @@ using namespace Lettuce::Core;
 
 void AsyncRecorder::Create(AsyncRecorderDesc desc)
 {
+    device = desc.device;
     CommandAllocatorDesc allocDesc = {
         .queueType = QueueType::Graphics,
     };
