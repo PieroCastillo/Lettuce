@@ -28,7 +28,7 @@ void Device::WaitFor(QueueType queueType)
     switch (queueType)
     {
     case QueueType::Graphics: queue = impl->m_graphicsQueue; break;
-    case QueueType::Compute: queue = impl->m_computeQueue;break;
+    case QueueType::Compute: queue = impl->m_computeQueue; break;
     case QueueType::Copy: queue = impl->m_transferQueue; break;
     }
     handleResult(vkQueueWaitIdle(queue));

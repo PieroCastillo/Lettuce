@@ -401,6 +401,8 @@ namespace Lettuce::Core
 
         void Barrier(std::span<const BarrierDesc> barriers);
         void PrepareTexture(Texture);
+
+        void Fill(MemoryView view, uint32_t value, uint32_t count);
     };
 }
 #endif // LETTUCE_CORE_API_HPP

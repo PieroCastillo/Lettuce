@@ -34,6 +34,7 @@ namespace Lettuce::Rendering
     private:
         struct Task
         {
+            uint32_t taskLevel;
             std::any userData;
             std::move_only_function<void(CommandBuffer, std::any)> recordFunc;
         };
@@ -49,13 +50,15 @@ namespace Lettuce::Rendering
         std::condition_variable taskCV;
 
         std::mutex cmdsMutex;
-        std::vector<CommandBuffer> cmds;
-        std::vector<uint32_t> counts;
+        std::vector<std::vector<CommandBuffer>> cmdLevels;
 
         std::atomic<uint32_t> pendingTasks;
+        std::atomic<uint32_t> currentLevel;
     public:
         void Create(AsyncRecorderDesc desc);
         void Destroy();
+
+        void Reset();
 
         void RecordAsync(std::any, std::move_only_function<void(CommandBuffer, std::any)>&&);
         void Barrier();

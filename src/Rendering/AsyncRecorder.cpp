@@ -20,9 +20,10 @@ void AsyncRecorder::Create(AsyncRecorderDesc desc)
     };
     allocators.resize(desc.threadCount);
 
-    // reserve for 48 Command buffers, are you gonna need more?
-    cmds.reserve(48);
-    counts.reserve(48);
+    // reserve for 16 levels, are you gonna need more?
+    cmdLevels.reserve(16);
+    stop = false;
+    currentLevel = 0;
 
     for (int threadID = 0; threadID < desc.threadCount; ++threadID)
     {
@@ -32,7 +33,7 @@ void AsyncRecorder::Create(AsyncRecorderDesc desc)
             {
                 auto alloc = allocators[threadID];
 
-                while (stop.load(std::memory_order_acquire))
+                while (!stop.load(std::memory_order_acquire))
                 {
                     // get task
                     Task task;
@@ -41,7 +42,7 @@ void AsyncRecorder::Create(AsyncRecorderDesc desc)
 
                         taskCV.wait(queueLock, [&] { return stop.load(std::memory_order_relaxed) || !taskQueue.empty(); });
                         if (stop && taskQueue.empty())
-                            return;
+                            continue;
                         task = std::move(taskQueue.front());
                         taskQueue.pop();
                     }
@@ -50,11 +51,11 @@ void AsyncRecorder::Create(AsyncRecorderDesc desc)
 
                     {
                         std::lock_guard lock(cmdsMutex);
-                        cmds.push_back(cmd);
-                        ++counts.back();
+                        cmdLevels[task.taskLevel].push_back(cmd);
                     }
 
-                    if (pendingTasks.fetch_sub(1, std::memory_order_acq_rel) == 1)
+                    auto oldPend = pendingTasks.fetch_sub(1, std::memory_order_acquire);
+                    if (oldPend == 1)
                     {
                         pendingTasks.notify_all();
                     }
@@ -76,8 +77,19 @@ void AsyncRecorder::Destroy()
         device.Destroy(allocators[threadID]);
         threads[threadID].join();
     }
-    cmds.clear();
-    counts.clear();
+    cmdLevels.clear();
+}
+
+void AsyncRecorder::Reset()
+{
+    std::lock_guard lock(cmdsMutex);
+    for (int id = 0; id < threads.size(); ++id)
+    {
+        device.Reset(allocators[id]);
+    }
+    cmdLevels.clear();
+    cmdLevels.push_back({});
+    currentLevel.store(0, std::memory_order_release);
 }
 
 void AsyncRecorder::RecordAsync(std::any userData, std::move_only_function<void(CommandBuffer, std::any)>&& record)
@@ -87,6 +99,7 @@ void AsyncRecorder::RecordAsync(std::any userData, std::move_only_function<void(
     std::lock_guard lockQueue(tasksMutex);
 
     auto task = Task{
+        .taskLevel = currentLevel.load(std::memory_order_acquire),
         .userData = userData,
         .recordFunc = std::move(record),
     };
@@ -100,7 +113,8 @@ void AsyncRecorder::Barrier()
     // mark that the next cmds go to another level
     // dont stop current buffer recording
     std::lock_guard lock(cmdsMutex);
-    counts.push_back(0);
+    cmdLevels.push_back({});
+    currentLevel.fetch_add(1, std::memory_order_release);
 }
 
 void AsyncRecorder::Submit(std::optional<Swapchain> optSwapchain)
@@ -116,11 +130,9 @@ void AsyncRecorder::Submit(std::optional<Swapchain> optSwapchain)
     std::pmr::monotonic_buffer_resource stackRes(stackBuffer, sizeof(stackBuffer));
     std::pmr::vector<std::span<CommandBuffer>> cmdsVec(&stackRes);
 
-    uint32_t offset = 0;
-    for (auto count : counts)
+    for (auto& levelCmds : cmdLevels)
     {
-        cmdsVec.emplace_back(cmds.data() + offset, count);
-        offset += count;
+        cmdsVec.push_back(std::span<CommandBuffer>(levelCmds));
     }
 
     CommandBufferSubmitDesc submitDesc = {

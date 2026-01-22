@@ -240,7 +240,7 @@ void Device::DisplayFrame(Swapchain swapchain)
         .pImageIndices = &info.currentImageIndex,
     };
     // TODO: further, we need to replace this usign a better sync system
-    handleResult(vkQueueWaitIdle(impl->m_graphicsQueue));
+    // handleResult(vkQueueWaitIdle(impl->m_graphicsQueue));
     handleResult(vkQueuePresentKHR(impl->m_graphicsQueue, &presentI));
     // wait for present complete
     info.currentImageIndex = (info.currentImageIndex + 1) % info.imageCount;

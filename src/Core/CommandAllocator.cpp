@@ -13,6 +13,7 @@
 #include <volk.h>
 
 // project headers
+#include "Lettuce/helper.hpp"
 #include "Lettuce/Core/api.hpp"
 #include "Lettuce/Core/DeviceImpl.hpp"
 #include "Lettuce/Core/common.hpp"
@@ -107,6 +108,7 @@ void Device::Submit(const CommandBufferSubmitDesc& desc)
     // per level
     auto waitValue = currentValue;
     auto signalValue = currentValue + 1;
+    DebugPrint("[QUEUE]", "submit desc start, initialWaitValue: {}", waitValue);
     for (int i = 0; i < desc.commandBuffers.size(); ++i)
     {
         // per cmd
@@ -115,6 +117,7 @@ void Device::Submit(const CommandBufferSubmitDesc& desc)
             auto cmd = (VkCommandBuffer)(desc.commandBuffers[i][j].impl.handle);
             handleResult(vkEndCommandBuffer(cmd));
 
+            DebugPrint("[QUEUE]","cmd handle: {}", (uint32_t)cmd);
             cmdInfos[(i * maxCmdLevels) + j] = {
                 .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_SUBMIT_INFO,
                 .commandBuffer = cmd,
@@ -126,7 +129,7 @@ void Device::Submit(const CommandBufferSubmitDesc& desc)
             .sType = VK_STRUCTURE_TYPE_SEMAPHORE_SUBMIT_INFO,
             .semaphore = semaphore,
             .value = waitValue,
-            .stageMask = VK_PIPELINE_STAGE_NONE,
+            .stageMask = VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT,
             .deviceIndex = 0,
         };
         // signal
@@ -134,22 +137,28 @@ void Device::Submit(const CommandBufferSubmitDesc& desc)
             .sType = VK_STRUCTURE_TYPE_SEMAPHORE_SUBMIT_INFO,
             .semaphore = semaphore,
             .value = signalValue,
-            .stageMask = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
+            .stageMask = VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT,
             .deviceIndex = 0,
         };
 
         submits[i] = {
             .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO_2,
-            .waitSemaphoreInfoCount = 1,
+            .waitSemaphoreInfoCount = 1u,
             .pWaitSemaphoreInfos = &semInfos[2 * i],
             .commandBufferInfoCount = (uint32_t)(desc.commandBuffers[i].size()),
             .pCommandBufferInfos = &cmdInfos[i * maxCmdLevels],
             .signalSemaphoreInfoCount = 1,
             .pSignalSemaphoreInfos = &semInfos[2 * i + 1],
         };
-        ++waitValue;
+        
+        DebugPrint("[QUEUE]", R"(wait value: {}
+        signal value: {}
+        cmd count: {})", waitValue, signalValue, desc.commandBuffers[i].size());
+
+        waitValue = signalValue;
         ++signalValue;
     }
+    DebugPrint("[QUEUE]", "submit desc end");
 
     if (desc.presentSwapchain)
     {
@@ -158,7 +167,7 @@ void Device::Submit(const CommandBufferSubmitDesc& desc)
             .sType = VK_STRUCTURE_TYPE_SEMAPHORE_SUBMIT_INFO,
             .semaphore = semaphore,
             .value = waitValue,
-            .stageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+            .stageMask = VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT,
             .deviceIndex = 0,
         };
         // signal binary semaphore
@@ -166,7 +175,7 @@ void Device::Submit(const CommandBufferSubmitDesc& desc)
         semInfos[semInfos.size() - 1] = {
             .sType = VK_STRUCTURE_TYPE_SEMAPHORE_SUBMIT_INFO,
             .semaphore = swp.presentSemaphores[(int)(swp.currentImageIndex)],
-            .stageMask = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
+            .stageMask = VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT,
             .deviceIndex = 0,
         };
 

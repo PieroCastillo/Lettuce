@@ -257,3 +257,8 @@ void CommandBuffer::PrepareTexture(Texture texture)
     };
     vkCmdPipelineBarrier2((VkCommandBuffer)impl.handle, &depInfo);
 }
+
+void CommandBuffer::Fill(MemoryView view, uint32_t value, uint32_t count)
+{
+    vkCmdFillBuffer((VkCommandBuffer)impl.handle,  impl.device->buffers.get(view.buffer).buffer, view.offset, count*sizeof(uint32_t), value);
+}
