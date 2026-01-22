@@ -108,7 +108,6 @@ void Device::Submit(const CommandBufferSubmitDesc& desc)
     // per level
     auto waitValue = currentValue;
     auto signalValue = currentValue + 1;
-    DebugPrint("[QUEUE]", "submit desc start, initialWaitValue: {}", waitValue);
     for (int i = 0; i < desc.commandBuffers.size(); ++i)
     {
         // per cmd
@@ -117,7 +116,6 @@ void Device::Submit(const CommandBufferSubmitDesc& desc)
             auto cmd = (VkCommandBuffer)(desc.commandBuffers[i][j].impl.handle);
             handleResult(vkEndCommandBuffer(cmd));
 
-            DebugPrint("[QUEUE]","cmd handle: {}", (uint32_t)cmd);
             cmdInfos[(i * maxCmdLevels) + j] = {
                 .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_SUBMIT_INFO,
                 .commandBuffer = cmd,
@@ -151,14 +149,9 @@ void Device::Submit(const CommandBufferSubmitDesc& desc)
             .pSignalSemaphoreInfos = &semInfos[2 * i + 1],
         };
         
-        DebugPrint("[QUEUE]", R"(wait value: {}
-        signal value: {}
-        cmd count: {})", waitValue, signalValue, desc.commandBuffers[i].size());
-
         waitValue = signalValue;
         ++signalValue;
     }
-    DebugPrint("[QUEUE]", "submit desc end");
 
     if (desc.presentSwapchain)
     {

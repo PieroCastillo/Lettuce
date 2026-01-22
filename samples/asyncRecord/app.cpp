@@ -151,13 +151,6 @@ void mainLoop()
             .dstStage = PipelineStage::Copy,
         }, };
 
-        BarrierDesc attachAttachBarrier[] = { {
-            .srcAccess = PipelineAccess::Write,
-            .srcStage = PipelineStage::ColorAttachmentOutput,
-            .dstAccess = PipelineAccess::Write,
-            .dstStage = PipelineStage::ColorAttachmentOutput,
-        }, };
-
         BarrierDesc copyVertBarrier[] = { {
             .srcAccess = PipelineAccess::Write,
             .srcStage = PipelineStage::Copy,
@@ -195,7 +188,6 @@ void mainLoop()
         rec.Barrier();
         rec.RecordAsync(std::nullopt, [&](CommandBuffer cmd, std::any _)
             {
-                cmd.Barrier(attachAttachBarrier);
                 cmd.Fill(particlesView, 1, 1);
                 cmd.Barrier(copyVertBarrier);
                 AttachmentDesc colorAttachment[1] = {
