@@ -67,7 +67,7 @@ ShaderBinary AssetLoader::LoadSpirv(std::string_view path)
     return m_device.CreateShader(desc);
 }
 
-Texture AssetLoader::LoadKtx2Texture(std::string_view path, uint32_t levelCount)
+Texture AssetLoader::LoadKtx2Texture(std::string_view path, uint32_t levelCount, bool highQuality)
 {
     // Lettuce Target is Desktop Platform & Modern Devices
     // So, needs to support
@@ -96,15 +96,20 @@ Texture AssetLoader::LoadKtx2Texture(std::string_view path, uint32_t levelCount)
         return {};
     }
 
+    if (ktxTexture2_NeedsTranscoding(kTexture))
+    {
+        DebugPrint("[ASSET LOADER]", "image transcoding initializated");
+        ktxTexture2_Destroy(kTexture);
+        auto res = ktxTexture2_CreateFromNamedFile(pathStr.c_str(), KTX_TEXTURE_CREATE_NO_FLAGS, &kTexture);
+
+        ktx_transcode_fmt_e tf = highQuality ? KTX_TTF_BC7_RGBA : KTX_TTF_BC1_OR_3;
+        auto resTranscoding = ktxTexture2_TranscodeBasis(kTexture, tf, 0);
+    }
+
     // get params & data
     uint32_t texWidth = kTexture->baseWidth;
     uint32_t texHeight = kTexture->baseHeight;
     uint32_t texMipLevels = kTexture->numLevels;
-
-    if (ktxTexture2_NeedsTranscoding(kTexture))
-    {
-        // TODO: impl basis universal
-    }
 
     uint64_t imageSize = kTexture->dataSize;
     uint8_t* texData = kTexture->pData;
