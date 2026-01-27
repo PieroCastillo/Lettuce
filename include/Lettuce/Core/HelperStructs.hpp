@@ -12,7 +12,6 @@ Created by @PieroCastillo on 2025-12-26
 // project headers
 #include "api.hpp"
 #include "common.hpp"
-#include "HelperStructs.hpp"
 
 namespace Lettuce::Core
 {

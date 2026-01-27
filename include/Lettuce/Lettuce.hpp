@@ -4,6 +4,10 @@
 #include "Core/HelperStructs.hpp"
 #include "Core/ResourcePool.hpp"
 
+// composition
+#include "Composition/api.hpp"
+#include "Composition/helpers.hpp"
+
 // allocators
 #include "Core/Allocators/LinearAllocator.hpp"
 #include "Core/Allocators/IGPUMemoryResource.hpp"
