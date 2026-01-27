@@ -8,11 +8,11 @@ Created by @PieroCastillo on 2026-01-25
 #include <cstdint>
 #include <span>
 
-#include "Core/api.hpp"
+#include "../Core/api.hpp"
 
 using namespace Lettuce::Core;
 
-#define DeclareProperty(HandleType, Name, Type) \
+#define DeclareAnimatableProperty(HandleType, Name, Type) \
     auto Get##Name(##HandleType handle) -> ##Type; \
     void Set##Name(##HandleType handle, ##Type value); \
     void Set##Name##Animation(##HandleType handle, AnimationToken token); \
@@ -48,12 +48,15 @@ namespace Lettuce::Composition
     };
 
     enum class BrushType : uint8_t {
-        SolidColor,
-        LinearGradient,
-        RadialGradient,
-        Texture,
-        Acrylic,
-        Noise,
+        SolidColor,          // Flat color surface
+        LinearGradient,      // Linear color interpolation
+        RadialGradient,      // Radial color interpolation
+        Texture,             // Textured surface
+        NormalMap,           // Surface with normal mapping for lighting
+        Metallic,            // Metallic surface
+        Roughness,           // Roughness variation
+        Noise,               // Procedural noise texture
+        Distortion,          // UV distortion
     };
 
     enum class EasingMode : uint8_t {
@@ -76,10 +79,16 @@ namespace Lettuce::Composition
     };
 
     enum class EffectType : uint8_t {
-        Blur,
-        DropShadow,
-        Glow,
-        Saturation,
+        Blur,           // Gaussian blur
+        DropShadow,     // Shadow overlay
+        InnerShadow,    // Inset shadow
+        Glow,           // Outer glow
+        Saturation,     // Color saturation adjustment
+        Brightness,     // Brightness adjustment
+        Contrast,       // Contrast adjustment
+        HueRotate,      // Hue rotation
+        Acrylic,        // Frosted glass effect (blur + tint + noise)
+        Glass,          // Glass/transparency effect
     };
 
     enum class BlendMode : uint8_t {
@@ -109,10 +118,19 @@ namespace Lettuce::Composition
 
     struct BrushDesc {
         BrushType type;
+        // Color properties
         Color color;
         Color secondaryColor;
-        float blurAmount;
+        // Texture properties
         Texture texture;
+        Texture normalMap;     // For NormalMap brush
+        // Material properties (for PBR lighting)
+        float metallic;      // 0.0 = dielectric, 1.0 = metal
+        float roughness;     // 0.0 = smooth, 1.0 = rough
+        // Distortion properties
+        float distortionStrength;
+        float noiseScale;
+        float noiseIntensity;
     };
 
     struct GradientStop {
@@ -134,8 +152,17 @@ namespace Lettuce::Composition
         Color color;
         Vec2 offset;
         float radius;
+        // Acrylic/Glass
+        float blurAmount;
+        float tintOpacity;
+        Color tintColor;
+        float noiseIntensity;
+        // Color adjustment
+        float saturation;    // For Saturation effect
+        float brightness;    // For Brightness effect
+        float contrast;      // For Contrast effect
+        float hueRotation;   // For HueRotate effect (degrees)
     };
-
     struct CompositorDesc {
         Device device;
         uint32_t maxVisuals;
@@ -202,7 +229,7 @@ namespace Lettuce::Composition
         void PauseAnimations(Light light);
         void PauseAnimations(Effect effect);
         void PauseAnimation(AnimationToken animation);
-        
+
         void ResumeAnimations(Visual visual);
         void ResumeAnimations(Brush brush);
         void ResumeAnimations(Light light);
@@ -225,27 +252,40 @@ namespace Lettuce::Composition
         auto GetAnimationCount() -> uint32_t;
 
         // Animatable Properties
-        DeclareProperty(Visual, Position, Vec2)
-        DeclareProperty(Visual, Size, Vec2)
-        DeclareProperty(Visual, Scale, Vec2)
-        DeclareProperty(Visual, Rotation, float)
-        DeclareProperty(Visual, AnchorPoint, Vec2)
-        DeclareProperty(Visual, Opacity, float)
-        DeclareProperty(Visual, CornerRadius, float)
-        DeclareProperty(Visual, BorderWidth, float)
+        DeclareAnimatableProperty(Visual, Position, Vec2);
+        DeclareAnimatableProperty(Visual, Size, Vec2);
+        DeclareAnimatableProperty(Visual, Scale, Vec2);
+        DeclareAnimatableProperty(Visual, Rotation, float);
+        DeclareAnimatableProperty(Visual, AnchorPoint, Vec2);
+        DeclareAnimatableProperty(Visual, Opacity, float);
+        DeclareAnimatableProperty(Visual, CornerRadius, float);
+        DeclareAnimatableProperty(Visual, BorderWidth, float);
 
-        DeclareProperty(Brush, BrushColor, Color)
-        DeclareProperty(Brush, BrushOpacity, float)
+        DeclareAnimatableProperty(Light, LightColor, Color);
+        DeclareAnimatableProperty(Light, LightIntensity, float);
+        DeclareAnimatableProperty(Light, LightPosition, Vec3);
+        DeclareAnimatableProperty(Light, LightDirection, Vec3);
 
-        DeclareProperty(Light, LightColor, Color)
-        DeclareProperty(Light, LightIntensity, float)
-        DeclareProperty(Light, LightPosition, Vec3)
-        DeclareProperty(Light, LightDirection, Vec3)
+        DeclareAnimatableProperty(Brush, BrushColor, Color);
+        DeclareAnimatableProperty(Brush, BrushSecondaryColor, Color);
+        DeclareAnimatableProperty(Brush, BrushMetallic, float);
+        DeclareAnimatableProperty(Brush, BrushRoughness, float);
+        DeclareAnimatableProperty(Brush, BrushDistortionStrength, float);
+        DeclareAnimatableProperty(Brush, BrushNoiseScale, float);
+        DeclareAnimatableProperty(Brush, BrushNoiseIntensity, float);
 
-        DeclareProperty(Effect, EffectIntensity, float)
-        DeclareProperty(Effect, EffectColor, Color)
-        DeclareProperty(Effect, EffectOffset, Vec2)
-        DeclareProperty(Effect, EffectRadius, float)
+        DeclareAnimatableProperty(Effect, EffectIntensity, float);
+        DeclareAnimatableProperty(Effect, EffectColor, Color);
+        DeclareAnimatableProperty(Effect, EffectOffset, Vec2);
+        DeclareAnimatableProperty(Effect, EffectRadius, float);
+        DeclareAnimatableProperty(Effect, EffectBlurAmount, float);
+        DeclareAnimatableProperty(Effect, EffectTintOpacity, float);
+        DeclareAnimatableProperty(Effect, EffectTintColor, Color);
+        DeclareAnimatableProperty(Effect, EffectNoiseIntensity, float);
+        DeclareAnimatableProperty(Effect, EffectSaturation, float);
+        DeclareAnimatableProperty(Effect, EffectBrightness, float);
+        DeclareAnimatableProperty(Effect, EffectContrast, float);
+        DeclareAnimatableProperty(Effect, EffectHueRotation, float);
     };
-}
+};
 #endif // LETTUCE_COMPOSITION_API_HPP

@@ -56,6 +56,7 @@ namespace Lettuce::Composition::Helpers
     constexpr Vec2 One = { 1.0f, 1.0f };
     constexpr Vec3 Zero3 = { 0.0f, 0.0f, 0.0f };
 
+    // Animation Presets
     constexpr AnimationDesc DefaultAnimation() {
         return { 300,0, 1, EasingMode::EaseInOut, true, 0.25f, 0.1f, 0.25f, 1.0f };
     }
@@ -96,6 +97,18 @@ namespace Lettuce::Composition::Helpers
         return { 400.0f, 25.0f, 1.0f };
     }
 
+    // Light Presets
+    constexpr LightDesc AmbientLight(Color color = White, float intensity = 0.5f) {
+        return { LightType::Ambient, color, intensity };
+    }
+    constexpr LightDesc PointLight(Vec3 position, Color color = White, float intensity = 1.0f) {
+        return { LightType::Point, color, intensity, position };
+    }
+    constexpr LightDesc SpotLight(Vec3 position, Vec3 direction, Color color = White, float intensity = 1.0f) {
+        return { LightType::Spot, color, intensity, position, direction };
+    }
+
+    // Brush Presets
     constexpr BrushDesc SolidColorBrush(Color color) {
         return { BrushType::SolidColor, color };
     }
@@ -105,34 +118,81 @@ namespace Lettuce::Composition::Helpers
     constexpr BrushDesc RadialGradientBrush(Color center, Color edge) {
         return { BrushType::RadialGradient, center, edge };
     }
-    constexpr BrushDesc AcrylicBrush(Color tint, float blurAmount = 30.0f) {
-        return { BrushType::Acrylic, tint, Black, blurAmount };
-    }
-    constexpr BrushDesc NoiseBrush(Color baseColor = White) {
-        return { BrushType::Noise, baseColor };
-    }
     inline BrushDesc TextureBrush(Texture texture) {
-        return { BrushType::Texture, White, Black, 0.0f, texture };
+        return { BrushType::Texture,  White,  Black, texture };
+    }
+    inline BrushDesc NormalMappedBrush(Texture albedo, Texture normalMap) {
+        BrushDesc desc{ BrushType::NormalMap,  White };
+        desc.texture = albedo;
+        desc.normalMap = normalMap;
+        return desc;
+    }
+    constexpr BrushDesc MetallicBrush(Color color, float metallic = 1.0f, float roughness = 0.2f) {
+        BrushDesc desc{ BrushType::Metallic, color };
+        desc.metallic = metallic;
+        desc.roughness = roughness;
+        return desc;
+    }
+    constexpr BrushDesc NoiseBrush(Color baseColor = White, float scale = 1.0f, float intensity = 1.0f) {
+        BrushDesc desc{ BrushType::Noise, baseColor };
+        desc.noiseScale = scale;
+        desc.noiseIntensity = intensity;
+        return desc;
+    }
+    inline BrushDesc DistortionBrush(Texture distortionMap, float strength = 1.0f) {
+        BrushDesc desc{ BrushType::Distortion,  White };
+        desc.texture = distortionMap;
+        desc.distortionStrength = strength;
+        return desc;
     }
 
-    constexpr LightDesc DefaultLight() {
-        return { LightType::Point, White, 1.0f, {0.0f, 0.0f, 100.0f}, {0.0f, 0.0f, -1.0f} };
-    }
-    constexpr LightDesc AmbientLight(Color color = White, float intensity = 0.5f) {
-        return { LightType::Ambient, color, intensity };
-    }
-    constexpr LightDesc PointLight(Vec3 position, Color color = White, float intensity = 1.0f) {
-        return { LightType::Point, color, intensity, position };
-    }
-
+    // Effect Presets
     constexpr EffectDesc DropShadow(Vec2 offset = { 0, 4 }, float radius = 8.0f, Color color = { 0, 0, 0, 0.3f }) {
         return { EffectType::DropShadow, 1.0f, color, offset, radius };
+    }
+    constexpr EffectDesc InnerShadow(Vec2 offset = { 0, 2 }, float radius = 4.0f, Color color = { 0, 0, 0, 0.5f }) {
+        return { EffectType::InnerShadow, 1.0f, color, offset, radius };
     }
     constexpr EffectDesc BlurEffect(float radius = 5.0f) {
         return { EffectType::Blur, 1.0f,  Black, Zero2, radius };
     }
     constexpr EffectDesc GlowEffect(Color color, float radius = 10.0f) {
         return { EffectType::Glow, 1.0f, color, Zero2, radius };
+    }
+    constexpr EffectDesc AcrylicEffect(Color tint = White, float blur = 30.0f, float tintOpacity = 0.8f) {
+        EffectDesc desc{ EffectType::Acrylic, 1.0f };
+        desc.tintColor = tint;
+        desc.blurAmount = blur;
+        desc.tintOpacity = tintOpacity;
+        desc.noiseIntensity = 0.02f;
+        return desc;
+    }
+    constexpr EffectDesc GlassEffect(float blur = 20.0f, float tintOpacity = 0.5f) {
+        EffectDesc desc{ EffectType::Glass, 1.0f };
+        desc.blurAmount = blur;
+        desc.tintOpacity = tintOpacity;
+        desc.tintColor = White;
+        return desc;
+    }
+    constexpr EffectDesc SaturationEffect(float saturation = 0.0f) {  // 0.0 = grayscale, 1.0 = normal, >1.0 = hyper
+        EffectDesc desc{ EffectType::Saturation, 1.0f };
+        desc.saturation = saturation;
+        return desc;
+    }
+    constexpr EffectDesc BrightnessEffect(float brightness = 1.2f) {  // 1.0 = normal
+        EffectDesc desc{ EffectType::Brightness, 1.0f };
+        desc.brightness = brightness;
+        return desc;
+    }
+    constexpr EffectDesc ContrastEffect(float contrast = 1.5f) {  // 1.0 = normal
+        EffectDesc desc{ EffectType::Contrast, 1.0f };
+        desc.contrast = contrast;
+        return desc;
+    }
+    constexpr EffectDesc HueRotateEffect(float degrees = 180.0f) {
+        EffectDesc desc{ EffectType::HueRotate, 1.0f };
+        desc.hueRotation = degrees;
+        return desc;
     }
 }
 
