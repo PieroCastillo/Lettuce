@@ -12,3 +12,38 @@
 #include "Lettuce/Composition/HelperStructs.hpp"
 
 using namespace Lettuce::Composition;
+
+void Compositor::SetBrushColorAnimation(Brush handle, AnimationToken token)
+{
+
+}
+
+void Compositor::SetBrushSecondaryColorAnimation(Brush handle, AnimationToken token)
+{
+
+}
+
+void Compositor::SetBrushMetallicAnimation(Brush handle, AnimationToken token)
+{
+
+}
+
+void Compositor::SetBrushRoughnessAnimation(Brush handle, AnimationToken token)
+{
+
+}
+
+void Compositor::SetBrushDistortionStrengthAnimation(Brush handle, AnimationToken token)
+{
+
+}
+
+void Compositor::SetBrushNoiseScaleAnimation(Brush handle, AnimationToken token)
+{
+
+}
+
+void Compositor::SetBrushNoiseIntensityAnimation(Brush handle, AnimationToken token)
+{
+
+}

@@ -12,3 +12,23 @@
 #include "Lettuce/Composition/HelperStructs.hpp"
 
 using namespace Lettuce::Composition;
+
+void Compositor::SetLightColorAnimation(Light handle, AnimationToken token)
+{
+
+}
+
+void Compositor::SetLightIntensityAnimation(Light handle, AnimationToken token)
+{
+
+}
+
+void Compositor::SetLightPositionAnimation(Light handle, AnimationToken token)
+{
+
+}
+
+void Compositor::SetLightDirectionAnimation(Light handle, AnimationToken token)
+{
+
+}

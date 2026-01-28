@@ -13,27 +13,27 @@
 
 using namespace Lettuce::Composition;
 
-auto Compositor::CreateBrush(const BrushDesc& type) -> Brush
+auto Compositor::CreateEffect(const EffectDesc& desc) -> Effect
 {
     return {};
 }
 
-void Compositor::DestroyBrush(Brush brush)
+void Compositor::DestroyEffect(Effect effect)
 {
 
 }
 
-void Compositor::SetBrush(Visual visual, Brush brush)
+void Compositor::AddEffect(Visual visual, Effect effect)
 {
 
 }
 
-void Compositor::SetBorderBrush(Visual visual, Brush brush)
+void Compositor::RemoveEffect(Visual visual, Effect effect)
 {
 
 }
 
-void Compositor::SetBrushGradientStops(Brush brush, std::span<const GradientStop> stops)
+void Compositor::ClearEffects(Visual visual)
 {
 
 }
