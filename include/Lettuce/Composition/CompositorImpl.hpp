@@ -10,6 +10,7 @@ Created by @PieroCastillo on 2026-01-27
 // project headers
 #include "api.hpp"
 #include "../Core/Allocators/LinearAllocator.hpp"
+#include "../Core/ResourcePool.hpp"
 
 using namespace Lettuce::Core;
 
@@ -38,11 +39,12 @@ namespace Lettuce::Composition
         
         Allocators::LinearAllocator memAlloc;
         MemoryView queuedAnimationsView;
+        MemoryView animationsView;
         MemoryView visualsView;
         MemoryView brushesView;
         MemoryView lightsView;
         MemoryView effectsView;
-        RenderTarget objectsTarget; // BrushDataID/EffectDataID/LightDataID per pixel
+        RenderTarget objectsTarget;  // BrushDataID/EffectDataID/LightDataID per pixel
         RenderTarget renderTarget;   // EffectPass writes here
 
         DescriptorTable descriptorTable;

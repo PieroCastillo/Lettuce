@@ -34,6 +34,42 @@ target("Lettuce")
     add_packages("volk", "glfw", "ktx", "glm", "fastgltf", "slang", "spirv-reflect")
     add_rules("utils.symbols.export_all", {export_classes = true})
 
+    after_build(function (target) 
+        import("core.base.process")
+
+        local slang_files = os.files("src/**.slang")
+
+        local outdir = path.absolute(target:targetdir())
+        os.mkdir(outdir)
+
+        if #slang_files ~= 0 then
+            for _, f in ipairs(slang_files) do
+                local outfile = path.join(outdir, path.basename(f) .. ".spv")
+
+                local args = { 
+                    '-matrix-layout-column-major',
+                    '-fvk-use-entrypoint-name',
+                    '-fvk-use-scalar-layout', 
+                    "-profile", 
+                    "spirv_1_6",
+                    "-capability", 
+                    "SPV_EXT_descriptor_indexing",
+                    "-target", "spirv",
+                    "-o", outfile, f}
+
+                local proc = process.openv("slangc", args)
+                local ok, status = proc:wait()
+                proc:close()
+
+                if ok < 0 then
+                    print(string.format("warning: failed to compile %s", f))
+                else
+                    print(string.format("compiled %s -> %s", f, path.relative(outfile, outdir)))
+                end
+            end       
+        end
+    end)
+
 local samples = {
     "asyncRecord",
     "cubemap",

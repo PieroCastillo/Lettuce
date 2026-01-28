@@ -15,12 +15,12 @@ using namespace Lettuce::Composition;
 
 void Compositor::Create(const CompositorDesc& desc)
 {
-
+    impl = new CompositorImpl;
 }
 
 void Compositor::Destroy()
 {
-
+    delete impl;
 }
 
 void Compositor::BeginBatch()
