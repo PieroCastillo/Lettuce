@@ -12,9 +12,9 @@
 using namespace Lettuce::Rendering;
 using namespace Lettuce::Core;
 
-void AsyncRecorder::Create(AsyncRecorderDesc desc)
+void AsyncRecorder::Create(const AsyncRecorderDesc& desc)
 {
-    device = desc.device;
+    device = &(desc.device);
     CommandAllocatorDesc allocDesc = {
         .queueType = QueueType::Graphics,
     };
@@ -27,7 +27,7 @@ void AsyncRecorder::Create(AsyncRecorderDesc desc)
 
     for (int threadID = 0; threadID < desc.threadCount; ++threadID)
     {
-        allocators[threadID] = device.CreateCommandAllocator(allocDesc);
+        allocators[threadID] = device->CreateCommandAllocator(allocDesc);
 
         threads.emplace_back([this, threadID]
             {
@@ -46,7 +46,7 @@ void AsyncRecorder::Create(AsyncRecorderDesc desc)
                         task = std::move(taskQueue.front());
                         taskQueue.pop();
                     }
-                    auto cmd = device.AllocateCommandBuffer(allocators[threadID]);
+                    auto cmd = device->AllocateCommandBuffer(allocators[threadID]);
                     task.recordFunc(cmd, task.userData);
 
                     {
@@ -74,7 +74,7 @@ void AsyncRecorder::Destroy()
 
     for (int threadID = 0; threadID < threads.size(); ++threadID)
     {
-        device.Destroy(allocators[threadID]);
+        device->Destroy(allocators[threadID]);
         threads[threadID].join();
     }
     cmdLevels.clear();
@@ -85,7 +85,7 @@ void AsyncRecorder::Reset()
     std::lock_guard lock(cmdsMutex);
     for (int id = 0; id < threads.size(); ++id)
     {
-        device.Reset(allocators[id]);
+        device->Reset(allocators[id]);
     }
     cmdLevels.clear();
     cmdLevels.push_back({});
@@ -140,5 +140,5 @@ void AsyncRecorder::Submit(std::optional<Swapchain> optSwapchain)
         .commandBuffers = std::span(cmdsVec),
         .presentSwapchain = optSwapchain,
     };
-    device.Submit(submitDesc);
+    device->Submit(submitDesc);
 }

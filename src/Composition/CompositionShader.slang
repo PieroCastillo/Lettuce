@@ -18,12 +18,6 @@ PushConstants pc;
 
 [require(compute, spirv_1_6)]
 [numthreads(32, 1, 1)]
-void queuedAnimationsPassMain(uint3 DTid: SV_DispatchThreadID)
-{
-}
-
-[require(compute, spirv_1_6)]
-[numthreads(32, 1, 1)]
 void animationsPassMain(uint3 DTid: SV_DispatchThreadID)
 {
 }

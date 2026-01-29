@@ -18,9 +18,9 @@
 using namespace Lettuce::Utils;
 using namespace Lettuce::Core::Allocators;
 
-void AssetLoader::Create(Device device, const AssetLoaderDesc& desc)
+void AssetLoader::Create(Device& device, const AssetLoaderDesc& desc)
 {
-    m_device = device;
+    m_device = &device;
 
     m_tempMem = std::make_unique<LinearAllocator>();
     m_resAlloc = std::make_unique<LinearAllocator>(); // temp, next replace with HeapAllocator
@@ -44,7 +44,7 @@ void AssetLoader::Create(Device device, const AssetLoaderDesc& desc)
 
 void AssetLoader::Destroy()
 {
-    m_device.Destroy(m_cmds);
+    m_device->Destroy(m_cmds);
     static_cast<LinearAllocator*>(m_resAlloc.get())->Destroy();
     static_cast<LinearAllocator*>(m_tempMem.get())->Destroy();
 }
@@ -64,7 +64,7 @@ ShaderBinary AssetLoader::LoadSpirv(std::string_view path)
     ShaderBinaryDesc desc = {
         .bytecode = shadersBuffer,
     };
-    return m_device.CreateShader(desc);
+    return m_device->CreateShader(desc);
 }
 
 Texture AssetLoader::LoadKtx2Texture(std::string_view path, uint32_t levelCount, bool highQuality)
@@ -134,7 +134,7 @@ Texture AssetLoader::LoadKtx2Texture(std::string_view path, uint32_t levelCount,
     };
     auto tex = m_resAlloc->AllocateTexture(desc);
 
-    auto cmd = m_device.AllocateCommandBuffer(m_cmds);
+    auto cmd = m_device->AllocateCommandBuffer(m_cmds);
 
     cmd.PrepareTexture(tex);
     // create copies for the first mipmap, next blit levels
@@ -153,10 +153,10 @@ Texture AssetLoader::LoadKtx2Texture(std::string_view path, uint32_t levelCount,
         .queueType = QueueType::Copy,
         .commandBuffers = std::span(cmdArr),
     };
-    m_device.Submit(cmdDesc);
+    m_device->Submit(cmdDesc);
 
     // here the host waits; delete it for future async impls
-    m_device.WaitFor(QueueType::Copy);
+    m_device->WaitFor(QueueType::Copy);
 
     static_cast<LinearAllocator*>(m_tempMem.get())->ResetMemory();
     ktxTexture2_Destroy(kTexture);

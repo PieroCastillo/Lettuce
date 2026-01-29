@@ -25,7 +25,7 @@ namespace Lettuce::Rendering
 {
     struct AsyncRecorderDesc
     {
-        Device device;
+        Device& device;
         uint32_t threadCount;
     };
 
@@ -39,7 +39,7 @@ namespace Lettuce::Rendering
             std::move_only_function<void(CommandBuffer, std::any)> recordFunc;
         };
 
-        Device device;
+        Device* device;
         std::vector<std::jthread> threads;
         std::vector<CommandAllocator> allocators;
 
@@ -55,7 +55,7 @@ namespace Lettuce::Rendering
         std::atomic<uint32_t> pendingTasks;
         std::atomic<uint32_t> currentLevel;
     public:
-        void Create(AsyncRecorderDesc desc);
+        void Create(const AsyncRecorderDesc& desc);
         void Destroy();
 
         void Reset();

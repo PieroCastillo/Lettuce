@@ -5,10 +5,13 @@ Created by @PieroCastillo on 2026-01-27
 #define LETTUCE_COMPOSITION_COMPOSITOR_IMPL_HPP
 
 // standard headers
+#include <atomic>
+#include <thread>
 #include <vector>
 
 // project headers
 #include "api.hpp"
+#include "HelperStructs.hpp"
 #include "../Core/Allocators/LinearAllocator.hpp"
 #include "../Core/ResourcePool.hpp"
 
@@ -32,9 +35,9 @@ namespace Lettuce::Composition
     */
     class CompositorImpl
     {
-    private:
+    public:
         // Lettuce Objects
-        Device device;
+        Device* device;
         CommandAllocator cmdAlloc;
         
         Allocators::LinearAllocator memAlloc;
@@ -53,7 +56,25 @@ namespace Lettuce::Composition
         Pipeline pBrushesPass;
         Pipeline pLightingPass;
         Pipeline pEffectPass;
-    public:
+
+        // Resource Pools
+        ResourcePool<Visual, VisualInfo> visuals;
+        ResourcePool<Brush, BrushInfo> brushes;
+        ResourcePool<Light, LightInfo> lights;
+        ResourcePool<Effect, EffectInfo> effects;
+        ResourcePool<AnimationToken, AnimationTokenInfo> animationTokens;
+
+        // Synchronization Primitives
+        std::atomic<bool> stop;
+        std::thread compositorThread;
+
+        void Create(const CompositorDesc& desc);
+        void Destroy();
+
+        void CreateResources();
+        void CreatePipelines();
+        
+        void MainLoop();
     };
 };
 

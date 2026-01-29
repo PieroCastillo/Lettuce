@@ -12,6 +12,31 @@ Created by @PieroCastillo on 2026-01-25
 
 namespace Lettuce::Composition
 {
+    struct VisualInfo
+    {
+
+    };
+
+    struct AnimationTokenInfo
+    {
+
+    };
+
+    struct BrushInfo
+    {
+
+    };
+
+    struct LightInfo
+    {
+
+    };
+
+    struct EffectInfo
+    {
+
+    };
+
     struct VisualGPUData
     {
         Vec2 Position;
@@ -37,7 +62,7 @@ namespace Lettuce::Composition
         float bezierY2;
     };
 
-    struct BrushData
+    struct BrushGPUData
     {        
         BrushType type;
         Color color;
@@ -51,7 +76,7 @@ namespace Lettuce::Composition
         float noiseIntensity;
     };
 
-    struct LightData
+    struct LightGPUData
     {        
         LightType type;
         Color color;
@@ -60,7 +85,7 @@ namespace Lettuce::Composition
         Vec3 direction;
     };
 
-    struct EffectData
+    struct EffectGPUData
     {        
         EffectType type;
         float intensity;

@@ -163,10 +163,15 @@ namespace Lettuce::Composition
         float contrast;      // For Contrast effect
         float hueRotation;   // For HueRotate effect (degrees)
     };
+
     struct CompositorDesc {
-        Device device;
+        Device& device;
         uint32_t maxVisuals;
+        uint32_t maxBrushes;
+        uint32_t maxLights;
+        uint32_t maxEffects;
         uint32_t maxAnimations;
+        uint32_t maxLinkedTextures;
     };
 
     struct CompositorImpl;

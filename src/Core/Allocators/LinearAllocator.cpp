@@ -12,14 +12,14 @@
 
 using namespace Lettuce::Core;
 
-void Allocators::LinearAllocator::Create(Device dev, const LinearAllocatorDesc& desc)
+void Allocators::LinearAllocator::Create(Device& dev, const LinearAllocatorDesc& desc)
 {
-    device = dev;
+    device = &dev;
     MemoryHeapDesc heapDesc = {
         .size = (desc.bufferSize + desc.imageSize),
         .cpuVisible = desc.cpuVisible,
     };
-    memory = device.CreateMemoryHeap(heapDesc);
+    memory = device->CreateMemoryHeap(heapDesc);
 
     BufferDesc bufferDesc = {
         .size = desc.bufferSize,
@@ -28,7 +28,7 @@ void Allocators::LinearAllocator::Create(Device dev, const LinearAllocatorDesc& 
         .heap = memory,
         .heapOffset = 0,
     };
-    buffer = device.CreateBuffer(bufferDesc, bindDesc);
+    buffer = device->CreateBuffer(bufferDesc, bindDesc);
 
     texturesMemoryOffset = desc.bufferSize + 1;
 
@@ -36,7 +36,7 @@ void Allocators::LinearAllocator::Create(Device dev, const LinearAllocatorDesc& 
     currentTextureOffset = texturesMemoryOffset;
     memoryHeapSize = desc.bufferSize + desc.imageSize;
 
-    auto bufferInfo = device.GetBufferInfo(buffer);
+    auto bufferInfo = device->GetBufferInfo(buffer);
     bufferCPUAddress = (uint64_t*)bufferInfo.cpuAddress;
     bufferGPUAddress = bufferInfo.gpuAddress;
 
@@ -49,12 +49,12 @@ void Allocators::LinearAllocator::Create(Device dev, const LinearAllocatorDesc& 
 
 void Allocators::LinearAllocator::Destroy()
 {
-    device.Destroy(buffer);
+    device->Destroy(buffer);
     for (auto tex : textures)
     {
-        device.Destroy(tex);
+        device->Destroy(tex);
     }
-    device.Destroy(memory);
+    device->Destroy(memory);
     textures.clear();
 }
 
@@ -79,9 +79,9 @@ Texture Allocators::LinearAllocator::AllocateTexture(const TextureDesc& desc)
         .heap = memory,
         .heapOffset = currentTextureOffset,
     };
-    auto tex = device.CreateTexture(desc, bindDesc);
+    auto tex = device->CreateTexture(desc, bindDesc);
     DebugPrint("[LINEAR ALLOCATOR]", "Texture allocated successfully");
-    auto texInfo = device.GetResourceInfo(tex);
+    auto texInfo = device->GetResourceInfo(tex);
     auto newOffset = currentTextureOffset + texInfo.size;
 
     if (newOffset > memoryHeapSize)

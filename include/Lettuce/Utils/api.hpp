@@ -26,12 +26,12 @@ namespace Lettuce::Utils
     struct AssetLoader
     {
     private:
-        Device m_device;
+        Device* m_device;
         CommandAllocator m_cmds;
         std::unique_ptr<IGPUMemoryResource> m_tempMem;
         std::unique_ptr<IGPUMemoryResource> m_resAlloc;
     public:
-        void Create(Device, const AssetLoaderDesc&);
+        void Create(Device&, const AssetLoaderDesc&);
         void Destroy();
         ShaderBinary LoadSpirv(std::string_view path);
         Texture LoadKtx2Texture(std::string_view path, uint32_t levels = 1, bool highQuality = false);

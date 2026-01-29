@@ -18,7 +18,7 @@ namespace Lettuce::Core::Allocators
 
     class LinearAllocator : public IGPUMemoryResource
     {
-        Device device;
+        Device* device;
         MemoryHeap memory;
         Buffer buffer;
         std::vector<Texture> textures;
@@ -33,7 +33,7 @@ namespace Lettuce::Core::Allocators
         uint64_t* currentBufferCPUAddress;
         uint64_t currentBufferGPUAddress;
     public:
-        void Create(Device, const LinearAllocatorDesc&);
+        void Create(Device&, const LinearAllocatorDesc&);
         void Destroy();
 
         MemoryView AllocateMemory(uint64_t);

@@ -16,10 +16,14 @@ using namespace Lettuce::Composition;
 void Compositor::Create(const CompositorDesc& desc)
 {
     impl = new CompositorImpl;
+    impl->Create(desc);
+
+    impl->MainLoop();
 }
 
 void Compositor::Destroy()
 {
+    impl->Destroy();
     delete impl;
 }
 
