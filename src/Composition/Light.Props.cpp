@@ -35,7 +35,7 @@ auto Compositor::GetLightDirection(Light handle) -> Vec3
 
 void Compositor::SetLightColor(Light handle, Color value)
 {
-
+    
 }
 
 void Compositor::SetLightIntensity(Light handle, float value)

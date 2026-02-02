@@ -12,29 +12,101 @@ Created by @PieroCastillo on 2026-01-25
 
 namespace Lettuce::Composition
 {
+    enum class AnimatableProperties : uint8_t
+    {
+        // Visual Props
+        Position,
+        Size,
+        Scale,
+        Rotation,
+        AnchorPoint,
+        Opacity,
+        CornerRadius,
+        BorderWidth,
+        // Light Props
+        LightColor,
+        LightIntensity,
+        LightPosition,
+        LightDirection,
+        // Brush Props
+        BrushColor,
+        BrushSecondaryColor,
+        BrushRoughness,
+        BrushDistortionStrength,
+        BrushNoiseScale,
+        BrushNoiseIntensity,
+        // Effects Props
+        EffectIntensity,
+        EffectColor,
+        EffectOffset,
+        EffectRadius,
+        EffectBlurAmount,
+        EffectTintOpacity,
+        EffectTintColor,
+    };
+
     struct VisualInfo
     {
-
+        uint32_t gpuIdx;
     };
 
     struct AnimationTokenInfo
     {
-
+        uint32_t gpuIdx;
+        uint32_t durationMs;
+        uint32_t delayMs;
+        uint32_t iterationCount;
+        bool startFromCurrent;
     };
 
     struct BrushInfo
     {
-
+        uint32_t gpuIdx;
     };
 
     struct LightInfo
     {
-
+        uint32_t gpuIdx;
     };
 
     struct EffectInfo
     {
+        uint32_t gpuIdx;
+    };
 
+    struct DataBufferGPULayout
+    {
+        uint64_t animationInstanceCount;
+        uint64_t animationTokenCount;
+        uint64_t visualCount;
+        uint64_t brusheCount;
+        uint64_t lightCount;
+        uint64_t effectCount;
+    };
+
+    struct AnimationInstanceGPUData
+    {
+        AnimatableProperties objectProperty;
+        uint32_t objectIdx;
+        uint32_t animationTokenIdx;
+        float startValue[4];
+        float targetValue[4];
+        bool naturalMotion;
+        double startTime;
+        double duration;
+    };
+
+    struct AnimationTokenGPUData
+    {
+        EasingMode easing;
+        float bezierX1;
+        float bezierY1;
+        float bezierX2;
+        float bezierY2;
+
+        float stiffness;
+        float damping;
+        float mass;
     };
 
     struct VisualGPUData
@@ -49,35 +121,19 @@ namespace Lettuce::Composition
         float BorderWidth;
     };
 
-    struct AnimationTokenGPUData
-    {
-        uint32_t durationMs;
-        uint32_t delayMs;
-        uint32_t iterationCount;
-        EasingMode easing;
-        bool startFromCurrent;
-        float bezierX1;
-        float bezierY1;
-        float bezierX2;
-        float bezierY2;
-    };
-
     struct BrushGPUData
-    {        
+    {
         BrushType type;
         Color color;
         Color secondaryColor;
         uint32_t textureIdx;
-        uint32_t normalMapIdx;
-        float metallic;
-        float roughness;
         float distortionStrength;
         float noiseScale;
         float noiseIntensity;
     };
 
     struct LightGPUData
-    {        
+    {
         LightType type;
         Color color;
         float intensity;
@@ -86,7 +142,7 @@ namespace Lettuce::Composition
     };
 
     struct EffectGPUData
-    {        
+    {
         EffectType type;
         float intensity;
         Color color;
@@ -95,11 +151,6 @@ namespace Lettuce::Composition
         float blurAmount;
         float tintOpacity;
         Color tintColor;
-        float noiseIntensity;
-        float saturation;
-        float brightness;
-        float contrast;
-        float hueRotation;
     };
 };
 #endif // LETTUCE_COMPOSITION_HELPER_STRUCTS_HPP

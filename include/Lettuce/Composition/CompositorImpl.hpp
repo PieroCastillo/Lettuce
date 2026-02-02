@@ -19,6 +19,14 @@ using namespace Lettuce::Core;
 
 namespace Lettuce::Composition
 {
+    enum class AnimatableType
+    {
+        Visual,
+        Brush,
+        Light,
+        Effect,
+    };
+
     /*
     Before all, we need to define behaviours:
     - Application send property changes by SetObjectProperty()
@@ -39,7 +47,13 @@ namespace Lettuce::Composition
         // Lettuce Objects
         Device* device;
         CommandAllocator cmdAlloc;
-        
+        uint32_t maxVisuals;
+        uint32_t maxBrushes;
+        uint32_t maxLights;
+        uint32_t maxEffects;
+        uint32_t maxAnimations;
+        uint32_t maxLinkedTextures;
+
         Allocators::LinearAllocator memAlloc;
         MemoryView queuedAnimationsView;
         MemoryView animationsView;
@@ -47,15 +61,14 @@ namespace Lettuce::Composition
         MemoryView brushesView;
         MemoryView lightsView;
         MemoryView effectsView;
+        Allocators::LinearAllocator memTargetsAlloc;
         RenderTarget objectsTarget;  // BrushDataID/EffectDataID/LightDataID per pixel
         RenderTarget renderTarget;   // EffectPass writes here
 
         DescriptorTable descriptorTable;
         Pipeline pAnimationEvaluationPass;
-        Pipeline pObjectPass;
-        Pipeline pBrushesPass;
-        Pipeline pLightingPass;
-        Pipeline pEffectPass;
+        Pipeline pTilesPass;
+        Pipeline pRasterPass;
 
         // Resource Pools
         ResourcePool<Visual, VisualInfo> visuals;
@@ -68,12 +81,15 @@ namespace Lettuce::Composition
         std::atomic<bool> stop;
         std::thread compositorThread;
 
+        uint32_t width;
+        uint32_t height;
+
         void Create(const CompositorDesc& desc);
         void Destroy();
 
         void CreateResources();
         void CreatePipelines();
-        
+
         void MainLoop();
     };
 };

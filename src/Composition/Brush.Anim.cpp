@@ -23,16 +23,6 @@ void Compositor::SetBrushSecondaryColorAnimation(Brush handle, AnimationToken to
 
 }
 
-void Compositor::SetBrushMetallicAnimation(Brush handle, AnimationToken token)
-{
-
-}
-
-void Compositor::SetBrushRoughnessAnimation(Brush handle, AnimationToken token)
-{
-
-}
-
 void Compositor::SetBrushDistortionStrengthAnimation(Brush handle, AnimationToken token)
 {
 

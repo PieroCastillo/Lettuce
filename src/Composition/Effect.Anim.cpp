@@ -46,28 +46,3 @@ void Compositor::SetEffectTintColorAnimation(Effect handle, AnimationToken token
 {
 
 }
-
-void Compositor::SetEffectNoiseIntensityAnimation(Effect handle, AnimationToken token)
-{
-
-}
-
-void Compositor::SetEffectSaturationAnimation(Effect handle, AnimationToken token)
-{
-
-}
-
-void Compositor::SetEffectBrightnessAnimation(Effect handle, AnimationToken token)
-{
-
-}
-
-void Compositor::SetEffectContrastAnimation(Effect handle, AnimationToken token)
-{
-
-}
-
-void Compositor::SetEffectHueRotationAnimation(Effect handle, AnimationToken token)
-{
-
-}

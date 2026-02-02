@@ -273,8 +273,6 @@ namespace Lettuce::Composition
 
         DeclareAnimatableProperty(Brush, BrushColor, Color);
         DeclareAnimatableProperty(Brush, BrushSecondaryColor, Color);
-        DeclareAnimatableProperty(Brush, BrushMetallic, float);
-        DeclareAnimatableProperty(Brush, BrushRoughness, float);
         DeclareAnimatableProperty(Brush, BrushDistortionStrength, float);
         DeclareAnimatableProperty(Brush, BrushNoiseScale, float);
         DeclareAnimatableProperty(Brush, BrushNoiseIntensity, float);
@@ -286,11 +284,6 @@ namespace Lettuce::Composition
         DeclareAnimatableProperty(Effect, EffectBlurAmount, float);
         DeclareAnimatableProperty(Effect, EffectTintOpacity, float);
         DeclareAnimatableProperty(Effect, EffectTintColor, Color);
-        DeclareAnimatableProperty(Effect, EffectNoiseIntensity, float);
-        DeclareAnimatableProperty(Effect, EffectSaturation, float);
-        DeclareAnimatableProperty(Effect, EffectBrightness, float);
-        DeclareAnimatableProperty(Effect, EffectContrast, float);
-        DeclareAnimatableProperty(Effect, EffectHueRotation, float);
     };
 };
 #endif // LETTUCE_COMPOSITION_API_HPP

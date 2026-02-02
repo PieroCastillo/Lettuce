@@ -35,6 +35,12 @@ ShaderBinary CompositorImpl_LoadSpirv(Device* m_device, std::string_view path)
 void CompositorImpl::Create(const CompositorDesc& desc)
 {
     device = &(desc.device);
+    maxVisuals = desc.maxVisuals;
+    maxBrushes = desc.maxBrushes;
+    maxLights = desc.maxLights;
+    maxEffects = desc.maxEffects;
+    maxAnimations = desc.maxAnimations;
+    maxLinkedTextures = desc.maxLinkedTextures;
 
     CommandAllocatorDesc cmdAllocDesc = {
         .queueType = QueueType::Compute,
@@ -53,12 +59,11 @@ void CompositorImpl::Create(const CompositorDesc& desc)
 void CompositorImpl::Destroy()
 {
     // Destroy Pipelines
-    device->Destroy(pEffectPass);
-    device->Destroy(pLightingPass);
-    device->Destroy(pBrushesPass);
-    device->Destroy(pObjectPass);
     device->Destroy(pAnimationEvaluationPass);
+    device->Destroy(pRasterPass);
+    device->Destroy(pTilesPass);
     // Destroy Resources
+    memAlloc.Destroy();
 
     device->Destroy(descriptorTable);
     device->Destroy(cmdAlloc);
@@ -66,7 +71,17 @@ void CompositorImpl::Destroy()
 
 void CompositorImpl::CreateResources()
 {
+    auto maxSize = (maxAnimations * sizeof(AnimationTokenGPUData)) +
+        (maxVisuals * sizeof(VisualGPUData)) +
+        (maxBrushes * sizeof(BrushGPUData)) +
+        (maxLights * sizeof(LightGPUData)) +
+        (maxEffects * sizeof(EffectGPUData));
 
+    Allocators::LinearAllocatorDesc linAllocDesc = {
+        .bufferSize = maxSize,
+        .imageSize = 16,
+    };
+    memAlloc.Create(*device, linAllocDesc);
 }
 
 void CompositorImpl::CreatePipelines()
@@ -81,17 +96,11 @@ void CompositorImpl::CreatePipelines()
     compDesc.compEntryPoint = "animationsPassMain";
     pAnimationEvaluationPass = device->CreatePipeline(compDesc);
 
-    compDesc.compEntryPoint = "visualsPassMain";
-    pObjectPass = device->CreatePipeline(compDesc);
+    compDesc.compEntryPoint = "tilesPassMain";
+    pTilesPass = device->CreatePipeline(compDesc);
 
-    compDesc.compEntryPoint = "brushesPassMain";
-    pBrushesPass = device->CreatePipeline(compDesc);
-
-    compDesc.compEntryPoint = "lightsPassMain";
-    pLightingPass = device->CreatePipeline(compDesc);
-
-    compDesc.compEntryPoint = "effectsPassMain";
-    pEffectPass = device->CreatePipeline(compDesc);
+    compDesc.compEntryPoint = "rasterPass";
+    pRasterPass = device->CreatePipeline(compDesc);
 
     device->Destroy(compositionShader);
 }
@@ -114,30 +123,29 @@ void CompositorImpl::MainLoop()
             auto cmd = device->AllocateCommandBuffer(cmdAlloc);
             cmd.BindDescriptorTable(descriptorTable, PipelineBindPoint::Compute);
 
-            // TODO: impl correct Dispatch() values
             cmd.BindPipeline(pAnimationEvaluationPass);
             cmd.PushAllocations(pushAllocs);
             cmd.Dispatch(1, 1, 1);
             cmd.Barrier(std::span(compCompBarrier));
 
-            cmd.BindPipeline(pObjectPass);
+            cmd.BindPipeline(pTilesPass);
             cmd.PushAllocations(pushAllocs);
             cmd.Dispatch(1, 1, 1);
             cmd.Barrier(std::span(compCompBarrier));
 
-            cmd.BindPipeline(pBrushesPass);
+            cmd.BindPipeline(pRasterPass);
             cmd.PushAllocations(pushAllocs);
             cmd.Dispatch(1, 1, 1);
             cmd.Barrier(std::span(compCompBarrier));
 
-            cmd.BindPipeline(pLightingPass);
-            cmd.PushAllocations(pushAllocs);
-            cmd.Dispatch(1, 1, 1);
-            cmd.Barrier(std::span(compCompBarrier));
+            // cmd.BindPipeline(pLightingPass);
+            // cmd.PushAllocations(pushAllocs);
+            // cmd.Dispatch(1, 1, 1);
+            // cmd.Barrier(std::span(compCompBarrier));
 
-            cmd.BindPipeline(pEffectPass);
-            cmd.PushAllocations(pushAllocs);
-            cmd.Dispatch(1, 1, 1);
+            // cmd.BindPipeline(pEffectPass);
+            // cmd.PushAllocations(pushAllocs);
+            // cmd.Dispatch(1, 1, 1);
         }
         });
 }

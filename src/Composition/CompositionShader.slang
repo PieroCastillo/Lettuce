@@ -18,30 +18,41 @@ PushConstants pc;
 
 [require(compute, spirv_1_6)]
 [numthreads(32, 1, 1)]
+// update visual/effects/lights/brushes properties
 void animationsPassMain(uint3 DTid: SV_DispatchThreadID)
 {
 }
 
 [require(compute, spirv_1_6)]
 [numthreads(32, 1, 1)]
-void visualsPassMain(uint3 DTid: SV_DispatchThreadID)
+void tilesPassMain(uint3 DTid: SV_DispatchThreadID)
 {
 }
 
 [require(compute, spirv_1_6)]
-[numthreads(32, 1, 1)]
-void brushesPassMain(uint3 DTid: SV_DispatchThreadID)
+[numthreads(16, 16, 1)]
+void rasterPass(uint3 DTid: SV_DispatchThreadID)
 {
 }
 
-[require(compute, spirv_1_6)]
-[numthreads(32, 1, 1)]
-void lightsPassMain(uint3 DTid: SV_DispatchThreadID)
-{
-}
+/*
+for pixel (x,y):
+    finalColor = background
 
-[require(compute, spirv_1_6)]
-[numthreads(32, 1, 1)]
-void effectsPassMain(uint3 DTid: SV_DispatchThreadID)
-{
-}
+    for element in drawOrder:
+        if !inside(element, x,y): continue
+
+        color = evalBrush(element.brush)
+
+        for light in affectingLights:
+            color = applyLight(light, color)
+
+        for effect in element.effects:
+            color = applyEffect(effect, color)
+
+        finalColor = alphaBlend(color, finalColor)
+
+        if finalColor.a == 1:
+            break
+
+*/

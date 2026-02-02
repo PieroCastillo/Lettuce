@@ -48,31 +48,6 @@ auto Compositor::GetEffectTintColor(Effect handle) -> Color
     return {};
 }
 
-auto Compositor::GetEffectNoiseIntensity(Effect handle) -> float
-{
-    return {};
-}
-
-auto Compositor::GetEffectSaturation(Effect handle) -> float
-{
-    return {};
-}
-
-auto Compositor::GetEffectBrightness(Effect handle) -> float
-{
-    return {};
-}
-
-auto Compositor::GetEffectContrast(Effect handle) -> float
-{
-    return {};
-}
-
-auto Compositor::GetEffectHueRotation(Effect handle) -> float
-{
-    return {};
-}
-
 void Compositor::SetEffectIntensity(Effect handle, float value)
 {
 
@@ -104,31 +79,6 @@ void Compositor::SetEffectTintOpacity(Effect handle, float value)
 }
 
 void Compositor::SetEffectTintColor(Effect handle, Color value)
-{
-
-}
-
-void Compositor::SetEffectNoiseIntensity(Effect handle, float value)
-{
-
-}
-
-void Compositor::SetEffectSaturation(Effect handle, float value)
-{
-
-}
-
-void Compositor::SetEffectBrightness(Effect handle, float value)
-{
-
-}
-
-void Compositor::SetEffectContrast(Effect handle, float value)
-{
-
-}
-
-void Compositor::SetEffectHueRotation(Effect handle, float value)
 {
 
 }
