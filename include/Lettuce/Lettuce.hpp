@@ -14,6 +14,8 @@
 
 // rendering
 #include "Rendering/api.hpp"
+#include "Rendering/HelperStructs.hpp"
+#include "Rendering/SceneGraphImpl.hpp"
 
 // utils
 #include "Utils/api.hpp"

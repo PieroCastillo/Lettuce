@@ -31,6 +31,10 @@ namespace Lettuce::Core
         bool GraphicsPipelineLibrary;
         bool DynamicRenderingLocalRead;
         bool Maintenance5;
+        bool RayTracing;
+        bool RayTracingNV;
+        bool NeuralShading;
+        bool NeuralShadingNV;
     };
 
     struct Properties
@@ -135,13 +139,61 @@ namespace Lettuce::Core
             .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MAINTENANCE_5_FEATURES_KHR,
         };
 
+        VkPhysicalDeviceCooperativeMatrixFeaturesKHR cooperativeMatrixFeature = {
+            .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COOPERATIVE_MATRIX_FEATURES_KHR,
+        };
+        VkPhysicalDeviceComputeShaderDerivativesFeaturesKHR computeShaderDerivativesFeature = {
+            .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COMPUTE_SHADER_DERIVATIVES_PROPERTIES_KHR,
+        };
+
         // optional features/extensions
         VkPhysicalDeviceFragmentShadingRateFeaturesKHR fragmentShadingRateFeature = {
             .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADING_RATE_FEATURES_KHR,
         };
-
         VkPhysicalDeviceMeshShaderFeaturesEXT meshShaderFeature = {
             .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MESH_SHADER_FEATURES_EXT,
+        };
+
+        // raytracing extensions
+        VkPhysicalDeviceAccelerationStructureFeaturesKHR accelerationStructureFeature = {
+            .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ACCELERATION_STRUCTURE_FEATURES_KHR,
+        };
+        VkPhysicalDeviceRayQueryFeaturesKHR rayQueryFeature = {
+             .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_QUERY_FEATURES_KHR
+        };
+        VkPhysicalDeviceRayTracingPipelineFeaturesKHR rayTracingPipelineFeature = {
+             .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PIPELINE_FEATURES_KHR,
+        };
+        VkPhysicalDeviceRayTracingMaintenance1FeaturesKHR rayTracingMaintenance1Feature = {
+            .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_MAINTENANCE_1_FEATURES_KHR,
+        };
+        VkPhysicalDeviceOpacityMicromapFeaturesEXT opacityMicromapFeature = {
+            .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_OPACITY_MICROMAP_FEATURES_EXT,
+        };
+        VkPhysicalDeviceRayTracingPositionFetchFeaturesKHR rayTracingPositionFetch = {
+            .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_POSITION_FETCH_FEATURES_KHR,
+        };
+
+        // raytracing NV extensions
+        VkPhysicalDeviceRayTracingInvocationReorderFeaturesNV rayTracingInvocationReorderFeature = {
+            .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_INVOCATION_REORDER_FEATURES_NV,
+        };
+        VkPhysicalDeviceRayTracingLinearSweptSpheresFeaturesNV rayTracingLinearSweptSpheresFeature = {
+            .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_LINEAR_SWEPT_SPHERES_FEATURES_NV,
+        };
+        VkPhysicalDeviceClusterAccelerationStructureFeaturesNV clusterAccelerationStructureFeature = {
+            .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_CLUSTER_ACCELERATION_STRUCTURE_FEATURES_NV,
+        };
+        VkPhysicalDevicePartitionedAccelerationStructureFeaturesNV partitionedAccelerationStructureFeature = {
+            .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PARTITIONED_ACCELERATION_STRUCTURE_FEATURES_NV,
+        };
+
+        // other NV extensions
+        VkPhysicalDeviceCooperativeVectorFeaturesNV cooperativeVectorFeature = {
+            .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COOPERATIVE_VECTOR_FEATURES_NV,
+        };
+        VkPhysicalDeviceCooperativeMatrix2FeaturesNV cooperativeMatrix2Feature = {
+             .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COOPERATIVE_MATRIX_2_FEATURES_NV,
         };
 
         void setDebugName(VkObjectType type, uint64_t handle, const std::string& name);

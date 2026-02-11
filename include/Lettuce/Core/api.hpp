@@ -12,6 +12,10 @@ Created by @PieroCastillo on 2025-12-26
 #include <variant>
 #include "formats.hpp"
 
+// external libs
+#include <glm/glm.hpp>
+#include <glm/gtc/quaternion.hpp>
+
 namespace Lettuce::Core
 {
     template<typename Tag>

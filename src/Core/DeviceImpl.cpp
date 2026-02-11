@@ -273,8 +273,31 @@ void DeviceImpl::setupFeaturesExtensions()
         requestedExtensionsNames.push_back(VK_KHR_MAINTENANCE_5_EXTENSION_NAME);
     }
 
-    // optional features/extensions
+    if (exists(availableExtensionsNames, VK_KHR_COOPERATIVE_MATRIX_EXTENSION_NAME) &&
+        exists(availableExtensionsNames, VK_KHR_COMPUTE_SHADER_DERIVATIVES_EXTENSION_NAME))
+    {
+        features.NeuralShading = true;
 
+        cooperativeMatrixFeature.cooperativeMatrix = VK_TRUE;
+        cooperativeMatrixFeature.pNext = next;
+        next = &cooperativeMatrixFeature;
+
+        requestedExtensionsNames.push_back(VK_KHR_COOPERATIVE_MATRIX_EXTENSION_NAME);
+
+        computeShaderDerivativesFeature.computeDerivativeGroupLinear = VK_TRUE;
+        computeShaderDerivativesFeature.computeDerivativeGroupQuads = VK_TRUE;
+        computeShaderDerivativesFeature.pNext = next;
+        next = &computeShaderDerivativesFeature;
+
+        requestedExtensionsNames.push_back(VK_KHR_COMPUTE_SHADER_DERIVATIVES_EXTENSION_NAME);
+    }
+
+    if(exists(availableExtensionsNames, VK_KHR_DEFERRED_HOST_OPERATIONS_EXTENSION_NAME))
+    {
+        requestedExtensionsNames.push_back(VK_KHR_DEFERRED_HOST_OPERATIONS_EXTENSION_NAME);
+    }
+
+    // optional features/extensions
     if (exists(availableExtensionsNames, VK_KHR_FRAGMENT_SHADING_RATE_EXTENSION_NAME))
     {
         features.FragmentShadingRate = true;
@@ -294,6 +317,98 @@ void DeviceImpl::setupFeaturesExtensions()
         meshShaderFeature.pNext = next;
         next = &meshShaderFeature;
         requestedExtensionsNames.push_back(VK_EXT_MESH_SHADER_EXTENSION_NAME);
+    }
+
+    // raytracing extensions
+    if (exists(availableExtensionsNames, VK_KHR_RAY_TRACING_PIPELINE_EXTENSION_NAME) &&
+        exists(availableExtensionsNames, VK_KHR_RAY_QUERY_EXTENSION_NAME) &&
+        exists(availableExtensionsNames, VK_KHR_RAY_TRACING_MAINTENANCE_1_EXTENSION_NAME) &&
+        exists(availableExtensionsNames, VK_EXT_OPACITY_MICROMAP_EXTENSION_NAME) &&
+        exists(availableExtensionsNames, VK_KHR_RAY_TRACING_POSITION_FETCH_EXTENSION_NAME))
+    {
+        features.RayTracing = true;
+
+        rayTracingPipelineFeature.rayTracingPipeline = VK_TRUE;
+        rayTracingPipelineFeature.rayTracingPipelineTraceRaysIndirect = VK_TRUE;
+        rayTracingPipelineFeature.rayTraversalPrimitiveCulling = VK_TRUE;
+        rayTracingPipelineFeature.pNext = next;
+        next = &rayTracingPipelineFeature;
+        requestedExtensionsNames.push_back(VK_KHR_RAY_TRACING_PIPELINE_EXTENSION_NAME);
+
+        rayQueryFeature.rayQuery = VK_TRUE;
+        rayQueryFeature.pNext = next;
+        next = &rayQueryFeature;
+        requestedExtensionsNames.push_back(VK_KHR_RAY_QUERY_EXTENSION_NAME);
+
+        rayTracingMaintenance1Feature.rayTracingMaintenance1 = VK_TRUE;
+        rayTracingMaintenance1Feature.rayTracingPipelineTraceRaysIndirect2 = VK_TRUE;
+        rayTracingMaintenance1Feature.pNext = next;
+        next = &rayTracingMaintenance1Feature;
+        requestedExtensionsNames.push_back(VK_KHR_RAY_TRACING_MAINTENANCE_1_EXTENSION_NAME);
+
+        opacityMicromapFeature.micromap = VK_TRUE;
+        opacityMicromapFeature.micromapHostCommands = VK_TRUE;
+        opacityMicromapFeature.pNext = next;
+        next = &opacityMicromapFeature;
+        requestedExtensionsNames.push_back(VK_EXT_OPACITY_MICROMAP_EXTENSION_NAME);
+
+        rayTracingPositionFetch.rayTracingPositionFetch = VK_TRUE;
+        rayTracingPositionFetch.pNext = next;
+        next = &rayTracingPositionFetch;
+        requestedExtensionsNames.push_back(VK_KHR_RAY_TRACING_POSITION_FETCH_EXTENSION_NAME);
+    }
+
+    // raytracing NV extensions    
+    if (exists(availableExtensionsNames, VK_NV_RAY_TRACING_INVOCATION_REORDER_EXTENSION_NAME) &&
+        exists(availableExtensionsNames, VK_NV_RAY_TRACING_LINEAR_SWEPT_SPHERES_EXTENSION_NAME) &&
+        exists(availableExtensionsNames, VK_NV_CLUSTER_ACCELERATION_STRUCTURE_EXTENSION_NAME) &&
+        exists(availableExtensionsNames, VK_NV_PARTITIONED_ACCELERATION_STRUCTURE_EXTENSION_NAME))
+    {
+        features.RayTracingNV = true;
+
+        rayTracingInvocationReorderFeature.rayTracingInvocationReorder = VK_TRUE;
+        rayTracingInvocationReorderFeature.pNext = next;
+        next = &rayTracingInvocationReorderFeature;
+        requestedExtensionsNames.push_back(VK_NV_RAY_TRACING_INVOCATION_REORDER_EXTENSION_NAME);
+
+        rayTracingLinearSweptSpheresFeature.linearSweptSpheres = VK_TRUE;
+        rayTracingLinearSweptSpheresFeature.spheres = VK_TRUE;
+        rayTracingLinearSweptSpheresFeature.pNext = next;
+        next = &rayTracingLinearSweptSpheresFeature;
+        requestedExtensionsNames.push_back(VK_NV_RAY_TRACING_LINEAR_SWEPT_SPHERES_EXTENSION_NAME);
+
+        clusterAccelerationStructureFeature.clusterAccelerationStructure = VK_TRUE;
+        clusterAccelerationStructureFeature.pNext = next;
+        next = &clusterAccelerationStructureFeature;
+        requestedExtensionsNames.push_back(VK_NV_CLUSTER_ACCELERATION_STRUCTURE_EXTENSION_NAME);
+
+        partitionedAccelerationStructureFeature.partitionedAccelerationStructure = VK_TRUE;
+        partitionedAccelerationStructureFeature.pNext = next;
+        next = &partitionedAccelerationStructureFeature;
+        requestedExtensionsNames.push_back(VK_NV_PARTITIONED_ACCELERATION_STRUCTURE_EXTENSION_NAME);
+    }
+
+    // other NV extensions
+    if (exists(availableExtensionsNames, VK_NV_COOPERATIVE_VECTOR_EXTENSION_NAME) &&
+        exists(availableExtensionsNames, VK_NV_COOPERATIVE_MATRIX_2_EXTENSION_NAME))
+    {
+        features.NeuralShadingNV = true;
+
+        cooperativeVectorFeature.cooperativeVector = VK_TRUE;
+        cooperativeVectorFeature.cooperativeVectorTraining = VK_TRUE;
+        cooperativeVectorFeature.pNext = next;
+        next = &cooperativeVectorFeature;
+        requestedExtensionsNames.push_back(VK_NV_COOPERATIVE_VECTOR_EXTENSION_NAME);
+
+        cooperativeMatrix2Feature.cooperativeMatrixBlockLoads = VK_TRUE;
+        cooperativeMatrix2Feature.cooperativeMatrixConversions = VK_TRUE;
+        cooperativeMatrix2Feature.cooperativeMatrixFlexibleDimensions = VK_TRUE;
+        cooperativeMatrix2Feature.cooperativeMatrixPerElementOperations = VK_TRUE;
+        cooperativeMatrix2Feature.cooperativeMatrixTensorAddressing = VK_TRUE;
+        cooperativeMatrix2Feature.cooperativeMatrixWorkgroupScope = VK_TRUE;
+        cooperativeMatrix2Feature.pNext = next;
+        next = &cooperativeMatrix2Feature;
+        requestedExtensionsNames.push_back(VK_NV_COOPERATIVE_MATRIX_2_EXTENSION_NAME);
     }
 }
 
