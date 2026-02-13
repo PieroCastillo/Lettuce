@@ -96,3 +96,11 @@ void Device::Destroy(RenderTarget renderTarget)
 
     impl->renderTargets.free(renderTarget);
 }
+
+Texture Device::CreateTextureView(RenderTarget renderTarget)
+{
+    auto device = impl->m_device;
+    auto info = impl->renderTargets.get(renderTarget);
+
+    return impl->textures.allocate({ info.width, info.height, 1, 1, info.format, info.image, info.imageView, info.memory, info.size, info.memoryOffset, false });
+}

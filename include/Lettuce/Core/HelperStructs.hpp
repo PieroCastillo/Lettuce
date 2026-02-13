@@ -50,6 +50,7 @@ namespace Lettuce::Core
         VkDeviceMemory memory;
         uint64_t size;
         uint64_t memoryOffset;
+        bool isViewOnly;
     };
 
     struct RenderTargetVK

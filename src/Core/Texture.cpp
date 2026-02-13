@@ -144,7 +144,7 @@ Texture Device::CreateTexture(const TextureDesc& desc, const MemoryBindDesc& bin
     };
     handleResult(vkCreateImageView(device, &viewCI, nullptr, &imageView));
 
-    return impl->textures.allocate({ desc.width, desc.height, desc.mipCount, desc.layerCount, format, image, imageView, mem, memReqs.size, offset });
+    return impl->textures.allocate({ desc.width, desc.height, desc.mipCount, desc.layerCount, format, image, imageView, mem, memReqs.size, offset, false });
 }
 
 void Device::Destroy(Texture texture)
@@ -154,6 +154,10 @@ void Device::Destroy(Texture texture)
 
     auto device = impl->m_device;
     auto info = impl->textures.get(texture);
+
+    // only Textures created by using Device.CreateTexture() could be destroyed
+    if(info.isViewOnly)
+        return;
 
     vkDestroyImageView(device, info.imageView, nullptr);
     vkDestroyImage(device, info.image, nullptr);

@@ -17,29 +17,43 @@
 #include <functional>
 
 using namespace Lettuce::Core;
+using namespace Lettuce::Rendering;
 
 GLFWwindow* window;
-
-struct ParticleOut
-{
-    float color[3];
-    float pos[2];
-};
 
 constexpr uint32_t width = 1366;
 constexpr uint32_t height = 768;
 
 Device device;
 Swapchain swapchain;
-DescriptorTable descriptorTable;
-IndirectSet indirectSet;
-Pipeline cullPipeline;
-Pipeline rgbPipeline;
-CommandAllocator cmdAlloc;
 
-Allocators::LinearAllocator alloc;
-MemoryView indirectView;
-MemoryView particlesView;
+AsyncRecorder rec;
+Allocators::LinearAllocator alloc; // I need a heap allocator uu
+
+DescriptorTable descriptorTable;
+IndirectSet isVisPass;
+
+Pipeline pCullPass;    // compute
+Pipeline pVisPass;      // mesh shading
+Pipeline pPbrMaterial; // compute
+
+constexpr uint32_t maxInstanceCount = 10000;
+uint32_t instanceCount = 0;
+
+MemoryView mvScene;
+MemoryView mvInstances;
+MemoryView mvMaterialDatas;
+MemoryView mvIndexBuffer;
+MemoryView mvVertexBuffer;
+MemoryView mvMeshlets;
+MemoryView mvTlasNodes;
+MemoryView mvBlasNodes;
+MemoryView mvBlasLeafMeshletIndices;
+
+MemoryView mvVisibilityPassDrawcalls;
+
+RenderTarget rtVisibilityTarget;
+Texture tVisibilityTargetView; // must not be destroyed
 
 std::vector<uint32_t> loadSpv(std::string path)
 {
@@ -75,25 +89,34 @@ void initLettuce()
     };
     swapchain = device.CreateSwapchain(swapchainDesc);
 
-    CommandAllocatorDesc cmdAllocDesc = {
-        .queueType = QueueType::Graphics,
-    };
-    cmdAlloc = device.CreateCommandAllocator(cmdAllocDesc);
-
     IndirectSetDesc indirectSetDesc = {
-        .type = IndirectType::Draw,
+        .type = IndirectType::DrawMesh,
         .maxCount = 128,
         .userDataSize = 0,
     };
-    indirectSet = device.CreateIndirectSet(indirectSetDesc);
-    indirectView = device.GetIndirectSetView(indirectSet);
 
     Allocators::LinearAllocatorDesc linAllocDesc = {
-        .bufferSize = 128 * sizeof(ParticleOut),
+        .bufferSize = 10 * 1024 * 1024, // 10 MB
         .imageSize = 16,
+        .cpuVisible = true,
     };
     alloc.Create(device, linAllocDesc);
-    particlesView = alloc.AllocateMemory(128 * sizeof(ParticleOut));
+
+    // mvScene = alloc.AllocateMemory(sizeof(SceneGPUData));
+    // mvInstances = alloc.AllocateMemory(sizeof(InstanceGPUItem) * maxInstanceCount);
+    // mvMaterialDatas = alloc.AllocateMemory(sizeof(MaterialDataGPUItem) * maxInstanceCount);
+    // mvIndexBuffer = alloc.AllocateMemory(sizeof(uint32_t)*);
+    // mvVertexBuffer = alloc.AllocateMemory(sizeof(glm::vec3) * 3 *);
+    // mvMeshlets = alloc.AllocateMemory(sizeof(MeshletGPUItem)*);
+    // mvTlasNodes = alloc.AllocateMemory(sizeof(TLASGPUItem)*);
+    // mvBlasNodes = alloc.AllocateMemory(sizeof(BLASGPUItem)*);
+    // mvBlasLeafMeshletIndices = alloc.AllocateMemory(sizeof()*);
+
+    AsyncRecorderDesc asyncRecDesc = {
+        .device = device,
+        .threadCount = 4,
+    };
+    rec.Create(asyncRecDesc);
 }
 
 void createRenderingObjects()
@@ -108,24 +131,13 @@ void createRenderingObjects()
     DescriptorTableDesc descriptorTableDesc = { 4,4,4 };
     descriptorTable = device.CreateDescriptorTable(descriptorTableDesc);
 
-    ComputePipelineDesc compDesc = {
-        .compEntryPoint = "compMain",
-        .compShaderBinary = shaders,
+    PushResourceDescriptorsDesc pushResDesc = {
+        .storageTextures = std::array {
+            std::pair(0u, tVisibilityTargetView),
+        },
         .descriptorTable = descriptorTable,
     };
-    cullPipeline = device.CreatePipeline(compDesc);
-
-    std::array<Format, 1> formatArr = { device.GetRenderTargetFormat(swapchain) };
-    PrimitiveShadingPipelineDesc pipelineDesc = {
-        .fragmentShadingRate = false,
-        .vertEntryPoint = "vertexMain",
-        .fragEntryPoint = "fragmentMain",
-        .vertShaderBinary = shaders,
-        .fragShaderBinary = shaders,
-        .colorAttachmentFormats = std::span(formatArr),
-        .descriptorTable = descriptorTable,
-    };
-    rgbPipeline = device.CreatePipeline(pipelineDesc);
+    device.PushResourceDescriptors(pushResDesc);
 
     device.Destroy(shaders);
 }
@@ -135,73 +147,125 @@ void mainLoop()
     while (!glfwWindowShouldClose(window))
     {
         device.NextFrame(swapchain);
+        device.WaitFor(QueueType::Graphics);
 
-        device.Reset(cmdAlloc);
         auto frame = device.GetCurrentRenderTarget(swapchain);
-        auto cmd = device.AllocateCommandBuffer(cmdAlloc);
-
-        cmd.BindDescriptorTable(descriptorTable, PipelineBindPoint::Compute);
-        cmd.BindPipeline(cullPipeline);
-        PushAllocationsDesc pushDesc;
-        pushDesc.allocations = std::array{ std::pair(0u, indirectView),  std::pair(1u, particlesView) };
-        pushDesc.descriptorTable = descriptorTable;
-        cmd.PushAllocations(pushDesc);
-        cmd.Dispatch(8, 1, 1);
-
-        BarrierDesc compVertBarrier[] = { {
+        BarrierDesc copyCopyBarrier[] = { {
             .srcAccess = PipelineAccess::Write,
-            .srcStage = PipelineStage::ComputeShader,
-            .dstAccess = PipelineAccess::Read,
-            .dstStage = PipelineStage::DrawIndirect,
+            .srcStage = PipelineStage::Copy,
+            .dstAccess = PipelineAccess::Write,
+            .dstStage = PipelineStage::Copy,
         }, };
-        cmd.Barrier(compVertBarrier);
 
-        AttachmentDesc colorAttachment[1] = {
-            {
-                .renderTarget = frame,
-                .loadOp = LoadOp::Clear,
-            }
+        BarrierDesc copyVertBarrier[] = { {
+            .srcAccess = PipelineAccess::Write,
+            .srcStage = PipelineStage::Copy,
+            .dstAccess = PipelineAccess::Read,
+            .dstStage = PipelineStage::VertexShader,
+        }, };
+
+        ExecuteIndirectDesc execDesc = {
+            .indirectSet = isVisPass,
+            .maxDrawCount = maxInstanceCount,
         };
-        RenderPassDesc renderPassDesc = {
+
+        PushAllocationsDesc pushAddressesCullPassDesc = {
+             .allocations = std::array {
+                std::pair(0u, mvScene), // read
+                std::pair(1u, mvTlasNodes),// read
+                std::pair(2u, mvInstances),// read
+                std::pair(3u, mvVisibilityPassDrawcalls), // write: count+drawcalls
+            },
+            .descriptorTable = descriptorTable,
+        };
+
+        PushAllocationsDesc pushAddressesVisibilityPassDesc = {
+             .allocations = std::array {
+                // task shader read
+                std::pair(0u, mvScene),
+                std::pair(1u, mvInstances),
+                std::pair(2u, mvBlasNodes),
+                std::pair(3u, mvBlasLeafMeshletIndices),
+                std::pair(4u, mvMeshlets),
+                // mesh shader read
+                std::pair(5u, mvVertexBuffer),
+                std::pair(6u, mvIndexBuffer),
+                std::pair(7u, mvMeshlets),
+                std::pair(8u, mvMaterialDatas),
+            },
+            .descriptorTable = descriptorTable,
+        };
+
+        PushAllocationsDesc pushAddressesMaterialShadingPassDesc = {
+             .allocations = std::array {
+                // read
+                std::pair(0u, mvVertexBuffer),
+                std::pair(1u, mvIndexBuffer),
+                std::pair(2u, mvMaterialDatas),
+                std::pair(3u, mvIndexBuffer),
+            },
+            .descriptorTable = descriptorTable,
+        };
+
+        AttachmentDesc visAttachment = {
+            .renderTarget = rtVisibilityTarget,
+            .loadOp = LoadOp::Clear,
+        };
+        
+        RenderPassDesc visibilityRenderPassDesc = {
             .width = width,
             .height = height,
-            .colorAttachments = std::span(colorAttachment),
+            .colorAttachments = std::span<const AttachmentDesc>(&visAttachment, 1),
+            .depthStencilAttachment = std::nullopt,
         };
-        cmd.BeginRendering(renderPassDesc);
-        cmd.BindDescriptorTable(descriptorTable, PipelineBindPoint::Graphics);
-        cmd.BindPipeline(rgbPipeline);
-        cmd.PushAllocations(pushDesc);
-        ExecuteIndirectDesc execIndirectDesc = {
-            .indirectSet = indirectSet,
-            .maxDrawCount = 128,
-        };
-        cmd.ExecuteIndirect(execIndirectDesc);
-        cmd.EndRendering();
 
-        std::array<std::span<CommandBuffer>, 1> cmds = { std::span(&cmd, 1) };
+        rec.Reset();
+        rec.RecordAsync(std::nullopt, [&](CommandBuffer cmd, std::any _)
+            {
+                cmd.BindDescriptorTable(descriptorTable, PipelineBindPoint::Compute);
+                cmd.BindPipeline(pCullPass);
+                cmd.PushAllocations(pushAddressesCullPassDesc);
+                cmd.Dispatch(instanceCount / 32, 1, 1);
 
-        CommandBufferSubmitDesc submitDesc = {
-            .queueType = QueueType::Graphics,
-            .commandBuffers = std::span(cmds),
-            .presentSwapchain = swapchain,
-        };
-        device.Submit(submitDesc);
+                cmd.BeginRendering(visibilityRenderPassDesc);
+                cmd.BindDescriptorTable(descriptorTable, PipelineBindPoint::Graphics);
+                cmd.BindPipeline(pVisPass);
+                cmd.PushAllocations(pushAddressesVisibilityPassDesc);
+                cmd.ExecuteIndirect(execDesc);
+                cmd.EndRendering();
+
+                cmd.BindDescriptorTable(descriptorTable, PipelineBindPoint::Compute);
+                cmd.BindPipeline(pPbrMaterial);
+                cmd.PushAllocations(pushAddressesMaterialShadingPassDesc);
+                cmd.Dispatch((width * height) / 32, 1, 1);
+            });
+
+        rec.Submit(swapchain);
 
         device.DisplayFrame(swapchain);
+        device.WaitFor(QueueType::Graphics);
         glfwPollEvents();
     }
 }
 
 void cleanupLettuce()
 {
+    rec.Destroy();
+
+    alloc.ReleaseMemory(mvBlasLeafMeshletIndices);
+    alloc.ReleaseMemory(mvBlasNodes);
+    alloc.ReleaseMemory(mvTlasNodes);
+    alloc.ReleaseMemory(mvMeshlets);
+    alloc.ReleaseMemory(mvVertexBuffer);
+    alloc.ReleaseMemory(mvIndexBuffer);
+    alloc.ReleaseMemory(mvMaterialDatas);
+    alloc.ReleaseMemory(mvInstances);
+    alloc.ReleaseMemory(mvScene);
+
     alloc.Destroy();
     device.WaitFor(QueueType::Graphics);
-    device.Destroy(rgbPipeline);
-    device.Destroy(cullPipeline);
     device.Destroy(descriptorTable);
 
-    device.Destroy(indirectSet);
-    device.Destroy(cmdAlloc);
     device.Destroy(swapchain);
     device.Destroy();
 }

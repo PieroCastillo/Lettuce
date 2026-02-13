@@ -322,6 +322,8 @@ namespace Lettuce::Core
         RenderTarget CreateRenderTarget(const RenderTargetDesc&, const MemoryBindDesc&);
         void Destroy(RenderTarget);
 
+        Texture CreateTextureView(RenderTarget); /// Is a view from the RenderTarget, it cannot be destroyed
+
         BufferInfo GetBufferInfo(Buffer) const;
         ResourceInfo GetResourceInfo(Texture) const;
         ResourceInfo GetResourceInfo(RenderTarget) const;
