@@ -199,6 +199,7 @@ void mainLoop()
         PushAllocationsDesc pushAddressesMaterialShadingPassDesc = {
              .allocations = std::array {
                 // read
+                std::pair(0u, mvScene), // provides frame index
                 std::pair(0u, mvVertexBuffer),
                 std::pair(1u, mvIndexBuffer),
                 std::pair(2u, mvMaterialDatas),
@@ -238,6 +239,14 @@ void mainLoop()
                 cmd.BindPipeline(pPbrMaterial);
                 cmd.PushAllocations(pushAddressesMaterialShadingPassDesc);
                 cmd.Dispatch((width * height) / 32, 1, 1);
+
+
+                cmd.BeginRendering(visibilityRenderPassDesc);
+                cmd.BindDescriptorTable(descriptorTable, PipelineBindPoint::Graphics);
+                cmd.BindPipeline(pVisPass);
+                cmd.DrawIndexed(4,1); // copy pixels from t
+                cmd.EndRendering();
+
             });
 
         rec.Submit(swapchain);

@@ -10,6 +10,7 @@
 
 // allocators
 #include "Core/Allocators/LinearAllocator.hpp"
+#include "Core/Allocators/HeapAllocator.hpp"
 #include "Core/Allocators/IGPUMemoryResource.hpp"
 
 // rendering
