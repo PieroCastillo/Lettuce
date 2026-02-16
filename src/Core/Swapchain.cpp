@@ -126,7 +126,7 @@ void setupVkSwapchain(SwapchainVK& swapchainVK, VkDevice device, VkPhysicalDevic
     swapchainVK.swapchain = swapchain;
 }
 
-void setupImagesAndView(SwapchainVK& swapchainVK, ResourcePool<RenderTarget, RenderTargetVK>& renderTargets, VkDevice device, VkPhysicalDevice gpu, const SwapchainDesc& createInfo)
+void setupImagesAndView(SwapchainVK& swapchainVK, ResourcePool<Texture, TextureVK>& textures, ResourcePool<RenderTarget, RenderTargetVK>& renderTargets, VkDevice device, VkPhysicalDevice gpu, const SwapchainDesc& createInfo)
 {
     auto swapchain = swapchainVK.swapchain;
     // get swapchain images
@@ -155,10 +155,11 @@ void setupImagesAndView(SwapchainVK& swapchainVK, ResourcePool<RenderTarget, Ren
         viewCI.image = swapchainVK.swapchainImages[i];
         handleResult(vkCreateImageView(device, &viewCI, nullptr, &view));
 
+        auto img = swapchainVK.swapchainImages[i];
+        auto texView = textures.allocate({ swapchainVK.width, swapchainVK.height, 1, 1, swapchainVK.format, img, view, VK_NULL_HANDLE, 0, 0, true });
         auto renderView = renderTargets.allocate({
-            true, swapchainVK.width, swapchainVK.height, swapchainVK.format, swapchainVK.swapchainImages[i], view,
-            VK_NULL_HANDLE, 0, 0
-            });
+            true, swapchainVK.width, swapchainVK.height, swapchainVK.format, img, view,
+            VK_NULL_HANDLE, 0, 0, {}, texView});
 
         swapchainVK.swapchainViews[i] = view;
         swapchainVK.renderTargets[i] = renderView;
@@ -175,7 +176,7 @@ Swapchain Device::CreateSwapchain(const SwapchainDesc& desc)
     swapchainVK.currentImageIndex = 0;
     setupVkSurface(swapchainVK, instance, desc);
     setupVkSwapchain(swapchainVK, device, gpu, desc);
-    setupImagesAndView(swapchainVK, impl->renderTargets, device, gpu, desc);
+    setupImagesAndView(swapchainVK, impl->textures, impl->renderTargets, device, gpu, desc);
     VkFenceCreateInfo fenceCI = {
         .sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO,
     };
@@ -206,6 +207,7 @@ void Device::Destroy(Swapchain swapchain)
     {
         vkDestroyImageView(device, info.swapchainViews[i], nullptr);
         impl->renderTargets.free(info.renderTargets[i]);
+        impl->textures.free(info.textureViews[i]);
     }
     info.swapchainViews.clear();
     info.swapchainImages.clear();

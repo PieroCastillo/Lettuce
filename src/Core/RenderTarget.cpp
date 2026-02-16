@@ -77,7 +77,8 @@ RenderTarget Device::CreateRenderTarget(const RenderTargetDesc& desc, const Memo
     VkMemoryRequirements memReqs;
     vkGetImageMemoryRequirements(device, image, &memReqs);
 
-    return impl->renderTargets.allocate({ false, desc.width, desc.height, format, image, imageView, mem, memReqs.size, bindDesc.heapOffset, ToVkClearValue(desc.defaultClearValue) });
+    auto texView = impl->textures.allocate({ desc.width, desc.height, 1, 1, format, image, imageView, mem, memReqs.size, bindDesc.heapOffset, true });
+    return impl->renderTargets.allocate({ false, desc.width, desc.height, format, image, imageView, mem, memReqs.size, bindDesc.heapOffset, ToVkClearValue(desc.defaultClearValue), texView });
 }
 
 void Device::Destroy(RenderTarget renderTarget)
@@ -94,13 +95,14 @@ void Device::Destroy(RenderTarget renderTarget)
     vkDestroyImageView(device, info.imageView, nullptr);
     vkDestroyImage(device, info.image, nullptr);
 
+    impl->textures.free(info.texView);
     impl->renderTargets.free(renderTarget);
 }
 
-Texture Device::CreateTextureView(RenderTarget renderTarget)
+Texture Device::GetTextureView(RenderTarget renderTarget)
 {
     auto device = impl->m_device;
     auto info = impl->renderTargets.get(renderTarget);
 
-    return impl->textures.allocate({ info.width, info.height, 1, 1, info.format, info.image, info.imageView, info.memory, info.size, info.memoryOffset, false });
+    return info.texView;
 }

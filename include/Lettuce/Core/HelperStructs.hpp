@@ -64,6 +64,7 @@ namespace Lettuce::Core
         uint64_t size;
         uint64_t memoryOffset;
         VkClearValue defaultClearValue;
+        Texture texView;
     };
 
     struct DescriptorTableVK
@@ -93,6 +94,7 @@ namespace Lettuce::Core
         std::vector<VkImage> swapchainImages;
         std::vector<VkImageView> swapchainViews;
         std::vector<RenderTarget> renderTargets;
+        std::vector<Texture> textureViews;
 
         Format ltFormat;
         VkFormat format;

@@ -33,9 +33,12 @@ Allocators::LinearAllocator alloc; // I need a heap allocator uu
 DescriptorTable descriptorTable;
 IndirectSet isVisPass;
 
-Pipeline pCullPass;    // compute
+Pipeline pCullPass;     // compute
 Pipeline pVisPass;      // mesh shading
-Pipeline pPbrMaterial; // compute
+Pipeline pPbrMaterial;  // compute
+
+constexpr uint32_t tileSizeX = 16;
+constexpr uint32_t tileSizeY = 16;
 
 constexpr uint32_t maxInstanceCount = 10000;
 uint32_t instanceCount = 0;
@@ -44,16 +47,22 @@ MemoryView mvScene;
 MemoryView mvInstances;
 MemoryView mvMaterialDatas;
 MemoryView mvIndexBuffer;
-MemoryView mvVertexBuffer;
 MemoryView mvMeshlets;
 MemoryView mvTlasNodes;
 MemoryView mvBlasNodes;
 MemoryView mvBlasLeafMeshletIndices;
+MemoryView mvVertexPosBuffer;
+MemoryView mvVertexNorBuffer;
+MemoryView mvVertexUVsBuffer;
 
 MemoryView mvVisibilityPassDrawcalls;
 
 RenderTarget rtVisibilityTarget;
-Texture tVisibilityTargetView; // must not be destroyed
+RenderTarget rtDepthTarget;
+RenderTarget rtResultTarget;
+Texture tVisibilityTargetView;
+Texture tDepthTargetView;
+Texture tResultTargetView;
 
 std::vector<uint32_t> loadSpv(std::string path)
 {
@@ -97,7 +106,7 @@ void initLettuce()
 
     Allocators::LinearAllocatorDesc linAllocDesc = {
         .bufferSize = 10 * 1024 * 1024, // 10 MB
-        .imageSize = 16,
+        .imageSize = 10 * 1024 * 1024,
         .cpuVisible = true,
     };
     alloc.Create(device, linAllocDesc);
@@ -134,6 +143,8 @@ void createRenderingObjects()
     PushResourceDescriptorsDesc pushResDesc = {
         .storageTextures = std::array {
             std::pair(0u, tVisibilityTargetView),
+            std::pair(1u, tDepthTargetView),
+            std::pair(2u, tResultTargetView),
         },
         .descriptorTable = descriptorTable,
     };
@@ -150,18 +161,25 @@ void mainLoop()
         device.WaitFor(QueueType::Graphics);
 
         auto frame = device.GetCurrentRenderTarget(swapchain);
-        BarrierDesc copyCopyBarrier[] = { {
+        BarrierDesc bCompDrawIndirect[] = { {
             .srcAccess = PipelineAccess::Write,
-            .srcStage = PipelineStage::Copy,
-            .dstAccess = PipelineAccess::Write,
-            .dstStage = PipelineStage::Copy,
+            .srcStage = PipelineStage::ComputeShader,
+            .dstAccess = PipelineAccess::Read,
+            .dstStage = PipelineStage::DrawIndirect,
         }, };
 
-        BarrierDesc copyVertBarrier[] = { {
+        BarrierDesc bFragOutputCompute[] = { {
             .srcAccess = PipelineAccess::Write,
-            .srcStage = PipelineStage::Copy,
+            .srcStage = PipelineStage::ColorAttachmentOutput,
             .dstAccess = PipelineAccess::Read,
-            .dstStage = PipelineStage::VertexShader,
+            .dstStage = PipelineStage::ComputeShader
+        }, };
+
+        BarrierDesc bComputeCopy[] = { {
+            .srcAccess = PipelineAccess::Write,
+            .srcStage = PipelineStage::ComputeShader,
+            .dstAccess = PipelineAccess::Read,
+            .dstStage = PipelineStage::Copy
         }, };
 
         ExecuteIndirectDesc execDesc = {
@@ -171,9 +189,9 @@ void mainLoop()
 
         PushAllocationsDesc pushAddressesCullPassDesc = {
              .allocations = std::array {
-                std::pair(0u, mvScene), // read
-                std::pair(1u, mvTlasNodes),// read
-                std::pair(2u, mvInstances),// read
+                std::pair(0u, mvScene),                   // read
+                std::pair(1u, mvTlasNodes),               // read
+                std::pair(2u, mvInstances),               // read
                 std::pair(3u, mvVisibilityPassDrawcalls), // write: count+drawcalls
             },
             .descriptorTable = descriptorTable,
@@ -188,10 +206,12 @@ void mainLoop()
                 std::pair(3u, mvBlasLeafMeshletIndices),
                 std::pair(4u, mvMeshlets),
                 // mesh shader read
-                std::pair(5u, mvVertexBuffer),
+                std::pair(5u, mvMaterialDatas),
+                // geometry buffers
                 std::pair(6u, mvIndexBuffer),
-                std::pair(7u, mvMeshlets),
-                std::pair(8u, mvMaterialDatas),
+                std::pair(7u, mvVertexPosBuffer),
+                std::pair(8u, mvVertexNorBuffer),
+                std::pair(9u, mvVertexUVsBuffer),
             },
             .descriptorTable = descriptorTable,
         };
@@ -200,24 +220,35 @@ void mainLoop()
              .allocations = std::array {
                 // read
                 std::pair(0u, mvScene), // provides frame index
-                std::pair(0u, mvVertexBuffer),
-                std::pair(1u, mvIndexBuffer),
-                std::pair(2u, mvMaterialDatas),
-                std::pair(3u, mvIndexBuffer),
+                std::pair(1u, mvMaterialDatas),
+                std::pair(2u, mvIndexBuffer),
+                std::pair(3u, mvVertexPosBuffer),
+                std::pair(4u, mvVertexNorBuffer),
+                std::pair(5u, mvVertexUVsBuffer),
             },
             .descriptorTable = descriptorTable,
         };
 
         AttachmentDesc visAttachment = {
             .renderTarget = rtVisibilityTarget,
-            .loadOp = LoadOp::Clear,
+            .loadOp = LoadOp::None,
         };
-        
+
+        AttachmentDesc depthAttachment = {
+            .renderTarget = rtDepthTarget,
+            .loadOp = LoadOp::None,
+        };
+
         RenderPassDesc visibilityRenderPassDesc = {
             .width = width,
             .height = height,
             .colorAttachments = std::span<const AttachmentDesc>(&visAttachment, 1),
-            .depthStencilAttachment = std::nullopt,
+            .depthStencilAttachment = depthAttachment,
+        };
+
+        TextureToRenderTargetCopy rtCopy = {
+            .srcTexture = tResultTargetView,
+            .dstRenderTarget = device.GetCurrentRenderTarget(swapchain),
         };
 
         rec.Reset();
@@ -228,6 +259,8 @@ void mainLoop()
                 cmd.PushAllocations(pushAddressesCullPassDesc);
                 cmd.Dispatch(instanceCount / 32, 1, 1);
 
+                cmd.Barrier(bCompDrawIndirect);
+
                 cmd.BeginRendering(visibilityRenderPassDesc);
                 cmd.BindDescriptorTable(descriptorTable, PipelineBindPoint::Graphics);
                 cmd.BindPipeline(pVisPass);
@@ -235,18 +268,16 @@ void mainLoop()
                 cmd.ExecuteIndirect(execDesc);
                 cmd.EndRendering();
 
+                cmd.Barrier(bFragOutputCompute);
+
                 cmd.BindDescriptorTable(descriptorTable, PipelineBindPoint::Compute);
                 cmd.BindPipeline(pPbrMaterial);
                 cmd.PushAllocations(pushAddressesMaterialShadingPassDesc);
-                cmd.Dispatch((width * height) / 32, 1, 1);
+                cmd.Dispatch(ceil(width / tileSizeX), ceil(height / tileSizeY), 1);
 
+                cmd.Barrier(bComputeCopy);
 
-                cmd.BeginRendering(visibilityRenderPassDesc);
-                cmd.BindDescriptorTable(descriptorTable, PipelineBindPoint::Graphics);
-                cmd.BindPipeline(pVisPass);
-                cmd.DrawIndexed(4,1); // copy pixels from t
-                cmd.EndRendering();
-
+                cmd.TextureCopy(rtCopy);
             });
 
         rec.Submit(swapchain);
@@ -265,7 +296,9 @@ void cleanupLettuce()
     alloc.ReleaseMemory(mvBlasNodes);
     alloc.ReleaseMemory(mvTlasNodes);
     alloc.ReleaseMemory(mvMeshlets);
-    alloc.ReleaseMemory(mvVertexBuffer);
+    alloc.ReleaseMemory(mvVertexNorBuffer);
+    alloc.ReleaseMemory(mvVertexPosBuffer);
+    alloc.ReleaseMemory(mvVertexUVsBuffer);
     alloc.ReleaseMemory(mvIndexBuffer);
     alloc.ReleaseMemory(mvMaterialDatas);
     alloc.ReleaseMemory(mvInstances);

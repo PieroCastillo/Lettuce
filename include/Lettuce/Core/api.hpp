@@ -281,6 +281,12 @@ namespace Lettuce::Core
         uint32_t layerBaseLevel;
         uint32_t layerCount;
     };
+
+    struct TextureToRenderTargetCopy
+    {
+        Texture srcTexture;
+        RenderTarget dstRenderTarget;
+    };
     
     struct PushAllocationsDesc 
     {
@@ -322,7 +328,7 @@ namespace Lettuce::Core
         RenderTarget CreateRenderTarget(const RenderTargetDesc&, const MemoryBindDesc&);
         void Destroy(RenderTarget);
 
-        Texture CreateTextureView(RenderTarget); /// Is a view from the RenderTarget, it cannot be destroyed
+        Texture GetTextureView(RenderTarget); /// Is a view from the RenderTarget, it cannot be destroyed
 
         BufferInfo GetBufferInfo(Buffer) const;
         ResourceInfo GetResourceInfo(Texture) const;
@@ -389,6 +395,7 @@ namespace Lettuce::Core
     public:
         void MemoryCopy(const MemoryToMemoryCopy&);
         void MemoryCopy(const MemoryToTextureCopy&);
+        void TextureCopy(const TextureToRenderTargetCopy&);
 
         void BeginRendering(const RenderPassDesc&);
         void EndRendering();

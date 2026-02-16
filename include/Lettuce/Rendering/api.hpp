@@ -77,8 +77,10 @@ namespace Lettuce::Rendering
 
     struct VisibilityBufferGPUPixel
     {
-        uint32_t instanceIdxLOD; // instanceIdx: 24 bits, LOD: 8 bits
-        uint32_t meshletIdx;
+        uint8_t LOD;
+        uint8_t triangleID;
+        uint16_t instanceID;
+        uint32_t meshletID;
     };
 
     struct LightGPUData
@@ -96,20 +98,6 @@ namespace Lettuce::Rendering
         float timeDelta;
         uint32_t frameIndex;
         uint32_t lightsCount;
-    };
-
-    // plane: vec3 to vec3                          (vec3 + vec3)
-    // box: vec3 to vec3 or center + side           (vec3 + float)
-    // sphere: center + radious + detail1 + detail2 (vec3 + float + uint2)
-    struct GeometryGPUData
-    {
-        glm::mat4 model;
-        // procedural gen data
-        glm::vec3 data0;
-        glm::vec3 data1;
-        // mesh buffer offsets
-        uint32_t indexOffset;
-        uint32_t vertexOffset;
     };
 
     struct MaterialParams

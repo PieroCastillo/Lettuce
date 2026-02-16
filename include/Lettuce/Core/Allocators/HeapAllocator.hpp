@@ -11,7 +11,7 @@ namespace Lettuce::Core::Allocators
 {
     struct HeapllocatorDesc 
     {
-        
+        uint32_t blockDefaultSize;
     };
 
     struct Heap {

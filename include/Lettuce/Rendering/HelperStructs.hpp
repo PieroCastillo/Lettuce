@@ -22,7 +22,6 @@ namespace Lettuce::Rendering
         MemoryView indexBuffer;
 
         std::span<std::any> materialsGPUData;
-        std::span<GeometryGPUData> geometryGPUData;
         std::span<std::any> vertexGPUData;
         std::span<uint32_t> indexGPUData;
 
