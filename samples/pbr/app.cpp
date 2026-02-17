@@ -46,16 +46,18 @@ uint32_t instanceCount = 0;
 MemoryView mvScene;
 MemoryView mvInstances;
 MemoryView mvMaterialDatas;
-MemoryView mvIndexBuffer;
-MemoryView mvMeshlets;
+
 MemoryView mvTlasNodes;
 MemoryView mvBlasNodes;
-MemoryView mvBlasLeafMeshletIndices;
+MemoryView mvMeshlets;
+
+MemoryView mvIndexBuffer;
 MemoryView mvVertexPosBuffer;
 MemoryView mvVertexNorBuffer;
 MemoryView mvVertexUVsBuffer;
 
 MemoryView mvVisibilityPassDrawcalls;
+MemoryView mvTaskRecords;
 
 RenderTarget rtVisibilityTarget;
 RenderTarget rtDepthTarget;
@@ -111,16 +113,6 @@ void initLettuce()
     };
     alloc.Create(device, linAllocDesc);
 
-    // mvScene = alloc.AllocateMemory(sizeof(SceneGPUData));
-    // mvInstances = alloc.AllocateMemory(sizeof(InstanceGPUItem) * maxInstanceCount);
-    // mvMaterialDatas = alloc.AllocateMemory(sizeof(MaterialDataGPUItem) * maxInstanceCount);
-    // mvIndexBuffer = alloc.AllocateMemory(sizeof(uint32_t)*);
-    // mvVertexBuffer = alloc.AllocateMemory(sizeof(glm::vec3) * 3 *);
-    // mvMeshlets = alloc.AllocateMemory(sizeof(MeshletGPUItem)*);
-    // mvTlasNodes = alloc.AllocateMemory(sizeof(TLASGPUItem)*);
-    // mvBlasNodes = alloc.AllocateMemory(sizeof(BLASGPUItem)*);
-    // mvBlasLeafMeshletIndices = alloc.AllocateMemory(sizeof()*);
-
     AsyncRecorderDesc asyncRecDesc = {
         .device = device,
         .threadCount = 4,
@@ -151,6 +143,33 @@ void createRenderingObjects()
     device.PushResourceDescriptors(pushResDesc);
 
     device.Destroy(shaders);
+}
+
+void buildGeometryBuffers()
+{
+    mvIndexBuffer = alloc.AllocateMemory(sizeof(uint32_t)*256);
+    mvVertexPosBuffer = alloc.AllocateMemory(sizeof(glm::vec3) * 30);
+    mvVertexNorBuffer = alloc.AllocateMemory(sizeof(glm::vec3) * 30);
+    mvVertexUVsBuffer = alloc.AllocateMemory(sizeof(glm::vec2) * 30);
+    mvMeshlets = alloc.AllocateMemory(sizeof(MeshletGPUItem)*128);
+}
+
+void buildBVH()
+{
+    mvTlasNodes = alloc.AllocateMemory(sizeof(TLASGPUItem)*);
+    mvBlasNodes = alloc.AllocateMemory(sizeof(BLASGPUItem)*);
+    mvBlasLeafMeshletIndices = alloc.AllocateMemory(sizeof()*);
+}
+
+void buildScene()
+{
+    // mvScene = alloc.AllocateMemory(sizeof(SceneGPUData));
+}
+
+void buildInstances()
+{
+    // mvInstances = alloc.AllocateMemory(sizeof(InstanceGPUItem) * maxInstanceCount);
+    // mvMaterialDatas = alloc.AllocateMemory(sizeof(MaterialDataGPUItem) * maxInstanceCount);
 }
 
 void mainLoop()
@@ -193,25 +212,24 @@ void mainLoop()
                 std::pair(1u, mvTlasNodes),               // read
                 std::pair(2u, mvInstances),               // read
                 std::pair(3u, mvVisibilityPassDrawcalls), // write: count+drawcalls
+                std::pair(4u, mvTaskRecords),
             },
             .descriptorTable = descriptorTable,
         };
 
         PushAllocationsDesc pushAddressesVisibilityPassDesc = {
              .allocations = std::array {
-                // task shader read
+                // task/mesh shader read
                 std::pair(0u, mvScene),
                 std::pair(1u, mvInstances),
                 std::pair(2u, mvBlasNodes),
-                std::pair(3u, mvBlasLeafMeshletIndices),
-                std::pair(4u, mvMeshlets),
-                // mesh shader read
-                std::pair(5u, mvMaterialDatas),
+                std::pair(3u, mvMeshlets),
+                std::pair(4u, mvTaskRecords),
                 // geometry buffers
-                std::pair(6u, mvIndexBuffer),
-                std::pair(7u, mvVertexPosBuffer),
-                std::pair(8u, mvVertexNorBuffer),
-                std::pair(9u, mvVertexUVsBuffer),
+                std::pair(5u, mvIndexBuffer),
+                std::pair(6u, mvVertexPosBuffer),
+                std::pair(7u, mvVertexNorBuffer),
+                std::pair(8u, mvVertexUVsBuffer),
             },
             .descriptorTable = descriptorTable,
         };
@@ -292,7 +310,6 @@ void cleanupLettuce()
 {
     rec.Destroy();
 
-    alloc.ReleaseMemory(mvBlasLeafMeshletIndices);
     alloc.ReleaseMemory(mvBlasNodes);
     alloc.ReleaseMemory(mvTlasNodes);
     alloc.ReleaseMemory(mvMeshlets);

@@ -8,54 +8,114 @@ Texture2D<float4> sampledTextures[];
 SamplerState samplers[];
 RWTexture2D<float4> storageTextures[];
 
-[require(compute, spirv)]
+groupshared uint taskShaderGroupSizeX;
+
+[require(compute, spirv_1_4)]
 [shader("compute")]
-void CompCullingPass([[vk::push_constant]] PCCullingPass pc)
+void CompCullingPass([[vk::push_constant]] PCCullingPass pc, uint3 threadID: SV_DispatchThreadID)
 {
     var sceneDataPtr = reinterpret<Ptr<SceneGPUData>>(pc.mvSceneAddress);
-    var tlasNodesPtr = reinterpret<Ptr<TLASGPUItem>>(pc.mvTlasNodesAddress);
+    var tlasNodesPtr = reinterpret<Ptr<BVHNodeGPUItem>>(pc.mvTlasNodesAddress);
     var instancesPtr = reinterpret<Ptr<InstanceGPUItem>>(pc.mvInstancesAddress);
     var drawcallsPtr = reinterpret<Ptr<IndirectBuffer>>(pc.mvVisibilityPassDrawcallsAddress);
+    var taskRecordPtr = reinterpret<Ptr<TaskRecord>>(pc.mvTaskRecordsAddress);
+
+    var idx = threadID.x;
+    if (idx == 0)
+    {
+        taskShaderGroupSizeX = 0;
+    }
+    GroupMemoryBarrierWithGroupSync();
+
+    var instance = instancesPtr[idx];
+
+    // apply culling per instance, if pass frustrum culling test
+    if (true)
+    {
+        taskRecordPtr[idx].instanceID = idx;
+        var groupsPerInstance = (uint32_t)ceil(instance.meshletCount / 64.0f);
+        InterlockedAdd(taskShaderGroupSizeX, groupsPerInstance);
+    }
+
+    if (idx == 0)
+    {
+        var drawcall = VkDrawMeshTasksIndirectCommandEXT(taskShaderGroupSizeX, 0, 0);
+        drawcallsPtr->count = 1;
+        drawcallsPtr->cmds[0] = drawcall;
+    }
 }
 
 [require(amplification, spirv)]
 [shader("amplification")]
 [numthreads(32, 1, 1)]
-void TaskVisibilityPass([[vk::push_constant]] PCVisibilityPass pc)
+void TaskVisibilityPass([[vk::push_constant]] PCVisibilityPass pc, uint3 threadID: SV_DispatchThreadID)
 {
     var sceneDataPtr = reinterpret<Ptr<SceneGPUData>>(pc.mvSceneAddress);
+    var taskRecordsPtr = reinterpret<Ptr<TaskRecord>>(pc.mvTaskRecordsAddress);
     var instancesPtr = reinterpret<Ptr<InstanceGPUItem>>(pc.mvInstancesAddress);
-    var blasNodesPtr = reinterpret<Ptr<BLASGPUItem>>(pc.mvBlasNodesAddress);
-    var blasLeafMeshletIndicesPtr = reinterpret<Ptr<BlasLeafMeshletGPUItem>>(pc.mvBlasLeafMeshletIndicesAddress);
+    var blasNodesPtr = reinterpret<Ptr<BVHNodeGPUItem>>(pc.mvBlasNodesAddress);
     var meshletsPtr = reinterpret<Ptr<MeshletGPUItem>>(pc.mvMeshletsAddress);
-    var materialDataPtr = reinterpret<Ptr<MaterialDataGPUItem>>(pc.mvMaterialDatasAddress);
+
+    var instance = instancesPtr[taskRecordsPtr[threadID.x].instanceID];
+
+    MeshVisibilityPassPayload payload;
+
+    // apply culling per meshlet
+
+    DispatchMesh(1, 0, 0, payload); 
 }
+
+groupshared float4x4 projViewModel;
+groupshared MeshletGPUItem meshletInfo;
 
 [require(mesh, spirv)]
 [shader("mesh")]
 [numthreads(32, 1, 1)]
-MeshOutput MeshVisibilityPass(MeshVisibilityPassPayload payload, [[vk::push_constant]] PCVisibilityPass pc)
+void MeshVisibilityPass(out indices uint3 triangles[126], out vertices MeshVertexOutput vertices[64],
+                        in MeshVisibilityPassPayload payload, [[vk::push_constant]] PCVisibilityPass pc,
+                        uint3 threadID: SV_DispatchThreadID)
 {
-    var sceneDataPtr = reinterpret<Ptr<SceneGPUData>>(pc.mvSceneAddress);
-    var instancesPtr = reinterpret<Ptr<InstanceGPUItem>>(pc.mvInstancesAddress);
-    var blasNodesPtr = reinterpret<Ptr<BLASGPUItem>>(pc.mvBlasNodesAddress);
-    var blasLeafMeshletIndicesPtr = reinterpret<Ptr<BlasLeafMeshletGPUItem>>(pc.mvBlasLeafMeshletIndicesAddress);
-    var meshletsPtr = reinterpret<Ptr<MeshletGPUItem>>(pc.mvMeshletsAddress);
-    var materialDataPtr = reinterpret<Ptr<MaterialDataGPUItem>>(pc.mvMaterialDatasAddress);
-    // geometry buffers
+    var idx = threadID.x;
+
+    if (idx == 0)
+    {
+        // calculate pvm matrix once
+        var sceneDataPtr = reinterpret<Ptr<SceneGPUData>>(pc.mvSceneAddress);
+        var instancesPtr = reinterpret<Ptr<InstanceGPUItem>>(pc.mvInstancesAddress);
+        projViewModel = sceneDataPtr->projection * sceneDataPtr->view * instancesPtr[payload.instanceID].model;
+
+        // get meshlet info once
+        var meshletsPtr = reinterpret<Ptr<MeshletGPUItem>>(pc.mvMeshletsAddress);
+        meshletInfo = meshletsPtr[payload.meshletID];
+    }
+    GroupMemoryBarrierWithGroupSync();
+
     var indexBufferPtr = reinterpret<Ptr<uint32_t>>(pc.mvIndexBufferAddress);
     var vertexPosPtr = reinterpret<Ptr<float3>>(pc.mvVertexPosBufferAddress);
-    var vertexNorPtr = reinterpret<Ptr<float3>>(pc.mvVertexNorBufferAddress);
-    var vertexUVsPtr = reinterpret<Ptr<float2>>(pc.mvVertexUVsBufferAddress);
 
-    MeshOutput output;
+    SetMeshOutputCounts(126, 64);
 
-    return output;
+    var vertexCount = meshletInfo.vertexCount;
+    var triangleCount = meshletInfo.triangleCount;
+    
+    for (int i = idx; i < vertexCount; i += 32)
+    {
+        vertices[i].pos = float4(vertexPosPtr[meshletInfo.vertexOffset + i], 1);
+        vertices[i].data.instanceID = payload.instanceID;
+        vertices[i].data.meshletID = payload.meshletID;
+        vertices[i].data.LOD = 0; // TODO: calculate LOD
+        vertices[i].data.triangleID = 0; // TODO: calculate triangle ID
+    }
+
+    for (int i = idx; i < triangleCount; i += 32)
+    {
+        triangles[i] = indexBufferPtr[meshletInfo.triangleOffset + i];
+    }
 }
 
 [require(fragment, spirv)]
 [shader("fragment")]
-VisibilityBufferGPUPixel FragVisibilityPass(MeshOutput in) : SV_Target
+VisibilityBufferGPUPixel FragVisibilityPass(MeshVertexOutput in) : SV_Target
 {
     return in.data;
 }
@@ -63,7 +123,7 @@ VisibilityBufferGPUPixel FragVisibilityPass(MeshOutput in) : SV_Target
 [require(compute, spirv)]
 [shader("compute")]
 [numthreads(16, 16, 1)]
-void CompMaterialShadingPass([[vk::push_constant]] PCMaterialShadingPass pc, uint3 threadID : SV_DispatchThreadID)
+void CompMaterialShadingPass([[vk::push_constant]] PCMaterialShadingPass pc, uint3 threadID: SV_DispatchThreadID)
 {
     var sceneDataPtr = reinterpret<Ptr<SceneGPUData>>(pc.mvSceneAddress);
     var materialDataPtr = reinterpret<Ptr<MaterialDataGPUItem>>(pc.mvMaterialDatasAddress);
@@ -74,38 +134,11 @@ void CompMaterialShadingPass([[vk::push_constant]] PCMaterialShadingPass pc, uin
     var vertexUVsPtr = reinterpret<Ptr<float2>>(pc.mvVertexUVsBufferAddress);
 
     var pixelID = threadID.xy;
-    var visPixel = storageTextures[0][pixelID]; // tVisibilityTargetView
+    var visPixel = storageTextures[0][pixelID];   // tVisibilityTargetView
     var depthPixel = storageTextures[1][pixelID]; // tDepthTargetView
     var color = float4(1, 1, 1, 1);
 
+    // here we need to resolve color
+
     storageTextures[2][pixelID] = color; // tResultTargetView
 }
-
-// [require(vertex, spirv)]
-// [shader("vertex")]
-// void vertexMain(uint vertexID: SV_VulkanVertexID)
-// {
-//     VSOutput out;
-
-//     float val = 0.5;
-//     float2 positions[3] = {
-//         float2(0.0, -val),
-//         float2(val, val),
-//         float2(-val, val)
-//     };
-
-//     Ptr<ParticleBuffer> particles = reinterpret<Ptr<ParticleBuffer>>(pc.particleAddress);
-//     var particle = particles->particles[particles->idx];
-
-//     out.position = float4(positions[vertexID % 3] + particle.pos, 0.0, 1.0);
-//     out.color = particle.color;
-
-//     return out;
-// }
-
-// [require(fragment, spirv)]
-// [shader("fragment")]
-// float4 fragmentMain(VSOutput input) : SV_Target
-// {
-//     return float4(input.color, 1.0);
-// }

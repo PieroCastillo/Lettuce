@@ -27,42 +27,47 @@ using namespace Lettuce::Core;
 
 namespace Lettuce::Rendering
 {
+    using float2 = glm::vec2;
+    using float3 = glm::vec3;
+    using float4 = glm::vec4;
+    using float3x3 = glm::mat3;
+    using float4x4 = glm::mat4;
+
     struct IMaterial;
     struct SceneGraph;
 
+    // BVH4
     struct BVHNodeGPUItem
     {
-        glm::vec3 aabbMin;
-        uint32_t  leftFirst;
-        glm::vec3 aabbMax;
-        uint32_t  count;
-    };
+        float bboxMinX[4];
+        float bboxMinY[4];
+        float bboxMinZ[4];
 
-    struct TLASGPUItem
-    {
-        uint32_t rootNodeIdx;
-    };
+        float bboxMaxX[4];
+        float bboxMaxY[4];
+        float bboxMaxZ[4];
 
-    struct BLASGPUItem
-    {
-        uint32_t rootNodeIdx;
+        uint32_t childID[4]; // into a TLAS: node or instance, into a BLAS: node or meshlet
+        uint32_t leafMask;
     };
 
     struct InstanceGPUItem
     {
-        glm::vec3 aabbMin;
-        uint32_t meshletIdx;
-        glm::vec3 aabbMax;
+        float3 aabbMin;
+        float3 aabbMax;
+        float4x4 model;
+        float4x4 modelInv;
         uint32_t materialDataIdx;
-        glm::mat4 model;
-        glm::mat4 modelInv;
+        uint32_t meshletOffset;
+        uint32_t meshletCount;
+        uint32_t blasID;
     };
 
-    // 16 bytes is enough
+    // is 32 bytes enough?
     struct MaterialDataGPUItem
     {
         uint32_t materialID;
-        uint8_t  mmaterialData[15];
+        uint32_t mmaterialData[7];
     };
 
     struct MeshletGPUItem
@@ -71,7 +76,7 @@ namespace Lettuce::Rendering
         uint32_t triangleOffset;
         uint32_t vertexCount;
         uint32_t triangleCount;
-        glm::vec3 center;
+        float3 center;
         float  radius;
     };
 
@@ -83,17 +88,10 @@ namespace Lettuce::Rendering
         uint32_t meshletID;
     };
 
-    struct LightGPUData
-    {
-        glm::vec3 color;
-        glm::vec3 direction;
-        float intensity;
-    };
-
     struct SceneGPUData
     {
-        glm::mat4 view;
-        glm::mat4 projection;
+        float4x4 view;
+        float4x4 projection;
         float time;
         float timeDelta;
         uint32_t frameIndex;

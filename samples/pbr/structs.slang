@@ -17,44 +17,43 @@ struct IndirectBuffer
     VkDrawMeshTasksIndirectCommandEXT cmds[maxInstanceCount];
 };
 
+struct TaskRecord
+{
+    uint32_t instanceID;
+};
+
+// BVH4
 struct BVHNodeGPUItem
 {
-    float3 aabbMin;
-    uint32_t leftFirst;
-    float3 aabbMax;
-    uint32_t count;
-};
+    float bboxMinX[4];
+    float bboxMinY[4];
+    float bboxMinZ[4];
 
-struct TLASGPUItem
-{
-    uint32_t rootNodeIdx;
-};
+    float bboxMaxX[4];
+    float bboxMaxY[4];
+    float bboxMaxZ[4];
 
-struct BLASGPUItem
-{
-    uint32_t rootNodeIdx;
-};
-
-struct BlasLeafMeshletGPUItem
-{
-    uint32_t meshletGlobalIndex;
+    uint32_t childID[4]; // into a TLAS: node or instance, into a BLAS: node or meshlet
+    uint32_t leafMask;
 };
 
 struct InstanceGPUItem
 {
     float3 aabbMin;
-    uint32_t meshletIdx;
     float3 aabbMax;
-    uint32_t materialDataIdx;
     float4x4 model;
     float4x4 modelInv;
+    uint32_t materialDataIdx;
+    uint32_t meshletOffset;
+    uint32_t meshletCount;
+    uint32_t blasID;
 };
 
-// 16 bytes is enough
+// is 32 bytes enough?
 struct MaterialDataGPUItem
 {
     uint32_t materialID;
-    uint8_t mmaterialData[15];
+    uint32_t mmaterialData[7];
 };
 
 struct MeshletGPUItem
@@ -75,13 +74,6 @@ struct VisibilityBufferGPUPixel
     uint32_t meshletID;
 };
 
-struct LightGPUData
-{
-    float3 color;
-    float3 direction;
-    float intensity;
-};
-
 struct SceneGPUData
 {
     float4x4 view;
@@ -98,6 +90,7 @@ struct PCCullingPass
     uint64_t mvTlasNodesAddress;               // read
     uint64_t mvInstancesAddress;               // read
     uint64_t mvVisibilityPassDrawcallsAddress; // write: count+drawcalls
+    uint64_t mvTaskRecordsAddress;             // write
 };
 
 struct PCVisibilityPass
@@ -105,9 +98,9 @@ struct PCVisibilityPass
     uint64_t mvSceneAddress;
     uint64_t mvInstancesAddress;
     uint64_t mvBlasNodesAddress;
-    uint64_t mvBlasLeafMeshletIndicesAddress;
     uint64_t mvMeshletsAddress;
-    uint64_t mvMaterialDatasAddress;
+    uint64_t mvTaskRecordsAddress;
+    
     uint64_t mvIndexBufferAddress;
     uint64_t mvVertexPosBufferAddress;
     uint64_t mvVertexNorBufferAddress;
@@ -124,11 +117,14 @@ struct PCMaterialShadingPass
     uint64_t mvVertexUVsBufferAddress;
 };
 
-struct MeshOutput
+struct MeshVertexOutput
 {
+    float4 pos : SV_Position;
     VisibilityBufferGPUPixel data;
 };
 
 struct MeshVisibilityPassPayload
 {
+    uint16_t instanceID;
+    uint meshletID;
 };
