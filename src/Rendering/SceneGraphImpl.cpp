@@ -19,11 +19,11 @@ void SceneGraphImpl::Create(const SceneGraphDesc& desc)
     device = &(desc.device);
     allocator = desc.allocator;
 
-    sceneMemoryView = allocator->AllocateMemory(sizeof(SceneGPUData));
-    lightMemoryView = allocator->AllocateMemory(sizeof(LightGPUData) * maxLightsCount);
+    // sceneMemoryView = allocator->AllocateMemory(sizeof(SceneGPUData));
+    // lightMemoryView = allocator->AllocateMemory(sizeof(LightGPUData) * maxLightsCount);
 
-    sceneGPUData = std::span<SceneGPUData, 1>(static_cast<SceneGPUData*>(sceneMemoryView.cpuAddress), 1);
-    lightsGPUData = std::span<LightGPUData, maxLightsCount>(static_cast<LightGPUData*>(lightMemoryView.cpuAddress), maxLightsCount);
+    // sceneGPUData = std::span<SceneGPUData, 1>(static_cast<SceneGPUData*>(sceneMemoryView.cpuAddress), 1);
+    // lightsGPUData = std::span<LightGPUData, maxLightsCount>(static_cast<LightGPUData*>(lightMemoryView.cpuAddress), maxLightsCount);
 }
 
 void SceneGraphImpl::Destroy()

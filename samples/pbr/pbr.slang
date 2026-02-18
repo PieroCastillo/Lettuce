@@ -12,7 +12,7 @@ groupshared uint taskShaderGroupSizeX;
 
 [require(compute, spirv_1_4)]
 [shader("compute")]
-void CompCullingPass([[vk::push_constant]] PCCullingPass pc, uint3 threadID: SV_DispatchThreadID)
+void CompCullingPass([[vk::push_constant]] uniform PCCullingPass pc, uint3 threadID: SV_DispatchThreadID)
 {
     var sceneDataPtr = reinterpret<Ptr<SceneGPUData>>(pc.mvSceneAddress);
     var tlasNodesPtr = reinterpret<Ptr<BVHNodeGPUItem>>(pc.mvTlasNodesAddress);
@@ -29,7 +29,7 @@ void CompCullingPass([[vk::push_constant]] PCCullingPass pc, uint3 threadID: SV_
 
     var instance = instancesPtr[idx];
 
-    // apply culling per instance, if pass frustrum culling test
+    // TODO: apply culling per instance, if pass frustrum culling test
     if (true)
     {
         taskRecordPtr[idx].instanceID = idx;
@@ -47,8 +47,8 @@ void CompCullingPass([[vk::push_constant]] PCCullingPass pc, uint3 threadID: SV_
 
 [require(amplification, spirv)]
 [shader("amplification")]
-[numthreads(32, 1, 1)]
-void TaskVisibilityPass([[vk::push_constant]] PCVisibilityPass pc, uint3 threadID: SV_DispatchThreadID)
+[numthreads(computeNumthreadsSizeX, 1, 1)]
+void TaskVisibilityPass([[vk::push_constant]] uniform PCVisibilityPass pc, uint3 threadID: SV_DispatchThreadID)
 {
     var sceneDataPtr = reinterpret<Ptr<SceneGPUData>>(pc.mvSceneAddress);
     var taskRecordsPtr = reinterpret<Ptr<TaskRecord>>(pc.mvTaskRecordsAddress);
@@ -60,7 +60,7 @@ void TaskVisibilityPass([[vk::push_constant]] PCVisibilityPass pc, uint3 threadI
 
     MeshVisibilityPassPayload payload;
 
-    // apply culling per meshlet
+    // TODO:apply culling per meshlet
 
     DispatchMesh(1, 0, 0, payload); 
 }
@@ -70,9 +70,9 @@ groupshared MeshletGPUItem meshletInfo;
 
 [require(mesh, spirv)]
 [shader("mesh")]
-[numthreads(32, 1, 1)]
-void MeshVisibilityPass(out indices uint3 triangles[126], out vertices MeshVertexOutput vertices[64],
-                        in MeshVisibilityPassPayload payload, [[vk::push_constant]] PCVisibilityPass pc,
+[numthreads(computeNumthreadsSizeX, 1, 1)]
+void MeshVisibilityPass(out indices uint3 triangles[meshletTriangleCount], out vertices MeshVertexOutput vertices[meshletVertexCount],
+                        in MeshVisibilityPassPayload payload, [[vk::push_constant]] uniform PCVisibilityPass pc,
                         uint3 threadID: SV_DispatchThreadID)
 {
     var idx = threadID.x;
@@ -93,12 +93,12 @@ void MeshVisibilityPass(out indices uint3 triangles[126], out vertices MeshVerte
     var indexBufferPtr = reinterpret<Ptr<uint32_t>>(pc.mvIndexBufferAddress);
     var vertexPosPtr = reinterpret<Ptr<float3>>(pc.mvVertexPosBufferAddress);
 
-    SetMeshOutputCounts(126, 64);
+    SetMeshOutputCounts(meshletTriangleCount, meshletVertexCount);
 
     var vertexCount = meshletInfo.vertexCount;
     var triangleCount = meshletInfo.triangleCount;
     
-    for (int i = idx; i < vertexCount; i += 32)
+    for (int i = idx; i < vertexCount; i += computeNumthreadsSizeX)
     {
         vertices[i].pos = float4(vertexPosPtr[meshletInfo.vertexOffset + i], 1);
         vertices[i].data.instanceID = payload.instanceID;
@@ -107,7 +107,7 @@ void MeshVisibilityPass(out indices uint3 triangles[126], out vertices MeshVerte
         vertices[i].data.triangleID = 0; // TODO: calculate triangle ID
     }
 
-    for (int i = idx; i < triangleCount; i += 32)
+    for (int i = idx; i < triangleCount; i += computeNumthreadsSizeX)
     {
         triangles[i] = indexBufferPtr[meshletInfo.triangleOffset + i];
     }
@@ -122,8 +122,8 @@ VisibilityBufferGPUPixel FragVisibilityPass(MeshVertexOutput in) : SV_Target
 
 [require(compute, spirv)]
 [shader("compute")]
-[numthreads(16, 16, 1)]
-void CompMaterialShadingPass([[vk::push_constant]] PCMaterialShadingPass pc, uint3 threadID: SV_DispatchThreadID)
+[numthreads(tileSizeX, tileSizeY, 1)]
+void CompMaterialShadingPass([[vk::push_constant]] uniform PCMaterialShadingPass pc, uint3 threadID: SV_DispatchThreadID)
 {
     var sceneDataPtr = reinterpret<Ptr<SceneGPUData>>(pc.mvSceneAddress);
     var materialDataPtr = reinterpret<Ptr<MaterialDataGPUItem>>(pc.mvMaterialDatasAddress);

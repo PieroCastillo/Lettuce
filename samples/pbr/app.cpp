@@ -151,14 +151,13 @@ void buildGeometryBuffers()
     mvVertexPosBuffer = alloc.AllocateMemory(sizeof(glm::vec3) * 30);
     mvVertexNorBuffer = alloc.AllocateMemory(sizeof(glm::vec3) * 30);
     mvVertexUVsBuffer = alloc.AllocateMemory(sizeof(glm::vec2) * 30);
-    mvMeshlets = alloc.AllocateMemory(sizeof(MeshletGPUItem)*128);
+    mvMeshlets = alloc.AllocateMemory(sizeof(MeshletGPUItem)* 128);
 }
 
 void buildBVH()
 {
-    mvTlasNodes = alloc.AllocateMemory(sizeof(TLASGPUItem)*);
-    mvBlasNodes = alloc.AllocateMemory(sizeof(BLASGPUItem)*);
-    mvBlasLeafMeshletIndices = alloc.AllocateMemory(sizeof()*);
+    // mvTlasNodes = alloc.AllocateMemory(sizeof(BVHNodeGPUItem)*1000);
+    // mvBlasNodes = alloc.AllocateMemory(sizeof(BVHNodeGPUItem)*1000);
 }
 
 void buildScene()

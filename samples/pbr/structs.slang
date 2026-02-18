@@ -3,6 +3,11 @@ Created by @PieroCastillo on 2025-02-16
 */
 
 const static uint32_t maxInstanceCount = 10000; // I will need to convert this to a constante maybe??
+const static uint32_t meshletVertexCount = 64;
+const static uint32_t meshletTriangleCount = 126;
+const static uint32_t computeNumthreadsSizeX = 32;
+const static uint32_t tileSizeX = 16;
+const static uint32_t tileSizeY = 16;
 
 struct VkDrawMeshTasksIndirectCommandEXT
 {

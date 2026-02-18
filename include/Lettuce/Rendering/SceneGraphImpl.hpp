@@ -23,7 +23,7 @@ namespace Lettuce::Rendering
         static constexpr int maxLightsCount = 256;
 
         std::span<SceneGPUData> sceneGPUData;
-        std::span<LightGPUData> lightsGPUData;
+        // std::span<LightGPUData> lightsGPUData;
 
         // ResourcePool<SceneNode, SceneNodeInfo> nodes;
         // ResourcePool<Renderable, uint64_t> renderables;
