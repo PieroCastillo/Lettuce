@@ -9,60 +9,90 @@ SamplerState samplers[];
 RWTexture2D<float4> storageTextures[];
 
 groupshared uint taskShaderGroupSizeX;
+groupshared uint meshletsLeft;
+groupshared InstanceGPUItem instanceInfo;
 
+/*
+Compute shader traverses TLAS
+*/
 [require(compute, spirv_1_4)]
 [shader("compute")]
-void CompCullingPass([[vk::push_constant]] uniform PCCullingPass pc, uint3 threadID: SV_DispatchThreadID)
+[numthreads(computeNumthreadsSizeX, 1, 1)]
+void CompCullingPass([[vk::push_constant]] uniform PCCullingPass pc,
+                     uint3 threadID: SV_DispatchThreadID, uint3 localID: SV_GroupThreadID)
 {
+    // load initial data
     var sceneDataPtr = reinterpret<Ptr<SceneGPUData>>(pc.mvSceneAddress);
     var tlasNodesPtr = reinterpret<Ptr<BVHNodeGPUItem>>(pc.mvTlasNodesAddress);
     var instancesPtr = reinterpret<Ptr<InstanceGPUItem>>(pc.mvInstancesAddress);
     var drawcallsPtr = reinterpret<Ptr<IndirectBuffer>>(pc.mvVisibilityPassDrawcallsAddress);
     var taskRecordPtr = reinterpret<Ptr<TaskRecord>>(pc.mvTaskRecordsAddress);
 
-    var idx = threadID.x;
-    if (idx == 0)
+    var lidx = localID.x;
+    var gidx = threadID.x;
+
+    if(gidx == 0)
+        drawcallsPtr->count = 1;
+    
+    if (lidx == 0)
     {
         taskShaderGroupSizeX = 0;
+        instanceInfo = instancesPtr[gidx];
+        meshletsLeft = instanceInfo.meshletCount;
     }
     GroupMemoryBarrierWithGroupSync();
-
-    var instance = instancesPtr[idx];
 
     // TODO: apply culling per instance, if pass frustrum culling test
     if (true)
     {
-        taskRecordPtr[idx].instanceID = idx;
-        var groupsPerInstance = (uint32_t)ceil(instance.meshletCount / 64.0f);
-        InterlockedAdd(taskShaderGroupSizeX, groupsPerInstance);
+        // taskRecordPtr[idx].instanceID = idx;
+        // var groupsPerInstance = (uint32_t)ceil(instance.meshletCount / maxMeshletPerTaskGroup);
+        // InterlockedAdd(taskShaderGroupSizeX, groupsPerInstance);
     }
 
-    if (idx == 0)
+    GroupMemoryBarrierWithGroupSync();
+    if (lidx == 0) // one thread writes drawcalls only, one drawcall at total
     {
-        var drawcall = VkDrawMeshTasksIndirectCommandEXT(taskShaderGroupSizeX, 0, 0);
-        drawcallsPtr->count = 1;
-        drawcallsPtr->cmds[0] = drawcall;
+        InterlockedAdd(drawcallsPtr->cmds[0].groupCountX, taskShaderGroupSizeX);
     }
 }
 
+groupshared TaskRecord taskRecord;
+groupshared uint meshletCounter;
+groupshared MeshVisibilityPassPayload meshPayload;
+
+/*
+Task shader traverses BLAS, each task group cooperates to traverse a BLAS subtree
+*/
 [require(amplification, spirv)]
 [shader("amplification")]
 [numthreads(computeNumthreadsSizeX, 1, 1)]
-void TaskVisibilityPass([[vk::push_constant]] uniform PCVisibilityPass pc, uint3 threadID: SV_DispatchThreadID)
+void TaskVisibilityPass([[vk::push_constant]] uniform PCVisibilityPass pc,
+                        uint3 threadID: SV_DispatchThreadID, uint3 localID: SV_GroupThreadID, uint3 groupID: SV_GroupID)
 {
+    // load initial data
     var sceneDataPtr = reinterpret<Ptr<SceneGPUData>>(pc.mvSceneAddress);
     var taskRecordsPtr = reinterpret<Ptr<TaskRecord>>(pc.mvTaskRecordsAddress);
     var instancesPtr = reinterpret<Ptr<InstanceGPUItem>>(pc.mvInstancesAddress);
     var blasNodesPtr = reinterpret<Ptr<BVHNodeGPUItem>>(pc.mvBlasNodesAddress);
     var meshletsPtr = reinterpret<Ptr<MeshletGPUItem>>(pc.mvMeshletsAddress);
+    var gidx = groupID.x;
 
-    var instance = instancesPtr[taskRecordsPtr[threadID.x].instanceID];
+    if (gidx == 0)
+    {
+        taskRecord = taskRecordsPtr[gidx]; // selects task record by group ID
+        meshletCounter = 0;                // init var
+        meshPayload.instanceID = taskRecord.instanceID;
+    }
+    GroupMemoryBarrierWithGroupSync();
 
-    MeshVisibilityPassPayload payload;
+    // var instance = instancesPtr[taskRecordsPtr[threadID.x].instanceID]; // how to access instance data
 
-    // TODO:apply culling per meshlet
+    // TODO: apply culling per meshlet
 
-    DispatchMesh(1, 0, 0, payload); 
+    GroupMemoryBarrierWithGroupSync();
+    if (gidx == 0)
+        DispatchMesh(meshletCounter, 1, 1, meshPayload);
 }
 
 groupshared float4x4 projViewModel;
@@ -73,9 +103,11 @@ groupshared MeshletGPUItem meshletInfo;
 [numthreads(computeNumthreadsSizeX, 1, 1)]
 void MeshVisibilityPass(out indices uint3 triangles[meshletTriangleCount], out vertices MeshVertexOutput vertices[meshletVertexCount],
                         in MeshVisibilityPassPayload payload, [[vk::push_constant]] uniform PCVisibilityPass pc,
-                        uint3 threadID: SV_DispatchThreadID)
+                        uint3 threadID: SV_DispatchThreadID, uint3 localID: SV_GroupThreadID, uint3 groupID: SV_GroupID)
 {
     var idx = threadID.x;
+    var lidx = localID.x;
+    var gidx = groupID.x;
 
     if (idx == 0)
     {
@@ -86,7 +118,7 @@ void MeshVisibilityPass(out indices uint3 triangles[meshletTriangleCount], out v
 
         // get meshlet info once
         var meshletsPtr = reinterpret<Ptr<MeshletGPUItem>>(pc.mvMeshletsAddress);
-        meshletInfo = meshletsPtr[payload.meshletID];
+        meshletInfo = meshletsPtr[payload.meshletIDs[gidx]];
     }
     GroupMemoryBarrierWithGroupSync();
 
@@ -97,17 +129,18 @@ void MeshVisibilityPass(out indices uint3 triangles[meshletTriangleCount], out v
 
     var vertexCount = meshletInfo.vertexCount;
     var triangleCount = meshletInfo.triangleCount;
-    
-    for (int i = idx; i < vertexCount; i += computeNumthreadsSizeX)
+
+    // vertex/index selection depends in local thread ID
+    for (int i = lidx; i < vertexCount; i += computeNumthreadsSizeX)
     {
         vertices[i].pos = float4(vertexPosPtr[meshletInfo.vertexOffset + i], 1);
         vertices[i].data.instanceID = payload.instanceID;
-        vertices[i].data.meshletID = payload.meshletID;
-        vertices[i].data.LOD = 0; // TODO: calculate LOD
+        vertices[i].data.meshletID = payload.meshletIDs[gidx];
+        vertices[i].data.LOD = 0;        // TODO: calculate LOD
         vertices[i].data.triangleID = 0; // TODO: calculate triangle ID
     }
 
-    for (int i = idx; i < triangleCount; i += computeNumthreadsSizeX)
+    for (int i = lidx; i < triangleCount; i += computeNumthreadsSizeX)
     {
         triangles[i] = indexBufferPtr[meshletInfo.triangleOffset + i];
     }

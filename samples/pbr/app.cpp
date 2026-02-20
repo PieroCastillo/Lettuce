@@ -16,6 +16,12 @@
 #include <optional>
 #include <functional>
 
+#include <fastgltf/core.hpp>
+#include <fastgltf/types.hpp>
+#include <fastgltf/tools.hpp>
+#include <fastgltf/util.hpp>
+#include <fastgltf/glm_element_traits.hpp>
+
 using namespace Lettuce::Core;
 using namespace Lettuce::Rendering;
 
@@ -43,18 +49,22 @@ constexpr uint32_t tileSizeY = 16;
 constexpr uint32_t maxInstanceCount = 10000;
 uint32_t instanceCount = 0;
 
+constexpr uint32_t maxMeshletVertices  = 64;
+constexpr uint32_t maxMeshletTriangles = 126;
+
 MemoryView mvScene;
 MemoryView mvInstances;
 MemoryView mvMaterialDatas;
 
 MemoryView mvTlasNodes;
 MemoryView mvBlasNodes;
-MemoryView mvMeshlets;
 
 MemoryView mvIndexBuffer;
 MemoryView mvVertexPosBuffer;
 MemoryView mvVertexNorBuffer;
+MemoryView mvVertexTanBuffer;
 MemoryView mvVertexUVsBuffer;
+MemoryView mvMeshlets;
 
 MemoryView mvVisibilityPassDrawcalls;
 MemoryView mvTaskRecords;
@@ -147,11 +157,72 @@ void createRenderingObjects()
 
 void buildGeometryBuffers()
 {
-    mvIndexBuffer = alloc.AllocateMemory(sizeof(uint32_t)*256);
-    mvVertexPosBuffer = alloc.AllocateMemory(sizeof(glm::vec3) * 30);
-    mvVertexNorBuffer = alloc.AllocateMemory(sizeof(glm::vec3) * 30);
-    mvVertexUVsBuffer = alloc.AllocateMemory(sizeof(glm::vec2) * 30);
-    mvMeshlets = alloc.AllocateMemory(sizeof(MeshletGPUItem)* 128);
+    std::filesystem::path modelPath = "";
+
+    auto parser = fastgltf::Parser();
+    auto gltfData = fastgltf::GltfDataBuffer::FromPath(modelPath);
+
+    auto asset = parser.loadGltf(gltfData.get(), modelPath.parent_path(), fastgltf::Options::None);
+
+    std::vector<float3> vertexPosData;
+    std::vector<float3> vertexNorData;
+    std::vector<float4> vertexTanData;
+    std::vector<float2> vertexUvsData;
+
+    std::vector<uint32_t> indexData;
+
+    std::vector<MeshletGPUItem> meshlets;
+
+    for (auto& mesh : asset->meshes)
+    {
+        for (auto& prim : mesh.primitives)
+        {
+            auto* posIt = prim.findAttribute("POSITION");
+            auto* norIt = prim.findAttribute("NORMAL");
+            auto* tanIt = prim.findAttribute("TANGENT");
+            auto* uvsIt = prim.findAttribute("TEXCOORD_0");
+
+            auto& posAcc = asset->accessors[posIt->accessorIndex];
+            auto& norAcc = asset->accessors[norIt->accessorIndex];
+            auto& tanAcc = asset->accessors[tanIt->accessorIndex];
+            auto& uvsAcc = asset->accessors[uvsIt->accessorIndex];
+            auto& idxAcc = asset->accessors[prim.indicesAccessor.value()];
+
+            auto extraVertexCount = posAcc.count;
+            vertexPosData.reserve(vertexPosData.size() + extraVertexCount);
+            vertexNorData.reserve(vertexNorData.size() + extraVertexCount);
+            vertexTanData.reserve(vertexTanData.size() + extraVertexCount);
+            vertexUvsData.reserve(vertexUvsData.size() + extraVertexCount);
+
+            indexData.reserve(indexData.size() + idxAcc.count);
+
+            fastgltf::iterateAccessorWithIndex<float3>(asset.get(), posAcc, [&](float3 v, size_t idx) {
+                vertexPosData.push_back(v);
+                });
+
+            fastgltf::iterateAccessorWithIndex<float3>(asset.get(), norAcc, [&](float3 v, size_t idx) {
+                vertexNorData.push_back(v);
+                });
+
+            fastgltf::iterateAccessorWithIndex<float4>(asset.get(), tanAcc, [&](float4 v, size_t idx) {
+                vertexTanData.push_back(v);
+                });
+
+            fastgltf::iterateAccessorWithIndex<float2>(asset.get(), uvsAcc, [&](float2 v, size_t idx) {
+                vertexUvsData.push_back(v);
+                });
+
+            fastgltf::iterateAccessorWithIndex<uint32_t>(asset.get(), idxAcc, [&](uint32_t index, size_t idx) {
+                indexData.push_back(index);
+                });
+        }
+    }
+
+    // mvIndexBuffer = alloc.AllocateMemory(sizeof(uint32_t)*256);
+    // mvVertexPosBuffer = alloc.AllocateMemory(sizeof(glm::vec3) * 30);
+    // mvVertexNorBuffer = alloc.AllocateMemory(sizeof(glm::vec3) * 30);
+    // mvVertexUVsBuffer = alloc.AllocateMemory(sizeof(glm::vec2) * 30);
+    // mvMeshlets = alloc.AllocateMemory(sizeof(MeshletGPUItem)* 128);
 }
 
 void buildBVH()
@@ -169,6 +240,11 @@ void buildInstances()
 {
     // mvInstances = alloc.AllocateMemory(sizeof(InstanceGPUItem) * maxInstanceCount);
     // mvMaterialDatas = alloc.AllocateMemory(sizeof(MaterialDataGPUItem) * maxInstanceCount);
+}
+
+void buildRenderTargets()
+{
+
 }
 
 void mainLoop()
@@ -274,7 +350,7 @@ void mainLoop()
                 cmd.BindDescriptorTable(descriptorTable, PipelineBindPoint::Compute);
                 cmd.BindPipeline(pCullPass);
                 cmd.PushAllocations(pushAddressesCullPassDesc);
-                cmd.Dispatch(instanceCount / 32, 1, 1);
+                cmd.Dispatch(instanceCount, 1, 1);
 
                 cmd.Barrier(bCompDrawIndirect);
 
@@ -349,6 +425,10 @@ int main()
     initWindow();
     initLettuce();
     createRenderingObjects();
+    buildGeometryBuffers();
+    buildBVH();
+    buildInstances();
+    buildRenderTargets();
     mainLoop();
     cleanupLettuce();
     cleanupWindow();

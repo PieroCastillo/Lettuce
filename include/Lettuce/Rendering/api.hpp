@@ -36,6 +36,14 @@ namespace Lettuce::Rendering
     struct IMaterial;
     struct SceneGraph;
 
+    struct TaskRecord
+    {
+        uint16_t instanceID;
+        uint16_t _padding;
+        uint32_t meshletStart;
+        uint32_t meshletCount;
+    };
+
     // BVH4
     struct BVHNodeGPUItem
     {

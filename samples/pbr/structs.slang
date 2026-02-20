@@ -2,12 +2,14 @@
 Created by @PieroCastillo on 2025-02-16
 */
 
-const static uint32_t maxInstanceCount = 10000; // I will need to convert this to a constante maybe??
+// may I need to convert this to spec constants??
+const static uint32_t maxInstanceCount = 10000; 
 const static uint32_t meshletVertexCount = 64;
 const static uint32_t meshletTriangleCount = 126;
 const static uint32_t computeNumthreadsSizeX = 32;
 const static uint32_t tileSizeX = 16;
 const static uint32_t tileSizeY = 16;
+const static uint32_t maxMeshletPerTaskGroup = 128;
 
 struct VkDrawMeshTasksIndirectCommandEXT
 {
@@ -24,7 +26,10 @@ struct IndirectBuffer
 
 struct TaskRecord
 {
-    uint32_t instanceID;
+    uint16_t instanceID;
+    uint16_t _padding;
+    uint32_t meshletStart;
+    uint32_t meshletCount;
 };
 
 // BVH4
@@ -131,5 +136,5 @@ struct MeshVertexOutput
 struct MeshVisibilityPassPayload
 {
     uint16_t instanceID;
-    uint meshletID;
+    uint meshletIDs[maxMeshletPerTaskGroup];
 };

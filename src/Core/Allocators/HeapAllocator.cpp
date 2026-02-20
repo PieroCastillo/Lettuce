@@ -14,12 +14,12 @@ using namespace Lettuce::Core;
 
 void Allocators::HeapAllocator::Create(Device& dev, const Allocators::HeapllocatorDesc& desc)
 {
-
+    device = &dev;
 }
 
 void Allocators::HeapAllocator::Destroy()
 {
-
+    
 }
 
 MemoryView Allocators::HeapAllocator::AllocateMemory(uint64_t size)
