@@ -4,6 +4,7 @@
 #include "glfw/glfw3native.h"
 #include <windows.h>
 
+#include <algorithm>
 #include <memory>
 #include <vector>
 #include <expected>
@@ -21,6 +22,8 @@
 #include <fastgltf/tools.hpp>
 #include <fastgltf/util.hpp>
 #include <fastgltf/glm_element_traits.hpp>
+
+#include <meshoptimizer.h>
 
 using namespace Lettuce::Core;
 using namespace Lettuce::Rendering;
@@ -49,7 +52,7 @@ constexpr uint32_t tileSizeY = 16;
 constexpr uint32_t maxInstanceCount = 10000;
 uint32_t instanceCount = 0;
 
-constexpr uint32_t maxMeshletVertices  = 64;
+constexpr uint32_t maxMeshletVertices = 64;
 constexpr uint32_t maxMeshletTriangles = 126;
 
 MemoryView mvScene;
@@ -188,13 +191,18 @@ void buildGeometryBuffers()
             auto& uvsAcc = asset->accessors[uvsIt->accessorIndex];
             auto& idxAcc = asset->accessors[prim.indicesAccessor.value()];
 
+            auto baseMeshet = meshlets.size() == 0 ? 0 : (meshlets.size() - 1);
+            auto baseVertex = vertexPosData.size() == 0 ? 0 : (vertexPosData.size() - 1);
+            auto baseIndex = indexData.size() == 0 ? 0 : (indexData.size() - 1);
+
             auto extraVertexCount = posAcc.count;
+            auto extraIndexCount = idxAcc.count;
             vertexPosData.reserve(vertexPosData.size() + extraVertexCount);
             vertexNorData.reserve(vertexNorData.size() + extraVertexCount);
             vertexTanData.reserve(vertexTanData.size() + extraVertexCount);
             vertexUvsData.reserve(vertexUvsData.size() + extraVertexCount);
 
-            indexData.reserve(indexData.size() + idxAcc.count);
+            indexData.reserve(indexData.size() + extraIndexCount);
 
             fastgltf::iterateAccessorWithIndex<float3>(asset.get(), posAcc, [&](float3 v, size_t idx) {
                 vertexPosData.push_back(v);
@@ -215,6 +223,33 @@ void buildGeometryBuffers()
             fastgltf::iterateAccessorWithIndex<uint32_t>(asset.get(), idxAcc, [&](uint32_t index, size_t idx) {
                 indexData.push_back(index);
                 });
+
+            for (int vIdx = baseVertex; vIdx < extraVertexCount; vIdx += maxMeshletVertices)
+            {
+
+
+                auto ml = MeshletGPUItem();
+                ml.vertexCount = maxMeshletVertices;
+                ml.vertexOffset = vIdx;
+            }
+
+            auto triangleCount = extraIndexCount / 3;
+            // for (int indexIdx = baseIndex; indexIdx < extraIndexCount; indexIdx += maxMeshletTriangles)
+            // {
+            //     auto trianglesToProcess = std::min(maxMeshletTriangles, triangleCount - indexIdx);
+            //     auto ml = MeshletGPUItem();
+            //     ml.triangleCount = maxMeshletTriangles;
+            //     ml.triangleOffset = indexIdx;
+            // }
+            
+            for (auto triIdx = 0; triIdx < triangleCount; triIdx += 3)
+            {
+                auto baseTri = baseIndex;
+                auto trianglesToProcess = std::min<uint32_t>(maxMeshletTriangles, (triangleCount - triIdx));
+
+            }
+
+            
         }
     }
 

@@ -33,3 +33,28 @@ void Device::WaitFor(QueueType queueType)
     }
     handleResult(vkQueueWaitIdle(queue));
 }
+
+auto Device::SupportMeshShader() -> bool
+{
+    return impl->features.MeshShading;
+}
+auto Device::SupportNeuralShading() -> bool
+{
+    return impl->features.NeuralShading;
+}
+auto Device::SupportNeuralShadingNV() -> bool
+{
+    return impl->features.NeuralShadingNV;
+}
+auto Device::SupportRayTracing() -> bool
+{
+    return impl->features.RayTracing;
+}
+auto Device::SupportRayTracingNV() -> bool
+{
+    return impl->features.RayTracingNV;
+}
+auto Device::SupportFragmentShadingRate() -> bool
+{
+    return impl->features.FragmentShadingRate;
+}

@@ -89,7 +89,7 @@ for _, name in ipairs(samples) do
         add_deps("Lettuce")
         add_includedirs("include")
         add_files("samples/" .. name .. "/app.cpp")
-        add_packages("volk", "glfw", "glm", "imgui", "fastgltf", "slang")
+        add_packages("volk", "glfw", "glm", "imgui", "fastgltf", "slang", "meshoptimizer")
         
         after_build(function (target)
             import("core.base.process")

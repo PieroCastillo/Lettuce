@@ -312,6 +312,13 @@ namespace Lettuce::Core
 
         void WaitFor(QueueType);
 
+        auto SupportMeshShader() -> bool;
+        auto SupportNeuralShading() -> bool;
+        auto SupportNeuralShadingNV() -> bool;
+        auto SupportRayTracing() -> bool;
+        auto SupportRayTracingNV() -> bool;
+        auto SupportFragmentShadingRate() -> bool;
+
         // Memory 
         MemoryHeap CreateMemoryHeap(const MemoryHeapDesc&);
         void Destroy(MemoryHeap);
