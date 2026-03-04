@@ -52,8 +52,10 @@ constexpr uint32_t tileSizeY = 16;
 constexpr uint32_t maxInstanceCount = 10000;
 uint32_t instanceCount = 0;
 
+// NVIDIA recommendation
 constexpr uint32_t maxMeshletVertices = 64;
 constexpr uint32_t maxMeshletTriangles = 126;
+constexpr float coneWeight = 0.0f;
 
 MemoryView mvScene;
 MemoryView mvInstances;
@@ -202,54 +204,50 @@ void buildGeometryBuffers()
             vertexTanData.reserve(vertexTanData.size() + extraVertexCount);
             vertexUvsData.reserve(vertexUvsData.size() + extraVertexCount);
 
-            indexData.reserve(indexData.size() + extraIndexCount);
+            struct Vertex {
+                float3 position;
+                float3 normal;
+                float4 tangent;
+                float2 texCoord0;
+            };
 
-            fastgltf::iterateAccessorWithIndex<float3>(asset.get(), posAcc, [&](float3 v, size_t idx) {
-                vertexPosData.push_back(v);
+            // next replace this
+            auto vertexVec = std::vector<Vertex>(posAcc.count);
+            auto indexVec = std::vector<uint32_t>(idxAcc.count);
+
+            fastgltf::iterateAccessorWithIndex<float3>(asset.get(), posAcc, [&](float3 pos, size_t idx) {
+                vertexVec[idx].position = pos;
                 });
 
-            fastgltf::iterateAccessorWithIndex<float3>(asset.get(), norAcc, [&](float3 v, size_t idx) {
-                vertexNorData.push_back(v);
+            fastgltf::iterateAccessorWithIndex<float3>(asset.get(), norAcc, [&](float3 normal, size_t idx) {
+                vertexVec[idx].normal = normal;
                 });
 
-            fastgltf::iterateAccessorWithIndex<float4>(asset.get(), tanAcc, [&](float4 v, size_t idx) {
-                vertexTanData.push_back(v);
+            fastgltf::iterateAccessorWithIndex<float4>(asset.get(), tanAcc, [&](float4 tang, size_t idx) {
+                vertexVec[idx].tangent = tang;
                 });
 
-            fastgltf::iterateAccessorWithIndex<float2>(asset.get(), uvsAcc, [&](float2 v, size_t idx) {
-                vertexUvsData.push_back(v);
+            fastgltf::iterateAccessorWithIndex<float2>(asset.get(), uvsAcc, [&](float2 uv, size_t idx) {
+                vertexVec[idx].texCoord0 = uv;
                 });
 
             fastgltf::iterateAccessorWithIndex<uint32_t>(asset.get(), idxAcc, [&](uint32_t index, size_t idx) {
-                indexData.push_back(index);
+                indexVec[idx] = index;
                 });
 
-            for (int vIdx = baseVertex; vIdx < extraVertexCount; vIdx += maxMeshletVertices)
-            {
+            // size_t maxMeshlets = meshopt_buildMeshletsBound(indexVec.size(), maxMeshletVertices, maxMeshletTriangles);
+            // std::vector<meshopt_Meshlet> meshlets(maxMeshlets);
+            // std::vector<uint32_t> meshletVertices(indexVec.size());
+            // std::vector<uint8_t> meshletTriangles(indexVec.size());
 
+            // auto meshletCount = meshopt_buildMeshlets(meshlets.data(), (unsigned int*)meshletVertices.data(), (unsigned char*)meshletTriangles.data(),
+            //     indexVec.data(), indexVec.size(), (float*)&vertexVec[0].position, vertexVec.size(), sizeof(Vertex), maxMeshletVertices, maxMeshletTriangles, coneWeight);
 
-                auto ml = MeshletGPUItem();
-                ml.vertexCount = maxMeshletVertices;
-                ml.vertexOffset = vIdx;
-            }
-
-            auto triangleCount = extraIndexCount / 3;
-            // for (int indexIdx = baseIndex; indexIdx < extraIndexCount; indexIdx += maxMeshletTriangles)
-            // {
-            //     auto trianglesToProcess = std::min(maxMeshletTriangles, triangleCount - indexIdx);
-            //     auto ml = MeshletGPUItem();
-            //     ml.triangleCount = maxMeshletTriangles;
-            //     ml.triangleOffset = indexIdx;
-            // }
-            
-            for (auto triIdx = 0; triIdx < triangleCount; triIdx += 3)
-            {
-                auto baseTri = baseIndex;
-                auto trianglesToProcess = std::min<uint32_t>(maxMeshletTriangles, (triangleCount - triIdx));
-
-            }
-
-            
+            // // shrink vectors
+            // const meshopt_Meshlet& last = meshlets[meshletCount - 1];
+            // vertexVec.resize(last.vertex_offset + last.vertex_count);
+            // indexVec.resize(last.triangle_offset + last.triangle_count * 3);
+            // meshlets.resize(meshletCount);
         }
     }
 

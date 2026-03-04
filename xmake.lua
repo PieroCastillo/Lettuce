@@ -78,6 +78,7 @@ local samples = {
     "helloTriangle",
     "helloTriangleMesh",
     "indirectDrawing",
+    "loadModel",
     "pbr",
     "textureLoad",
     "uniform",
