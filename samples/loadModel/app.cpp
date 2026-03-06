@@ -20,7 +20,16 @@
 #include <optional>
 #include <functional>
 
+#include <fastgltf/core.hpp>
+#include <fastgltf/types.hpp>
+#include <fastgltf/tools.hpp>
+#include <fastgltf/util.hpp>
+#include <fastgltf/glm_element_traits.hpp>
+
+#include <meshoptimizer.h>
+
 using namespace Lettuce::Core;
+using namespace Lettuce::Rendering;
 
 class FrameTimer
 {
@@ -66,13 +75,42 @@ private:
 
 struct CameraState
 {
-    glm::vec3 position = { 0.0f, 0.0f, 5.0f };
+    glm::vec3 position = { 0.0f, 0.0f, 3.0f };
     glm::quat orientation = { 1.0f, 0.0f, 0.0f, 0.0f };
 };
 
 struct SceneData
 {
-    glm::mat4 viewProj;
+    float4x4 viewProj;
+};
+
+struct Instance {
+    uint32_t meshID;
+    float4x4 model;
+};
+
+struct MeshInfo {
+    uint32_t primitiveOffset;
+    uint32_t primitiveCount;
+};
+
+struct PrimitiveInfo {
+    uint32_t vertexOffset;
+    uint32_t vertexCount;
+    uint32_t indexOffset;
+    uint32_t indexCount;
+};
+
+struct Vertex {
+    float3 position;
+    float3 normal;
+    float3 tangent;
+    float2 texCoord0;
+};
+
+struct InstancedPrimitive
+{
+    uint32_t primitiveID, instanceID;
 };
 
 GLFWwindow* window;
@@ -83,11 +121,18 @@ constexpr uint32_t height = 768;
 Device device;
 Swapchain swapchain;
 DescriptorTable descriptorTable;
+Pipeline cullPipeline;
 Pipeline rgbPipeline;
 CommandAllocator cmdAlloc;
 
 Allocators::LinearAllocator memalloc;
 MemoryView mvSceneData;
+MemoryView mvIndexB, mvVertexB, mvInstances, mvMeshes, mvPrimitives, mvInstancedPrimitives;
+MemoryView mvIndirectB;
+IndirectSet isIndirect;
+
+std::vector<MeshInfo> meshes;
+std::vector<PrimitiveInfo> primitives;
 
 FrameTimer timer;
 CameraState camera;
@@ -150,6 +195,7 @@ glm::mat4 calculateViewProjection(
 
 double xprev = width / 2;
 double yprev = height / 2;
+bool wasMousePressed = false;
 
 void UpdateCamera()
 {
@@ -164,12 +210,19 @@ void UpdateCamera()
     auto sKeyPressed = GLFW_PRESS == glfwGetKey(window, GLFW_KEY_S) || GLFW_PRESS == glfwGetKey(window, GLFW_KEY_DOWN);
     auto dKeyPressed = GLFW_PRESS == glfwGetKey(window, GLFW_KEY_D) || GLFW_PRESS == glfwGetKey(window, GLFW_KEY_RIGHT);
 
+    if (mousePressed && !wasMousePressed)
+    {
+        xprev = xpos;
+        yprev = ypos;
+    }
+
     ((SceneData*)(mvSceneData.cpuAddress))->viewProj = calculateViewProjection(camera, xpos, ypos, xprev, yprev,
         mousePressed, wKeyPressed, aKeyPressed, sKeyPressed, dKeyPressed,
         dt, 60.0f, width / float(height), 0.1f, 100.0f);
 
     xprev = xpos;
-    xprev = ypos;
+    yprev = ypos;
+    wasMousePressed = mousePressed;
 }
 
 std::vector<uint32_t> loadSpv(std::string path)
@@ -213,12 +266,21 @@ void initLettuce()
 
     Allocators::LinearAllocatorDesc lindesc =
     {
-        .bufferSize = 1024 * 1024, // 1 MB
+        .bufferSize = 100 * 1024 * 1024, // 100 MB
         .imageSize = 16,
         .cpuVisible = true,
     };
     memalloc.Create(device, lindesc);
     mvSceneData = memalloc.AllocateMemory(sizeof(SceneData));
+
+    IndirectSetDesc isDesc =
+    {
+        .type = IndirectType::Draw,
+        .maxCount = 1024,
+        .userDataSize = 0,
+    };
+    isIndirect = device.CreateIndirectSet(isDesc);
+    mvIndirectB = device.GetIndirectSetView(isIndirect);
 }
 
 void createRenderingObjects()
@@ -245,7 +307,153 @@ void createRenderingObjects()
     };
     rgbPipeline = device.CreatePipeline(pipelineDesc);
 
+    ComputePipelineDesc compPipelineDesc = {
+        .compEntryPoint = "cullMain",
+        .compShaderBinary = shaders,
+        .descriptorTable = descriptorTable,
+    };
+    cullPipeline = device.CreatePipeline(compPipelineDesc);
+
     device.Destroy(shaders);
+}
+
+void loadModel()
+{
+    std::filesystem::path modelPath = "../../../../external/models/DragonAttenuation.glb";
+
+    if (!std::filesystem::exists(modelPath))
+    {
+        std::println("file {} does not exist", "DragonAttenuation.glb");
+        return;
+    }
+
+    auto parser = fastgltf::Parser();
+    auto gltfData = fastgltf::GltfDataBuffer::FromPath(modelPath);
+
+    auto asset = parser.loadGltf(gltfData.get(), modelPath.parent_path(), fastgltf::Options::None);
+
+    meshes = std::vector<MeshInfo>();
+    primitives = std::vector<PrimitiveInfo>();
+    auto vertexVec = std::vector<Vertex>();
+    auto indexVec = std::vector<uint32_t>();
+
+    int meshCount = 0;
+    int totalPrims = 0;
+    for (auto& mesh : asset->meshes)
+    {
+        int primCount = 0;
+        for (auto& prim : mesh.primitives)
+        {
+            auto* posIt = prim.findAttribute("POSITION");
+            auto* norIt = prim.findAttribute("NORMAL");
+            auto* tanIt = prim.findAttribute("TANGENT");
+            auto* uvsIt = prim.findAttribute("TEXCOORD_0");
+
+            auto& posAcc = asset->accessors[posIt->accessorIndex];
+            auto& norAcc = asset->accessors[norIt->accessorIndex];
+            auto& tanAcc = asset->accessors[tanIt->accessorIndex];
+            auto& uvsAcc = asset->accessors[uvsIt->accessorIndex];
+            auto& idxAcc = asset->accessors[prim.indicesAccessor.value()];
+
+            auto baseVertexIdx = vertexVec.size();
+            auto baseIndexIdx = indexVec.size();
+
+            vertexVec.resize(baseVertexIdx + posAcc.count);
+            indexVec.resize(baseIndexIdx + idxAcc.count);
+
+            PrimitiveInfo prim = { baseVertexIdx, posAcc.count, baseIndexIdx, idxAcc.count };
+            primitives.push_back(prim);
+
+            fastgltf::iterateAccessorWithIndex<float3>(asset.get(), posAcc, [&](float3 pos, size_t idx) {
+                vertexVec[baseVertexIdx + idx].position = pos;
+                });
+            std::println("pos acc");
+            fastgltf::iterateAccessorWithIndex<float3>(asset.get(), norAcc, [&](float3 normal, size_t idx) {
+                vertexVec[baseVertexIdx + idx].normal = normal;
+                });
+            std::println("nor acc");
+
+            fastgltf::iterateAccessorWithIndex<float3>(asset.get(), tanAcc, [&](float3 tang, size_t idx) {
+                vertexVec[baseVertexIdx + idx].tangent = tang;
+                });
+            std::println("tan acc");
+
+            fastgltf::iterateAccessorWithIndex<float2>(asset.get(), uvsAcc, [&](float2 uv, size_t idx) {
+                vertexVec[baseVertexIdx + idx].texCoord0 = uv;
+                });
+            std::println("tex0 acc");
+
+            fastgltf::iterateAccessorWithIndex<uint32_t>(asset.get(), idxAcc, [&](uint32_t index, size_t idx) {
+                indexVec[baseIndexIdx + idx] = index;
+                });
+            std::println("idx acc");
+
+            std::println("mesh #{}, primitive  #{} : #vertex:{}  #index: {}", meshCount, primCount, posAcc.count, idxAcc.count);
+            ++primCount;
+        }
+        MeshInfo mesh = { totalPrims, primCount };
+        meshes.push_back(mesh);
+        totalPrims += primCount;
+        ++meshCount;
+    }
+
+    mvMeshes = memalloc.AllocateMemory(sizeof(MeshInfo) * meshes.size());
+    mvPrimitives = memalloc.AllocateMemory(sizeof(PrimitiveInfo) * primitives.size());
+    mvVertexB = memalloc.AllocateMemory(sizeof(Vertex) * vertexVec.size());
+    mvIndexB = memalloc.AllocateMemory(sizeof(uint32_t) * indexVec.size());
+
+    memcpy(mvMeshes.cpuAddress, meshes.data(), sizeof(MeshInfo) * meshes.size());
+    memcpy(mvPrimitives.cpuAddress, primitives.data(), sizeof(PrimitiveInfo) * primitives.size());
+    memcpy(mvVertexB.cpuAddress, vertexVec.data(), sizeof(Vertex) * vertexVec.size());
+    memcpy(mvIndexB.cpuAddress, indexVec.data(), sizeof(uint32_t) * indexVec.size());
+}
+
+uint32_t instanceCount = 0;
+uint32_t instancedPrimitivesCount = 0;
+void loadInstances()
+{
+    std::vector<Instance> instances;
+    instances.reserve(20);
+
+    const int gridX = 5;
+    const int gridY = 4;
+    const float spacing = 8.0f;
+
+    for (int y = 0; y < gridY; y++)
+    {
+        for (int x = 0; x < gridX; x++)
+        {
+            int i = y * gridX + x;
+
+            glm::vec3 pos = {
+                (x - gridX / 2) * spacing,
+                0.0f,
+                (y - gridY / 2) * spacing
+            };
+
+            float angle = glm::radians(20.0f * i);
+
+            glm::mat4 model =
+                glm::translate(glm::mat4(1.0f), pos) *
+                glm::rotate(glm::mat4(1.0f), angle, { 0,1,0 }) *
+                glm::scale(glm::mat4(1.0f), { 1.0f,1.0f,1.0f });
+
+            Instance inst;
+            inst.meshID = (i < 10) ? 0 : 1;
+            inst.model = model;
+
+            instancedPrimitivesCount += meshes[inst.meshID].primitiveCount;
+
+            instances.push_back(inst);
+        }
+    }
+
+    mvInstances = memalloc.AllocateMemory(sizeof(uint32_t) + (sizeof(Instance) * instances.size()));
+    mvInstancedPrimitives = memalloc.AllocateMemory(sizeof(InstancedPrimitive) * instancedPrimitivesCount);
+    // instances Buffer layout: [ count | instances ]
+    instanceCount = instances.size();
+    *(uint32_t*)(mvInstances.cpuAddress) = instances.size();
+    memcpy(sizeof(uint32_t) + (uint8_t*)(mvInstances.cpuAddress), instances.data(), sizeof(Instance) * instances.size());
 }
 
 void mainLoop()
@@ -256,9 +464,6 @@ void mainLoop()
     {
         timer.Tick();
         UpdateCamera();
-        // std::println("quat -> {} + {} i + {} j + {} k", camera.orientation.w, camera.orientation.x, camera.orientation.y, camera.orientation.z);
-        // std::println("pos: ({},{},{})", camera.position.x, camera.position.y, camera.position.z);
-        // std::println("delta time: {}", timer.GetDeltaTime());
 
         device.NextFrame(swapchain);
 
@@ -282,15 +487,41 @@ void mainLoop()
         PushAllocationsDesc pushDesc = {
              .allocations = std::array {
                 std::pair(0u, mvSceneData),
+                std::pair(1u, mvInstances),
+                std::pair(2u, mvMeshes),
+                std::pair(3u, mvPrimitives),
+                std::pair(4u, mvVertexB),
+                std::pair(5u, mvIndexB),
+                std::pair(6u, mvIndirectB),
+                std::pair(7u, mvInstancedPrimitives),
             },
             .descriptorTable = descriptorTable,
         };
+
+        ExecuteIndirectDesc execDesc = {
+            .indirectSet = isIndirect,
+            .maxDrawCount = instancedPrimitivesCount,
+        };
+
+        BarrierDesc compVertBarrier[] = { {
+            .srcAccess = PipelineAccess::Write,
+            .srcStage = PipelineStage::ComputeShader,
+            .dstAccess = PipelineAccess::Read,
+            .dstStage = PipelineStage::DrawIndirect,
+        }, };
+
+        cmd.BindDescriptorTable(descriptorTable, PipelineBindPoint::Compute);
+        cmd.BindPipeline(cullPipeline);
+        cmd.PushAllocations(pushDesc);
+        cmd.Dispatch((instanceCount + 31) / 32, 1, 1);
+
+        cmd.Barrier(compVertBarrier);
 
         cmd.BeginRendering(renderPassDesc);
         cmd.BindDescriptorTable(descriptorTable, PipelineBindPoint::Graphics);
         cmd.BindPipeline(rgbPipeline);
         cmd.PushAllocations(pushDesc);
-        cmd.Draw(3, 1);
+        cmd.ExecuteIndirect(execDesc);
         cmd.EndRendering();
 
         std::array<std::span<CommandBuffer>, 1> cmds = { std::span(&cmd, 1) };
@@ -304,7 +535,7 @@ void mainLoop()
 
         device.DisplayFrame(swapchain);
         device.WaitFor(QueueType::Graphics);
-        glfwPollEvents();   
+        glfwPollEvents();
     }
 }
 
@@ -312,9 +543,11 @@ void cleanupLettuce()
 {
     device.WaitFor(QueueType::Graphics);
     device.Destroy(rgbPipeline);
+    device.Destroy(cullPipeline);
     device.Destroy(descriptorTable);
 
     memalloc.Destroy();
+    device.Destroy(isIndirect);
     device.Destroy(cmdAlloc);
     device.Destroy(swapchain);
     device.Destroy();
@@ -341,6 +574,8 @@ int main()
     initWindow();
     initLettuce();
     createRenderingObjects();
+    loadModel();
+    loadInstances();
     mainLoop();
     cleanupLettuce();
     cleanupWindow();

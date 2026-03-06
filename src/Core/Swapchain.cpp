@@ -196,8 +196,8 @@ Swapchain Device::CreateSwapchain(const SwapchainDesc& desc)
 
 void Device::Destroy(Swapchain swapchain)
 {
-    auto info = impl->swapchains.get(swapchain);
-    auto device = impl->m_device;
+    auto& info = impl->swapchains.get(swapchain);
+    auto& device = impl->m_device;
     for (const auto& sem : info.presentSemaphores)
     {
         vkDestroySemaphore(device, sem, nullptr);
