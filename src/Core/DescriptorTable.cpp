@@ -142,7 +142,7 @@ storage image descriptor size: {})", bufferSize, samplerDescriptorSize, sampledI
         .sampledImagesBindingOffset = sampledImagesBindingOffset,
         .samplersBindingOffset = samplersBindingOffset,
         .storageImagesBindingOffset = storageImagesBindingOffset,
-        .cpuAddress = (uint8_t*)cpuPtr,
+        .cpuAddress = (HostAddress)cpuPtr,
         .gpuAddress = gpuPtr,
         });
 }

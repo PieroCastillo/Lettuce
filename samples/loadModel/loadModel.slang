@@ -48,15 +48,6 @@ struct VkDrawIndirectCommand
     uint firstInstance;
 };
 
-struct VkDrawIndexedIndirectCommand
-{
-    uint indexCount;
-    uint instanceCount;
-    uint firstIndex;
-    int vertexOffset;
-    uint firstInstance;
-};
-
 struct InstanceBuffer
 {
     uint32_t count;
@@ -84,36 +75,20 @@ struct PushConstants
     uint64_t ptrIndices;
     uint64_t ptrIndirectBuffer;
     uint64_t ptrInstancedPrimitives;
+    uint64_t ptrDebugBuffer;
 };
 
 [[vk::push_constant]]
 PushConstants pc;
 
+[require(compute, spirv_1_6)]
 [numthreads(32, 1, 1)]
-[shader("compute")]
 void cullMain(uint3 id: SV_DispatchThreadID)
 {
     uint instanceID = id.x;
     var indirectPtr = reinterpret<Ptr<IndirectBuffer>>(pc.ptrIndirectBuffer);
 
-    if (instanceID == 0)
-    {
-        // VkDrawIndirectCommand cmd;
-        // cmd.indexCount = 3;
-        // cmd.firstIndex = 0;
-        // cmd.vertexCount = 3;
-        // cmd.instanceCount = 1;
-        // cmd.firstVertex = 0;
-        // cmd.firstInstance = 0;
-
-        // indirectPtr->count = 1;
-        // indirectPtr->cmds[0] = cmd;
-        indirectPtr->count = 0; // reset draw count
-    }
-
-    GroupMemoryBarrierWithGroupSync();
-
-    if (instanceID >= reinterpret<Ptr<uint>>(pc.ptrInstances)[0]) // first uint is instance count
+    if (instanceID >= reinterpret<Ptr<InstanceBuffer>>(pc.ptrInstances).count)
         return;
 
     var inst = reinterpret<Ptr<InstanceBuffer>>(pc.ptrInstances).instances[instanceID];
@@ -128,45 +103,67 @@ void cullMain(uint3 id: SV_DispatchThreadID)
     {
         var prim = primitivesPtr[mesh.primitiveOffset + i];
 
-        VkDrawIndirectCommand cmd;
-        cmd.vertexCount = prim.indexCount;
-        cmd.instanceCount = 1;
-        cmd.firstVertex = 0;
-        cmd.firstInstance = 0;
-
-        InstancedPrimitive ip;
-        ip.primitiveID = mesh.primitiveOffset + i;
-        ip.instanceID = instanceID;
+        var cmd = VkDrawIndirectCommand(prim.indexCount, 1, 0, 0);
 
         indirectPtr.cmds[drawIndex + i] = cmd;
-        instancedPrimPtr[drawIndex + i] = ip;
+        instancedPrimPtr[drawIndex + i] = InstancedPrimitive(mesh.primitiveOffset + i, instanceID);
+
+        if (instanceID < 32)
+        {
+            reinterpret<Ptr<VkDrawIndirectCommand>>(pc.ptrDebugBuffer)[instanceID] = cmd; // for debugging
+        }
     }
 }
+
+// [shader("vertex")]
+// VSOutput vertexMain(uint vertexID: SV_VulkanVertexID, uint drawID: SV_DrawIndex)
+// {
+//     VSOutput out;
+
+//     var scene = reinterpret<Ptr<SceneData>>(pc.ptrSceneData)[0];
+//     var instancedPrim = reinterpret<Ptr<InstancedPrimitive>>(pc.ptrInstancedPrimitives)[drawID];
+//     var inst = reinterpret<Ptr<InstanceBuffer>>(pc.ptrInstances).instances[instancedPrim.instanceID];
+//     var prim = reinterpret<Ptr<PrimitiveInfo>>(pc.ptrPrimitives)[instancedPrim.primitiveID];
+//     var mesh = reinterpret<Ptr<MeshInfo>>(pc.ptrMeshes)[inst.meshID];
+
+//     var index = reinterpret<Ptr<uint32_t>>(pc.ptrIndices)[prim.indexOffset + vertexID];
+//     var v = reinterpret<Ptr<Vertex>>(pc.ptrVertices)[prim.vertexOffset + index];
+
+//     float4 worldPos = mul(float4(v.position, 1.0), inst.model);
+//     float4 clipPos = mul(worldPos, scene.viewProj);
+
+//     out.color =  abs(v.normal); // debug color
+//     out.position = clipPos;
+
+//     // geometry simplification for debugging:
+//     // out.color = float3(1, 1, 1); // abs(v.normal); // debug color
+//     // uint id = vertexID % 3;
+//     // float2 debugPos = id == 0 ? float2(-1, -1) : id == 1 ? float2(1, -1)
+//     //                                                      : float2(0, 1);
+//     // out.position = float4(debugPos, 0, 1); // clipPos;
+
+//     return out;
+// }
 
 [shader("vertex")]
 VSOutput vertexMain(uint vertexID: SV_VulkanVertexID, uint drawID: SV_DrawIndex)
 {
     VSOutput out;
 
-    // var scene = reinterpret<Ptr<SceneData>>(pc.ptrSceneData)[0];
-    // var instancedPrim = reinterpret<Ptr<InstancedPrimitive>>(pc.ptrInstancedPrimitives)[drawID];
-    // var inst = reinterpret<Ptr<InstanceBuffer>>(pc.ptrInstances).instances[instancedPrim.instanceID];
-    // var prim = reinterpret<Ptr<PrimitiveInfo>>(pc.ptrPrimitives)[instancedPrim.primitiveID];
-    // var mesh = reinterpret<Ptr<MeshInfo>>(pc.ptrMeshes)[inst.meshID];
+    var instancedPrim = reinterpret<Ptr<InstancedPrimitive>>(pc.ptrInstancedPrimitives)[drawID];
+    var scene = reinterpret<Ptr<SceneData>>(pc.ptrSceneData)[0];
+    var inst = reinterpret<Ptr<InstanceBuffer>>(pc.ptrInstances).instances[instancedPrim.instanceID];
+    var prim = reinterpret<Ptr<PrimitiveInfo>>(pc.ptrPrimitives)[instancedPrim.primitiveID];
+    var index = reinterpret<Ptr<uint32_t>>(pc.ptrIndices)[prim.indexOffset + vertexID];
+    var v = reinterpret<Ptr<Vertex>>(pc.ptrVertices)[prim.vertexOffset + index];
 
-    // var index = reinterpret<Ptr<uint32_t>>(pc.ptrIndices)[prim.indexOffset + vertexID];
-    // var v = reinterpret<Ptr<Vertex>>(pc.ptrVertices)[prim.vertexOffset + index];
-
-    // float4 worldPos = mul(float4(v.position, 1.0), inst.model);
+    // float4 worldPos = mul(inst.model, float4(v.position, 1.0));
     // float4 clipPos = mul(worldPos, scene.viewProj);
+    var worldPos = mul(inst.model, float4(v.position, 1.0)); // si usas column major explícito
+    var clipPos = mul(scene.viewProj, worldPos);
 
-    // out.color =  abs(v.normal); // debug color
-    // out.position = clipPos;
-    
-    out.color = float3(1, 1, 1); // abs(v.normal); // debug color
-    uint id = vertexID % 3;
-    float2 debugPos = id == 0 ? float2(-1, -1) : id == 1 ? float2(1, -1) : float2(0, 1);
-    out.position = float4(debugPos, 0, 1); // clipPos;
+    out.color = abs(v.normal);
+    out.position = clipPos;
 
     return out;
 }

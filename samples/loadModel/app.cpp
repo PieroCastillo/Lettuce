@@ -129,13 +129,27 @@ Allocators::LinearAllocator memalloc;
 MemoryView mvSceneData;
 MemoryView mvIndexB, mvVertexB, mvInstances, mvMeshes, mvPrimitives, mvInstancedPrimitives;
 MemoryView mvIndirectB;
+MemoryView mvDebugBuffer;
 IndirectSet isIndirect;
 
 std::vector<MeshInfo> meshes;
 std::vector<PrimitiveInfo> primitives;
 
+constexpr uint32_t debugBufferCount = 32;
+constexpr uint32_t debugBufferItemSize = 4 * sizeof(uint32_t);
+
 FrameTimer timer;
 CameraState camera;
+
+inline uint8_t firstByte(const MemoryView& mv)
+{
+    return *(uint8_t*)mv.cpuAddress;
+}
+
+inline uint64_t firstUInt64(const MemoryView& mv)
+{
+    return *(uint64_t*)mv.cpuAddress;
+}
 
 glm::mat4 calculateViewProjection(
     CameraState& cam,
@@ -216,7 +230,7 @@ void UpdateCamera()
         yprev = ypos;
     }
 
-    ((SceneData*)(mvSceneData.cpuAddress))->viewProj = calculateViewProjection(camera, xpos, ypos, xprev, yprev,
+    ((SceneData*)(mvSceneData.cpuAddress))[0].viewProj = calculateViewProjection(camera, xpos, ypos, xprev, yprev,
         mousePressed, wKeyPressed, aKeyPressed, sKeyPressed, dKeyPressed,
         dt, 60.0f, width / float(height), 0.1f, 100.0f);
 
@@ -281,6 +295,9 @@ void initLettuce()
     };
     isIndirect = device.CreateIndirectSet(isDesc);
     mvIndirectB = device.GetIndirectSetView(isIndirect);
+
+    // DEBUG BUFFER, CPU READEABLE
+    mvDebugBuffer = memalloc.AllocateMemory(debugBufferCount * debugBufferItemSize);
 }
 
 void createRenderingObjects()
@@ -391,7 +408,9 @@ void loadModel()
             std::println("mesh #{}, primitive  #{} : #vertex:{}  #index: {}", meshCount, primCount, posAcc.count, idxAcc.count);
             ++primCount;
         }
-        MeshInfo mesh = { totalPrims, primCount };
+        MeshInfo mesh;
+        mesh.primitiveOffset = totalPrims;
+        mesh.primitiveCount = primCount;
         meshes.push_back(mesh);
         totalPrims += primCount;
         ++meshCount;
@@ -433,10 +452,11 @@ void loadInstances()
 
             float angle = glm::radians(20.0f * i);
 
+            float uniformScale = 0.5f;
             glm::mat4 model =
                 glm::translate(glm::mat4(1.0f), pos) *
                 glm::rotate(glm::mat4(1.0f), angle, { 0,1,0 }) *
-                glm::scale(glm::mat4(1.0f), { 1.0f,1.0f,1.0f });
+                glm::scale(glm::mat4(1.0f), { uniformScale,uniformScale,uniformScale });
 
             Instance inst;
             inst.meshID = (i < 10) ? 0 : 1;
@@ -494,6 +514,7 @@ void mainLoop()
                 std::pair(5u, mvIndexB),
                 std::pair(6u, mvIndirectB),
                 std::pair(7u, mvInstancedPrimitives),
+                std::pair(8u, mvDebugBuffer),
             },
             .descriptorTable = descriptorTable,
         };
@@ -503,19 +524,31 @@ void mainLoop()
             .maxDrawCount = instancedPrimitivesCount,
         };
 
-        BarrierDesc compVertBarrier[] = { {
+        BarrierDesc bCopyComp[] = { {
+            .srcAccess = PipelineAccess::Write,
+            .srcStage = PipelineStage::ComputeShader,
+            .dstAccess = PipelineAccess::Read,
+            .dstStage = PipelineStage::ComputeShader,
+        }, };
+
+        BarrierDesc bCompInd[] = { {
             .srcAccess = PipelineAccess::Write,
             .srcStage = PipelineStage::ComputeShader,
             .dstAccess = PipelineAccess::Read,
             .dstStage = PipelineStage::DrawIndirect,
         }, };
 
+        cmd.ResetCount(isIndirect);
+
+        cmd.Barrier(bCopyComp);
+
         cmd.BindDescriptorTable(descriptorTable, PipelineBindPoint::Compute);
         cmd.BindPipeline(cullPipeline);
         cmd.PushAllocations(pushDesc);
-        cmd.Dispatch((instanceCount + 31) / 32, 1, 1);
+        auto dispatchX = (instanceCount + 31) / 32;
+        cmd.Dispatch(dispatchX, 1, 1);
 
-        cmd.Barrier(compVertBarrier);
+        cmd.Barrier(bCompInd);
 
         cmd.BeginRendering(renderPassDesc);
         cmd.BindDescriptorTable(descriptorTable, PipelineBindPoint::Graphics);
@@ -531,10 +564,19 @@ void mainLoop()
             .commandBuffers = std::span(cmds),
             .presentSwapchain = swapchain,
         };
+
         device.Submit(submitDesc);
 
         device.DisplayFrame(swapchain);
         device.WaitFor(QueueType::Graphics);
+
+        // auto baseGenDrawCallPtr = (VkDrawIndirectCommand*)mvDebugBuffer.cpuAddress;
+        // for (size_t i = 0; i < debugBufferCount; ++i) {
+        //     auto genDrawCallPtr = (baseGenDrawCallPtr + i);
+        //     std::print(" {},{},{},{} |", genDrawCallPtr->vertexCount, genDrawCallPtr->instanceCount, genDrawCallPtr->firstVertex, genDrawCallPtr->firstVertex);
+        // }
+        // std::println();
+
         glfwPollEvents();
     }
 }

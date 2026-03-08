@@ -83,7 +83,7 @@ namespace Lettuce::Core
         uint64_t samplersBindingOffset;
         uint64_t storageImagesBindingOffset;
 
-        uint8_t* cpuAddress;
+        HostAddress cpuAddress;
         uint64_t  gpuAddress;
     };
 
@@ -94,7 +94,6 @@ namespace Lettuce::Core
         std::vector<VkImage> swapchainImages;
         std::vector<VkImageView> swapchainViews;
         std::vector<RenderTarget> renderTargets;
-        std::vector<Texture> textureViews;
 
         Format ltFormat;
         VkFormat format;

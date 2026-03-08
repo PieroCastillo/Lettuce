@@ -37,14 +37,15 @@ void Allocators::LinearAllocator::Create(Device& dev, const LinearAllocatorDesc&
     memoryHeapSize = desc.bufferSize + desc.imageSize;
 
     auto bufferInfo = device->GetBufferInfo(buffer);
-    bufferCPUAddress = (uint64_t*)bufferInfo.cpuAddress;
+    bufferCPUAddress = (HostAddress)bufferInfo.cpuAddress;
     bufferGPUAddress = bufferInfo.gpuAddress;
 
-    currentBufferCPUAddress = (uint64_t*)bufferInfo.cpuAddress;
+    currentBufferCPUAddress = (HostAddress)bufferInfo.cpuAddress;
     currentBufferGPUAddress = bufferInfo.gpuAddress;
 
-    
     DebugPrint("[LINEAR ALLOCATOR]", "memory size: {}", bufferInfo.size);
+
+    currentBufferUsage = 0;
 }
 
 void Allocators::LinearAllocator::Destroy()
@@ -60,15 +61,41 @@ void Allocators::LinearAllocator::Destroy()
 
 MemoryView Allocators::LinearAllocator::AllocateMemory(uint64_t size)
 {
-    if ((currentBufferOffset + size) > texturesMemoryOffset)
+    // if ((currentBufferOffset + size) > texturesMemoryOffset)
+    // {
+    //     return {};
+    // }
+
+    // MemoryView mv = { size, currentBufferCPUAddress, currentBufferGPUAddress, buffer, currentBufferOffset };
+
+    // auto oldCPUAddress = currentBufferCPUAddress;
+    // auto oldGPUAddress = currentBufferGPUAddress;
+
+    // currentBufferCPUAddress += ((currentBufferCPUAddress != nullptr) ? size : 0);
+    // currentBufferGPUAddress += size;
+    // currentBufferUsage += size;
+
+    // DebugPrint("[LINEAR ALLOCATOR]", "cpu diff : {} | gpu diff: {} | size : {}", currentBufferCPUAddress - oldCPUAddress, currentBufferGPUAddress - oldGPUAddress, size);
+    // DebugPrint("[LINEAR ALLOCATOR]", "buffer usage: {:.1f}%", ((float)currentBufferUsage / (float)(texturesMemoryOffset-1))*100);
+
+    // return mv;
+    uint64_t alignment = 64;
+    uint64_t alignedOffset = (currentBufferOffset + alignment - 1) & ~(alignment - 1);
+    
+    if ((alignedOffset + size) > texturesMemoryOffset)
     {
         return {};
     }
 
-    MemoryView mv = { size, currentBufferCPUAddress, currentBufferGPUAddress, buffer, currentBufferOffset };
+    currentBufferOffset = alignedOffset;
+    
+    HostAddress cpuAddr = (currentBufferCPUAddress != nullptr) ? (currentBufferCPUAddress + currentBufferOffset) : nullptr;
+    uint64_t gpuAddr = currentBufferGPUAddress + currentBufferOffset;
 
-    currentBufferCPUAddress += ((currentBufferCPUAddress != nullptr) ? size : 0);
-    currentBufferGPUAddress += size;
+    MemoryView mv = { size, cpuAddr, gpuAddr, buffer, currentBufferOffset };
+
+    currentBufferOffset += size;
+    currentBufferUsage = currentBufferOffset;
 
     return mv;
 }

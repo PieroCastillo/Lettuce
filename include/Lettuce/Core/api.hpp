@@ -18,6 +18,15 @@ Created by @PieroCastillo on 2025-12-26
 
 namespace Lettuce::Core
 {
+    // types
+    using float2 = glm::vec2;
+    using float3 = glm::vec3;
+    using float4 = glm::vec4;
+    using float3x3 = glm::mat3;
+    using float4x4 = glm::mat4;
+    using DeviceAddress = uint64_t;
+    using HostAddress = uint8_t*;
+
     template<typename Tag>
     struct Handle {
         uint32_t index = 0;
@@ -218,8 +227,8 @@ namespace Lettuce::Core
     struct MemoryView
     {
         uint64_t size;
-        void* cpuAddress;
-        uint64_t gpuAddress;
+        HostAddress cpuAddress;
+        DeviceAddress gpuAddress;
 
         Buffer buffer;
         uint64_t offset;
@@ -423,6 +432,7 @@ namespace Lettuce::Core
         void PrepareTexture(Texture);
 
         void Fill(MemoryView view, uint32_t value, uint32_t count);
+        void ResetCount(IndirectSet);
     };
 }
 #endif // LETTUCE_CORE_API_HPP

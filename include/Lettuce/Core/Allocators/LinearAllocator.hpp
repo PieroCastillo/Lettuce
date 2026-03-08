@@ -24,14 +24,15 @@ namespace Lettuce::Core::Allocators
         std::vector<Texture> textures;
         uint64_t memoryHeapSize;
         uint64_t texturesMemoryOffset;
-        uint64_t* bufferCPUAddress;
+        HostAddress bufferCPUAddress;
         uint64_t bufferGPUAddress;
 
         uint64_t currentTextureOffset;
         uint64_t currentBufferOffset;
 
-        uint64_t* currentBufferCPUAddress;
+        HostAddress currentBufferCPUAddress;
         uint64_t currentBufferGPUAddress;
+        uint64_t currentBufferUsage;
     public:
         void Create(Device&, const LinearAllocatorDesc&);
         void Destroy();

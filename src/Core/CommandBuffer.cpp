@@ -1,6 +1,7 @@
 // standard headers
-#include <memory>
 #include <array>
+#include <format>
+#include <memory>
 #include <print>
 
 // external headers
@@ -168,13 +169,22 @@ void CommandBuffer::BindDescriptorTable(DescriptorTable descriptorTable, Pipelin
 void CommandBuffer::PushAllocations(const PushAllocationsDesc& desc)
 {
     auto& dt = impl.device->descriptorTables.get(desc.descriptorTable);
-    auto payloadSize = impl.device->props.maxPushAllocationsCount * sizeof(uint64_t);
-    uint64_t* data = (uint64_t*)alloca(payloadSize);
+    auto payloadSize = std::min<uint32_t>(impl.device->props.maxPushAllocationsCount, desc.allocations.size()) * sizeof(uint64_t);
+    auto count = payloadSize / sizeof(uint64_t);
+    auto data = (uint64_t*)alloca(payloadSize);
 
     for (auto const& [idx, memView] : desc.allocations)
     {
-        data[idx] = memView.gpuAddress;
+        if(idx < count)
+            data[idx] = memView.gpuAddress;
     }
+
+    std::print("push allocations addresses: ");
+    for (size_t i = 0; i < count; ++i)
+    {
+        std::print("{} | ", data[i]);
+    }
+    std::println("");
 
     vkCmdPushConstants((VkCommandBuffer)impl.handle, dt.pipelineLayout, VK_SHADER_STAGE_ALL, 0, payloadSize, data);
 }
@@ -283,4 +293,9 @@ void CommandBuffer::PrepareTexture(Texture texture)
 void CommandBuffer::Fill(MemoryView view, uint32_t value, uint32_t count)
 {
     vkCmdFillBuffer((VkCommandBuffer)impl.handle, impl.device->buffers.get(view.buffer).buffer, view.offset, count * sizeof(uint32_t), value);
+}
+
+void CommandBuffer::ResetCount(IndirectSet indirectSet)
+{
+    vkCmdFillBuffer((VkCommandBuffer)impl.handle, impl.device->indirectSets.get(indirectSet).indirectSetBuffer, 0, sizeof(uint32_t), 0);
 }
