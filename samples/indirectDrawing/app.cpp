@@ -89,8 +89,9 @@ void initLettuce()
     indirectView = device.GetIndirectSetView(indirectSet);
 
     Allocators::LinearAllocatorDesc linAllocDesc = {
-        .bufferSize = 128 * sizeof(ParticleOut),
-        .imageSize = 16,
+        .maxBufferMemorySize = 128 * sizeof(ParticleOut),
+                .maxImageMemorySize = 16,
+        .maxRenderTargetsMemorySize = 16,
     };
     alloc.Create(device, linAllocDesc);
     particlesView = alloc.AllocateMemory(128 * sizeof(ParticleOut));

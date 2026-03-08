@@ -59,6 +59,13 @@ RenderTarget Device::CreateRenderTarget(const RenderTargetDesc& desc, const Memo
     {
         subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;
     }
+    VkMemoryRequirements memReqs;
+    vkGetImageMemoryRequirements(device, image, &memReqs);
+
+    auto alignedHeapOffset = align_up(bindDesc.heapOffset, memReqs.alignment);
+
+    auto mem = impl->memoryHeaps.get(bindDesc.heap).memory;
+    handleResult(vkBindImageMemory(device, image, mem, alignedHeapOffset));
 
     VkImageView imageView;
     VkImageViewCreateInfo viewCI = {
@@ -71,14 +78,8 @@ RenderTarget Device::CreateRenderTarget(const RenderTargetDesc& desc, const Memo
     };
     handleResult(vkCreateImageView(device, &viewCI, nullptr, &imageView));
 
-    auto mem = impl->memoryHeaps.get(bindDesc.heap).memory;
-    handleResult(vkBindImageMemory(device, image, mem, bindDesc.heapOffset));
-
-    VkMemoryRequirements memReqs;
-    vkGetImageMemoryRequirements(device, image, &memReqs);
-
-    auto texView = impl->textures.allocate({ desc.width, desc.height, 1, 1, format, image, imageView, mem, memReqs.size, bindDesc.heapOffset, true });
-    return impl->renderTargets.allocate({ false, desc.width, desc.height, format, image, imageView, mem, memReqs.size, bindDesc.heapOffset, ToVkClearValue(desc.defaultClearValue), texView });
+    auto texView = impl->textures.allocate({ desc.width, desc.height, 1, 1, format, image, imageView, mem, memReqs.size, alignedHeapOffset, true });
+    return impl->renderTargets.allocate({ false, desc.width, desc.height, format, image, imageView, mem, memReqs.size, alignedHeapOffset, ToVkClearValue(desc.defaultClearValue), texView });
 }
 
 void Device::Destroy(RenderTarget renderTarget)

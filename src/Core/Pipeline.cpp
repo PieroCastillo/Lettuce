@@ -17,7 +17,7 @@ Pipeline Device::CreatePipeline(const PrimitiveShadingPipelineDesc& desc)
 {
     VkPipelineInputAssemblyStateCreateInfo inputAssemblyState = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO,
-        .topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, 
+        .topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
     };
     VkPipelineViewportStateCreateInfo viewportState =
     {
@@ -31,7 +31,7 @@ Pipeline Device::CreatePipeline(const PrimitiveShadingPipelineDesc& desc)
         .depthClampEnable = VK_FALSE,
         .rasterizerDiscardEnable = VK_FALSE,
         .polygonMode = VK_POLYGON_MODE_FILL,
-        .cullMode = VK_CULL_MODE_FRONT_BIT,
+        .cullMode = VK_CULL_MODE_BACK_BIT,
         .frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE,
         //.lineWidth // dynamic;
     };
@@ -47,6 +47,16 @@ Pipeline Device::CreatePipeline(const PrimitiveShadingPipelineDesc& desc)
         .depthTestEnable = VK_FALSE,
         .depthWriteEnable = VK_FALSE,
     };
+    if (desc.depthStencilAttachmentFormat)
+    {
+        depthStencilState.depthTestEnable = VK_TRUE;
+        depthStencilState.depthWriteEnable = VK_TRUE;
+        depthStencilState.depthCompareOp = VK_COMPARE_OP_LESS;
+        depthStencilState.depthBoundsTestEnable = VK_FALSE;
+        depthStencilState.stencilTestEnable = VK_FALSE;
+        depthStencilState.minDepthBounds = 0.0f;
+        depthStencilState.maxDepthBounds = 1.0f;
+    }
 
     VkPipelineColorBlendAttachmentState colorBlendAttachment = {
         .blendEnable = VK_FALSE,
@@ -161,7 +171,7 @@ Pipeline Device::CreatePipeline(const MeshShadingPipelineDesc& desc)
         .depthClampEnable = VK_FALSE,
         .rasterizerDiscardEnable = VK_FALSE,
         .polygonMode = VK_POLYGON_MODE_FILL,
-        .cullMode = VK_CULL_MODE_FRONT_BIT,
+        .cullMode = VK_CULL_MODE_BACK_BIT,
         .frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE,
         //.lineWidth // dynamic;
     };
@@ -177,6 +187,16 @@ Pipeline Device::CreatePipeline(const MeshShadingPipelineDesc& desc)
         .depthTestEnable = VK_FALSE,
         .depthWriteEnable = VK_FALSE,
     };
+    if (desc.depthStencilAttachmentFormat)
+    {
+        depthStencilState.depthTestEnable = VK_TRUE;
+        depthStencilState.depthWriteEnable = VK_TRUE;
+        depthStencilState.depthCompareOp = VK_COMPARE_OP_LESS;
+        depthStencilState.depthBoundsTestEnable = VK_FALSE;
+        depthStencilState.stencilTestEnable = VK_FALSE;
+        depthStencilState.minDepthBounds = 0.0f;
+        depthStencilState.maxDepthBounds = 1.0f;
+    }
 
     VkPipelineColorBlendAttachmentState colorBlendAttachment = {
         .blendEnable = VK_FALSE,

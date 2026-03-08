@@ -115,36 +115,6 @@ void cullMain(uint3 id: SV_DispatchThreadID)
     }
 }
 
-// [shader("vertex")]
-// VSOutput vertexMain(uint vertexID: SV_VulkanVertexID, uint drawID: SV_DrawIndex)
-// {
-//     VSOutput out;
-
-//     var scene = reinterpret<Ptr<SceneData>>(pc.ptrSceneData)[0];
-//     var instancedPrim = reinterpret<Ptr<InstancedPrimitive>>(pc.ptrInstancedPrimitives)[drawID];
-//     var inst = reinterpret<Ptr<InstanceBuffer>>(pc.ptrInstances).instances[instancedPrim.instanceID];
-//     var prim = reinterpret<Ptr<PrimitiveInfo>>(pc.ptrPrimitives)[instancedPrim.primitiveID];
-//     var mesh = reinterpret<Ptr<MeshInfo>>(pc.ptrMeshes)[inst.meshID];
-
-//     var index = reinterpret<Ptr<uint32_t>>(pc.ptrIndices)[prim.indexOffset + vertexID];
-//     var v = reinterpret<Ptr<Vertex>>(pc.ptrVertices)[prim.vertexOffset + index];
-
-//     float4 worldPos = mul(float4(v.position, 1.0), inst.model);
-//     float4 clipPos = mul(worldPos, scene.viewProj);
-
-//     out.color =  abs(v.normal); // debug color
-//     out.position = clipPos;
-
-//     // geometry simplification for debugging:
-//     // out.color = float3(1, 1, 1); // abs(v.normal); // debug color
-//     // uint id = vertexID % 3;
-//     // float2 debugPos = id == 0 ? float2(-1, -1) : id == 1 ? float2(1, -1)
-//     //                                                      : float2(0, 1);
-//     // out.position = float4(debugPos, 0, 1); // clipPos;
-
-//     return out;
-// }
-
 [shader("vertex")]
 VSOutput vertexMain(uint vertexID: SV_VulkanVertexID, uint drawID: SV_DrawIndex)
 {
@@ -157,9 +127,7 @@ VSOutput vertexMain(uint vertexID: SV_VulkanVertexID, uint drawID: SV_DrawIndex)
     var index = reinterpret<Ptr<uint32_t>>(pc.ptrIndices)[prim.indexOffset + vertexID];
     var v = reinterpret<Ptr<Vertex>>(pc.ptrVertices)[prim.vertexOffset + index];
 
-    // float4 worldPos = mul(inst.model, float4(v.position, 1.0));
-    // float4 clipPos = mul(worldPos, scene.viewProj);
-    var worldPos = mul(inst.model, float4(v.position, 1.0)); // si usas column major explícito
+    var worldPos = mul(inst.model, float4(v.position, 1.0));
     var clipPos = mul(scene.viewProj, worldPos);
 
     out.color = abs(v.normal);

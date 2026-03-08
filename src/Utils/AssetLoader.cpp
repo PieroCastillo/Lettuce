@@ -26,13 +26,15 @@ void AssetLoader::Create(Device& device, const AssetLoaderDesc& desc)
     m_resAlloc = std::make_unique<LinearAllocator>(); // temp, next replace with HeapAllocator
 
     LinearAllocatorDesc linDesc = {
-        .bufferSize = desc.maxTempMemory,
-        .imageSize = 16,
+        .maxBufferMemorySize = desc.maxTempMemory,
+                .maxImageMemorySize = 16,
+        .maxRenderTargetsMemorySize = 16,
         .cpuVisible = true,
     };
     static_cast<LinearAllocator*>(m_tempMem.get())->Create(device, linDesc);
     
-    linDesc.imageSize = desc.maxResourceMemory;
+    linDesc.maxImageMemorySize = desc.maxResourceMemory;
+    linDesc.maxRenderTargetsMemorySize = 16;
     linDesc.cpuVisible = false;
     static_cast<LinearAllocator*>(m_resAlloc.get())->Create(device, linDesc);
 

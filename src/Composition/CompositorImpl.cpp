@@ -78,8 +78,9 @@ void CompositorImpl::CreateResources()
         (maxEffects * sizeof(EffectGPUData));
 
     Allocators::LinearAllocatorDesc linAllocDesc = {
-        .bufferSize = maxSize,
-        .imageSize = 16,
+        .maxBufferMemorySize = maxSize,
+                .maxImageMemorySize = 16,
+        .maxRenderTargetsMemorySize = 16,
     };
     memAlloc.Create(*device, linAllocDesc);
 }

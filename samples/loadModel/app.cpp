@@ -126,11 +126,13 @@ Pipeline rgbPipeline;
 CommandAllocator cmdAlloc;
 
 Allocators::LinearAllocator memalloc;
+Allocators::LinearAllocator devalloc;
 MemoryView mvSceneData;
 MemoryView mvIndexB, mvVertexB, mvInstances, mvMeshes, mvPrimitives, mvInstancedPrimitives;
 MemoryView mvIndirectB;
 MemoryView mvDebugBuffer;
 IndirectSet isIndirect;
+RenderTarget depthTarget;
 
 std::vector<MeshInfo> meshes;
 std::vector<PrimitiveInfo> primitives;
@@ -278,13 +280,22 @@ void initLettuce()
     };
     cmdAlloc = device.CreateCommandAllocator(cmdAllocDesc);
 
-    Allocators::LinearAllocatorDesc lindesc =
-    {
-        .bufferSize = 100 * 1024 * 1024, // 100 MB
-        .imageSize = 16,
-        .cpuVisible = true,
-    };
-    memalloc.Create(device, lindesc);
+    Allocators::LinearAllocatorDesc lindesc[] =
+    { {
+           .maxBufferMemorySize = 50 * 1024 * 1024, // 50 MB
+           .maxImageMemorySize = 16,
+           .maxRenderTargetsMemorySize = 16,
+           .cpuVisible = true,
+       },
+      {
+           .maxBufferMemorySize = 16,
+           .maxImageMemorySize = 16,
+           .maxRenderTargetsMemorySize = 16 * 1024 * 1024, // 16 MB
+           .cpuVisible = false,
+    } };
+    memalloc.Create(device, lindesc[0]);
+    devalloc.Create(device, lindesc[1]);
+
     mvSceneData = memalloc.AllocateMemory(sizeof(SceneData));
 
     IndirectSetDesc isDesc =
@@ -298,6 +309,14 @@ void initLettuce()
 
     // DEBUG BUFFER, CPU READEABLE
     mvDebugBuffer = memalloc.AllocateMemory(debugBufferCount * debugBufferItemSize);
+
+    RenderTargetDesc depthDesc = {
+        .width = width,
+        .height = height,
+        .type = RenderTargetType::DepthStencilDS40,
+        .defaultClearValue = DepthStencilClear {1.0f, 0},
+    };
+    depthTarget = devalloc.AllocateRenderTarget(depthDesc);
 }
 
 void createRenderingObjects()
@@ -320,6 +339,7 @@ void createRenderingObjects()
         .vertShaderBinary = shaders,
         .fragShaderBinary = shaders,
         .colorAttachmentFormats = std::span(formatArr),
+        .depthStencilAttachmentFormat = Format::Universal_DepthStencil_D32_SFloat_S8_UInt,
         .descriptorTable = descriptorTable,
     };
     rgbPipeline = device.CreatePipeline(pipelineDesc);
@@ -497,11 +517,16 @@ void mainLoop()
                 .loadOp = LoadOp::Clear,
             }
         };
+        AttachmentDesc depthAttachment = {
+            .renderTarget = depthTarget,
+            .loadOp = LoadOp::Clear,
+        };
 
         RenderPassDesc renderPassDesc = {
             .width = width,
             .height = height,
             .colorAttachments = std::span(colorAttachment),
+            .depthStencilAttachment = depthAttachment,
         };
 
         PushAllocationsDesc pushDesc = {
@@ -588,6 +613,7 @@ void cleanupLettuce()
     device.Destroy(cullPipeline);
     device.Destroy(descriptorTable);
 
+    devalloc.Destroy();
     memalloc.Destroy();
     device.Destroy(isIndirect);
     device.Destroy(cmdAlloc);

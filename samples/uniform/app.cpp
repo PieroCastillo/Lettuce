@@ -70,8 +70,9 @@ void initLettuce()
     cmdAlloc = device.CreateCommandAllocator(cmdAllocDesc);
 
     Allocators::LinearAllocatorDesc linAllocDesc = {
-        .bufferSize = 4096,
-        .imageSize = 16,
+        .maxBufferMemorySize = 4096,
+                .maxImageMemorySize = 16,
+        .maxRenderTargetsMemorySize = 16,
         .cpuVisible = true,
     };
     linAllocator.Create(device, linAllocDesc);

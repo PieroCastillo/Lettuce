@@ -88,8 +88,9 @@ void initLettuce()
     };
 
     Allocators::LinearAllocatorDesc linAllocDesc = {
-        .bufferSize = sizeof(ParticleBuffer),
-        .imageSize = 16,
+        .maxBufferMemorySize = sizeof(ParticleBuffer),
+                .maxImageMemorySize = 16,
+        .maxRenderTargetsMemorySize = 16,
         .cpuVisible = true,
     };
     alloc.Create(device, linAllocDesc);

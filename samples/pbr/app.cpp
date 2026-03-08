@@ -122,8 +122,9 @@ void initLettuce()
     };
 
     Allocators::LinearAllocatorDesc linAllocDesc = {
-        .bufferSize = 10 * 1024 * 1024, // 10 MB
-        .imageSize = 10 * 1024 * 1024,
+        .maxBufferMemorySize = 10 * 1024 * 1024, // 10 MB
+        .maxImageMemorySize = 10 * 1024 * 1024,
+        .maxRenderTargetsMemorySize = 16,
         .cpuVisible = true,
     };
     alloc.Create(device, linAllocDesc);

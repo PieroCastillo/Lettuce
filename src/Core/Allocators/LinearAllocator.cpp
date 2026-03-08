@@ -8,6 +8,7 @@
 // project headers
 #include "Lettuce/helper.hpp"
 #include "Lettuce/Core/api.hpp"
+#include "Lettuce/Core/common.hpp"
 #include "Lettuce/Core/Allocators/LinearAllocator.hpp"
 
 using namespace Lettuce::Core;
@@ -15,14 +16,27 @@ using namespace Lettuce::Core;
 void Allocators::LinearAllocator::Create(Device& dev, const LinearAllocatorDesc& desc)
 {
     device = &dev;
+    auto alignment = 64;
+
+    // SETUP OFFSETS
+    texturesMemoryOffset = align_up(desc.maxBufferMemorySize + 1, alignment);
+    renderTargetsMemoryOffset = align_up(texturesMemoryOffset + desc.maxImageMemorySize + 1, alignment);
+
+    currentTextureOffset = texturesMemoryOffset;
+    currentRenderTargetOffset = renderTargetsMemoryOffset;
+
+    currentBufferOffset = 0;
+    memoryHeapSize = renderTargetsMemoryOffset + desc.maxRenderTargetsMemorySize;
+
+    // SETUP BUFFER & HEAP
     MemoryHeapDesc heapDesc = {
-        .size = (desc.bufferSize + desc.imageSize),
+        .size = memoryHeapSize,
         .cpuVisible = desc.cpuVisible,
     };
     memory = device->CreateMemoryHeap(heapDesc);
 
     BufferDesc bufferDesc = {
-        .size = desc.bufferSize,
+        .size = desc.maxBufferMemorySize,
     };
     MemoryBindDesc bindDesc = {
         .heap = memory,
@@ -30,12 +44,7 @@ void Allocators::LinearAllocator::Create(Device& dev, const LinearAllocatorDesc&
     };
     buffer = device->CreateBuffer(bufferDesc, bindDesc);
 
-    texturesMemoryOffset = desc.bufferSize + 1;
-
-    currentBufferOffset = 0;
-    currentTextureOffset = texturesMemoryOffset;
-    memoryHeapSize = desc.bufferSize + desc.imageSize;
-
+    // SETUP BUFFER ADDRESSES
     auto bufferInfo = device->GetBufferInfo(buffer);
     bufferCPUAddress = (HostAddress)bufferInfo.cpuAddress;
     bufferGPUAddress = bufferInfo.gpuAddress;
@@ -43,7 +52,9 @@ void Allocators::LinearAllocator::Create(Device& dev, const LinearAllocatorDesc&
     currentBufferCPUAddress = (HostAddress)bufferInfo.cpuAddress;
     currentBufferGPUAddress = bufferInfo.gpuAddress;
 
-    DebugPrint("[LINEAR ALLOCATOR]", "memory size: {}", bufferInfo.size);
+    DebugPrint("[LINEAR ALLOCATOR]", "buffer  memory size: {}", texturesMemoryOffset - 1);
+    DebugPrint("                  ", "images  memory size: {}", renderTargetsMemoryOffset - texturesMemoryOffset + 1);
+    DebugPrint("                  ", "targets memory size: {}", memoryHeapSize - renderTargetsMemoryOffset + 1);
 
     currentBufferUsage = 0;
 }
@@ -55,40 +66,26 @@ void Allocators::LinearAllocator::Destroy()
     {
         device->Destroy(tex);
     }
+    for (auto rt : renderTargets)
+    {
+        device->Destroy(rt);
+    }
     device->Destroy(memory);
     textures.clear();
 }
 
 MemoryView Allocators::LinearAllocator::AllocateMemory(uint64_t size)
 {
-    // if ((currentBufferOffset + size) > texturesMemoryOffset)
-    // {
-    //     return {};
-    // }
-
-    // MemoryView mv = { size, currentBufferCPUAddress, currentBufferGPUAddress, buffer, currentBufferOffset };
-
-    // auto oldCPUAddress = currentBufferCPUAddress;
-    // auto oldGPUAddress = currentBufferGPUAddress;
-
-    // currentBufferCPUAddress += ((currentBufferCPUAddress != nullptr) ? size : 0);
-    // currentBufferGPUAddress += size;
-    // currentBufferUsage += size;
-
-    // DebugPrint("[LINEAR ALLOCATOR]", "cpu diff : {} | gpu diff: {} | size : {}", currentBufferCPUAddress - oldCPUAddress, currentBufferGPUAddress - oldGPUAddress, size);
-    // DebugPrint("[LINEAR ALLOCATOR]", "buffer usage: {:.1f}%", ((float)currentBufferUsage / (float)(texturesMemoryOffset-1))*100);
-
-    // return mv;
     uint64_t alignment = 64;
     uint64_t alignedOffset = (currentBufferOffset + alignment - 1) & ~(alignment - 1);
-    
+
     if ((alignedOffset + size) > texturesMemoryOffset)
     {
         return {};
     }
 
     currentBufferOffset = alignedOffset;
-    
+
     HostAddress cpuAddr = (currentBufferCPUAddress != nullptr) ? (currentBufferCPUAddress + currentBufferOffset) : nullptr;
     uint64_t gpuAddr = currentBufferGPUAddress + currentBufferOffset;
 
@@ -102,24 +99,50 @@ MemoryView Allocators::LinearAllocator::AllocateMemory(uint64_t size)
 
 Texture Allocators::LinearAllocator::AllocateTexture(const TextureDesc& desc)
 {
+    auto alignment = 64;
     MemoryBindDesc bindDesc = {
         .heap = memory,
         .heapOffset = currentTextureOffset,
     };
     auto tex = device->CreateTexture(desc, bindDesc);
-    DebugPrint("[LINEAR ALLOCATOR]", "Texture allocated successfully");
     auto texInfo = device->GetResourceInfo(tex);
-    auto newOffset = currentTextureOffset + texInfo.size;
+    auto newOffset = align_up(currentTextureOffset + texInfo.size, alignment);
 
-    if (newOffset > memoryHeapSize)
+    if (newOffset >= renderTargetsMemoryOffset)
     {
         // TODO: error checking
         DebugPrint("[LINEAR ALLOCATOR]", "Error Texture");
+        device->Destroy(tex);
         return {};
     }
 
+    DebugPrint("[LINEAR ALLOCATOR]", "Texture allocated successfully");
     currentTextureOffset = newOffset;
     return tex;
+}
+
+auto Allocators::LinearAllocator::AllocateRenderTarget(const RenderTargetDesc& desc) -> RenderTarget
+{
+    auto alignment = 64;
+    MemoryBindDesc bindDesc = {
+        .heap = memory,
+        .heapOffset = currentRenderTargetOffset,
+    };
+    auto rt = device->CreateRenderTarget(desc, bindDesc);
+    auto rtInfo = device->GetResourceInfo(rt);
+    auto newOffset = align_up(currentRenderTargetOffset + rtInfo.size, alignment);
+
+    if (newOffset >= memoryHeapSize)
+    {
+        // TODO: error checking
+        DebugPrint("[LINEAR ALLOCATOR]", "Error Render Target");
+        device->Destroy(rt);
+        return {};
+    }
+
+    DebugPrint("[LINEAR ALLOCATOR]", "Render Target allocated successfully");
+    currentRenderTargetOffset = newOffset;
+    return rt;
 }
 
 void Allocators::LinearAllocator::ReleaseMemory(const MemoryView& view)
@@ -132,9 +155,26 @@ void Allocators::LinearAllocator::ReleaseTexture(Texture texture)
     // NO OP
 }
 
+void Allocators::LinearAllocator::ReleaseRenderTarget(RenderTarget renderTarget)
+{
+    // no op
+}
+
 void Allocators::LinearAllocator::ResetMemory()
 {
     currentBufferOffset = 0;
     currentBufferCPUAddress = bufferCPUAddress;
     currentBufferGPUAddress = bufferGPUAddress;
+    currentTextureOffset = texturesMemoryOffset;
+    currentRenderTargetOffset = renderTargetsMemoryOffset;
+
+    for (auto tex : textures)
+    {
+        device->Destroy(tex);
+    }
+
+    for (auto rt : renderTargets)
+    {
+        device->Destroy(rt);
+    }
 }
