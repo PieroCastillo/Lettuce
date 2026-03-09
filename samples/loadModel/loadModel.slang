@@ -1,10 +1,17 @@
 /*
 Created by @PieroCastillo on 2026-03-03
 */
+
+// shader inputs
+Texture2D<float4> sampledTextures[];
+SamplerState samplers[];
+RWTexture2D storageTextures[];
+
 struct VSOutput
 {
     float4 position : SV_Position;
     float3 color : COLOR0;
+    uint32_t instanceID;
 };
 
 struct SceneData
@@ -75,6 +82,7 @@ struct PushConstants
     uint64_t ptrIndices;
     uint64_t ptrIndirectBuffer;
     uint64_t ptrInstancedPrimitives;
+    uint64_t ptrPickInstanceData;
     uint64_t ptrDebugBuffer;
 };
 
@@ -132,13 +140,25 @@ VSOutput vertexMain(uint vertexID: SV_VulkanVertexID, uint drawID: SV_DrawIndex)
 
     out.color = abs(v.normal);
     out.position = clipPos;
+    out.instanceID = instancedPrim.instanceID;
 
     return out;
 }
 
-[require(fragment, spirv)]
+[require(fragment, spirv_1_6)]
 [shader("fragment")]
-float4 fragmentMain(VSOutput input) : SV_Target
+float4 fragmentMain(VSOutput input, uint4 fragCoord: SV_Position) : SV_Target
 {
-    return float4(input.color, 1.0);
+    var pickTexture = storageTextures[0];
+    var pickedInstance = reinterpret<Ptr<uint32_t>>(pc.ptrPickInstanceData)[0];
+    var outColor = input.color;
+
+    pickTexture[fragCoord.xy] = asfloat(input.instanceID + 1);
+
+    if (pickedInstance == (input.instanceID + 1))
+    {
+        outColor.x = 1.0;
+    }
+
+    return float4(outColor, 1.0);
 }

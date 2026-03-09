@@ -130,9 +130,11 @@ Allocators::LinearAllocator devalloc;
 MemoryView mvSceneData;
 MemoryView mvIndexB, mvVertexB, mvInstances, mvMeshes, mvPrimitives, mvInstancedPrimitives;
 MemoryView mvIndirectB;
-MemoryView mvDebugBuffer;
+MemoryView mvDebugBuffer, mvPickInstanceData;
 IndirectSet isIndirect;
 RenderTarget depthTarget;
+
+Texture tPickTexture;
 
 std::vector<MeshInfo> meshes;
 std::vector<PrimitiveInfo> primitives;
@@ -289,7 +291,7 @@ void initLettuce()
        },
       {
            .maxBufferMemorySize = 16,
-           .maxImageMemorySize = 16,
+           .maxImageMemorySize = 10 * 1024 * 1024, // 10 MB
            .maxRenderTargetsMemorySize = 16 * 1024 * 1024, // 16 MB
            .cpuVisible = false,
     } };
@@ -297,6 +299,18 @@ void initLettuce()
     devalloc.Create(device, lindesc[1]);
 
     mvSceneData = memalloc.AllocateMemory(sizeof(SceneData));
+    mvPickInstanceData = memalloc.AllocateMemory(sizeof(uint32_t));
+
+    TextureDesc pickDesc = {
+        .width = width,
+        .height = height,
+        .depth = 1,
+        .format = Format::Raw_R32_UInt,
+        .mipCount = 1,
+        .layerCount = 1,
+        .isCubeMap = false,
+    };
+    tPickTexture = devalloc.AllocateTexture(pickDesc);
 
     IndirectSetDesc isDesc =
     {
@@ -330,6 +344,15 @@ void createRenderingObjects()
 
     DescriptorTableDesc descriptorTableDesc = { 4,4,4 };
     descriptorTable = device.CreateDescriptorTable(descriptorTableDesc);
+
+    std::array<std::pair<uint32_t, Texture>, 1> texDescs;
+    texDescs[0] = { 0, tPickTexture };
+
+    PushResourceDescriptorsDesc pushDtDesc = {
+        .storageTextures = std::span(texDescs),
+        .descriptorTable = descriptorTable,
+    };
+    device.PushResourceDescriptors(pushDtDesc);
 
     std::array<Format, 1> formatArr = { device.GetRenderTargetFormat(swapchain) };
     PrimitiveShadingPipelineDesc pipelineDesc = {
@@ -505,6 +528,18 @@ void mainLoop()
         timer.Tick();
         UpdateCamera();
 
+        // not optimal, but works
+        double xCursorPos, yCursorPos;
+        bool isPressed = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS;
+        glfwGetCursorPos(window, &xCursorPos, &yCursorPos);
+        int mode = glfwGetInputMode(window, GLFW_CURSOR);
+        if (mode == GLFW_CURSOR_DISABLED)
+        {
+            xCursorPos = width / 2;
+            yCursorPos = height / 2;
+        }
+        // std::println("cursor at x: {} y: {}", xCursorPos, yCursorPos);
+
         device.NextFrame(swapchain);
 
         device.Reset(cmdAlloc);
@@ -539,7 +574,8 @@ void mainLoop()
                 std::pair(5u, mvIndexB),
                 std::pair(6u, mvIndirectB),
                 std::pair(7u, mvInstancedPrimitives),
-                std::pair(8u, mvDebugBuffer),
+                std::pair(8u, mvPickInstanceData),
+                std::pair(9u, mvDebugBuffer),
             },
             .descriptorTable = descriptorTable,
         };
@@ -547,6 +583,16 @@ void mainLoop()
         ExecuteIndirectDesc execDesc = {
             .indirectSet = isIndirect,
             .maxDrawCount = instancedPrimitivesCount,
+        };
+
+        TextureToMemory tmPixelCopy =
+        {
+            .srcTexture = tPickTexture,
+            .dstMemory = mvPickInstanceData,
+            .mipmapLevel = 0,
+            .layerBaseLevel = 0,
+            .layerCount = 1,
+            .x = static_cast<uint32_t>(xCursorPos), .y = static_cast<uint32_t>(yCursorPos), .width = 1, .height = 1,
         };
 
         BarrierDesc bCopyComp[] = { {
@@ -561,6 +607,14 @@ void mainLoop()
             .srcStage = PipelineStage::ComputeShader,
             .dstAccess = PipelineAccess::Read,
             .dstStage = PipelineStage::DrawIndirect,
+        }, };
+
+
+        BarrierDesc bFragCopy[] = { {
+            .srcAccess = PipelineAccess::Write,
+            .srcStage = PipelineStage::FragmentShader,
+            .dstAccess = PipelineAccess::Read,
+            .dstStage = PipelineStage::Copy,
         }, };
 
         cmd.ResetCount(isIndirect);
@@ -581,6 +635,11 @@ void mainLoop()
         cmd.PushAllocations(pushDesc);
         cmd.ExecuteIndirect(execDesc);
         cmd.EndRendering();
+        if (isPressed)
+        {
+            cmd.Barrier(bFragCopy);
+            cmd.MemoryCopy(tmPixelCopy);
+        }
 
         std::array<std::span<CommandBuffer>, 1> cmds = { std::span(&cmd, 1) };
 
@@ -594,7 +653,8 @@ void mainLoop()
 
         device.DisplayFrame(swapchain);
         device.WaitFor(QueueType::Graphics);
-
+        if (isPressed)
+            std::println("picked instance: {}", *((uint32_t*)mvPickInstanceData.cpuAddress) - 1);
         // auto baseGenDrawCallPtr = (VkDrawIndirectCommand*)mvDebugBuffer.cpuAddress;
         // for (size_t i = 0; i < debugBufferCount; ++i) {
         //     auto genDrawCallPtr = (baseGenDrawCallPtr + i);

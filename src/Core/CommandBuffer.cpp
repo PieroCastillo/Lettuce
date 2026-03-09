@@ -1,4 +1,5 @@
 // standard headers
+#include <algorithm>
 #include <array>
 #include <format>
 #include <memory>
@@ -49,6 +50,36 @@ void CommandBuffer::MemoryCopy(const MemoryToTextureCopy& copy)
         dev->buffers.get(copy.srcMemory.buffer).buffer,
         imgInfo.image,
         VK_IMAGE_LAYOUT_GENERAL, 1, &imageCopy);
+}
+
+void CommandBuffer::MemoryCopy(const TextureToMemory& copy)
+{
+    auto& dev = impl.device;
+    auto& imgInfo = dev->textures.get(copy.srcTexture);
+
+    // I don't wanna this crashing the every moment, so I use this checks/clamps 
+    auto safeX = std::clamp<int32_t>(copy.x, 0, static_cast<int32_t>(imgInfo.width) - 1);
+    auto safeY = std::clamp<int32_t>(copy.y, 0, static_cast<int32_t>(imgInfo.height) - 1);
+
+    uint32_t maxW = imgInfo.width  - static_cast<uint32_t>(safeX);
+    uint32_t maxH = imgInfo.height - static_cast<uint32_t>(safeY);
+
+    auto safeW = std::clamp<uint32_t>(copy.width,  1u, maxW);
+    auto safeH = std::clamp<uint32_t>(copy.height, 1u, maxH);
+
+    // std::println("w: {} h: {} x: {} y: {}", safeW, safeH, safeX, safeY);
+
+    VkBufferImageCopy imageCopy = {
+        .bufferOffset = copy.dstMemory.offset,
+        .bufferRowLength = 0,
+        .bufferImageHeight = 0,
+        .imageSubresource = {VK_IMAGE_ASPECT_COLOR_BIT, copy.mipmapLevel, copy.layerBaseLevel, copy.layerCount},
+        .imageOffset = {safeX, safeY, 0},
+        .imageExtent = {safeW, safeH, 1},
+    };
+
+    vkCmdCopyImageToBuffer((VkCommandBuffer)impl.handle, imgInfo.image, VK_IMAGE_LAYOUT_GENERAL,
+        dev->buffers.get(copy.dstMemory.buffer).buffer, 1, &imageCopy);
 }
 
 void CommandBuffer::TextureCopy(const TextureToRenderTargetCopy& copy)
@@ -175,16 +206,16 @@ void CommandBuffer::PushAllocations(const PushAllocationsDesc& desc)
 
     for (auto const& [idx, memView] : desc.allocations)
     {
-        if(idx < count)
+        if (idx < count)
             data[idx] = memView.gpuAddress;
     }
 
-    std::print("push allocations addresses: ");
-    for (size_t i = 0; i < count; ++i)
-    {
-        std::print("{} | ", data[i]);
-    }
-    std::println("");
+    // std::print("push allocations addresses: ");
+    // for (size_t i = 0; i < count; ++i)
+    // {
+    //     std::print("{} | ", data[i]);
+    // }
+    // std::println("");
 
     vkCmdPushConstants((VkCommandBuffer)impl.handle, dt.pipelineLayout, VK_SHADER_STAGE_ALL, 0, payloadSize, data);
 }

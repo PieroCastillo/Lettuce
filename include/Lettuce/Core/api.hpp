@@ -291,13 +291,23 @@ namespace Lettuce::Core
         uint32_t layerCount;
     };
 
+    struct TextureToMemory
+    {
+        Texture srcTexture;
+        MemoryView dstMemory;
+        uint32_t mipmapLevel;
+        uint32_t layerBaseLevel;
+        uint32_t layerCount;
+        uint32_t x, y, width, height;
+    };
+
     struct TextureToRenderTargetCopy
     {
         Texture srcTexture;
         RenderTarget dstRenderTarget;
     };
-    
-    struct PushAllocationsDesc 
+
+    struct PushAllocationsDesc
     {
         std::span<const std::pair<uint32_t, MemoryView>> allocations;
         DescriptorTable descriptorTable;
@@ -411,6 +421,8 @@ namespace Lettuce::Core
     public:
         void MemoryCopy(const MemoryToMemoryCopy&);
         void MemoryCopy(const MemoryToTextureCopy&);
+        // Copy from offset[x,y], range[width, height] of the Texture to the start of the buffer
+        void MemoryCopy(const TextureToMemory&);
         void TextureCopy(const TextureToRenderTargetCopy&);
 
         void BeginRendering(const RenderPassDesc&);
