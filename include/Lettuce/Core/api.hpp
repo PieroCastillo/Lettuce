@@ -275,6 +275,13 @@ namespace Lettuce::Core
         DescriptorTable  descriptorTable;
     };
 
+    struct ClearTextureDesc
+    {
+        Texture texture;
+        ColorClear color;
+        uint32_t baseLevel, levelCount, baseLayer, layerCount;
+    };
+
     struct MemoryToMemoryCopy
     {
         MemoryView srcMemory;
@@ -419,6 +426,8 @@ namespace Lettuce::Core
         CommandBufferImpl impl;
         explicit CommandBuffer(CommandBufferImpl cmdImpl) : impl(cmdImpl) {}
     public:
+        void ClearTexture(const ClearTextureDesc&);
+
         void MemoryCopy(const MemoryToMemoryCopy&);
         void MemoryCopy(const MemoryToTextureCopy&);
         // Copy from offset[x,y], range[width, height] of the Texture to the start of the buffer

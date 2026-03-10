@@ -11,7 +11,7 @@ struct VSOutput
 {
     float4 position : SV_Position;
     float3 color : COLOR0;
-    uint32_t instanceID;
+    nointerpolation uint32_t instanceID;
 };
 
 struct SceneData
@@ -149,7 +149,7 @@ VSOutput vertexMain(uint vertexID: SV_VulkanVertexID, uint drawID: SV_DrawIndex)
 [shader("fragment")]
 float4 fragmentMain(VSOutput input, uint4 fragCoord: SV_Position) : SV_Target
 {
-    var pickTexture = storageTextures[0];
+    var pickTexture =  storageTextures[0];
     var pickedInstance = reinterpret<Ptr<uint32_t>>(pc.ptrPickInstanceData)[0];
     var outColor = input.color;
 

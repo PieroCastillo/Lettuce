@@ -595,6 +595,15 @@ void mainLoop()
             .x = static_cast<uint32_t>(xCursorPos), .y = static_cast<uint32_t>(yCursorPos), .width = 1, .height = 1,
         };
 
+        ClearTextureDesc clearDesc = {
+            .texture = tPickTexture,
+            .color = {1.0f},
+            .baseLevel = 0,
+            .levelCount = 1,
+            .baseLayer = 0,
+            .layerCount = 1,
+        };
+
         BarrierDesc bCopyComp[] = { {
             .srcAccess = PipelineAccess::Write,
             .srcStage = PipelineStage::ComputeShader,
@@ -609,7 +618,6 @@ void mainLoop()
             .dstStage = PipelineStage::DrawIndirect,
         }, };
 
-
         BarrierDesc bFragCopy[] = { {
             .srcAccess = PipelineAccess::Write,
             .srcStage = PipelineStage::FragmentShader,
@@ -618,6 +626,7 @@ void mainLoop()
         }, };
 
         cmd.ResetCount(isIndirect);
+        cmd.ClearTexture(clearDesc);
 
         cmd.Barrier(bCopyComp);
 
@@ -639,6 +648,10 @@ void mainLoop()
         {
             cmd.Barrier(bFragCopy);
             cmd.MemoryCopy(tmPixelCopy);
+        }
+        else
+        {
+            *((uint32_t*)mvPickInstanceData.cpuAddress) = 0;
         }
 
         std::array<std::span<CommandBuffer>, 1> cmds = { std::span(&cmd, 1) };

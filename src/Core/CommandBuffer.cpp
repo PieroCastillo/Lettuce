@@ -15,6 +15,22 @@
 
 using namespace Lettuce::Core;
 
+void CommandBuffer::ClearTexture(const ClearTextureDesc& desc)
+{
+    auto& dev = impl.device;
+    auto& imgInfo = dev->textures.get(desc.texture);
+
+    auto color = VkClearColorValue{};
+    color.float32[0] = desc.color.value[0];
+    color.float32[1] = desc.color.value[1];
+    color.float32[2] = desc.color.value[2];
+    color.float32[3] = desc.color.value[3];
+
+    auto range = VkImageSubresourceRange { VK_IMAGE_ASPECT_COLOR_BIT, desc.baseLevel, desc.levelCount, desc.baseLayer, desc.layerCount };
+
+    vkCmdClearColorImage((VkCommandBuffer)impl.handle, imgInfo.image, VK_IMAGE_LAYOUT_GENERAL, &color, 1, &range);
+}
+
 void CommandBuffer::MemoryCopy(const MemoryToMemoryCopy& copy)
 {
     VkBufferCopy bufferCopy = {
@@ -61,10 +77,10 @@ void CommandBuffer::MemoryCopy(const TextureToMemory& copy)
     auto safeX = std::clamp<int32_t>(copy.x, 0, static_cast<int32_t>(imgInfo.width) - 1);
     auto safeY = std::clamp<int32_t>(copy.y, 0, static_cast<int32_t>(imgInfo.height) - 1);
 
-    uint32_t maxW = imgInfo.width  - static_cast<uint32_t>(safeX);
+    uint32_t maxW = imgInfo.width - static_cast<uint32_t>(safeX);
     uint32_t maxH = imgInfo.height - static_cast<uint32_t>(safeY);
 
-    auto safeW = std::clamp<uint32_t>(copy.width,  1u, maxW);
+    auto safeW = std::clamp<uint32_t>(copy.width, 1u, maxW);
     auto safeH = std::clamp<uint32_t>(copy.height, 1u, maxH);
 
     // std::println("w: {} h: {} x: {} y: {}", safeW, safeH, safeX, safeY);
