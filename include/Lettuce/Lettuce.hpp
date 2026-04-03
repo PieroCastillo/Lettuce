@@ -6,7 +6,6 @@
 
 // composition
 #include "Composition/api.hpp"
-#include "Composition/helpers.hpp"
 
 // allocators
 #include "Core/Allocators/LinearAllocator.hpp"

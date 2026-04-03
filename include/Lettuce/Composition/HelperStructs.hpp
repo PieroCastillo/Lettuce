@@ -28,21 +28,13 @@ namespace Lettuce::Composition
         LightIntensity,
         LightPosition,
         LightDirection,
-        // Brush Props
-        BrushColor,
-        BrushSecondaryColor,
-        BrushRoughness,
-        BrushDistortionStrength,
-        BrushNoiseScale,
-        BrushNoiseIntensity,
-        // Effects Props
-        EffectIntensity,
-        EffectColor,
-        EffectOffset,
-        EffectRadius,
-        EffectBlurAmount,
-        EffectTintOpacity,
-        EffectTintColor,
+        // Material Props
+        MaterialColor,
+        MaterialSecondaryColor,
+        MaterialRoughness,
+        MaterialDistortionStrength,
+        MaterialNoiseScale,
+        MaterialNoiseIntensity,
     };
 
     struct VisualInfo
@@ -59,7 +51,7 @@ namespace Lettuce::Composition
         bool startFromCurrent;
     };
 
-    struct BrushInfo
+    struct MaterialInfo
     {
         uint32_t gpuIdx;
     };
@@ -69,19 +61,13 @@ namespace Lettuce::Composition
         uint32_t gpuIdx;
     };
 
-    struct EffectInfo
-    {
-        uint32_t gpuIdx;
-    };
-
     struct DataBufferGPULayout
     {
         uint64_t animationInstanceCount;
         uint64_t animationTokenCount;
         uint64_t visualCount;
-        uint64_t brusheCount;
+        uint64_t MaterialeCount;
         uint64_t lightCount;
-        uint64_t effectCount;
     };
 
     struct AnimationInstanceGPUData
@@ -121,9 +107,9 @@ namespace Lettuce::Composition
         float BorderWidth;
     };
 
-    struct BrushGPUData
+    struct MaterialGPUData
     {
-        BrushType type;
+        Material type;
         Color color;
         Color secondaryColor;
         uint32_t textureIdx;
@@ -139,18 +125,6 @@ namespace Lettuce::Composition
         float intensity;
         Vec3 position;
         Vec3 direction;
-    };
-
-    struct EffectGPUData
-    {
-        EffectType type;
-        float intensity;
-        Color color;
-        Vec2 offset;
-        float radius;
-        float blurAmount;
-        float tintOpacity;
-        Color tintColor;
     };
 };
 #endif // LETTUCE_COMPOSITION_HELPER_STRUCTS_HPP

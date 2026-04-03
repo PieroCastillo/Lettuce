@@ -1,12 +1,13 @@
 /*
 Created by @PieroCastillo on 2026-01-27
 */
+module LettuceComposition;
 
-#include "CompositionStructs.slang"
+__include "CompositionMaterials.part.slang";
+__include "CompositionStructs.part.slang";
 
 // soon these will be converted to specialization constants
 const static uint tileSize = 16;
-const static uint maxElementsPerTile = 64;
 const static uint computeNumThreadsX = 32;
 const static uint maxVisualsPerQueue = 256;
 
@@ -35,18 +36,12 @@ bool intersects2D(float2 visualPos, float2 visualSize, float2 tilePos, float2 ti
 
 [require(compute, spirv_1_6)]
 [numthreads(computeNumThreadsX, 1, 1)]
-// update visual/effects/lights/brushes properties
-void animationsPassMain(uint3 DTid: SV_DispatchThreadID)
-{
-}
-
-[require(compute, spirv_1_6)]
-[numthreads(computeNumThreadsX, 1, 1)]
-void cullingPassMain(uint3 gid: SV_DispatchThreadID)
+void compTileBinningSortPassMain(uint3 gid: SV_DispatchThreadID)
 {
     var visualsBuffer = reinterpret<Ptr<VisualGPUData>>(pc.visualsDataAddress);
     var culledVisualsBuffer = reinterpret<Ptr<uint32_t>>(pc.culledVisualsIDsAddress);
     var frameData = reinterpret<Ptr<FrameGPUData>>(pc.frameDataAddress);
+    var tilesQueues = reinterpret<Ptr<TileInstance>>(pc.culledVisualsIDsAddress);
 
     var visualIdx = gid.x;
     var visual = visualsBuffer[visualIdx];
@@ -58,6 +53,16 @@ void cullingPassMain(uint3 gid: SV_DispatchThreadID)
         InterlockedAdd(culledVisualsBuffer[0], 1, idx);
         culledVisualsBuffer[idx + 1] = visualIdx;
     }
+
+    GroupMemoryBarrierWithGroupSync();
+
+    // for each culled instance
+    //    calculate affected tiles
+
+    GroupMemoryBarrierWithGroupSync();
+    
+    // for each tile
+    //    sort instances by depth (top to bottom)
 }
 
 groupshared uint visualTileQueue[maxVisualsPerQueue];
@@ -66,7 +71,7 @@ groupshared uint visualTileQueueCount;
 [require(compute, spirv_1_6)]
 [numthreads(computeNumThreadsX, 1, 1)]
 // record visuals
-void tilesPassMain(uint3 globalThreadID: SV_DispatchThreadID, uint3 localThreadID: SV_GroupThreadID, uint3 groupID: SV_GroupID)
+void compTilesBinningMain(uint3 globalThreadID: SV_DispatchThreadID, uint3 localThreadID: SV_GroupThreadID, uint3 groupID: SV_GroupID)
 {
     var visualsBuffer = reinterpret<Ptr<VisualGPUData>>(pc.culledVisualsIDsAddress);
     // cull visuals
@@ -83,9 +88,15 @@ void tilesPassMain(uint3 globalThreadID: SV_DispatchThreadID, uint3 localThreadI
 
 [require(compute, spirv_1_6)]
 [numthreads(tileSize, tileSize, 1)]
-void rasterPass(uint3 DTid: SV_DispatchThreadID)
+void compTileRasterPassMain(uint3 DTid: SV_DispatchThreadID)
 {
 
+}
+
+[require(compute, spirv_1_6)]
+[numthreads(tileSize, tileSize, 1)]
+void compTilePostprocessingPassMain(uint3 DTid: SV_DispatchThreadID)
+{
 }
 
 /*
@@ -99,9 +110,6 @@ for pixel (x,y):
 
         for light in affectingLights:
             color = applyLight(light, color)
-
-        for effect in element.effects:
-            color = applyEffect(effect, color)
 
         finalColor = alphaBlend(color, finalColor)
 

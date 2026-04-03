@@ -13,22 +13,10 @@
 
 using namespace Lettuce::Composition;
 
-auto Compositor::CreateLight(const LightDesc& desc) -> Light
-{
-    return {};
-}
-
-void Compositor::DestroyLight(Light light)
-{
-
-}
-
-void Compositor::AddLightTarget(Light light, Visual visual)
-{
-
-}
-
-void Compositor::RemoveLightTarget(Light light, Visual visual)
-{
-
-}
+auto Compositor::CreateLight(const AmbientLightDesc&) -> Light { return {}; }
+auto Compositor::CreateLight(const DirectionalLightDesc&) -> Light { return {}; }
+auto Compositor::CreateLight(const SpotLightDesc&) -> Light { return {}; }
+auto Compositor::CreateLight(const RevealLightDesc&) -> Light { return {}; }
+void Compositor::DestroyLight(Light light) {}
+void Compositor::AddLightTarget(Light light, Visual visual) {}
+void Compositor::RemoveLightTarget(Light light, Visual visual) {}

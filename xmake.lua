@@ -38,7 +38,12 @@ target("Lettuce")
     after_build(function (target) 
         import("core.base.process")
 
-        local slang_files = os.files("src/**.slang")
+        local slang_files = {}
+        for _, f in ipairs(os.files("src/**.slang")) do
+            if not f:endswith(".part.slang") then
+                table.insert(slang_files, f)
+            end
+        end
 
         local outdir = path.absolute(target:targetdir())
         os.mkdir(outdir)
@@ -79,6 +84,7 @@ local samples = {
     "helloTriangleMesh",
     "indirectDrawing",
     "loadModel",
+    "movingSquares",
     "pbr",
     "textureLoad",
     "uniform",
@@ -95,7 +101,12 @@ for _, name in ipairs(samples) do
         after_build(function (target)
             import("core.base.process")
 
-            local slang_files = os.files("samples/" .. name .. "/*.slang")
+            local slang_files = {}
+            for _, f in ipairs(os.files("samples/" .. name .. "/*.slang")) do
+                if not f:endswith(".part.slang") then
+                    table.insert(slang_files, f)
+                end
+            end
 
             local outdir = path.absolute(target:targetdir())
             os.mkdir(outdir)

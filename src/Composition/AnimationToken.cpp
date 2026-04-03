@@ -18,7 +18,7 @@ auto Compositor::CreateAnimation(const AnimationDesc& desc) -> AnimationToken
     return {};
 }
 
-auto Compositor::CreateNaturalMotionAnimation(const NaturalMotionAnimationDesc& desc) -> AnimationToken
+auto Compositor::CreateAnimation(const NaturalMotionAnimationDesc& desc) -> AnimationToken
 {
     return {};
 }
@@ -33,7 +33,7 @@ void Compositor::StopAnimations(Visual visual)
 
 }
 
-void Compositor::StopAnimations(Brush brush)
+void Compositor::StopAnimations(Material material)
 {
 
 }
@@ -43,23 +43,12 @@ void Compositor::StopAnimations(Light light)
 
 }
 
-void Compositor::StopAnimations(Effect effect)
-{
-
-}
-
-void Compositor::StopAnimation(AnimationToken animation)
-{
-
-}
-
-
 void Compositor::PauseAnimations(Visual visual)
 {
 
 }
 
-void Compositor::PauseAnimations(Brush brush)
+void Compositor::PauseAnimations(Material material)
 {
 
 }
@@ -69,23 +58,12 @@ void Compositor::PauseAnimations(Light light)
 
 }
 
-void Compositor::PauseAnimations(Effect effect)
-{
-
-}
-
-void Compositor::PauseAnimation(AnimationToken animation)
-{
-
-}
-
-
 void Compositor::ResumeAnimations(Visual visual)
 {
 
 }
 
-void Compositor::ResumeAnimations(Brush brush)
+void Compositor::ResumeAnimations(Material material)
 {
 
 }
@@ -95,12 +73,27 @@ void Compositor::ResumeAnimations(Light light)
 
 }
 
-void Compositor::ResumeAnimations(Effect effect)
+void Compositor::BindImplicitAnimation(Visual visual, AnimatableProperty prop, AnimationToken token)
 {
 
 }
 
-void Compositor::ResumeAnimation(AnimationToken animation)
+void Compositor::BindImplicitAnimation(Material material, AnimatableProperty prop, AnimationToken token)
+{
+
+}
+
+void Compositor::BindImplicitAnimation(Geometry geometry, AnimatableProperty prop, AnimationToken token)
+{
+
+}
+
+void Compositor::BindImplicitAnimation(Light light, AnimatableProperty prop, AnimationToken token)
+{
+
+}
+
+void Compositor::BindImplicitAnimation(DropShadow shadow, AnimatableProperty prop, AnimationToken token)
 {
 
 }

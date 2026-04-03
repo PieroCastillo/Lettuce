@@ -1,3 +1,7 @@
+implementing LettuceComposition;
+
+const static uint maxElementsPerTile = 32;
+
 enum class BrushType : uint8_t
 {
     SolidColor,     // Flat color surface
@@ -27,21 +31,13 @@ enum AnimatableProperties : uint8_t
     LightIntensity,
     LightPosition,
     LightDirection,
-    // Brush Props
+    // Material Props
     Brushfloat4,
     BrushSecondaryfloat4,
     BrushRoughness,
     BrushDistortionStrength,
     BrushNoiseScale,
     BrushNoiseIntensity,
-    // Effects Props
-    EffectIntensity,
-    Effectfloat4,
-    EffectOffset,
-    EffectRadius,
-    EffectBlurAmount,
-    EffectTintOpacity,
-    EffectTintfloat4,
 };
 
 enum EasingMode : uint8_t
@@ -63,20 +59,6 @@ enum LightType : uint8_t
     Ambient,
     Point,
     Spot,
-};
-
-enum EffectType : uint8_t
-{
-    Blur,        // Gaussian blur
-    DropShadow,  // Shadow overlay
-    InnerShadow, // Inset shadow
-    Glow,        // Outer glow
-    Saturation,  // Color saturation adjustment
-    Brightness,  // Brightness adjustment
-    Contrast,    // Contrast adjustment
-    HueRotate,   // Hue rotation
-    Acrylic,     // Frosted glass effect (blur + tint + noise)
-    Glass,       // Glass/transparency effect
 };
 
 struct AnimationInstanceGPUData
@@ -116,17 +98,6 @@ struct VisualGPUData
     float BorderWidth;
 };
 
-struct BrushGPUData
-{
-    BrushType type;
-    float4 color;
-    float4 secondaryfloat4;
-    uint32_t textureIdx;
-    float distortionStrength;
-    float noiseScale;
-    float noiseIntensity;
-};
-
 struct LightGPUData
 {
     LightType type;
@@ -136,21 +107,15 @@ struct LightGPUData
     float3 direction;
 };
 
-struct EffectGPUData
-{
-    EffectType type;
-    float intensity;
-    float4 color;
-    float2 offset;
-    float radius;
-    float blurAmount;
-    float tintOpacity;
-    float4 tintfloat4;
-};
-
 struct FrameGPUData
 {
     float4x4 viewProj;
     float2 viewportSize;
     float2 padding;
+};
+
+struct TileInstance
+{
+    uint32_t count;
+    uint32_t visualIDs[maxElementsPerTile];
 };

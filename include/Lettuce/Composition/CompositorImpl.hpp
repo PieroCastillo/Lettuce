@@ -22,9 +22,8 @@ namespace Lettuce::Composition
     enum class AnimatableType
     {
         Visual,
-        Brush,
+        Material,
         Light,
-        Effect,
     };
 
     /*
@@ -32,13 +31,12 @@ namespace Lettuce::Composition
     - Application send property changes by SetObjectProperty()
     - When Application call Commit(), the last changes per Visual-Property pair are accepted
       and put into a internal "values" queue
-    - after update every visual/light/brush/effect, Compositor execute the Pipeline
+    - after update every visual/light/Material/effect, Compositor execute the Pipeline
     - Pipeline consist in 3 phases:
         - AnimationEvaluationPass
-        - Objects  Pass: Writes BrushDataID, EffectDataID, LightDataID to ObjectDataTarget
-        - Brushes  Pass
+        - Objects  Pass: Writes MaterialDataID, EffectDataID, LightDataID to ObjectDataTarget
+        - Materiales  Pass
         - Lighting Pass
-        - Effects  Pass
     - Application MUST proveed a Target for blending pass
     */
     class CompositorImpl
@@ -46,11 +44,12 @@ namespace Lettuce::Composition
     public:
         // Lettuce Objects
         Device* device;
+        Swapchain swapchain;
+        
         CommandAllocator cmdAlloc;
         uint32_t maxVisuals;
-        uint32_t maxBrushes;
+        uint32_t maxMaterials;
         uint32_t maxLights;
-        uint32_t maxEffects;
         uint32_t maxAnimations;
         uint32_t maxLinkedTextures;
 
@@ -58,28 +57,25 @@ namespace Lettuce::Composition
         MemoryView queuedAnimationsView;
         MemoryView animationsView;
         MemoryView visualsView;
-        MemoryView brushesView;
+        MemoryView MaterialesView;
         MemoryView lightsView;
-        MemoryView effectsView;
         Allocators::LinearAllocator memTargetsAlloc;
-        RenderTarget objectsTarget;  // BrushDataID/EffectDataID/LightDataID per pixel
-        RenderTarget renderTarget;   // EffectPass writes here
+        RenderTarget objectsTarget;  // MaterialDataID/LightDataID per pixel
+        RenderTarget renderTarget;   // Composing Material Pass writes here
 
         DescriptorTable descriptorTable;
-        Pipeline pAnimationEvaluationPass;
-        Pipeline pTilesPass;
-        Pipeline pRasterPass;
+        Pipeline pTileBinningPass;
+        Pipeline pTileRasterPass;
+        Pipeline pPostprocessingPass;
 
         // Resource Pools
         ResourcePool<Visual, VisualInfo> visuals;
-        ResourcePool<Brush, BrushInfo> brushes;
+        ResourcePool<Material, MaterialInfo> materials;
         ResourcePool<Light, LightInfo> lights;
-        ResourcePool<Effect, EffectInfo> effects;
         ResourcePool<AnimationToken, AnimationTokenInfo> animationTokens;
 
-        // Synchronization Primitives
-        std::atomic<bool> stop;
-        std::thread compositorThread;
+        std::jthread compositorThread;
+        std::stop_token compositorStopToken;
 
         uint32_t width;
         uint32_t height;

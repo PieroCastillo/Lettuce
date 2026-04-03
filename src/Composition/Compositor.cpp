@@ -27,32 +27,12 @@ void Compositor::Destroy()
     delete impl;
 }
 
-void Compositor::BeginBatch()
-{
-
-}
-
-void Compositor::EndBatch()
-{
-
-}
-
-void Compositor::SetOpacityBatch(std::span<const Visual> visuals, float opacity)
-{
-
-}
-
-void Compositor::SetVisibleBatch(std::span<const Visual> visuals, bool visible)
-{
-
-}
-
 void Compositor::Commit()
 {
 
 }
 
-void Compositor::SetDebugName(Visual visual, const char* name)
+void Compositor::SetDebugName(Visual visual, std::string name)
 {
 
 }

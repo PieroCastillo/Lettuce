@@ -13,42 +13,15 @@
 
 using namespace Lettuce::Composition;
 
-auto Compositor::CreateVisual() -> Visual
-{
-    return {};
-}
-
-void Compositor::DestroyVisual(Visual visual)
-{
-
-}
-
-void Compositor::SetVisible(Visual visual, bool visible)
-{
-
-}
-
-auto Compositor::IsVisible(Visual visual) -> bool
-{
-    return {};
-}
-
-void Compositor::SetBlendMode(Visual visual, BlendMode mode)
-{
-
-}
-
-void Compositor::SetRectClip(Visual visual, Rect rect)
-{
-
-}
-
-void Compositor::SetRoundedRectClip(Visual visual, Rect rect, float cornerRadius)
-{
-
-}
-
-void Compositor::ClearClip(Visual visual)
-{
-
-}
+auto Compositor::CreateVisual(const ContainerVisualDesc&) -> Visual { return {}; }
+auto Compositor::CreateVisual(const SpriteVisualDesc&) -> Visual { return {}; }
+void Compositor::DestroyVisual(Visual visual) {}
+void Compositor::AddChild(Visual parent, Visual child) {}
+void Compositor::RemoveChild(Visual parent, Visual child) {}
+void Compositor::SetVisible(Visual visual, bool visible) {}
+auto Compositor::IsVisible(Visual visual) -> bool { return false; }
+void Compositor::SetBlendMode(Visual visual, BlendMode mode) {}
+void Compositor::SetRectClip(Visual visual, Rect rect) {}
+void Compositor::SetRoundedRectClip(Visual visual, Rect rect, float cornerRadius) {}
+void Compositor::ClearClip(Visual visual) {}
+auto Compositor::HitTest(Vec2 screenPoint) -> Visual{ return {}; }
