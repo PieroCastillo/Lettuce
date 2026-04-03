@@ -128,6 +128,16 @@ void initCompositionEngine()
 
     // OnMouseEnter
     compositor.SetScale(myButtonVisual, {1.1f, 1.1f});
+
+    auto missingGlyphs = RasterizeMissingGlyphs("🌍あ");
+    compositor.UploadToAtlasTexture(globalTextAtlas, missingGlyphs);
+    std::vector<AtlasInstance> glyphInstances;
+    glyphInstances.push_back({uvH, rectH, {0,0,0,1}, AtlasInstanceFlags::None}); 
+    glyphInstances.push_back({uvEarth, rectEarth, {1,1,1,1}, AtlasInstanceFlags::IsColorBitmap}); 
+
+    compositor.UpdateAtlasedInstances(myTextGeometry, glyphInstances);
+
+    compositor.Commit();
     */
 }
 

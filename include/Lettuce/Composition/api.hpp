@@ -7,6 +7,7 @@ Created by @PieroCastillo on 2026-01-25
 #include <chrono>
 #include <cstdint>
 #include <span>
+#include <string>
 
 #include "../Core/api.hpp"
 
@@ -59,7 +60,7 @@ namespace Lettuce::Composition
     };
 
     enum class EasingMode : uint8_t {
-        Linear, 
+        Linear,
         EaseIn,
         EaseOut,
         EaseInOut,
@@ -79,6 +80,12 @@ namespace Lettuce::Composition
         SemiBold = 600,
         Bold = 700,
         Black = 900,
+    };
+
+    enum class AtlasInstanceFlags : uint8_t {
+        None = 0,
+        IsColorBitmap = 1 << 0,
+        IsSubpixelAA = 1 << 1,
     };
 
     enum class AnimatableProperty : uint16_t {
@@ -102,7 +109,7 @@ namespace Lettuce::Composition
         BlurRadius,         // Glass / Acrylic
         NoiseIntensity,     // Noise / Acrylic
         DistortionStrength, // Distortion Map
-        
+
         LightIntensity = 300,
         LightColor,
         LightPosition,      // Point / Spot / Reveal
@@ -140,6 +147,13 @@ namespace Lettuce::Composition
         Rect uvCrop;
         Rect localRect;
         Color tint;
+        AtlasInstanceFlags flags;
+    };
+
+    struct GlyphUpload {
+        Rect destinationRect;
+        const byte* pixelData;
+        size_t dataSize;
     };
 
     struct PathCommand {
@@ -147,15 +161,14 @@ namespace Lettuce::Composition
         Vec2 points[3];
     };
 
-
     // Visual Descriptions
     struct ContainerVisualDesc {
-        Vec2 size = {0, 0};
+        Vec2 size = { 0, 0 };
         bool clipsToBounds = false;
     };
 
     struct SpriteVisualDesc {
-        Vec2 size = {0, 0};
+        Vec2 size = { 0, 0 };
         Geometry geometry;
         Material material;
     };
@@ -164,23 +177,23 @@ namespace Lettuce::Composition
     struct SolidColorMaterialDesc {
         Color color;
     };
-    
+
     struct LinearGradientMaterialDesc {
         Vec2 startPoint;
         Vec2 endPoint;
         std::span<const GradientStop> stops;
     };
-    
+
     struct RadialGradientMaterialDesc {
         Vec2 center;
         Vec2 gradientOriginOffset;
         float radiusX, radiusY;
         std::span<const GradientStop> stops;
     };
-    
+
     struct MeshGradientMaterialDesc {
         std::span<const Color> colors;
-        std::span<const Vec2> positions; 
+        std::span<const Vec2> positions;
     };
 
     struct TextureMaterialDesc {
@@ -192,13 +205,13 @@ namespace Lettuce::Composition
     // Backdrop Material Descriptions
     struct GlassMaterialDesc {
         float blurRadius = 15.0f;
-        Color tintColor = {1, 1, 1, 0.2f};
+        Color tintColor = { 1, 1, 1, 0.2f };
         float specularIntensity = 0.5f;
     };
 
     struct AcrylicMaterialDesc {
         float blurRadius = 30.0f;
-        Color tintColor = {0, 0, 0, 0.6f};
+        Color tintColor = { 0, 0, 0, 0.6f };
         float noiseIntensity = 0.02f;
         float luminosityOpacity = 0.8f;
     };
@@ -216,12 +229,12 @@ namespace Lettuce::Composition
     // Geometry Descriptions
     struct ImplicitGeometryDesc {
         ImplicitShape shape = ImplicitShape::Rectangle;
-        float cornerRadius = 0.0f; 
+        float cornerRadius = 0.0f;
         float strokeWidth = 0.0f;
     };
 
     struct InstancedGeometryDesc {
-        Texture atlasTexture; 
+        Texture atlasTexture;
         std::span<const AtlasInstance> instances;
     };
 
@@ -231,18 +244,18 @@ namespace Lettuce::Composition
     };
 
     // Light & Shadow Descriptions
-    struct AmbientLightDesc{
+    struct AmbientLightDesc {
         Color color;
         float intensity;
     };
-    
-    struct DirectionalLightDesc { 
-        Color color; 
-        float intensity; 
-        Vec2 direction; 
+
+    struct DirectionalLightDesc {
+        Color color;
+        float intensity;
+        Vec2 direction;
         float elevation;
     };
-    
+
     struct SpotLightDesc {
         Color color;
         float intensity;
@@ -251,7 +264,7 @@ namespace Lettuce::Composition
         float innerConeAngle;
         float outerConeAngle;
     };
-    
+
     struct RevealLightDesc {
         Color color;
         float intensity;
@@ -261,9 +274,9 @@ namespace Lettuce::Composition
     };
 
     struct DropShadowDesc {
-        Color color = {0, 0, 0, 0.5f};
+        Color color = { 0, 0, 0, 0.5f };
         float blurRadius = 10.0f;
-        Vec2 offset = {0.0f, 4.0f};
+        Vec2 offset = { 0.0f, 4.0f };
     };
 
     struct AnimationDesc {
@@ -271,9 +284,9 @@ namespace Lettuce::Composition
         uint32_t delayMs = 0;
         uint32_t iterationCount = 1; // 0 = loop
         EasingMode easing = EasingMode::EaseOut;
-        
+
         // if easing == CustomBezier
-        float bezierX1 = 0.25f; 
+        float bezierX1 = 0.25f;
         float bezierY1 = 0.1f;
         float bezierX2 = 0.25f;
         float bezierY2 = 1.0f;
@@ -291,8 +304,8 @@ namespace Lettuce::Composition
         float baseSize;
         FontWeight weight = FontWeight::Regular;
         bool italic = false;
-        
-        const void* memoryData = nullptr; 
+
+        const byte* memoryData = nullptr;
         size_t memorySize = 0;
     };
 
@@ -335,6 +348,8 @@ namespace Lettuce::Composition
         // Fonts
         auto CreateFont(const FontDesc& desc) -> Font;
         void DestroyFont(Font font);
+
+        void UploadToAtlasTexture(Texture atlas, std::span<const GlyphUpload> uploads);
 
         // Materials
         auto CreateMaterial(const SolidColorMaterialDesc&) -> Material;
@@ -407,7 +422,7 @@ namespace Lettuce::Composition
         void SetDebugName(Visual visual, std::string name);
         auto GetVisualCount() -> uint32_t;
         auto GetAnimationCount() -> uint32_t;
-        
+
         // Visual Animatable Properties
         DeclareAnimatableProperty(Visual, Position, Vec2);
         DeclareAnimatableProperty(Visual, Size, Vec2);
@@ -426,7 +441,7 @@ namespace Lettuce::Composition
         // Geometry Animatable Properties
         DeclareAnimatableProperty(Geometry, CornerRadius, float); // ImplicitGeometry only
         DeclareAnimatableProperty(Geometry, StrokeWidth, float);
-        
+
         // For Trim Paths
         DeclareAnimatableProperty(Geometry, TrimStart, float);  // Normalized
         DeclareAnimatableProperty(Geometry, TrimEnd, float);    // Normalized
