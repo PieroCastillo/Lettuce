@@ -19,8 +19,27 @@ auto Compositor::GetTrimStart(Geometry handle) -> float { return {}; }
 auto Compositor::GetTrimEnd(Geometry handle) -> float { return {}; }
 auto Compositor::GetTrimOffset(Geometry handle) -> float { return {}; }
 
-void Compositor::SetCornerRadius(Geometry handle, float value) {}
-void Compositor::SetStrokeWidth(Geometry handle, float value) {}
-void Compositor::SetTrimStart(Geometry handle, float value) {}
-void Compositor::SetTrimEnd(Geometry handle, float value) {}
-void Compositor::SetTrimOffset(Geometry handle, float value) {}
+void Compositor::SetCornerRadius(Geometry handle, float value)
+{
+    impl->appQueue.addCommand(OpCode::SetGeometryCornerRadius, handle.get(), {}, std::array<float, 4>{value});
+}
+
+void Compositor::SetStrokeWidth(Geometry handle, float value)
+{
+    impl->appQueue.addCommand(OpCode::SetGeometryStrokeWidth, handle.get(), {}, std::array<float, 4>{value});
+}
+
+void Compositor::SetTrimStart(Geometry handle, float value)
+{
+    impl->appQueue.addCommand(OpCode::SetGeometryTrimStart, handle.get(), {}, std::array<float, 4>{value});
+}
+
+void Compositor::SetTrimEnd(Geometry handle, float value)
+{
+    impl->appQueue.addCommand(OpCode::SetGeometryTrimEnd, handle.get(), {}, std::array<float, 4>{value});
+}
+
+void Compositor::SetTrimOffset(Geometry handle, float value)
+{
+    impl->appQueue.addCommand(OpCode::SetGeometryTrimOffset, handle.get(), {}, std::array<float, 4>{value});
+}

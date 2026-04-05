@@ -17,6 +17,18 @@ auto Compositor::CreateLight(const AmbientLightDesc&) -> Light { return {}; }
 auto Compositor::CreateLight(const DirectionalLightDesc&) -> Light { return {}; }
 auto Compositor::CreateLight(const SpotLightDesc&) -> Light { return {}; }
 auto Compositor::CreateLight(const RevealLightDesc&) -> Light { return {}; }
-void Compositor::DestroyLight(Light light) {}
-void Compositor::AddLightTarget(Light light, Visual visual) {}
-void Compositor::RemoveLightTarget(Light light, Visual visual) {}
+
+void Compositor::DestroyLight(Light light)
+{
+    impl->appQueue.addCommand(OpCode::DestroyLight, light.get(), {});
+}
+
+void Compositor::AddLightTarget(Visual visual, Light light)
+{
+    impl->appQueue.addCommand(OpCode::AddLightTarget, visual.get(), light.get());
+}
+
+void Compositor::RemoveLightTarget(Visual visual)
+{
+    impl->appQueue.addCommand(OpCode::RemoveLightTarget, visual.get(), {});
+}

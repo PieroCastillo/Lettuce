@@ -19,8 +19,27 @@ auto Compositor::GetPosition(Light handle) -> Vec3 { return {}; }
 auto Compositor::GetDirection(Light handle) -> Vec3 { return {}; }
 auto Compositor::GetRadius(Light handle) -> float { return {}; }
 
-void Compositor::SetColor(Light handle, Color value) {}
-void Compositor::SetIntensity(Light handle, float value) {}
-void Compositor::SetPosition(Light handle, Vec3 value) {}
-void Compositor::SetDirection(Light handle, Vec3 value) {}
-void Compositor::SetRadius(Light handle, float value) {}
+void Compositor::SetColor(Light handle, Color value)
+{
+    impl->appQueue.addCommand(OpCode::SetLightColor, handle.get(), {}, std::array<float, 4>{value.r, value.g, value.b, value.a});
+}
+
+void Compositor::SetIntensity(Light handle, float value)
+{
+    impl->appQueue.addCommand(OpCode::SetLightIntensity, handle.get(), {}, std::array<float, 4>{value});
+}
+
+void Compositor::SetPosition(Light handle, Vec3 value)
+{
+    impl->appQueue.addCommand(OpCode::SetLightPosition, handle.get(), {}, std::array<float, 4>{value.x, value.y, value.z});
+}
+
+void Compositor::SetDirection(Light handle, Vec3 value)
+{
+    impl->appQueue.addCommand(OpCode::SetLightDirection, handle.get(), {}, std::array<float, 4>{value.x, value.y, value.z});
+}
+
+void Compositor::SetRadius(Light handle, float value)
+{
+    impl->appQueue.addCommand(OpCode::SetLightRadius, handle.get(), {}, std::array<float, 4>{value});
+}

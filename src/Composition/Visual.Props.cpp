@@ -20,9 +20,32 @@ auto Compositor::GetRotation(Visual handle) -> float { return {}; }
 auto Compositor::GetAnchorPoint(Visual handle) -> Vec2 { return {}; }
 auto Compositor::GetOpacity(Visual handle) -> float { return {}; }
 
-void Compositor::SetPosition(Visual handle, Vec2 value) {}
-void Compositor::SetSize(Visual handle, Vec2 value) {}
-void Compositor::SetScale(Visual handle, Vec2 value) {}
-void Compositor::SetRotation(Visual handle, float value) {}
-void Compositor::SetAnchorPoint(Visual handle, Vec2 value) {}
-void Compositor::SetOpacity(Visual handle, float value) {}
+void Compositor::SetPosition(Visual handle, Vec2 value)
+{
+    impl->appQueue.addCommand(OpCode::SetVisualPosition, handle.get(), {}, std::array<float, 4>{value.x, value.y});
+}
+
+void Compositor::SetSize(Visual handle, Vec2 value)
+{
+    impl->appQueue.addCommand(OpCode::SetVisualSize, handle.get(), {}, std::array<float, 4>{value.x, value.y});
+}
+
+void Compositor::SetScale(Visual handle, Vec2 value)
+{
+    impl->appQueue.addCommand(OpCode::SetVisualScale, handle.get(), {}, std::array<float, 4>{value.x, value.y});
+}
+
+void Compositor::SetRotation(Visual handle, float value)
+{
+    impl->appQueue.addCommand(OpCode::SetVisualRotation, handle.get(), {}, std::array<float, 4>{value});
+}
+
+void Compositor::SetAnchorPoint(Visual handle, Vec2 value)
+{
+    impl->appQueue.addCommand(OpCode::SetVisualAnchorPoint, handle.get(), {}, std::array<float, 4>{value.x, value.y});
+}
+
+void Compositor::SetOpacity(Visual handle, float value)
+{
+    impl->appQueue.addCommand(OpCode::SetVisualOpacity, handle.get(), {}, std::array<float, 4>{value});
+}

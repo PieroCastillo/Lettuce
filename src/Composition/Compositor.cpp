@@ -2,6 +2,7 @@
 #include <algorithm>
 #include <atomic>
 #include <limits>
+#include <mutex>
 #include <queue>
 #include <string>
 #include <vector>
@@ -29,12 +30,12 @@ void Compositor::Destroy()
 
 void Compositor::Commit()
 {
-
+    std::lock_guard<std::mutex> lock(impl->commitMutex);
 }
 
 void Compositor::SetDebugName(Visual visual, std::string name)
 {
-
+    impl->appQueue.addCommand(OpCode::SetDebugName, visual.get(), {}, name);
 }
 
 auto Compositor::GetVisualCount() -> uint32_t

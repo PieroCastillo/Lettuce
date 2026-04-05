@@ -152,7 +152,7 @@ namespace Lettuce::Composition
 
     struct GlyphUpload {
         Rect destinationRect;
-        const byte* pixelData;
+        const uint8_t* pixelData;
         size_t dataSize;
     };
 
@@ -305,7 +305,7 @@ namespace Lettuce::Composition
         FontWeight weight = FontWeight::Regular;
         bool italic = false;
 
-        const byte* memoryData = nullptr;
+        const uint8_t* memoryData = nullptr;
         size_t memorySize = 0;
     };
 
@@ -331,7 +331,7 @@ namespace Lettuce::Composition
         // Visuals
         auto CreateVisual(const ContainerVisualDesc&) -> Visual;
         auto CreateVisual(const SpriteVisualDesc&) -> Visual;
-        void DestroyVisual(Visual visual);
+        void DestroyVisual(Visual);
 
         void AddChild(Visual parent, Visual child);
         void RemoveChild(Visual parent, Visual child);
@@ -361,7 +361,7 @@ namespace Lettuce::Composition
         auto CreateMaterial(const AcrylicMaterialDesc&) -> Material;
         auto CreateMaterial(const NoiseMaterialDesc&) -> Material;
         auto CreateMaterial(const DistortionMaterialDesc&) -> Material;
-        void DestroyMaterial(Material Material);
+        void DestroyMaterial(Material);
 
         void SetMaterial(Visual visual, Material Material);
         void SetMaterialGradientStops(Material Material, std::span<const GradientStop> stops);
@@ -380,10 +380,10 @@ namespace Lettuce::Composition
         auto CreateLight(const DirectionalLightDesc&) -> Light;
         auto CreateLight(const SpotLightDesc&) -> Light;
         auto CreateLight(const RevealLightDesc&) -> Light;
-        void DestroyLight(Light light);
+        void DestroyLight(Light);
 
-        void AddLightTarget(Light light, Visual visual);
-        void RemoveLightTarget(Light light, Visual visual);
+        void AddLightTarget(Visual visual, Light light);
+        void RemoveLightTarget(Visual visual);
 
         // Drop Shadows
         auto CreateDropShadow(const DropShadowDesc&) -> DropShadow;
@@ -393,27 +393,33 @@ namespace Lettuce::Composition
         void ClearShadowTarget(Visual visual);
 
         // Animations
-        auto CreateAnimation(const AnimationDesc& desc) -> AnimationToken;
-        auto CreateAnimation(const NaturalMotionAnimationDesc& desc) -> AnimationToken;
-        void DestroyAnimation(AnimationToken token);
+        auto CreateAnimation(const AnimationDesc&) -> AnimationToken;
+        auto CreateAnimation(const NaturalMotionAnimationDesc&) -> AnimationToken;
+        void DestroyAnimation(AnimationToken);
 
-        void StopAnimations(Visual visual);
-        void StopAnimations(Material Material);
-        void StopAnimations(Light light);
+        void StopAnimations(Visual);
+        void StopAnimations(Material);
+        void StopAnimations(Geometry);
+        void StopAnimations(Light);
+        void StopAnimations(DropShadow);
 
-        void PauseAnimations(Visual visual);
-        void PauseAnimations(Material Material);
-        void PauseAnimations(Light light);
+        void PauseAnimations(Visual);
+        void PauseAnimations(Material);
+        void PauseAnimations(Geometry);
+        void PauseAnimations(Light);
+        void PauseAnimations(DropShadow);
 
-        void ResumeAnimations(Visual visual);
-        void ResumeAnimations(Material Material);
-        void ResumeAnimations(Light light);
+        void ResumeAnimations(Visual);
+        void ResumeAnimations(Material);
+        void ResumeAnimations(Geometry);
+        void ResumeAnimations(Light);
+        void ResumeAnimations(DropShadow);
 
-        void BindImplicitAnimation(Visual visual, AnimatableProperty prop, AnimationToken token);
-        void BindImplicitAnimation(Material material, AnimatableProperty prop, AnimationToken token);
-        void BindImplicitAnimation(Geometry geometry, AnimatableProperty prop, AnimationToken token);
-        void BindImplicitAnimation(Light light, AnimatableProperty prop, AnimationToken token);
-        void BindImplicitAnimation(DropShadow shadow, AnimatableProperty prop, AnimationToken token);
+        void BindImplicitAnimation(Visual, AnimatableProperty, AnimationToken);
+        void BindImplicitAnimation(Material, AnimatableProperty, AnimationToken);
+        void BindImplicitAnimation(Geometry, AnimatableProperty, AnimationToken);
+        void BindImplicitAnimation(Light, AnimatableProperty, AnimationToken);
+        void BindImplicitAnimation(DropShadow, AnimatableProperty, AnimationToken);
 
         // Commit
         void Commit();

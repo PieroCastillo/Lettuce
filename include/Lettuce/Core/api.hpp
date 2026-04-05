@@ -32,11 +32,19 @@ namespace Lettuce::Core
         uint32_t index = 0;
         uint32_t generation = 0;
 
+        static constexpr Handle<Tag> Null() noexcept {
+            return {};
+        }
+
         constexpr bool valid() const noexcept {
             return generation != 0;
         }
 
         auto operator<=>(const Handle&) const = default;
+
+        constexpr std::array<uint32_t, 2> get() const noexcept {
+            return { index, generation };
+        }
     };
 
     struct MemoryHeapTag {};

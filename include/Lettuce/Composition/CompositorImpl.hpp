@@ -6,6 +6,7 @@ Created by @PieroCastillo on 2026-01-27
 
 // standard headers
 #include <atomic>
+#include <mutex>
 #include <thread>
 #include <vector>
 
@@ -76,6 +77,10 @@ namespace Lettuce::Composition
 
         std::jthread compositorThread;
         std::stop_token compositorStopToken;
+
+        std::mutex commitMutex;
+        CommandQueue appQueue;
+        std::vector<Command> compositorQueue;
 
         uint32_t width;
         uint32_t height;

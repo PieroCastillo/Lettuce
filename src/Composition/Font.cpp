@@ -14,5 +14,10 @@
 using namespace Lettuce::Composition;
 
 auto Compositor::CreateFont(const FontDesc& desc) -> Font { return {}; }
-void Compositor::DestroyFont(Font font) {}
+
+void Compositor::DestroyFont(Font font)
+{
+    impl->appQueue.addCommand(OpCode::DestroyFont, font.get(), {});
+}
+
 void Compositor::UploadToAtlasTexture(Texture atlas, std::span<const GlyphUpload> uploads) {}
