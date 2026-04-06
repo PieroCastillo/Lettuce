@@ -30,7 +30,17 @@ void Compositor::Destroy()
 
 void Compositor::Commit()
 {
-    std::lock_guard<std::mutex> lock(impl->commitMutex);
+    /*
+    locks commitMutex, waits for compositor is not processing
+    then swap queues, register new state, so notifies compositor thread
+    */
+    std::unique_lock<std::mutex> lock(impl->commitMutex);
+
+    impl->appCv.wait(lock, [this]() {return !impl->compositorIsProcessing; });
+    std::swap(impl->appQueue, impl->compositorQueue);
+    impl->hasNewCommands = true;
+    impl->compositorIsProcessing = true;
+    impl->compCv.notify_one();
 }
 
 void Compositor::SetDebugName(Visual visual, std::string name)

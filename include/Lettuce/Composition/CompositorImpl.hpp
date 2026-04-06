@@ -69,18 +69,24 @@ namespace Lettuce::Composition
         Pipeline pTileRasterPass;
         Pipeline pPostprocessingPass;
 
-        // Resource Pools
-        ResourcePool<Visual, VisualInfo> visuals;
-        ResourcePool<Material, MaterialInfo> materials;
-        ResourcePool<Light, LightInfo> lights;
-        ResourcePool<AnimationToken, AnimationTokenInfo> animationTokens;
+        // Registries
+        HandleRegistry<VisualTag> visuals;
+        HandleRegistry<MaterialTag> materials;
+        HandleRegistry<GeometryTag> geometries;
+        HandleRegistry<LightTag> light;
+        HandleRegistry<DropShadowTag> shadows;
+        HandleRegistry<FontTag> fonts;
 
         std::jthread compositorThread;
         std::stop_token compositorStopToken;
 
-        std::mutex commitMutex;
         CommandQueue appQueue;
-        std::vector<Command> compositorQueue;
+        CommandQueue compositorQueue;
+        std::mutex commitMutex;
+        std::condition_variable appCv, compCv;
+        bool hasNewCommands = false;
+        bool compositorIsProcessing = false;
+        bool isRunning = true;
 
         uint32_t width;
         uint32_t height;
@@ -92,6 +98,11 @@ namespace Lettuce::Composition
         void CreatePipelines();
 
         void MainLoop();
+
+        void ExecuteCommands();
+        void UpdateAnimations();
+        void ResolveTree();
+        void RecordGPUCommands();
     };
 };
 

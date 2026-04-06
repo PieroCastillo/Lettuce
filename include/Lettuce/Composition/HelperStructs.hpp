@@ -240,7 +240,7 @@ namespace Lettuce::Composition
 
         void addCommand(OpCode op, std::array<uint32_t, 2> dst, std::array<uint32_t, 2> src)
         {
-            appQueue.emplace_back(Command{ op, CommandPayloadKind::none, dst,  src, 0});
+            appQueue.emplace_back(Command{ op, CommandPayloadKind::none, dst,  src, 0 });
         }
 
         template<typename PayloadT>
@@ -293,6 +293,35 @@ namespace Lettuce::Composition
             uint32_t idx = storage.arenaRanges.size();
             storage.arenaRanges.push_back({ offset,static_cast<uint32_t>(byteCount) });
             return { CommandPayloadKind::arenaRange, idx };
+        }
+    };
+
+    template<typename Tag>
+    class HandleRegistry {
+    private:
+        std::vector<uint32_t> freeIndices;
+        std::vector<uint32_t> generations;
+
+    public:
+        HandleRegistry() {}
+
+        HandleRegistry(uint32_t maxCount) {
+            freeIndices.reserve(maxCount);
+            generations.resize(maxCount, 1);
+            for (uint32_t i = maxCount; i > 0; --i) {
+                freeIndices.push_back(i - 1);
+            }
+        }
+
+        auto Allocate() -> Handle<Tag> {
+            uint32_t index = freeIndices.back();
+            freeIndices.pop_back();
+            return Handle<Tag>{ index, generations[index] };
+        }
+
+        void Release(Handle<Tag> handle) {
+            generations[handle.index]++;
+            freeIndices.push_back(handle.index);
         }
     };
 };

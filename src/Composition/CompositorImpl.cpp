@@ -48,25 +48,25 @@ void CompositorImpl::Create(const CompositorDesc& desc)
     cmdAlloc = device->CreateCommandAllocator(cmdAllocDesc);
 
     DescriptorTableDesc dtDesc = {
-        .sampledImageDescriptorCount= 1024,
+        .sampledImageDescriptorCount = 1024,
         .samplerDescriptorCount = 8,
         .storageImageDescriptorCount = 1024,
     };
     descriptorTable = device->CreateDescriptorTable(dtDesc);
 
-    CreateResources();
-    CreatePipelines();
+    // CreateResources();
+    // CreatePipelines();
 }
 
 void CompositorImpl::Destroy()
 {
     compositorThread.request_stop();
     // Destroy Pipelines
-    device->Destroy(pTileBinningPass);
-    device->Destroy(pTileRasterPass);
-    device->Destroy(pPostprocessingPass);
+    // device->Destroy(pTileBinningPass);
+    // device->Destroy(pTileRasterPass);
+    // device->Destroy(pPostprocessingPass);
     // Destroy Resources
-    memAlloc.Destroy();
+    // memAlloc.Destroy();
 
     device->Destroy(descriptorTable);
     device->Destroy(cmdAlloc);
@@ -108,43 +108,75 @@ void CompositorImpl::CreatePipelines()
     device->Destroy(compositionShader);
 }
 
+void CompositorImpl::ExecuteCommands()
+{
+
+}
+
+void CompositorImpl::UpdateAnimations()
+{
+
+}
+
+void CompositorImpl::ResolveTree()
+{
+
+}
+
+void CompositorImpl::RecordGPUCommands()
+{
+    BarrierDesc compCompBarrier[1] = { {
+        .srcAccess = PipelineAccess::Write,
+        .srcStage = PipelineStage::ComputeShader,
+        .dstAccess = PipelineAccess::Write,
+        .dstStage = PipelineStage::ComputeShader,
+    }, };
+    PushAllocationsDesc pushAllocs = {
+        .descriptorTable = descriptorTable,
+    };
+
+    auto cmd = device->AllocateCommandBuffer(cmdAlloc);
+    cmd.BindDescriptorTable(descriptorTable, PipelineBindPoint::Compute);
+
+    cmd.BindPipeline(pTileBinningPass);
+    cmd.PushAllocations(pushAllocs);
+    cmd.Dispatch(1, 1, 1);
+    cmd.Barrier(std::span(compCompBarrier));
+
+    cmd.BindPipeline(pTileRasterPass);
+    cmd.PushAllocations(pushAllocs);
+    cmd.Dispatch(1, 1, 1);
+    cmd.Barrier(std::span(compCompBarrier));
+
+    cmd.BindPipeline(pPostprocessingPass);
+    cmd.PushAllocations(pushAllocs);
+    cmd.Dispatch(1, 1, 1);
+    cmd.Barrier(std::span(compCompBarrier));
+
+    CommandBufferSubmitDesc cmdSubmit = {
+
+    };
+    device->Submit(cmdSubmit);
+}
+
 void CompositorImpl::MainLoop()
 {
     compositorThread = std::jthread([&](std::stop_token token) {
         while (!token.stop_requested())
         {
-            BarrierDesc compCompBarrier[1] = { {
-                .srcAccess = PipelineAccess::Write,
-                .srcStage = PipelineStage::ComputeShader,
-                .dstAccess = PipelineAccess::Write,
-                .dstStage = PipelineStage::ComputeShader,
-            }, };
-            PushAllocationsDesc pushAllocs = {
-                .descriptorTable = descriptorTable,
-            };
+            std::unique_lock<std::mutex> lock(commitMutex);
+            compCv.wait(lock, [this]() { return !hasNewCommands; });
+            hasNewCommands = false;
+            lock.unlock();
 
-            auto cmd = device->AllocateCommandBuffer(cmdAlloc);
-            cmd.BindDescriptorTable(descriptorTable, PipelineBindPoint::Compute);
+            ExecuteCommands();
+            // UpdateAnimations();
+            // ResolveTree();
+            // RecordGPUCommands();
 
-            cmd.BindPipeline(pTileBinningPass);
-            cmd.PushAllocations(pushAllocs);
-            cmd.Dispatch(1, 1, 1);
-            cmd.Barrier(std::span(compCompBarrier));
-
-            cmd.BindPipeline(pTileRasterPass);
-            cmd.PushAllocations(pushAllocs);
-            cmd.Dispatch(1, 1, 1);
-            cmd.Barrier(std::span(compCompBarrier));
-
-            cmd.BindPipeline(pPostprocessingPass);
-            cmd.PushAllocations(pushAllocs);
-            cmd.Dispatch(1, 1, 1);
-            cmd.Barrier(std::span(compCompBarrier));
-
-            CommandBufferSubmitDesc cmdSubmit = {
-                
-            };
-            device->Submit(cmdSubmit);
+            lock.lock();
+            compositorIsProcessing = false;
+            appCv.notify_one();
         }
         });
 }
