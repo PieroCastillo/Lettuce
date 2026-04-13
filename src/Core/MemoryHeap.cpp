@@ -14,6 +14,7 @@
 
 using namespace Lettuce::Core;
 
+/*
 MemoryHeap Device::CreateMemoryHeap(const MemoryHeapDesc& desc)
 {
     auto device = impl->m_device;
@@ -43,7 +44,7 @@ MemoryHeap Device::CreateMemoryHeap(const MemoryHeapDesc& desc)
     return impl->memoryHeaps.allocate({ mem, desc.size, access, cpuAddress });
 }
 
-void Device::Destroy(MemoryHeap heap)
+auto Device::Destroy(MemoryHeap heap)
 {
     if (!impl->memoryHeaps.isValid(heap))
         return;
@@ -58,3 +59,4 @@ void Device::Destroy(MemoryHeap heap)
 
     impl->memoryHeaps.free(heap);
 }
+*/

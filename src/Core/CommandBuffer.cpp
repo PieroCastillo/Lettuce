@@ -15,7 +15,7 @@
 
 using namespace Lettuce::Core;
 
-void CommandBuffer::ClearTexture(const ClearTextureDesc& desc)
+auto CommandBuffer::ClearTexture(const ClearTextureDesc& desc)
 {
     auto& dev = impl.device;
     auto& imgInfo = dev->textures.get(desc.texture);
@@ -30,8 +30,8 @@ void CommandBuffer::ClearTexture(const ClearTextureDesc& desc)
 
     vkCmdClearColorImage((VkCommandBuffer)impl.handle, imgInfo.image, VK_IMAGE_LAYOUT_GENERAL, &color, 1, &range);
 }
-
-void CommandBuffer::MemoryCopy(const MemoryToMemoryCopy& copy)
+/*
+auto CommandBuffer::MemoryCopy(const MemoryToMemoryCopy& copy)
 {
     VkBufferCopy bufferCopy = {
         .srcOffset = copy.srcMemory.offset,
@@ -47,7 +47,7 @@ void CommandBuffer::MemoryCopy(const MemoryToMemoryCopy& copy)
         1, &bufferCopy);
 }
 
-void CommandBuffer::MemoryCopy(const MemoryToTextureCopy& copy)
+auto CommandBuffer::MemoryCopy(const MemoryToTextureCopy& copy)
 {
     auto& dev = impl.device;
     auto& imgInfo = dev->textures.get(copy.dstTexture);
@@ -68,7 +68,7 @@ void CommandBuffer::MemoryCopy(const MemoryToTextureCopy& copy)
         VK_IMAGE_LAYOUT_GENERAL, 1, &imageCopy);
 }
 
-void CommandBuffer::MemoryCopy(const TextureToMemory& copy)
+auto CommandBuffer::MemoryCopy(const TextureToMemory& copy)
 {
     auto& dev = impl.device;
     auto& imgInfo = dev->textures.get(copy.srcTexture);
@@ -98,7 +98,7 @@ void CommandBuffer::MemoryCopy(const TextureToMemory& copy)
         dev->buffers.get(copy.dstMemory.buffer).buffer, 1, &imageCopy);
 }
 
-void CommandBuffer::TextureCopy(const TextureToRenderTargetCopy& copy)
+auto CommandBuffer::TextureCopy(const TextureToRenderTargetCopy& copy)
 {
     auto& dev = impl.device;
     auto& srcTex = dev->textures.get(copy.srcTexture);
@@ -119,8 +119,9 @@ void CommandBuffer::TextureCopy(const TextureToRenderTargetCopy& copy)
 
     vkCmdCopyImage((VkCommandBuffer)impl.handle, srcTex.image, VK_IMAGE_LAYOUT_GENERAL, dstRT.image, VK_IMAGE_LAYOUT_GENERAL, 1, &imgCopy);
 }
+*/
 
-void CommandBuffer::BeginRendering(const RenderPassDesc& desc)
+auto CommandBuffer::BeginRendering(const RenderPassDesc& desc)
 {
     auto& renderTargets = impl.device->renderTargets;
 
@@ -177,18 +178,18 @@ void CommandBuffer::BeginRendering(const RenderPassDesc& desc)
     vkCmdSetScissor(cmd, 0, 1, &scissor);
 }
 
-void CommandBuffer::EndRendering()
+auto CommandBuffer::EndRendering()
 {
     vkCmdEndRendering((VkCommandBuffer)impl.handle);
 }
 
-void CommandBuffer::BindPipeline(Pipeline pipeline)
+auto CommandBuffer::BindPipeline(Pipeline pipeline)
 {
     auto pipelineInfo = impl.device->pipelines.get(pipeline);
     vkCmdBindPipeline((VkCommandBuffer)impl.handle, pipelineInfo.bindPoint, pipelineInfo.pipeline);
 }
 
-void CommandBuffer::BindDescriptorTable(DescriptorTable descriptorTable, PipelineBindPoint bindPoint)
+auto CommandBuffer::BindDescriptorTable(DescriptorTable descriptorTable, PipelineBindPoint bindPoint)
 {
     auto& dt = impl.device->descriptorTables.get(descriptorTable);
     VkDescriptorBufferBindingInfoEXT bindingInfo = {
@@ -213,7 +214,7 @@ void CommandBuffer::BindDescriptorTable(DescriptorTable descriptorTable, Pipelin
     // vkCmdPushConstants((VkCommandBuffer)impl.handle, dt.pipelineLayout, VK_SHADER_STAGE_ALL, 0, dt.pushPayloadSize, dt.pushPayloadAddress);
 }
 
-void CommandBuffer::PushAllocations(const PushAllocationsDesc& desc)
+auto CommandBuffer::PushAllocations(const PushAllocationsDesc& desc)
 {
     auto& dt = impl.device->descriptorTables.get(desc.descriptorTable);
     auto payloadSize = std::min<uint32_t>(impl.device->props.maxPushAllocationsCount, desc.allocations.size()) * sizeof(uint64_t);
@@ -236,22 +237,22 @@ void CommandBuffer::PushAllocations(const PushAllocationsDesc& desc)
     vkCmdPushConstants((VkCommandBuffer)impl.handle, dt.pipelineLayout, VK_SHADER_STAGE_ALL, 0, payloadSize, data);
 }
 
-void CommandBuffer::Draw(uint32_t vertexCount, uint32_t instanceCount)
+auto CommandBuffer::Draw(uint32_t vertexCount, uint32_t instanceCount)
 {
     vkCmdDraw((VkCommandBuffer)impl.handle, vertexCount, instanceCount, 0, 0);
 }
 
-void CommandBuffer::DrawIndexed(uint32_t indexCount, uint32_t instanceCount)
+auto CommandBuffer::DrawIndexed(uint32_t indexCount, uint32_t instanceCount)
 {
     vkCmdDrawIndexed((VkCommandBuffer)impl.handle, indexCount, instanceCount, 0, 0, 0);
 }
 
-void CommandBuffer::DrawMesh(uint32_t x, uint32_t y, uint32_t z)
+auto CommandBuffer::DrawMesh(uint32_t x, uint32_t y, uint32_t z)
 {
     vkCmdDrawMeshTasksEXT((VkCommandBuffer)impl.handle, x, y, z);
 }
 
-void CommandBuffer::ExecuteIndirect(const ExecuteIndirectDesc& desc)
+auto CommandBuffer::ExecuteIndirect(const ExecuteIndirectDesc& desc)
 {
     // TODO: impl execute indirect
     auto& set = impl.device->indirectSets.get(desc.indirectSet);
@@ -277,12 +278,12 @@ void CommandBuffer::ExecuteIndirect(const ExecuteIndirectDesc& desc)
     }
 }
 
-void CommandBuffer::Dispatch(uint32_t x, uint32_t y, uint32_t z)
+auto CommandBuffer::Dispatch(uint32_t x, uint32_t y, uint32_t z)
 {
     vkCmdDispatch((VkCommandBuffer)impl.handle, x, y, z);
 }
 
-void CommandBuffer::Barrier(std::span<const BarrierDesc> barriers)
+auto CommandBuffer::Barrier(std::span<const BarrierDesc> barriers)
 {
     uint32_t count = barriers.size();
     if (count == 0) [[unlikely]] return;
@@ -309,8 +310,8 @@ void CommandBuffer::Barrier(std::span<const BarrierDesc> barriers)
     };
     vkCmdPipelineBarrier2((VkCommandBuffer)impl.handle, &depInfo);
 }
-
-void CommandBuffer::PrepareTexture(Texture texture)
+/*
+auto CommandBuffer::PrepareTexture(Texture texture)
 {
     auto texInfo = impl.device->textures.get(texture);
     auto subRes = VkImageSubresourceRange{ VK_IMAGE_ASPECT_COLOR_BIT, 0, texInfo.mipCount, 0, texInfo.layerCount };
@@ -337,12 +338,12 @@ void CommandBuffer::PrepareTexture(Texture texture)
     vkCmdPipelineBarrier2((VkCommandBuffer)impl.handle, &depInfo);
 }
 
-void CommandBuffer::Fill(MemoryView view, uint32_t value, uint32_t count)
+auto CommandBuffer::Fill(MemoryView view, uint32_t value, uint32_t count)
 {
     vkCmdFillBuffer((VkCommandBuffer)impl.handle, impl.device->buffers.get(view.buffer).buffer, view.offset, count * sizeof(uint32_t), value);
 }
-
-void CommandBuffer::ResetCount(IndirectSet indirectSet)
+*/
+auto CommandBuffer::ResetCount(IndirectSet indirectSet)
 {
     vkCmdFillBuffer((VkCommandBuffer)impl.handle, impl.device->indirectSets.get(indirectSet).indirectSetBuffer, 0, sizeof(uint32_t), 0);
 }

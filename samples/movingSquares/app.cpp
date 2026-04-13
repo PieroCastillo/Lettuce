@@ -11,8 +11,9 @@
 #include <algorithm>
 #include <atomic>
 #include <memory>
-#include <vector>
+#include <print>
 #include <string>
+#include <vector>
 
 using namespace Lettuce::Core;
 using namespace Lettuce::Composition;
@@ -28,29 +29,30 @@ std::unique_ptr<Compositor> compositor;
 Swapchain swapchain;
 CommandAllocator cmdAlloc;
 
-
 void mainLoop()
 {
     while (!glfwWindowShouldClose(window))
     {
-        device->NextFrame(swapchain);
+        // device->NextFrame(swapchain);
 
-        device->Reset(cmdAlloc);
-        auto frame = device->GetCurrentRenderTarget(swapchain);
-        auto cmd = device->AllocateCommandBuffer(cmdAlloc);
+        // device->Reset(cmdAlloc);
+        // auto frame = device->GetCurrentRenderTarget(swapchain);
+        // auto cmd = device->AllocateCommandBuffer(cmdAlloc);
 
-        std::array<std::span<CommandBuffer>, 1> cmds = { std::span(&cmd, 1) };
+        // std::array<std::span<CommandBuffer>, 1> cmds = { std::span(&cmd, 1) };
 
-        CommandBufferSubmitDesc submitDesc = {
-            .queueType = QueueType::Graphics,
-            .commandBuffers = std::span(cmds),
-            .presentSwapchain = swapchain,
-        };
+        // CommandBufferSubmitDesc submitDesc = {
+        //     .queueType = QueueType::Graphics,
+        //     .commandBuffers = std::span(cmds),
+        //     .presentSwapchain = swapchain,
+        // };
 
-        device->Submit(submitDesc);
+        // device->Submit(submitDesc);
 
-        device->DisplayFrame(swapchain);
-        device->WaitFor(QueueType::Graphics);
+        // device->DisplayFrame(swapchain);
+        // device->WaitFor(QueueType::Graphics);
+        std::println("app thread");
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
         glfwPollEvents();
     }
@@ -116,29 +118,27 @@ void initCompositionEngine()
     };
     compositor = std::make_unique<Compositor>();
     compositor->Create(compositorCI);
-    /*
-    auto geom1 = compositor.CreateShapeGeometry({ .w = 100, .h = 50, .radius = 10 });
-    auto geom2 = compositor.CreateInstancedGeometry({ .atlas = myFontAtlas, .instances = glyphs });
-    auto geom3 = compositor.CreatePathGeometry({ .commands = lottieShapePoints });
 
-    NaturalMotionAnimationDesc springDesc = { .stiffness = 300.0f, .damping = 15.0f };
-    auto hoverSpring = compositor.CreateAnimation(springDesc);
+    auto geom = compositor->CreateGeometry(ImplicitGeometryDesc{ .shape = ImplicitShape::Rectangle });
+    auto matColor = compositor->CreateMaterial(SolidColorMaterialDesc{ .color = {0.565, 0.933, 0.565} });
 
-    compositor.BindImplicitAnimation(myButtonVisual, AnimatableProperty::Scale, hoverSpring);
+    auto myButtonVisual = compositor->CreateVisual(SpriteVisualDesc{ .size = {100, 50}, .geometry = geom, .material = matColor });
+
+    auto hoverSpring = compositor->CreateAnimation(NaturalMotionAnimationDesc{ .stiffness = 300.0f, .damping = 15.0f });
+    compositor->BindImplicitAnimation(myButtonVisual, AnimatableProperty::Scale, hoverSpring);
 
     // OnMouseEnter
-    compositor.SetScale(myButtonVisual, {1.1f, 1.1f});
+    compositor->SetScale(myButtonVisual, { 1.1f, 1.1f });
 
-    auto missingGlyphs = RasterizeMissingGlyphs("🌍あ");
-    compositor.UploadToAtlasTexture(globalTextAtlas, missingGlyphs);
-    std::vector<AtlasInstance> glyphInstances;
-    glyphInstances.push_back({uvH, rectH, {0,0,0,1}, AtlasInstanceFlags::None}); 
-    glyphInstances.push_back({uvEarth, rectEarth, {1,1,1,1}, AtlasInstanceFlags::IsColorBitmap}); 
+    // auto missingGlyphs = RasterizeMissingGlyphs("🌍あ");
+    // compositor.UploadToAtlasTexture(globalTextAtlas, missingGlyphs);
+    // std::vector<AtlasInstance> glyphInstances;
+    // glyphInstances.push_back({ uvH, rectH, {0,0,0,1}, AtlasInstanceFlags::None });
+    // glyphInstances.push_back({ uvEarth, rectEarth, {1,1,1,1}, AtlasInstanceFlags::IsColorBitmap });
 
-    compositor.UpdateAtlasedInstances(myTextGeometry, glyphInstances);
+    // compositor.UpdateAtlasedInstances(myTextGeometry, glyphInstances);
 
-    compositor.Commit();
-    */
+    compositor->Commit();
 }
 
 void cleanupCompositionEngine()
@@ -148,6 +148,7 @@ void cleanupCompositionEngine()
 
 int main()
 {
+    setvbuf(stdout, nullptr, _IONBF, 0);
     initWindow();
     initLettuce();
     initCompositionEngine();

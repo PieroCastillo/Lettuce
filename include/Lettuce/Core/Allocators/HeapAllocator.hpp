@@ -5,24 +5,26 @@ Created by @PieroCastillo on 2025-02-13
 #define LETTUCE_CORE_ALLOCATORS_HEAP_ALLOCATOR
 
 // project headers
-#include "IGPUMemoryResource.hpp"
+#include "../IGPUMemoryResource.hpp"
+#include "common.hpp"
 
 namespace Lettuce::Core::Allocators
 {
-    struct HeapllocatorDesc 
+    struct HeapAllocatorDesc
     {
         uint32_t blockDefaultSize;
+        bool cpuVisible;
     };
 
     struct Heap {
-        std::vector<MemoryHeap> blockHeaps;
+        std::vector<VkDeviceMemory> blockHeaps;
         std::vector<uint64_t> blockOffsets;
         std::vector<uint64_t> blockSizes;
     };
 
     class HeapAllocator : public IGPUMemoryResource
     {
-        Device* device;
+        DeviceImpl* device;
 
         // small buffers
         Heap hSmallBuffers;
@@ -32,19 +34,21 @@ namespace Lettuce::Core::Allocators
         std::vector<MemoryView> mvsLarge;
         // small textures
         Heap hSmallTextures;
-        std::vector<Texture> tSmall;
+        std::vector<TextureView> tSmall;
         // large textures
         Heap hBigTextures;
-        std::vector<Texture> mLarge;
+        std::vector<TextureView> mLarge;
 
     public:
-        void Create(Device&, const HeapllocatorDesc&);
+        explicit HeapAllocator(Device& dev, const HeapAllocatorDesc& desc) { Create(dev, desc); }
+
+        void Create(Device&, const HeapAllocatorDesc&);
         void Destroy();
 
-        MemoryView AllocateMemory(uint64_t) override;
-        Texture AllocateTexture(const TextureDesc&) override;
-        void ReleaseMemory(const MemoryView&) override;
-        void ReleaseTexture(Texture) override;
+        auto AllocateMemory(uint32_t size) -> MemoryView override;
+        auto AllocateTexture(VkImage) -> TextureView override;
+        void ReleaseMemory(MemoryView) override;
+        void ReleaseTexture(TextureView) override;
     };
 };
 #endif // LETTUCE_CORE_ALLOCATORS_HEAP_ALLOCATOR

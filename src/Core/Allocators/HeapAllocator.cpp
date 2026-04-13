@@ -11,33 +11,34 @@
 #include "Lettuce/Core/Allocators/HeapAllocator.hpp"
 
 using namespace Lettuce::Core;
+using namespace Lettuce::Core::Allocators;
 
-void Allocators::HeapAllocator::Create(Device& dev, const Allocators::HeapllocatorDesc& desc)
+void HeapAllocator::Create(Device& dev, const HeapllocatorDesc& desc)
 {
     device = &dev;
 }
 
-void Allocators::HeapAllocator::Destroy()
+void HeapAllocator::Destroy()
 {
-    
+
 }
 
-MemoryView Allocators::HeapAllocator::AllocateMemory(uint64_t size)
-{
-    return {};
-}
-
-Texture Allocators::HeapAllocator::AllocateTexture(const TextureDesc& desc)
+auto HeapAllocator::AllocateMemory(uint32_t size) -> MemoryView
 {
     return {};
 }
 
-void Allocators::HeapAllocator::ReleaseMemory(const MemoryView& view)
+auto HeapAllocator::AllocateTexture(VkImage img) -> TextureView
+{
+    return {};
+}
+
+void HeapAllocator::ReleaseMemory(MemoryView view)
 {
 
 }
 
-void Allocators::HeapAllocator::ReleaseTexture(Texture tex)
+void HeapAllocator::ReleaseTexture(TextureView view)
 {
 
 }

@@ -5,7 +5,7 @@
 
 using namespace Lettuce::Core;
 
-Sampler Device::CreateSampler(const SamplerDesc& desc)
+auto Device::CreateSampler(const SamplerDesc& desc) -> Sampler
 {
     VkSamplerCreateInfo samplerCI = {
         .sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
@@ -31,7 +31,7 @@ Sampler Device::CreateSampler(const SamplerDesc& desc)
     return impl->samplers.allocate(std::move(sampler));
 }
 
-void Device::Destroy(Sampler sampler)
+auto Device::Destroy(Sampler sampler)
 {
     vkDestroySampler(impl->m_device, impl->samplers.get(sampler), nullptr);
     impl->samplers.free(sampler);

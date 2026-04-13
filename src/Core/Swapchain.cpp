@@ -17,7 +17,7 @@
 
 using namespace Lettuce::Core;
 
-void setupVkSurface(SwapchainVK& swapchainVK, VkInstance instance, const SwapchainDesc& createInfo)
+auto setupVkSurface(SwapchainVK& swapchainVK, VkInstance instance, const SwapchainDesc& createInfo)
 {
     VkSurfaceKHR surface;
 #if defined(WIN32_) || defined(_WIN32) || defined(WIN32)
@@ -41,7 +41,7 @@ void setupVkSurface(SwapchainVK& swapchainVK, VkInstance instance, const Swapcha
     swapchainVK.surface = surface;
 }
 
-void setupVkSwapchain(SwapchainVK& swapchainVK, VkDevice device, VkPhysicalDevice gpu, const SwapchainDesc& createInfo)
+auto setupVkSwapchain(SwapchainVK& swapchainVK, VkDevice device, VkPhysicalDevice gpu, const SwapchainDesc& createInfo)
 {
     VkSurfaceKHR surface = swapchainVK.surface;
 
@@ -126,7 +126,7 @@ void setupVkSwapchain(SwapchainVK& swapchainVK, VkDevice device, VkPhysicalDevic
     swapchainVK.swapchain = swapchain;
 }
 
-void setupImagesAndView(SwapchainVK& swapchainVK, ResourcePool<Texture, TextureVK>& textures, ResourcePool<RenderTarget, RenderTargetVK>& renderTargets, VkDevice device, VkPhysicalDevice gpu, const SwapchainDesc& createInfo)
+auto setupImagesAndView(SwapchainVK& swapchainVK, ResourcePool<Texture, TextureVK>& textures, ResourcePool<RenderTarget, RenderTargetVK>& renderTargets, VkDevice device, VkPhysicalDevice gpu, const SwapchainDesc& createInfo)
 {
     auto swapchain = swapchainVK.swapchain;
     // get swapchain images
@@ -166,7 +166,7 @@ void setupImagesAndView(SwapchainVK& swapchainVK, ResourcePool<Texture, TextureV
     }
 }
 
-Swapchain Device::CreateSwapchain(const SwapchainDesc& desc)
+auto Device::CreateSwapchain(const SwapchainDesc& desc) -> Swapchain
 {
     auto device = impl->m_device;
     auto gpu = impl->m_physicalDevice;
@@ -194,7 +194,7 @@ Swapchain Device::CreateSwapchain(const SwapchainDesc& desc)
     return impl->swapchains.allocate(std::move(swapchainVK));
 }
 
-void Device::Destroy(Swapchain swapchain)
+auto Device::Destroy(Swapchain swapchain)
 {
     auto& info = impl->swapchains.get(swapchain);
     auto& device = impl->m_device;
@@ -216,7 +216,7 @@ void Device::Destroy(Swapchain swapchain)
     vkDestroySurfaceKHR(impl->m_instance, info.surface, nullptr);
 }
 
-void Device::NextFrame(Swapchain swapchain)
+auto Device::NextFrame(Swapchain swapchain)
 {
     auto& info = impl->swapchains.get(swapchain);
     auto device = impl->m_device;
@@ -230,7 +230,7 @@ void Device::NextFrame(Swapchain swapchain)
     handleResult(vkWaitForFences(device, 1, &info.waitForAcquireFence, VK_TRUE, timeout));
 }
 
-void Device::DisplayFrame(Swapchain swapchain)
+auto Device::DisplayFrame(Swapchain swapchain)
 {
     auto& info = impl->swapchains.get(swapchain);
     // TODO: Manage Global Synchronization
@@ -249,24 +249,26 @@ void Device::DisplayFrame(Swapchain swapchain)
     info.currentImageIndex = (info.currentImageIndex + 1) % info.imageCount;
 }
 
-Format Device::GetRenderTargetFormat(Swapchain swapchain)
+auto Device::GetRenderTargetFormat(Swapchain swapchain) -> Format
 {
     auto& swp = impl->swapchains.get(swapchain);
     return swp.ltFormat;
 }
 
-void Device::ResizeSwapchain(Swapchain swapchain, uint32_t w, uint32_t h)
+auto Device::ResizeSwapchain(Swapchain swapchain, uint32_t w, uint32_t h)
 {
     // TODO: impl
 }
 
-RenderTarget Device::GetCurrentRenderTarget(Swapchain swapchain) const
+auto Device::GetCurrentRenderTarget(Swapchain swapchain) const -> TextureView
 {
-    auto& swc = impl->swapchains.get(swapchain);
-    return swc.renderTargets[(int)swc.currentImageIndex];
+    // TODO: memory
+    // auto& swc = impl->swapchains.get(swapchain);
+    // return swc.renderTargets[(int)swc.currentImageIndex];
+    return {};
 }
 
-uint32_t Device::GetFrameCount(Swapchain swapchain)
+auto Device::GetFrameCount(Swapchain swapchain) -> uint32_t
 {
     auto& swc = impl->swapchains.get(swapchain);
     return swc.swapchainImages.size();

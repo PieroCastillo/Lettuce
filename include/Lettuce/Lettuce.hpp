@@ -3,14 +3,10 @@
 #include "Core/DeviceImpl.hpp"
 #include "Core/HelperStructs.hpp"
 #include "Core/ResourcePool.hpp"
+#include "Core/IGPUMemoryResource.hpp"
 
 // composition
 #include "Composition/api.hpp"
-
-// allocators
-#include "Core/Allocators/LinearAllocator.hpp"
-#include "Core/Allocators/HeapAllocator.hpp"
-#include "Core/Allocators/IGPUMemoryResource.hpp"
 
 // rendering
 #include "Rendering/api.hpp"

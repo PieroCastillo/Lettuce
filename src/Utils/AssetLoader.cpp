@@ -69,7 +69,7 @@ ShaderBinary AssetLoader::LoadSpirv(std::string_view path)
     return m_device->CreateShader(desc);
 }
 
-Texture AssetLoader::LoadKtx2Texture(std::string_view path, uint32_t levelCount, bool highQuality)
+TextureView AssetLoader::LoadKtx2Texture(std::string_view path, uint32_t levelCount, bool highQuality)
 {
     // Lettuce Target is Desktop Platform & Modern Devices
     // So, needs to support

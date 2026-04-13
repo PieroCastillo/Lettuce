@@ -20,6 +20,11 @@ Created by @PieroCastillo on 2025-07-20
 #include "common.hpp"
 #include "HelperStructs.hpp"
 #include "ResourcePool.hpp"
+#include "IGPUMemoryResource.hpp"
+#include "Allocators/LinearAllocator.hpp"
+#include "Allocators/FrameAllocator.hpp"
+#include "Allocators/RingAllocator.hpp"
+#include "Allocators/HeapAllocator.hpp"
 
 namespace Lettuce::Core
 {
@@ -86,10 +91,8 @@ namespace Lettuce::Core
         Features features;
         Properties props;
 
-        ResourcePool<MemoryHeap, MemoryHeapVK> memoryHeaps;
-        ResourcePool<Buffer, BufferVK> buffers;
-        ResourcePool<Texture, TextureVK> textures;
-        ResourcePool<RenderTarget, RenderTargetVK> renderTargets;
+        ResourcePool<MemoryView, MemoryViewVK> memories;
+        ResourcePool<TextureView, TextureVK> textures;
         ResourcePool<Sampler, VkSampler> samplers;
         ResourcePool<ShaderBinary, VkShaderModule> shaders;
         ResourcePool<Pipeline, PipelineVK> pipelines;
@@ -97,6 +100,15 @@ namespace Lettuce::Core
         ResourcePool<IndirectSet, IndirectSetVK> indirectSets;
         ResourcePool<Swapchain, SwapchainVK> swapchains;
         ResourcePool<CommandAllocator, CommandAllocatorVK> commandAllocators;
+
+        std::unique_ptr<IGPUMemoryResource> hostLinearAlloc;
+        std::unique_ptr<IGPUMemoryResource> hostFrameAlloc;
+        std::unique_ptr<IGPUMemoryResource> hostRingAlloc;
+        std::unique_ptr<IGPUMemoryResource> hostHeapAlloc;
+        std::unique_ptr<IGPUMemoryResource> devLinearAlloc;
+        std::unique_ptr<IGPUMemoryResource> devFrameAlloc;
+        std::unique_ptr<IGPUMemoryResource> devRingAlloc;
+        std::unique_ptr<IGPUMemoryResource> devHeapAlloc;
 
         // physical device features structs
         // required features/extensions
@@ -202,9 +214,34 @@ namespace Lettuce::Core
         void selectGPU(const DeviceCreateInfo& createInfo);
         void setupFeaturesExtensions();
         void setupDevice();
+        void setupAllocators();
 
         void Create(const DeviceCreateInfo& createInfo);
         void Release();
+
+        constexpr IGPUMemoryResource* selectAlloc(AllocationPolicy pol, bool hostVisible)
+        {
+            if (hostVisible)
+            {
+                switch (pol)
+                {
+                case AllocationPolicy::Transient: return hostLinearAlloc.get();
+                case AllocationPolicy::Frame: return hostFrameAlloc.get();
+                case AllocationPolicy::MultiFrame: return hostRingAlloc.get();
+                case AllocationPolicy::Persistent: return hostHeapAlloc.get();
+                }
+            }
+            else
+            {
+                switch (pol)
+                {
+                case AllocationPolicy::Transient: return devLinearAlloc.get();
+                case AllocationPolicy::Frame: return devFrameAlloc.get();
+                case AllocationPolicy::MultiFrame: return devRingAlloc.get();
+                case AllocationPolicy::Persistent: return devHeapAlloc.get();
+                }
+            }
+        }
 
         bool isDebug() { return true; };
     };

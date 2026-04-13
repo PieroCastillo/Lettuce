@@ -19,16 +19,15 @@ namespace Lettuce::Core::Allocators
 
     class LinearAllocator : public IGPUMemoryResource
     {
-        Device* device;
-        MemoryHeap memory;
-        Buffer buffer;
-        std::vector<Texture> textures;
-        std::vector<RenderTarget> renderTargets;
+        DeviceImpl* device;
+        VkDeviceMemory memory;
+        VkBuffer buffer;
+        std::vector<TextureView> textures;
         uint64_t memoryHeapSize;
 
         uint64_t texturesMemoryOffset;
         uint64_t renderTargetsMemoryOffset;
-        
+
         HostAddress bufferCPUAddress;
         uint64_t bufferGPUAddress;
 
@@ -40,15 +39,16 @@ namespace Lettuce::Core::Allocators
         uint64_t currentBufferGPUAddress;
         uint64_t currentBufferUsage;
     public:
+        explicit LinearAllocator(Device& dev, const LinearAllocatorDesc& desc) { Create(dev, desc); }
+
         void Create(Device&, const LinearAllocatorDesc&);
         void Destroy();
 
-        auto AllocateMemory(uint64_t) -> MemoryView;
-        auto AllocateTexture(const TextureDesc&) -> Texture;
-        auto AllocateRenderTarget(const RenderTargetDesc&) -> RenderTarget;
-        void ReleaseMemory(const MemoryView&);
-        void ReleaseTexture(Texture);
-        void ReleaseRenderTarget(RenderTarget);
+        auto AllocateMemory(uint32_t size) -> MemoryView override;
+        auto AllocateTexture(VkImage) -> TextureView override;
+        void ReleaseMemory(MemoryView) override;
+        void ReleaseTexture(TextureView) override;
+
         void ResetMemory();
     };
 };

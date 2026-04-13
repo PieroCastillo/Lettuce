@@ -14,12 +14,14 @@
 
 using namespace Lettuce::Core;
 
+// TODO: memory
+
 [[nodiscard]] constexpr size_t alignUp(size_t v, size_t a) noexcept
 {
     return (v + a - 1) / a * a;
 }
 
-Texture Device::CreateTexture(const TextureDesc& desc, const MemoryBindDesc& bindDesc)
+auto Device::CreateTextureView(const TextureViewDesc& desc) -> TextureView
 {
     auto device = impl->m_device;
 
@@ -147,7 +149,7 @@ Texture Device::CreateTexture(const TextureDesc& desc, const MemoryBindDesc& bin
     return impl->textures.allocate({ desc.width, desc.height, desc.mipCount, desc.layerCount, format, image, imageView, mem, memReqs.size, offset, false });
 }
 
-void Device::Destroy(Texture texture)
+auto Device::Destroy(TextureView texture)
 {
     if (!impl->textures.isValid(texture))
         return;

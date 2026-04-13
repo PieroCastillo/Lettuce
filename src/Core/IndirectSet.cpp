@@ -22,7 +22,7 @@ Indirect Set Layout:
 | count | VkABCIndirectCommand | UserData |... |
 */
 
-IndirectSet Device::CreateIndirectSet(const IndirectSetDesc& desc)
+auto Device::CreateIndirectSet(const IndirectSetDesc& desc) -> IndirectSet
 {
     auto dev = impl->m_device;
     auto gpu = impl->m_physicalDevice;
@@ -83,7 +83,7 @@ IndirectSet Device::CreateIndirectSet(const IndirectSetDesc& desc)
     return impl->indirectSets.allocate({ mem, buffer, desc.type, stride, bufferSize, address });
 }
 
-void Device::Destroy(IndirectSet indirectSet)
+auto Device::Destroy(IndirectSet indirectSet)
 {
     auto& info = impl->indirectSets.get(indirectSet);
 
@@ -92,9 +92,11 @@ void Device::Destroy(IndirectSet indirectSet)
     impl->indirectSets.free(indirectSet);
 }
 
-MemoryView Device::GetIndirectSetView(IndirectSet indirectSet)
+auto Device::GetIndirectSetView(IndirectSet indirectSet) -> MemoryView
 {
-    auto& info = impl->indirectSets.get(indirectSet);
-    // only size and gpuAddress are required, TODO: maybe impl a buffer?
-    return { info.size, 0, info.gpuAddress, {0,0}, 0 };
+    // TODO: memory
+    // auto& info = impl->indirectSets.get(indirectSet);
+    // // only size and gpuAddress are required, TODO: maybe impl a buffer?
+    // return { info.size, 0, info.gpuAddress, {0,0}, 0 };
+    return {};
 }

@@ -3,9 +3,10 @@
 #include <atomic>
 #include <fstream>
 #include <limits>
+#include <print>
 #include <queue>
-#include <string>
 #include <vector>
+#include <string>
 
 // project headers
 #include "Lettuce/Composition/api.hpp"
@@ -61,6 +62,12 @@ void CompositorImpl::Create(const CompositorDesc& desc)
 void CompositorImpl::Destroy()
 {
     compositorThread.request_stop();
+    compCv.notify_all();
+    {
+        std::lock_guard<std::mutex> lock(commitMutex);
+        compositorIsProcessing = false;
+    }
+    appCv.notify_all();
     // Destroy Pipelines
     // device->Destroy(pTileBinningPass);
     // device->Destroy(pTileRasterPass);
@@ -81,7 +88,7 @@ void CompositorImpl::CreateResources()
 
     Allocators::LinearAllocatorDesc linAllocDesc = {
         .maxBufferMemorySize = maxSize,
-                .maxImageMemorySize = 16,
+        .maxImageMemorySize = 16,
         .maxRenderTargetsMemorySize = 16,
     };
     memAlloc.Create(*device, linAllocDesc);
@@ -162,21 +169,30 @@ void CompositorImpl::RecordGPUCommands()
 void CompositorImpl::MainLoop()
 {
     compositorThread = std::jthread([&](std::stop_token token) {
+        std::println("compositor thread starts");
         while (!token.stop_requested())
         {
             std::unique_lock<std::mutex> lock(commitMutex);
-            compCv.wait(lock, [this]() { return !hasNewCommands; });
+            compCv.wait(lock, token, [this]() { return !hasNewCommands; });
             hasNewCommands = false;
             lock.unlock();
+
+            if (token.stop_requested()) {
+                break;
+            }
 
             ExecuteCommands();
             // UpdateAnimations();
             // ResolveTree();
             // RecordGPUCommands();
 
+            std::println("compositor thread");
+            std::this_thread::sleep_for(std::chrono::milliseconds(8));
+
             lock.lock();
             compositorIsProcessing = false;
             appCv.notify_one();
         }
+        std::println("compositor thread ends");
         });
 }

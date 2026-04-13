@@ -197,7 +197,7 @@ namespace Lettuce::Composition
     };
 
     struct TextureMaterialDesc {
-        Texture texture;
+        TextureView texture;
         BlendMode blendMode = BlendMode::Normal;
         float opacity = 1.0f;
     };
@@ -222,7 +222,7 @@ namespace Lettuce::Composition
     };
 
     struct DistortionMaterialDesc {
-        Texture displacementMap;
+        TextureView displacementMap;
         float strength;
     };
 
@@ -234,7 +234,7 @@ namespace Lettuce::Composition
     };
 
     struct InstancedGeometryDesc {
-        Texture atlasTexture;
+        TextureView atlasTexture;
         std::span<const AtlasInstance> instances;
     };
 
@@ -349,7 +349,7 @@ namespace Lettuce::Composition
         auto CreateFont(const FontDesc& desc) -> Font;
         void DestroyFont(Font font);
 
-        void UploadToAtlasTexture(Texture atlas, std::span<const GlyphUpload> uploads);
+        void UploadToAtlasTexture(TextureView atlas, std::span<const GlyphUpload> uploads);
 
         // Materials
         auto CreateMaterial(const SolidColorMaterialDesc&) -> Material;

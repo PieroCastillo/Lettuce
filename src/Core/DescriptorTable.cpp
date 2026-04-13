@@ -29,7 +29,7 @@ using namespace Lettuce::Core;
     The Descriptor Table have 3 binding & 1 set
 */
 
-DescriptorTable Device::CreateDescriptorTable(const DescriptorTableDesc& desc)
+auto Device::CreateDescriptorTable(const DescriptorTableDesc& desc) -> DescriptorTable
 {
     VkDevice device = impl->m_device;
     VkPhysicalDevice gpu = impl->m_physicalDevice;
@@ -147,7 +147,7 @@ storage image descriptor size: {})", bufferSize, samplerDescriptorSize, sampledI
         });
 }
 
-void Device::Destroy(DescriptorTable descriptorTable)
+auto Device::Destroy(DescriptorTable descriptorTable)
 {
     VkDevice device = impl->m_device;
     auto& dt = impl->descriptorTables.get(descriptorTable);
@@ -161,7 +161,7 @@ void Device::Destroy(DescriptorTable descriptorTable)
     impl->descriptorTables.free(descriptorTable);
 }
 
-void Device::PushResourceDescriptors(const PushResourceDescriptorsDesc& desc)
+auto Device::PushResourceDescriptors(const PushResourceDescriptorsDesc& desc)
 {
     auto& dt = impl->descriptorTables.get(desc.descriptorTable);
 

@@ -5,7 +5,7 @@
 
 using namespace Lettuce::Core;
 
-ShaderBinary Device::CreateShader(const ShaderBinaryDesc& desc)
+auto Device::CreateShader(const ShaderBinaryDesc& desc) -> ShaderBinary
 {
     VkShaderModuleCreateInfo shaderCI = {
         .sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,
@@ -18,7 +18,7 @@ ShaderBinary Device::CreateShader(const ShaderBinaryDesc& desc)
     return impl->shaders.allocate(std::move(shaderModule));
 }
 
-void Device::Destroy(ShaderBinary shader)
+auto Device::Destroy(ShaderBinary shader)
 {
     vkDestroyShaderModule(impl->m_device, impl->shaders.get(shader), nullptr);
     impl->shaders.free(shader);

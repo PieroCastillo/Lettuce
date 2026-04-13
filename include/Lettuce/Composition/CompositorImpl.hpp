@@ -6,6 +6,7 @@ Created by @PieroCastillo on 2026-01-27
 
 // standard headers
 #include <atomic>
+#include <condition_variable>
 #include <mutex>
 #include <thread>
 #include <vector>
@@ -83,7 +84,7 @@ namespace Lettuce::Composition
         CommandQueue appQueue;
         CommandQueue compositorQueue;
         std::mutex commitMutex;
-        std::condition_variable appCv, compCv;
+        std::condition_variable_any appCv, compCv;
         bool hasNewCommands = false;
         bool compositorIsProcessing = false;
         bool isRunning = true;

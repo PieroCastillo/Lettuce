@@ -82,7 +82,7 @@ RenderTarget Device::CreateRenderTarget(const RenderTargetDesc& desc, const Memo
     return impl->renderTargets.allocate({ false, desc.width, desc.height, format, image, imageView, mem, memReqs.size, alignedHeapOffset, ToVkClearValue(desc.defaultClearValue), texView });
 }
 
-void Device::Destroy(RenderTarget renderTarget)
+auto Device::Destroy(RenderTarget renderTarget)
 {
     if (!impl->renderTargets.isValid(renderTarget))
         return;

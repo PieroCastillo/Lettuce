@@ -20,7 +20,7 @@
 
 using namespace Lettuce::Core;
 
-CommandAllocator Device::CreateCommandAllocator(const CommandAllocatorDesc& desc)
+auto Device::CreateCommandAllocator(const CommandAllocatorDesc& desc) -> CommandAllocator
 {
     VkCommandPoolCreateInfo poolCI = {
         .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
@@ -38,7 +38,7 @@ CommandAllocator Device::CreateCommandAllocator(const CommandAllocatorDesc& desc
     return impl->commandAllocators.allocate({ pool });
 }
 
-void Device::Destroy(CommandAllocator cmdAlloc)
+auto Device::Destroy(CommandAllocator cmdAlloc)
 {
     auto poolInfo = impl->commandAllocators.get(cmdAlloc);
     handleResult(vkResetCommandPool(impl->m_device, poolInfo.pool, 1));
@@ -46,12 +46,12 @@ void Device::Destroy(CommandAllocator cmdAlloc)
     impl->commandAllocators.free(cmdAlloc);
 }
 
-void Device::Reset(CommandAllocator cmdAlloc)
+auto Device::Reset(CommandAllocator cmdAlloc)
 {
     handleResult(vkResetCommandPool(impl->m_device, impl->commandAllocators.get(cmdAlloc).pool, 1));
 }
 
-CommandBuffer Device::AllocateCommandBuffer(CommandAllocator cmdAlloc)
+auto Device::AllocateCommandBuffer(CommandAllocator cmdAlloc) -> CommandBuffer
 {
     VkCommandBufferAllocateInfo cmdAI = {
         .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
@@ -71,7 +71,7 @@ CommandBuffer Device::AllocateCommandBuffer(CommandAllocator cmdAlloc)
     return CommandBuffer{ CommandBufferImpl{ impl,  (uint64_t)cmd } };
 }
 
-void Device::Submit(const CommandBufferSubmitDesc& desc)
+auto Device::Submit(const CommandBufferSubmitDesc& desc)
 {
     VkQueue queue;
     VkSemaphore semaphore;

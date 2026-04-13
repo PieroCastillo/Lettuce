@@ -29,7 +29,7 @@ namespace Lettuce::Core
         void* baseCpuAddress;
     };
 
-    struct BufferVK
+    struct MemoryViewVK
     {
         VkBuffer buffer;
         VkDeviceMemory memory;
@@ -50,21 +50,9 @@ namespace Lettuce::Core
         VkDeviceMemory memory;
         uint64_t size;
         uint64_t memoryOffset;
+        // render target exclusive params
         bool isViewOnly;
-    };
-
-    struct RenderTargetVK
-    {
-        bool isViewOnly;
-        uint32_t width, height;
-        VkFormat format;
-        VkImage image;
-        VkImageView imageView;
-        VkDeviceMemory memory;
-        uint64_t size;
-        uint64_t memoryOffset;
         VkClearValue defaultClearValue;
-        Texture texView;
     };
 
     struct DescriptorTableVK

@@ -1,21 +1,30 @@
 // standard headers
-#include <limits>
+#include <array>
 #include <memory>
+#include <print>
+#include <unordered_map>
+#include <string>
+#include <string_view>
 #include <vector>
-#include <algorithm>
+#include <memory>
+#include <ranges>
 
 // external headers
 #include <volk.h>
 
 // project headers
+#include "Lettuce/helper.hpp"
 #include "Lettuce/Core/api.hpp"
 #include "Lettuce/Core/DeviceImpl.hpp"
 #include "Lettuce/Core/common.hpp"
 
 using namespace Lettuce::Core;
 
-Buffer Device::CreateBuffer(const BufferDesc& desc, const MemoryBindDesc& bindDesc)
+// TODO: memory
+
+auto Device::CreateMemoryView(const MemoryViewDesc& desc)
 {
+    ////////////////////////////////////////////////
     auto memInfo = impl->memoryHeaps.get(bindDesc.heap);
 
     VkBufferCreateInfo bufferCI = {
@@ -26,6 +35,7 @@ Buffer Device::CreateBuffer(const BufferDesc& desc, const MemoryBindDesc& bindDe
     };
     VkBuffer buffer;
     handleResult(vkCreateBuffer(impl->m_device, &bufferCI, nullptr, &buffer));
+
     handleResult(vkBindBufferMemory(impl->m_device, buffer, memInfo.memory, bindDesc.heapOffset));
 
     VkBufferDeviceAddressInfo addressInfo = {
@@ -33,16 +43,26 @@ Buffer Device::CreateBuffer(const BufferDesc& desc, const MemoryBindDesc& bindDe
         .buffer = buffer,
     };
 
+    switch(desc.policy)
+    {
+        case AllocationPolicy::Frame: 
+            break;
+    }
+
+    ////////////////////////////////////////////////
+
     void* cpuAddress = memInfo.access == MemoryAccess::Shared ? ((uint64_t*)memInfo.baseCpuAddress + bindDesc.heapOffset) : nullptr;
     uint64_t gpuAddress = vkGetBufferDeviceAddress(impl->m_device, &addressInfo);
 
     return impl->buffers.allocate({ buffer, memInfo.memory, desc.size, bindDesc.heapOffset, cpuAddress, gpuAddress });
 }
 
-void Device::Destroy(Buffer buffer)
+auto Device::Destroy(MemoryView view)
 {
+    /*
     auto info = impl->buffers.get(buffer);
 
     vkDestroyBuffer(impl->m_device, impl->buffers.get(buffer).buffer, nullptr);
     impl->buffers.free(buffer);
+    */
 }

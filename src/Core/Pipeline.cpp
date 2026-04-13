@@ -13,7 +13,7 @@
 
 using namespace Lettuce::Core;
 
-Pipeline Device::CreatePipeline(const PrimitiveShadingPipelineDesc& desc)
+auto Device::CreatePipeline(const PrimitiveShadingPipelineDesc& desc) -> Pipeline
 {
     VkPipelineInputAssemblyStateCreateInfo inputAssemblyState = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO,
@@ -157,7 +157,7 @@ Pipeline Device::CreatePipeline(const PrimitiveShadingPipelineDesc& desc)
     return impl->pipelines.allocate({ pipeline, VK_PIPELINE_BIND_POINT_GRAPHICS });
 }
 
-Pipeline Device::CreatePipeline(const MeshShadingPipelineDesc& desc)
+auto Device::CreatePipeline(const MeshShadingPipelineDesc& desc) -> Pipeline
 {
     VkPipelineViewportStateCreateInfo viewportState =
     {
@@ -307,7 +307,7 @@ Pipeline Device::CreatePipeline(const MeshShadingPipelineDesc& desc)
     return impl->pipelines.allocate({ pipeline, VK_PIPELINE_BIND_POINT_GRAPHICS });
 }
 
-Pipeline Device::CreatePipeline(const ComputePipelineDesc& desc)
+auto Device::CreatePipeline(const ComputePipelineDesc& desc) -> Pipeline
 {
     auto entryName = std::string(desc.compEntryPoint);
     VkPipelineShaderStageCreateInfo stageCI = {
@@ -328,7 +328,7 @@ Pipeline Device::CreatePipeline(const ComputePipelineDesc& desc)
     return impl->pipelines.allocate({ pipeline, VK_PIPELINE_BIND_POINT_COMPUTE });
 }
 
-void Device::Destroy(Pipeline pipeline)
+auto Device::Destroy(Pipeline pipeline)
 {
     auto vkPipeline = impl->pipelines.get(pipeline);
     vkDestroyPipeline(impl->m_device, vkPipeline.pipeline, nullptr);
