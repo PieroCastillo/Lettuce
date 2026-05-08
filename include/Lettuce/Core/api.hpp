@@ -91,7 +91,7 @@ namespace Lettuce::Core
     enum class QueueType : uint8_t { Graphics, Compute, Copy };
     enum class RenderTargetType : uint8_t { ColorRGB_sRGB, ColorRGBA_sRGB, DepthStencilDS40 };
     enum class IndirectType : uint8_t { Draw, DrawIndexed, DrawMesh, Dispatch }; // TraceRays, DeviceGenerated
-    enum class AllocationPolicy : uint8_t { Transient, Frame, MultiFrame, Persistent }; // Linear/Frame/Ring/Heap allocator
+    enum class AllocationPolicy : uint8_t { Transient, Frame, MultiFrame, Persistent }; // Linear/Ring/Segmented Ring/Heap allocator
 
     // Resources
     struct MemoryViewInfo {

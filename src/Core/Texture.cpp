@@ -127,13 +127,9 @@ auto Device::CreateTextureView(const TextureViewDesc& desc) -> TextureView
     };
     handleResult(vkCreateImage(device, &imageCI, nullptr, &image));
 
-    VkMemoryRequirements memReqs;
-    vkGetImageMemoryRequirements(device, image, &memReqs);
+    auto res = impl->selectAlloc(desc.policy, desc.cpuVisible)->AllocateTexture(image);
 
-    auto offset = alignUp(bindDesc.heapOffset, memReqs.alignment);
-
-    auto mem = impl->memoryHeaps.get(bindDesc.heap).memory;
-    handleResult(vkBindImageMemory(device, image, mem, offset));
+    // TODO: error check logic
 
     VkImageView imageView;
     VkImageViewCreateInfo viewCI = {
@@ -158,7 +154,7 @@ auto Device::Destroy(TextureView texture)
     auto info = impl->textures.get(texture);
 
     // only Textures created by using Device.CreateTexture() could be destroyed
-    if(info.isViewOnly)
+    if (info.isViewOnly)
         return;
 
     vkDestroyImageView(device, info.imageView, nullptr);
