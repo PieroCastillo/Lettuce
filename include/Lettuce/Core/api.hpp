@@ -336,10 +336,10 @@ namespace Lettuce::Core
     private:
         DeviceImpl* impl;
     public:
-        auto Create(const DeviceDesc&);
-        auto Destroy();
+        void Create(const DeviceDesc&);
+        void Destroy();
 
-        auto WaitFor(QueueType);
+        void WaitFor(QueueType);
 
         auto SupportMeshShader() -> bool;
         auto SupportNeuralShading() -> bool;
@@ -349,71 +349,67 @@ namespace Lettuce::Core
         auto SupportFragmentShadingRate() -> bool;
 
         // MemoryView
-        auto CreateMemoryView(const MemoryViewDesc&);
-        auto Destroy(MemoryView);
+        auto CreateMemoryView(const MemoryViewDesc&) -> MemoryView;
+        void Destroy(MemoryView);
 
         // TextureView
         auto CreateTextureView(const TextureViewDesc&) -> TextureView;
-        auto Destroy(TextureView);
+        void Destroy(TextureView);
 
         auto GetMemoryViewInfo(MemoryView) const -> MemoryViewInfo;
         auto GetResourceInfo(TextureView) const -> TextureViewInfo;
 
         // Sampler 
         auto CreateSampler(const SamplerDesc&) -> Sampler;
-        auto Destroy(Sampler);
+        void Destroy(Sampler);
 
         // Shader Binary 
         auto CreateShader(const ShaderBinaryDesc&) -> ShaderBinary;
-        auto Destroy(ShaderBinary);
+        void Destroy(ShaderBinary);
 
         // Pipeline 
         auto CreatePipeline(const PrimitiveShadingPipelineDesc&) -> Pipeline;
         auto CreatePipeline(const MeshShadingPipelineDesc&) -> Pipeline;
         auto CreatePipeline(const ComputePipelineDesc&) -> Pipeline;
-        auto Destroy(Pipeline);
+        void Destroy(Pipeline);
 
         // Descriptor Table
         auto CreateDescriptorTable(const DescriptorTableDesc&) -> DescriptorTable;
-        auto Destroy(DescriptorTable);
+        void Destroy(DescriptorTable);
 
-        auto PushResourceDescriptors(const PushResourceDescriptorsDesc&);
-
-        auto PushAllocations(
-            DescriptorTable,
-            std::span<const std::pair<uint32_t, MemoryView>>
-        );
+        void PushResourceDescriptors(const PushResourceDescriptorsDesc&);
+        void PushAllocations(DescriptorTable, std::span<const std::pair<uint32_t, MemoryView>>);
 
         // Indirect Set
         auto CreateIndirectSet(const IndirectSetDesc&) -> IndirectSet;
-        auto Destroy(IndirectSet);
+        void Destroy(IndirectSet);
 
         auto GetIndirectSetView(IndirectSet) -> MemoryView;
 
         // Swapchain
         auto CreateSwapchain(const SwapchainDesc&) -> Swapchain;
-        auto Destroy(Swapchain);
+        void Destroy(Swapchain);
 
-        auto NextFrame(Swapchain);
-        auto DisplayFrame(Swapchain);
+        void NextFrame(Swapchain);
+        void DisplayFrame(Swapchain);
         auto GetRenderTargetFormat(Swapchain) -> Format;
         auto GetCurrentRenderTarget(Swapchain) const -> TextureView;
-        auto ResizeSwapchain(Swapchain, uint32_t w, uint32_t h);
+        void ResizeSwapchain(Swapchain, uint32_t w, uint32_t h);
         auto GetFrameCount(Swapchain) -> uint32_t;
 
         // Command Allocator
         auto CreateCommandAllocator(const CommandAllocatorDesc&) -> CommandAllocator;
-        auto Destroy(CommandAllocator);
+        void Destroy(CommandAllocator);
 
-        auto Reset(CommandAllocator);
+        void Reset(CommandAllocator);
         auto AllocateCommandBuffer(CommandAllocator) -> CommandBuffer;
 
-        auto Submit(const CommandBufferSubmitDesc&);
+        void Submit(const CommandBufferSubmitDesc&);
 
-        auto MemoryCopy(const HostToMemoryCopy&);
-        auto MemoryCopy(const HostToTextureCopy&);
-        auto MemoryCopy(const MemoryToMemoryCopy&);
-        auto MemoryCopy(const MemoryToTextureCopy&);
+        void MemoryCopy(const HostToMemoryCopy&);
+        void MemoryCopy(const HostToTextureCopy&);
+        void MemoryCopy(const MemoryToMemoryCopy&);
+        void MemoryCopy(const MemoryToTextureCopy&);
     };
 
     struct CommandBuffer
@@ -424,35 +420,35 @@ namespace Lettuce::Core
         explicit CommandBuffer(CommandBufferImpl cmdImpl) : impl(cmdImpl) {}
     public:
 
-        auto MemoryCopy(const HostToMemoryCopy&);
-        auto MemoryCopy(const HostToTextureCopy&);
-        auto MemoryCopy(const MemoryToMemoryCopy&);
-        auto MemoryCopy(const MemoryToTextureCopy&);
+        void MemoryCopy(const HostToMemoryCopy&);
+        void MemoryCopy(const HostToTextureCopy&);
+        void MemoryCopy(const MemoryToMemoryCopy&);
+        void MemoryCopy(const MemoryToTextureCopy&);
         // Copy from offset[x,y], range[width, height] of the TextureView to the start of the buffer
-        auto MemoryCopy(const TextureToMemory&);
-        auto Fill(MemoryView view, uint32_t value, uint32_t count);
+        void MemoryCopy(const TextureToMemory&);
+        void Fill(MemoryView view, uint32_t value, uint32_t count);
 
-        auto ClearTexture(const ClearTextureDesc&);
+        void ClearTexture(const ClearTextureDesc&);
 
-        auto BeginRendering(const RenderPassDesc&);
-        auto EndRendering();
+        void BeginRendering(const RenderPassDesc&);
+        void EndRendering();
 
-        auto BindPipeline(Pipeline);
-        auto BindDescriptorTable(DescriptorTable, PipelineBindPoint);
-        auto PushAllocations(const PushAllocationsDesc&);
+        void BindPipeline(Pipeline);
+        void BindDescriptorTable(DescriptorTable, PipelineBindPoint);
+        void PushAllocations(const PushAllocationsDesc&);
 
-        auto Draw(uint32_t vertexCount, uint32_t instanceCount);
-        auto DrawIndexed(uint32_t indexCount, uint32_t instanceCount);
-        auto DrawMesh(uint32_t x, uint32_t y, uint32_t z);
+        void Draw(uint32_t vertexCount, uint32_t instanceCount);
+        void DrawIndexed(uint32_t indexCount, uint32_t instanceCount);
+        void DrawMesh(uint32_t x, uint32_t y, uint32_t z);
 
-        auto ExecuteIndirect(const ExecuteIndirectDesc&);
+        void ExecuteIndirect(const ExecuteIndirectDesc&);
 
-        auto Dispatch(uint32_t x, uint32_t y, uint32_t z);
+        void Dispatch(uint32_t x, uint32_t y, uint32_t z);
 
-        auto Barrier(std::span<const BarrierDesc> barriers);
-        auto PrepareTexture(TextureView);
+        void Barrier(std::span<const BarrierDesc> barriers);
+        void PrepareTexture(TextureView);
 
-        auto ResetCount(IndirectSet);
+        void ResetCount(IndirectSet);
     };
 }
 #endif // LETTUCE_CORE_API_HPP

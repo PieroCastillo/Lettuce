@@ -16,32 +16,32 @@ using namespace Lettuce::Core;
 
 // TODO: memory
 
-auto CommandBuffer::MemoryCopy(const HostToMemoryCopy& desc)
+void CommandBuffer::MemoryCopy(const HostToMemoryCopy& desc)
 {
 
 }
 
-auto CommandBuffer::MemoryCopy(const HostToTextureCopy& desc)
+void CommandBuffer::MemoryCopy(const HostToTextureCopy& desc)
 {
 
 }
 
-auto CommandBuffer::MemoryCopy(const MemoryToMemoryCopy& desc)
+void CommandBuffer::MemoryCopy(const MemoryToMemoryCopy& desc)
 {
 
 }
 
-auto CommandBuffer::MemoryCopy(const MemoryToTextureCopy& desc)
+void CommandBuffer::MemoryCopy(const MemoryToTextureCopy& desc)
 {
 
 }
 
-auto CommandBuffer::MemoryCopy(const TextureToMemory& desc)
+void CommandBuffer::MemoryCopy(const TextureToMemory& desc)
 {
 
 }
 
-auto CommandBuffer::Fill(MemoryView view, uint32_t value, uint32_t count)
+void CommandBuffer::Fill(MemoryView view, uint32_t value, uint32_t count)
 {
 
 }

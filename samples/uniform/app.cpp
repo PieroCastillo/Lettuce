@@ -69,13 +69,13 @@ void initLettuce()
     };
     cmdAlloc = device.CreateCommandAllocator(cmdAllocDesc);
 
-    Allocators::LinearAllocatorDesc linAllocDesc = {
-        .maxBufferMemorySize = 4096,
-                .maxImageMemorySize = 16,
-        .maxRenderTargetsMemorySize = 16,
-        .cpuVisible = true,
-    };
-    linAllocator.Create(device, linAllocDesc);
+    // Allocators::LinearAllocatorDesc linAllocDesc = {
+    //     .maxBufferMemorySize = 4096,
+    //             .maxImageMemorySize = 16,
+    //     .maxRenderTargetsMemorySize = 16,
+    //     .cpuVisible = true,
+    // };
+    // linAllocator.Create(device, linAllocDesc);
     uniformData = linAllocator.AllocateMemory(3 * sizeof(float));
 
     std::println("uniform gpu address: ", uniformData.gpuAddress);

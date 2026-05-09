@@ -86,12 +86,12 @@ void CompositorImpl::CreateResources()
         (maxMaterials * sizeof(MaterialGPUData)) +
         (maxLights * sizeof(LightGPUData));
 
-    Allocators::LinearAllocatorDesc linAllocDesc = {
-        .maxBufferMemorySize = maxSize,
-        .maxImageMemorySize = 16,
-        .maxRenderTargetsMemorySize = 16,
-    };
-    memAlloc.Create(*device, linAllocDesc);
+    // Allocators::LinearAllocatorDesc linAllocDesc = {
+    //     .maxBufferMemorySize = maxSize,
+    //     .maxImageMemorySize = 16,
+    //     .maxRenderTargetsMemorySize = 16,
+    // };
+    // memAlloc.Create(*device, linAllocDesc);
 }
 
 void CompositorImpl::CreatePipelines()

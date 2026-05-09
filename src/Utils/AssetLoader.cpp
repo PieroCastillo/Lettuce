@@ -13,30 +13,28 @@
 #include "Lettuce/helper.hpp"
 #include "Lettuce/Utils/api.hpp"
 #include "Lettuce/Core/HelperStructs.hpp"
-#include "Lettuce/Core/Allocators/LinearAllocator.hpp"
 
 using namespace Lettuce::Utils;
-using namespace Lettuce::Core::Allocators;
 
 void AssetLoader::Create(Device& device, const AssetLoaderDesc& desc)
 {
     m_device = &device;
 
-    m_tempMem = std::make_unique<LinearAllocator>();
-    m_resAlloc = std::make_unique<LinearAllocator>(); // temp, next replace with HeapAllocator
+    // m_tempMem = std::make_unique<LinearAllocator>();
+    // m_resAlloc = std::make_unique<LinearAllocator>(); // temp, next replace with HeapAllocator
 
-    LinearAllocatorDesc linDesc = {
-        .maxBufferMemorySize = desc.maxTempMemory,
-                .maxImageMemorySize = 16,
-        .maxRenderTargetsMemorySize = 16,
-        .cpuVisible = true,
-    };
-    static_cast<LinearAllocator*>(m_tempMem.get())->Create(device, linDesc);
+    // LinearAllocatorDesc linDesc = {
+    //     .maxBufferMemorySize = desc.maxTempMemory,
+    //             .maxImageMemorySize = 16,
+    //     .maxRenderTargetsMemorySize = 16,
+    //     .cpuVisible = true,
+    // };
+    // static_cast<LinearAllocator*>(m_tempMem.get())->Create(device, linDesc);
     
-    linDesc.maxImageMemorySize = desc.maxResourceMemory;
-    linDesc.maxRenderTargetsMemorySize = 16;
-    linDesc.cpuVisible = false;
-    static_cast<LinearAllocator*>(m_resAlloc.get())->Create(device, linDesc);
+    // linDesc.maxImageMemorySize = desc.maxResourceMemory;
+    // linDesc.maxRenderTargetsMemorySize = 16;
+    // linDesc.cpuVisible = false;
+    // static_cast<LinearAllocator*>(m_resAlloc.get())->Create(device, linDesc);
 
     CommandAllocatorDesc cmdDesc = {
         .queueType = QueueType::Copy,
@@ -47,8 +45,8 @@ void AssetLoader::Create(Device& device, const AssetLoaderDesc& desc)
 void AssetLoader::Destroy()
 {
     m_device->Destroy(m_cmds);
-    static_cast<LinearAllocator*>(m_resAlloc.get())->Destroy();
-    static_cast<LinearAllocator*>(m_tempMem.get())->Destroy();
+    // static_cast<LinearAllocator*>(m_resAlloc.get())->Destroy();
+    // static_cast<LinearAllocator*>(m_tempMem.get())->Destroy();
 }
 
 ShaderBinary AssetLoader::LoadSpirv(std::string_view path)

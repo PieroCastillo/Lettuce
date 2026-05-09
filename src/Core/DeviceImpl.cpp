@@ -7,7 +7,6 @@
 #include "Lettuce/Core/DeviceImpl.hpp"
 
 using namespace Lettuce::Core;
-using namespace Lettuce::Core::Allocators;
 
 auto exists(const std::vector<std::string>& list, const char* key) -> bool
 {
@@ -535,27 +534,7 @@ void DeviceImpl::setupDevice()
 
 void DeviceImpl::setupAllocators()
 {
-    LinearAllocatorDesc linDesc;
-    FrameAllocatorDesc frameDesc;
-    RingAllocatorDesc ringDesc;
-    HeapAllocatorDesc heapDesc;
-
-    // TODO: init other params
-
-    hostFrameAlloc = std::make_unique<LinearAllocator>(this, linDesc);
-    hostLinearAlloc = std::make_unique<FrameAllocator>(this, frameDesc);
-    hostRingAlloc = std::make_unique<RingAllocator>(this, ringDesc);
-    hostHeapAlloc = std::make_unique<HeapAllocator>(this, heapDesc);
-
-    linDesc.cpuVisible = true;
-    frameDesc.cpuVisible = true;
-    ringDesc.cpuVisible = true;
-    heapDesc.cpuVisible = true;
-
-    devFrameAlloc = std::make_unique<LinearAllocator>(this, linDesc);
-    devLinearAlloc = std::make_unique<FrameAllocator>(this, frameDesc);
-    devRingAlloc = std::make_unique<RingAllocator>(this, ringDesc);
-    devHeapAlloc = std::make_unique<HeapAllocator>(this, heapDesc);
+    // TODO: impl & init VMA
 }
 
 void DeviceImpl::setDebugName(VkObjectType type, uint64_t handle, const std::string& name)

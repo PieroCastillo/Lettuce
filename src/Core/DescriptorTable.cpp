@@ -147,7 +147,7 @@ storage image descriptor size: {})", bufferSize, samplerDescriptorSize, sampledI
         });
 }
 
-auto Device::Destroy(DescriptorTable descriptorTable)
+void Device::Destroy(DescriptorTable descriptorTable)
 {
     VkDevice device = impl->m_device;
     auto& dt = impl->descriptorTables.get(descriptorTable);
@@ -161,7 +161,7 @@ auto Device::Destroy(DescriptorTable descriptorTable)
     impl->descriptorTables.free(descriptorTable);
 }
 
-auto Device::PushResourceDescriptors(const PushResourceDescriptorsDesc& desc)
+void Device::PushResourceDescriptors(const PushResourceDescriptorsDesc& desc)
 {
     auto& dt = impl->descriptorTables.get(desc.descriptorTable);
 

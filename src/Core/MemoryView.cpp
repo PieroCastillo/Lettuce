@@ -11,6 +11,7 @@
 
 // external headers
 #include <volk.h>
+#include <vk_mem_alloc.h>
 
 // project headers
 #include "Lettuce/helper.hpp"
@@ -22,14 +23,14 @@ using namespace Lettuce::Core;
 
 // TODO: memory
 
-auto Device::CreateMemoryView(const MemoryViewDesc& desc)
+auto Device::CreateMemoryView(const MemoryViewDesc& desc) -> MemoryView
 {
-    auto mem = impl->selectAlloc(desc.policy, desc.cpuVisible)->AllocateMemory(desc.size);
+    MemoryView mem;// = impl->selectAlloc(desc.policy, desc.cpuVisible)->AllocateMemory(desc.size);
     // TODO: error check logic
     return mem;
 }
 
-auto Device::Destroy(MemoryView view)
+void Device::Destroy(MemoryView view)
 {
     /*
     auto info = impl->buffers.get(buffer);

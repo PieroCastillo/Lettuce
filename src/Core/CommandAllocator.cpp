@@ -38,7 +38,7 @@ auto Device::CreateCommandAllocator(const CommandAllocatorDesc& desc) -> Command
     return impl->commandAllocators.allocate({ pool });
 }
 
-auto Device::Destroy(CommandAllocator cmdAlloc)
+void Device::Destroy(CommandAllocator cmdAlloc)
 {
     auto poolInfo = impl->commandAllocators.get(cmdAlloc);
     handleResult(vkResetCommandPool(impl->m_device, poolInfo.pool, 1));
@@ -46,7 +46,7 @@ auto Device::Destroy(CommandAllocator cmdAlloc)
     impl->commandAllocators.free(cmdAlloc);
 }
 
-auto Device::Reset(CommandAllocator cmdAlloc)
+void Device::Reset(CommandAllocator cmdAlloc)
 {
     handleResult(vkResetCommandPool(impl->m_device, impl->commandAllocators.get(cmdAlloc).pool, 1));
 }
@@ -71,7 +71,7 @@ auto Device::AllocateCommandBuffer(CommandAllocator cmdAlloc) -> CommandBuffer
     return CommandBuffer{ CommandBufferImpl{ impl,  (uint64_t)cmd } };
 }
 
-auto Device::Submit(const CommandBufferSubmitDesc& desc)
+void Device::Submit(const CommandBufferSubmitDesc& desc)
 {
     VkQueue queue;
     VkSemaphore semaphore;

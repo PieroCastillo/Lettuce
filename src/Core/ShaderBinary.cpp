@@ -18,7 +18,7 @@ auto Device::CreateShader(const ShaderBinaryDesc& desc) -> ShaderBinary
     return impl->shaders.allocate(std::move(shaderModule));
 }
 
-auto Device::Destroy(ShaderBinary shader)
+void Device::Destroy(ShaderBinary shader)
 {
     vkDestroyShaderModule(impl->m_device, impl->shaders.get(shader), nullptr);
     impl->shaders.free(shader);

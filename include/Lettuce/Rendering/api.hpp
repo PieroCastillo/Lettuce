@@ -21,7 +21,6 @@ Created by @PieroCastillo on 2025-01-5
 
 // project headers
 #include "../Core/api.hpp"
-#include "../Core/Allocators/IGPUMemoryResource.hpp"
 
 using namespace Lettuce::Core;
 
@@ -141,7 +140,6 @@ namespace Lettuce::Rendering
     struct SceneGraphDesc
     {
         Device& device;
-        std::shared_ptr<Allocators::IGPUMemoryResource> allocator;
     };
 
     struct SceneGraph

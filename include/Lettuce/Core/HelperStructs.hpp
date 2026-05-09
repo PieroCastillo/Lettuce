@@ -81,7 +81,7 @@ namespace Lettuce::Core
         uint32_t height;
         std::vector<VkImage> swapchainImages;
         std::vector<VkImageView> swapchainViews;
-        std::vector<RenderTarget> renderTargets;
+        std::vector<TextureView> renderTargets;
 
         Format ltFormat;
         VkFormat format;

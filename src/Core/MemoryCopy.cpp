@@ -16,22 +16,22 @@ using namespace Lettuce::Core;
 
 // TODO: memory
 
-auto Device::MemoryCopy(const HostToMemoryCopy& desc)
+void Device::MemoryCopy(const HostToMemoryCopy& desc)
 {
 
 }
 
-auto Device::MemoryCopy(const HostToTextureCopy& desc)
+void Device::MemoryCopy(const HostToTextureCopy& desc)
 {
 
 }
 
-auto Device::MemoryCopy(const MemoryToMemoryCopy& desc)
+void Device::MemoryCopy(const MemoryToMemoryCopy& desc)
 {
 
 }
 
-auto Device::MemoryCopy(const MemoryToTextureCopy& desc)
+void Device::MemoryCopy(const MemoryToTextureCopy& desc)
 {
 
 }

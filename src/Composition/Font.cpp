@@ -20,4 +20,4 @@ void Compositor::DestroyFont(Font font)
     impl->appQueue.addCommand(OpCode::DestroyFont, font.get(), {});
 }
 
-void Compositor::UploadToAtlasTexture(Texture atlas, std::span<const GlyphUpload> uploads) {}
+void Compositor::UploadToAtlasTexture(TextureView atlas, std::span<const GlyphUpload> uploads) {}

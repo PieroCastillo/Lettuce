@@ -14,7 +14,6 @@ Created by @PieroCastillo on 2026-01-27
 // project headers
 #include "api.hpp"
 #include "HelperStructs.hpp"
-#include "../Core/Allocators/LinearAllocator.hpp"
 #include "../Core/ResourcePool.hpp"
 
 using namespace Lettuce::Core;
@@ -55,15 +54,15 @@ namespace Lettuce::Composition
         uint32_t maxAnimations;
         uint32_t maxLinkedTextures;
 
-        Allocators::LinearAllocator memAlloc;
+        // Allocators::LinearAllocator memAlloc;
         MemoryView queuedAnimationsView;
         MemoryView animationsView;
         MemoryView visualsView;
         MemoryView MaterialesView;
         MemoryView lightsView;
-        Allocators::LinearAllocator memTargetsAlloc;
-        RenderTarget objectsTarget;  // MaterialDataID/LightDataID per pixel
-        RenderTarget renderTarget;   // Composing Material Pass writes here
+        // Allocators::LinearAllocator memTargetsAlloc;
+        // RenderTarget objectsTarget;  // MaterialDataID/LightDataID per pixel
+        // RenderTarget renderTarget;   // Composing Material Pass writes here
 
         DescriptorTable descriptorTable;
         Pipeline pTileBinningPass;

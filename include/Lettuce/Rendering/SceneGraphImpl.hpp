@@ -15,7 +15,6 @@ namespace Lettuce::Rendering
     {
     public:
         Device* device;
-        std::shared_ptr<Allocators::IGPUMemoryResource> allocator;
 
         MemoryView sceneMemoryView;
         MemoryView lightMemoryView;

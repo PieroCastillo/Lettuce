@@ -10,10 +10,8 @@ Created by @PieroCastillo on 2025-01-5
 #include <string_view>
 
 #include "../Core/api.hpp"
-#include "../Core/Allocators/IGPUMemoryResource.hpp"
 
 using namespace Lettuce::Core;
-using namespace Lettuce::Core::Allocators;
 
 namespace Lettuce::Utils
 {

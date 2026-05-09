@@ -83,7 +83,7 @@ auto Device::CreateIndirectSet(const IndirectSetDesc& desc) -> IndirectSet
     return impl->indirectSets.allocate({ mem, buffer, desc.type, stride, bufferSize, address });
 }
 
-auto Device::Destroy(IndirectSet indirectSet)
+void Device::Destroy(IndirectSet indirectSet)
 {
     auto& info = impl->indirectSets.get(indirectSet);
 

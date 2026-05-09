@@ -125,8 +125,8 @@ Pipeline cullPipeline;
 Pipeline rgbPipeline;
 CommandAllocator cmdAlloc;
 
-Allocators::LinearAllocator memalloc;
-Allocators::LinearAllocator devalloc;
+// Allocators::LinearAllocator memalloc;
+// Allocators::LinearAllocator devalloc;
 MemoryView mvSceneData;
 MemoryView mvIndexB, mvVertexB, mvInstances, mvMeshes, mvPrimitives, mvInstancedPrimitives;
 MemoryView mvIndirectB;

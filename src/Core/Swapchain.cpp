@@ -17,7 +17,7 @@
 
 using namespace Lettuce::Core;
 
-auto setupVkSurface(SwapchainVK& swapchainVK, VkInstance instance, const SwapchainDesc& createInfo)
+void setupVkSurface(SwapchainVK& swapchainVK, VkInstance instance, const SwapchainDesc& createInfo)
 {
     VkSurfaceKHR surface;
 #if defined(WIN32_) || defined(_WIN32) || defined(WIN32)
@@ -41,7 +41,7 @@ auto setupVkSurface(SwapchainVK& swapchainVK, VkInstance instance, const Swapcha
     swapchainVK.surface = surface;
 }
 
-auto setupVkSwapchain(SwapchainVK& swapchainVK, VkDevice device, VkPhysicalDevice gpu, const SwapchainDesc& createInfo)
+void setupVkSwapchain(SwapchainVK& swapchainVK, VkDevice device, VkPhysicalDevice gpu, const SwapchainDesc& createInfo)
 {
     VkSurfaceKHR surface = swapchainVK.surface;
 
@@ -126,7 +126,7 @@ auto setupVkSwapchain(SwapchainVK& swapchainVK, VkDevice device, VkPhysicalDevic
     swapchainVK.swapchain = swapchain;
 }
 
-auto setupImagesAndView(SwapchainVK& swapchainVK, ResourcePool<Texture, TextureVK>& textures, ResourcePool<RenderTarget, RenderTargetVK>& renderTargets, VkDevice device, VkPhysicalDevice gpu, const SwapchainDesc& createInfo)
+void setupImagesAndView(SwapchainVK& swapchainVK, ResourcePool<TextureView, TextureVK>& textures, VkDevice device, VkPhysicalDevice gpu, const SwapchainDesc& createInfo)
 {
     auto swapchain = swapchainVK.swapchain;
     // get swapchain images
@@ -157,12 +157,9 @@ auto setupImagesAndView(SwapchainVK& swapchainVK, ResourcePool<Texture, TextureV
 
         auto img = swapchainVK.swapchainImages[i];
         auto texView = textures.allocate({ swapchainVK.width, swapchainVK.height, 1, 1, swapchainVK.format, img, view, VK_NULL_HANDLE, 0, 0, true });
-        auto renderView = renderTargets.allocate({
-            true, swapchainVK.width, swapchainVK.height, swapchainVK.format, img, view,
-            VK_NULL_HANDLE, 0, 0, {}, texView});
 
         swapchainVK.swapchainViews[i] = view;
-        swapchainVK.renderTargets[i] = renderView;
+        swapchainVK.renderTargets[i] = texView;
     }
 }
 
@@ -176,7 +173,7 @@ auto Device::CreateSwapchain(const SwapchainDesc& desc) -> Swapchain
     swapchainVK.currentImageIndex = 0;
     setupVkSurface(swapchainVK, instance, desc);
     setupVkSwapchain(swapchainVK, device, gpu, desc);
-    setupImagesAndView(swapchainVK, impl->textures, impl->renderTargets, device, gpu, desc);
+    setupImagesAndView(swapchainVK, impl->textures, device, gpu, desc);
     VkFenceCreateInfo fenceCI = {
         .sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO,
     };
@@ -194,7 +191,7 @@ auto Device::CreateSwapchain(const SwapchainDesc& desc) -> Swapchain
     return impl->swapchains.allocate(std::move(swapchainVK));
 }
 
-auto Device::Destroy(Swapchain swapchain)
+void Device::Destroy(Swapchain swapchain)
 {
     auto& info = impl->swapchains.get(swapchain);
     auto& device = impl->m_device;
@@ -206,9 +203,7 @@ auto Device::Destroy(Swapchain swapchain)
     for (int i = 0; i < info.swapchainViews.size(); ++i)
     {
         vkDestroyImageView(device, info.swapchainViews[i], nullptr);
-        auto tex = impl->renderTargets.get(info.renderTargets[i]).texView;
-        impl->textures.free(tex);
-        impl->renderTargets.free(info.renderTargets[i]);
+        impl->textures.free(info.renderTargets[i]);
     }
     info.swapchainViews.clear();
     info.swapchainImages.clear();
@@ -216,7 +211,7 @@ auto Device::Destroy(Swapchain swapchain)
     vkDestroySurfaceKHR(impl->m_instance, info.surface, nullptr);
 }
 
-auto Device::NextFrame(Swapchain swapchain)
+void Device::NextFrame(Swapchain swapchain)
 {
     auto& info = impl->swapchains.get(swapchain);
     auto device = impl->m_device;
@@ -230,7 +225,7 @@ auto Device::NextFrame(Swapchain swapchain)
     handleResult(vkWaitForFences(device, 1, &info.waitForAcquireFence, VK_TRUE, timeout));
 }
 
-auto Device::DisplayFrame(Swapchain swapchain)
+void Device::DisplayFrame(Swapchain swapchain)
 {
     auto& info = impl->swapchains.get(swapchain);
     // TODO: Manage Global Synchronization
@@ -255,7 +250,7 @@ auto Device::GetRenderTargetFormat(Swapchain swapchain) -> Format
     return swp.ltFormat;
 }
 
-auto Device::ResizeSwapchain(Swapchain swapchain, uint32_t w, uint32_t h)
+void Device::ResizeSwapchain(Swapchain swapchain, uint32_t w, uint32_t h)
 {
     // TODO: impl
 }

@@ -6,6 +6,7 @@
 
 // external headers
 #include <volk.h>
+#include <vk_mem_alloc.h>
 
 // project headers
 #include "Lettuce/Core/api.hpp"
@@ -127,8 +128,6 @@ auto Device::CreateTextureView(const TextureViewDesc& desc) -> TextureView
     };
     handleResult(vkCreateImage(device, &imageCI, nullptr, &image));
 
-    auto res = impl->selectAlloc(desc.policy, desc.cpuVisible)->AllocateTexture(image);
-
     // TODO: error check logic
 
     VkImageView imageView;
@@ -142,10 +141,11 @@ auto Device::CreateTextureView(const TextureViewDesc& desc) -> TextureView
     };
     handleResult(vkCreateImageView(device, &viewCI, nullptr, &imageView));
 
-    return impl->textures.allocate({ desc.width, desc.height, desc.mipCount, desc.layerCount, format, image, imageView, mem, memReqs.size, offset, false });
+    // return impl->textures.allocate({ desc.width, desc.height, desc.mipCount, desc.layerCount, format, image, imageView, mem, memReqs.size, offset, false });
+    return {};
 }
 
-auto Device::Destroy(TextureView texture)
+void Device::Destroy(TextureView texture)
 {
     if (!impl->textures.isValid(texture))
         return;

@@ -31,7 +31,7 @@ auto Device::CreateSampler(const SamplerDesc& desc) -> Sampler
     return impl->samplers.allocate(std::move(sampler));
 }
 
-auto Device::Destroy(Sampler sampler)
+void Device::Destroy(Sampler sampler)
 {
     vkDestroySampler(impl->m_device, impl->samplers.get(sampler), nullptr);
     impl->samplers.free(sampler);

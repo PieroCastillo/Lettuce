@@ -10,19 +10,19 @@
 
 using namespace Lettuce::Core;
 
-auto Device::Create(const DeviceDesc& desc)
+void Device::Create(const DeviceDesc& desc)
 {
     impl = new DeviceImpl;
     impl->Create({ desc.preferDedicated });
 }
 
-auto Device::Destroy()
+void Device::Destroy()
 {
     impl->Release();
     delete impl;
 }
 
-auto Device::WaitFor(QueueType queueType)
+void Device::WaitFor(QueueType queueType)
 {
     VkQueue queue;
     switch (queueType)

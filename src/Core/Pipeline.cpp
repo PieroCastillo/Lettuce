@@ -328,7 +328,7 @@ auto Device::CreatePipeline(const ComputePipelineDesc& desc) -> Pipeline
     return impl->pipelines.allocate({ pipeline, VK_PIPELINE_BIND_POINT_COMPUTE });
 }
 
-auto Device::Destroy(Pipeline pipeline)
+void Device::Destroy(Pipeline pipeline)
 {
     auto vkPipeline = impl->pipelines.get(pipeline);
     vkDestroyPipeline(impl->m_device, vkPipeline.pipeline, nullptr);

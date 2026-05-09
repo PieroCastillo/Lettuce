@@ -17,7 +17,7 @@ using namespace Lettuce::Core;
 void SceneGraphImpl::Create(const SceneGraphDesc& desc)
 {
     device = &(desc.device);
-    allocator = desc.allocator;
+    // allocator = desc.allocator;
 
     // sceneMemoryView = allocator->AllocateMemory(sizeof(SceneGPUData));
     // lightMemoryView = allocator->AllocateMemory(sizeof(LightGPUData) * maxLightsCount);
@@ -28,6 +28,6 @@ void SceneGraphImpl::Create(const SceneGraphDesc& desc)
 
 void SceneGraphImpl::Destroy()
 {
-    allocator->ReleaseMemory(lightMemoryView);
-    allocator->ReleaseMemory(sceneMemoryView);
+    // allocator->ReleaseMemory(lightMemoryView);
+    // allocator->ReleaseMemory(sceneMemoryView);
 }

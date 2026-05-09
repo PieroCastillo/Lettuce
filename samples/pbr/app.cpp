@@ -121,13 +121,13 @@ void initLettuce()
         .userDataSize = 0,
     };
 
-    Allocators::LinearAllocatorDesc linAllocDesc = {
-        .maxBufferMemorySize = 10 * 1024 * 1024, // 10 MB
-        .maxImageMemorySize = 10 * 1024 * 1024,
-        .maxRenderTargetsMemorySize = 16,
-        .cpuVisible = true,
-    };
-    alloc.Create(device, linAllocDesc);
+    // Allocators::LinearAllocatorDesc linAllocDesc = {
+    //     .maxBufferMemorySize = 10 * 1024 * 1024, // 10 MB
+    //     .maxImageMemorySize = 10 * 1024 * 1024,
+    //     .maxRenderTargetsMemorySize = 16,
+    //     .cpuVisible = true,
+    // };
+    // alloc.Create(device, linAllocDesc);
 
     AsyncRecorderDesc asyncRecDesc = {
         .device = device,
