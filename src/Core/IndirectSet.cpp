@@ -73,14 +73,15 @@ auto Device::CreateIndirectSet(const IndirectSetDesc& desc) -> IndirectSet
     handleResult(vkBindBufferMemory(dev, buffer, mem, 0));
 
     VkBufferDeviceAddressInfo addressInfo = {
-        .sType= VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO,
+        .sType = VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO,
         .buffer = buffer,
     };
     uint64_t address = vkGetBufferDeviceAddress(dev, &addressInfo);
 
     DebugPrint("[INDIRECT SET]", "memory size: {}", bufferSize);
-    // TODO: impl
-    return impl->indirectSets.allocate({ mem, buffer, desc.type, stride, bufferSize, address });
+    auto memVw = impl->memories.allocate({ buffer, mem, bufferSize, 0, nullptr,  address, VK_NULL_HANDLE, true });
+    // TODO: impl Device Generated Commands
+    return impl->indirectSets.allocate({ mem, buffer, desc.type, stride, bufferSize, address, VK_NULL_HANDLE, VK_NULL_HANDLE,memVw });
 }
 
 void Device::Destroy(IndirectSet indirectSet)
@@ -94,9 +95,5 @@ void Device::Destroy(IndirectSet indirectSet)
 
 auto Device::GetIndirectSetView(IndirectSet indirectSet) -> MemoryView
 {
-    // TODO: memory
-    // auto& info = impl->indirectSets.get(indirectSet);
-    // // only size and gpuAddress are required, TODO: maybe impl a buffer?
-    // return { info.size, 0, info.gpuAddress, {0,0}, 0 };
-    return {};
+    return impl->indirectSets.get(indirectSet).memView;
 }

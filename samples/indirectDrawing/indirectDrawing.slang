@@ -119,9 +119,9 @@ VSOutput vertexMain(uint vertexID: SV_VulkanVertexID, uint drawID: SV_DrawIndex)
 
     float val = 0.1;
     float2 positions[3] = {
-        float2(0.0, -val),
+        float2(-val, val),
         float2(val, val),
-        float2(-val, val)
+        float2(0.0, -val),
     };
 
     Ptr<ParticleOut> particles = reinterpret<Ptr<ParticleOut>>(pc.particleAddress);

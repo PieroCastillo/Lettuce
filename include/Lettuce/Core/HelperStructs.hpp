@@ -31,6 +31,8 @@ namespace Lettuce::Core
         void* cpuAddress;
         uint64_t gpuAddress;
         VmaAllocation allocation;
+
+        bool isView;
     };
 
     struct TextureVK
@@ -106,6 +108,8 @@ namespace Lettuce::Core
         // if VK_EXT_device_generated_commands is enable
         VkIndirectCommandsLayoutEXT commandsLayout;
         VkIndirectExecutionSetEXT executionSet;
+
+        MemoryView memView;
     };
 
     constexpr std::array<std::uint8_t, 64> kFormatTable = {

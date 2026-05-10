@@ -37,7 +37,6 @@ Pipeline cullPipeline;
 Pipeline rgbPipeline;
 CommandAllocator cmdAlloc;
 
-Allocators::LinearAllocator alloc;
 MemoryView indirectView;
 MemoryView particlesView;
 
@@ -88,13 +87,10 @@ void initLettuce()
     indirectSet = device.CreateIndirectSet(indirectSetDesc);
     indirectView = device.GetIndirectSetView(indirectSet);
 
-    Allocators::LinearAllocatorDesc linAllocDesc = {
-        .maxBufferMemorySize = 128 * sizeof(ParticleOut),
-                .maxImageMemorySize = 16,
-        .maxRenderTargetsMemorySize = 16,
+    MemoryViewDesc partVwDesc = {
+        .size = 128 * sizeof(ParticleOut),
     };
-    alloc.Create(device, linAllocDesc);
-    particlesView = alloc.AllocateMemory(128 * sizeof(ParticleOut));
+    particlesView = device.CreateMemoryView(partVwDesc);
 }
 
 void createRenderingObjects()
@@ -195,8 +191,9 @@ void mainLoop()
 
 void cleanupLettuce()
 {
-    alloc.Destroy();
     device.WaitFor(QueueType::Graphics);
+    
+    device.Destroy(particlesView);
     device.Destroy(rgbPipeline);
     device.Destroy(cullPipeline);
     device.Destroy(descriptorTable);

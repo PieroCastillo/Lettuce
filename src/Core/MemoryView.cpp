@@ -55,6 +55,9 @@ void Device::Destroy(MemoryView view)
 {
     auto info = impl->memories.get(view);
 
+    if(info.isView)
+        return;
+
     if(info.cpuAddress)
         vmaUnmapMemory(impl->m_allocator, info.allocation);
 
