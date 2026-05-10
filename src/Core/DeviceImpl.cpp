@@ -3,6 +3,10 @@
 #include <iostream>
 #include <print>
 
+// external headers
+#include <volk.h>
+#include <vk_mem_alloc.h>
+
 // project headers
 #include "Lettuce/Core/DeviceImpl.hpp"
 
@@ -58,6 +62,7 @@ void DeviceImpl::Create(const DeviceCreateInfo& createInfo)
 void DeviceImpl::Release()
 {
     handleResult(vkDeviceWaitIdle(m_device));
+    vmaDestroyAllocator(m_allocator);
     vkDestroySemaphore(m_device, graphicsSemaphore, nullptr);
     vkDestroySemaphore(m_device, computeSemaphore, nullptr);
     vkDestroySemaphore(m_device, transferSemaphore, nullptr);
@@ -534,7 +539,18 @@ void DeviceImpl::setupDevice()
 
 void DeviceImpl::setupAllocators()
 {
-    // TODO: impl & init VMA
+    VmaAllocatorCreateInfo allocatorCI = {
+        .flags = VMA_ALLOCATOR_CREATE_BUFFER_DEVICE_ADDRESS_BIT | VMA_ALLOCATOR_CREATE_EXT_MEMORY_BUDGET_BIT,
+        .physicalDevice = m_physicalDevice,
+        .device = m_device,
+        .instance = m_instance,
+        .vulkanApiVersion = VK_API_VERSION_1_3,
+    };
+    VmaVulkanFunctions vkFuncs;
+    handleResult(vmaImportVulkanFunctionsFromVolk(&allocatorCI, &vkFuncs));
+    allocatorCI.pVulkanFunctions = &vkFuncs;
+
+    handleResult(vmaCreateAllocator(&allocatorCI, &m_allocator));
 }
 
 void DeviceImpl::setDebugName(VkObjectType type, uint64_t handle, const std::string& name)

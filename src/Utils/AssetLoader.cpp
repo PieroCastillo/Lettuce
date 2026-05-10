@@ -30,7 +30,7 @@ void AssetLoader::Create(Device& device, const AssetLoaderDesc& desc)
     //     .cpuVisible = true,
     // };
     // static_cast<LinearAllocator*>(m_tempMem.get())->Create(device, linDesc);
-    
+
     // linDesc.maxImageMemorySize = desc.maxResourceMemory;
     // linDesc.maxRenderTargetsMemorySize = 16;
     // linDesc.cpuVisible = false;
@@ -77,7 +77,7 @@ TextureView AssetLoader::LoadKtx2Texture(std::string_view path, uint32_t levelCo
     // byte-aligned RAW
     // non byte-aligned RAW
 
-    if(!std::filesystem::exists(path))
+    if (!std::filesystem::exists(path))
     {
         DebugPrint("[ASSET LOADER]", "File not found: {}", path);
         return {};
@@ -90,7 +90,7 @@ TextureView AssetLoader::LoadKtx2Texture(std::string_view path, uint32_t levelCo
     // TODO: handle res
     switch (res)
     {
-    case ktx_error_code_e::KTX_SUCCESS : break;
+    case ktx_error_code_e::KTX_SUCCESS: break;
     default:
         DebugPrint("[ASSET LOADER]", "Load Error: {}", path);
         return {};
@@ -115,8 +115,13 @@ TextureView AssetLoader::LoadKtx2Texture(std::string_view path, uint32_t levelCo
     uint8_t* texData = kTexture->pData;
 
     // staging buffer in gpu
-    auto staging = m_tempMem->AllocateMemory(imageSize);
-    memcpy(staging.cpuAddress, texData, imageSize);
+    MemoryViewDesc stagingInfo = {
+        .size = imageSize,
+        .cpuVisible = true,
+    };
+    auto stagingBuff = m_device->CreateMemoryView(stagingInfo);
+    auto stagingBuffInfo = m_device->GetMemoryViewInfo(stagingBuff);
+    memcpy(stagingBuffInfo.cpuAddress, texData, imageSize);
 
     DebugPrint("[ASSET LOADER]", "image size: {} KB", imageSize / (1024));
     DebugPrint("[ASSET LOADER]", "image format: {}", kTexture->vkFormat);
@@ -129,18 +134,16 @@ TextureView AssetLoader::LoadKtx2Texture(std::string_view path, uint32_t levelCo
 
     // create long resource
     // TODO: impl kTexture->numLevels / mipLevels
-    TextureDesc desc = {
+    TextureViewDesc texDesc = {
         texWidth, texHeight, kTexture->baseDepth, format, 1, kTexture->numLayers, kTexture->isCubemap,
     };
-    auto tex = m_resAlloc->AllocateTexture(desc);
+    auto tex = m_device->CreateTextureView(texDesc);
 
     auto cmd = m_device->AllocateCommandBuffer(m_cmds);
 
-    cmd.PrepareTexture(tex);
     // create copies for the first mipmap, next blit levels
-    staging.offset += mainMipOffset;
     MemoryToTextureCopy copy = {
-        .srcMemory = staging,
+        .srcMemory = stagingBuff,
         .dstTexture = tex,
         .mipmapLevel = 0,
         .layerBaseLevel = 0,
@@ -158,7 +161,7 @@ TextureView AssetLoader::LoadKtx2Texture(std::string_view path, uint32_t levelCo
     // here the host waits; delete it for future async impls
     m_device->WaitFor(QueueType::Copy);
 
-    static_cast<LinearAllocator*>(m_tempMem.get())->ResetMemory();
+    m_device->Destroy(stagingBuff);
     ktxTexture2_Destroy(kTexture);
 
     DebugPrint("[ASSET LOADER]", "texture: {} loaded successfully", path);

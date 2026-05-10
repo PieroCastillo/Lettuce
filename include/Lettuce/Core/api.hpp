@@ -91,7 +91,6 @@ namespace Lettuce::Core
     enum class QueueType : uint8_t { Graphics, Compute, Copy };
     enum class RenderTargetType : uint8_t { ColorRGB_sRGB, ColorRGBA_sRGB, DepthStencilDS40 };
     enum class IndirectType : uint8_t { Draw, DrawIndexed, DrawMesh, Dispatch }; // TraceRays, DeviceGenerated
-    enum class AllocationPolicy : uint8_t { Transient, Frame, MultiFrame, Persistent }; // Linear/Ring/Segmented Ring/Heap allocator
 
     // Resources
     struct MemoryViewInfo {
@@ -124,7 +123,6 @@ namespace Lettuce::Core
     struct MemoryViewDesc {
         uint64_t size;
         bool cpuVisible;
-        AllocationPolicy policy;
     };
 
     struct TextureViewDesc {
@@ -136,7 +134,6 @@ namespace Lettuce::Core
         uint32_t layerCount;
         bool isCubeMap;
         bool cpuVisible;
-        AllocationPolicy policy;
     };
 
     struct RenderTargetDesc {
@@ -145,7 +142,6 @@ namespace Lettuce::Core
         RenderTargetType type;
         ClearValue defaultClearValue;
         bool cpuVisible;
-        AllocationPolicy policy;
     };
 
     struct SamplerDesc {

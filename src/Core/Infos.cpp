@@ -16,14 +16,12 @@ using namespace Lettuce::Core;
 
 auto Device::GetMemoryViewInfo(MemoryView view) const -> MemoryViewInfo
 {
-    // auto res = impl->buffers.get(buffer);
-    // return { res.size, res.cpuAddress, res.gpuAddress, res.memoryOffset };
-    return {};
+    auto res = impl->memories.get(view);
+    return { res.size, res.cpuAddress, res.gpuAddress, res.memoryOffset };
 }
 
 auto Device::GetResourceInfo(TextureView view) const -> TextureViewInfo
 {
-    // auto res = impl->textures.get(texture);
-    // return { res.size, res.width, res.height, res.memoryOffset };
-    return {};
+    auto res = impl->textures.get(view);
+    return { res.size, res.width, res.height, res.memoryOffset };
 }

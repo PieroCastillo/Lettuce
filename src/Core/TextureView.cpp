@@ -112,6 +112,9 @@ auto Device::CreateTextureView(const TextureViewDesc& desc) -> TextureView
     };
 
     VkImage image;
+    VmaAllocation alloc;
+    VmaAllocationInfo allocI;
+
     VkImageCreateInfo imageCI = {
         .sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
         .flags = desc.isCubeMap ? VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT : (VkImageCreateFlags)0,
@@ -126,9 +129,12 @@ auto Device::CreateTextureView(const TextureViewDesc& desc) -> TextureView
         .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
         .initialLayout = VK_IMAGE_LAYOUT_PREINITIALIZED,
     };
-    handleResult(vkCreateImage(device, &imageCI, nullptr, &image));
+    VmaAllocationCreateInfo allocCI = {
+        .flags = desc.cpuVisible ? VMA_ALLOCATION_CREATE_MAPPED_BIT : (VmaAllocationCreateFlags)0,
+        .requiredFlags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT | (desc.cpuVisible ? VK_MEMORY_PROPERTY_HOST_COHERENT_BIT : (VkMemoryPropertyFlags)0),
+    };
 
-    // TODO: error check logic
+    handleResult(vmaCreateImage(impl->m_allocator, &imageCI, &allocCI, &image, &alloc, &allocI));
 
     VkImageView imageView;
     VkImageViewCreateInfo viewCI = {
@@ -141,8 +147,14 @@ auto Device::CreateTextureView(const TextureViewDesc& desc) -> TextureView
     };
     handleResult(vkCreateImageView(device, &viewCI, nullptr, &imageView));
 
-    // return impl->textures.allocate({ desc.width, desc.height, desc.mipCount, desc.layerCount, format, image, imageView, mem, memReqs.size, offset, false });
-    return {};
+    void* buffCPUAddr = nullptr;
+    if (desc.cpuVisible)
+        vmaMapMemory(impl->m_allocator, alloc, &buffCPUAddr);
+
+    return impl->textures.allocate({ desc.width, desc.height, desc.mipCount, desc.layerCount,
+                                    format, image, imageView, allocI.deviceMemory,
+                                    allocI.size, allocI.offset, alloc, buffCPUAddr,
+                                    false });
 }
 
 void Device::Destroy(TextureView texture)
@@ -150,15 +162,17 @@ void Device::Destroy(TextureView texture)
     if (!impl->textures.isValid(texture))
         return;
 
-    auto device = impl->m_device;
     auto info = impl->textures.get(texture);
 
     // only Textures created by using Device.CreateTexture() could be destroyed
     if (info.isViewOnly)
         return;
 
-    vkDestroyImageView(device, info.imageView, nullptr);
-    vkDestroyImage(device, info.image, nullptr);
+    if (info.cpuAddress)
+        vmaUnmapMemory(impl->m_allocator, info.allocation);
+
+    vkDestroyImageView(impl->m_device, info.imageView, nullptr);
+    vmaDestroyImage(impl->m_allocator, info.image, info.allocation);
 
     impl->textures.free(texture);
 }

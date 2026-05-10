@@ -21,14 +21,6 @@ namespace Lettuce::Core
         VkPipelineBindPoint bindPoint;
     };
 
-    struct MemoryHeapVK
-    {
-        VkDeviceMemory memory;
-        uint64_t size;
-        MemoryAccess access;
-        void* baseCpuAddress;
-    };
-
     struct MemoryViewVK
     {
         VkBuffer buffer;
@@ -38,6 +30,7 @@ namespace Lettuce::Core
 
         void* cpuAddress;
         uint64_t gpuAddress;
+        VmaAllocation allocation;
     };
 
     struct TextureVK
@@ -50,6 +43,8 @@ namespace Lettuce::Core
         VkDeviceMemory memory;
         uint64_t size;
         uint64_t memoryOffset;
+        VmaAllocation allocation;
+        void* cpuAddress;
         // render target exclusive params
         bool isViewOnly;
         VkClearValue defaultClearValue;
@@ -96,13 +91,6 @@ namespace Lettuce::Core
     struct CommandAllocatorVK
     {
         VkCommandPool pool;
-    };
-
-    struct AllocationVK
-    {
-        uint64_t size;
-        void* cpuAddress;
-        uint64_t gpuAddress;
     };
 
     struct IndirectSetVK

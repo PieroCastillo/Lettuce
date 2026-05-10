@@ -55,6 +55,8 @@ struct VkAccelerationStructureKHR_T;
 struct VkDeferredOperationKHR_T;
 struct VkIndirectCommandsLayoutEXT_T;
 struct VkIndirectExecutionSetEXT_T;
+struct VmaAllocation_T;
+struct VmaAllocator_T;
 
 using VkInstance = VkHandle<VkInstance_T>::type;
 using VkPhysicalDevice = VkHandle<VkPhysicalDevice_T>::type;
@@ -84,6 +86,8 @@ using VkAccelerationStructureKHR = VkHandle<VkAccelerationStructureKHR_T>::type;
 using VkDeferredOperationKHR = VkHandle<VkDeferredOperationKHR_T>::type;
 using VkIndirectCommandsLayoutEXT = VkHandle<VkIndirectCommandsLayoutEXT_T>::type;
 using VkIndirectExecutionSetEXT = VkHandle<VkIndirectExecutionSetEXT_T>::type;
+using VmaAllocation = VkHandle<VmaAllocation_T>::type;
+using VmaAllocator = VkHandle<VmaAllocator_T>::type;
 
 using VkDeviceSize = std::uint64_t;
 using VkFlags = std::uint32_t;
@@ -180,24 +184,24 @@ namespace Lettuce::Core
     private:
         static std::string resultToString(LettuceResult r) {
             switch (r) {
-                case LettuceResult::Success: return "Success";
-                case LettuceResult::OutOfDeviceMemory: return "Out of Device Memory";
-                case LettuceResult::OutOfHostMemory: return "Out of Host Memory";
-                case LettuceResult::OutOfBounds: return "Out of Bounds";
-                case LettuceResult::AllocationFailed: return "Allocation Failed";
-                case LettuceResult::DoubleFree: return "Double Free Detected";
-                case LettuceResult::InvalidDevice: return "Invalid Device";
-                case LettuceResult::InvalidOperation: return "Invalid Operation";
-                case LettuceResult::InvalidShaderEntryPoint: return "Invalid Shader Entry Point";
-                case LettuceResult::InitializationFailed: return "Initialization Failed";
-                case LettuceResult::RequiredMemoryNotFound: return "Required Memory Not Found";
-                case LettuceResult::ShaderReflectionFailed: return "Shader Reflection Failed";
-                case LettuceResult::ShaderCompilationFailed: return "Shader Compilation Failed";
-                case LettuceResult::ShaderParametersMismatch: return "Shader Parameters Mismatch";
-                case LettuceResult::TypeMismatch: return "Type Mismatch";
-                case LettuceResult::NotReady: return "Not Ready";
-                case LettuceResult::NotFound: return "Not Found";
-                case LettuceResult::Unknown: return "Unknown Error";
+            case LettuceResult::Success: return "Success";
+            case LettuceResult::OutOfDeviceMemory: return "Out of Device Memory";
+            case LettuceResult::OutOfHostMemory: return "Out of Host Memory";
+            case LettuceResult::OutOfBounds: return "Out of Bounds";
+            case LettuceResult::AllocationFailed: return "Allocation Failed";
+            case LettuceResult::DoubleFree: return "Double Free Detected";
+            case LettuceResult::InvalidDevice: return "Invalid Device";
+            case LettuceResult::InvalidOperation: return "Invalid Operation";
+            case LettuceResult::InvalidShaderEntryPoint: return "Invalid Shader Entry Point";
+            case LettuceResult::InitializationFailed: return "Initialization Failed";
+            case LettuceResult::RequiredMemoryNotFound: return "Required Memory Not Found";
+            case LettuceResult::ShaderReflectionFailed: return "Shader Reflection Failed";
+            case LettuceResult::ShaderCompilationFailed: return "Shader Compilation Failed";
+            case LettuceResult::ShaderParametersMismatch: return "Shader Parameters Mismatch";
+            case LettuceResult::TypeMismatch: return "Type Mismatch";
+            case LettuceResult::NotReady: return "Not Ready";
+            case LettuceResult::NotFound: return "Not Found";
+            case LettuceResult::Unknown: return "Unknown Error";
             }
         }
 

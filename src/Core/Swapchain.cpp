@@ -156,7 +156,10 @@ void setupImagesAndView(SwapchainVK& swapchainVK, ResourcePool<TextureView, Text
         handleResult(vkCreateImageView(device, &viewCI, nullptr, &view));
 
         auto img = swapchainVK.swapchainImages[i];
-        auto texView = textures.allocate({ swapchainVK.width, swapchainVK.height, 1, 1, swapchainVK.format, img, view, VK_NULL_HANDLE, 0, 0, true });
+        auto texView = textures.allocate({ swapchainVK.width, swapchainVK.height, 1, 1,
+                                            swapchainVK.format, img, view,VK_NULL_HANDLE,
+                                            0, 0, VK_NULL_HANDLE, nullptr,
+                                            true });
 
         swapchainVK.swapchainViews[i] = view;
         swapchainVK.renderTargets[i] = texView;

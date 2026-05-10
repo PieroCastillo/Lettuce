@@ -26,8 +26,6 @@ namespace Lettuce::Utils
     private:
         Device* m_device;
         CommandAllocator m_cmds;
-        std::unique_ptr<IGPUMemoryResource> m_tempMem;
-        std::unique_ptr<IGPUMemoryResource> m_resAlloc;
     public:
         void Create(Device&, const AssetLoaderDesc&);
         void Destroy();

@@ -70,6 +70,7 @@ namespace Lettuce::Core
         VkQueue m_graphicsQueue;
         VkQueue m_computeQueue;
         VkQueue m_transferQueue;
+        VmaAllocator m_allocator;
 
         VkSemaphore graphicsSemaphore, computeSemaphore, transferSemaphore;
         uint64_t graphicsCurrentValue, computeCurrentValue, transferCurrentValue;
