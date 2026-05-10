@@ -146,6 +146,7 @@ void mainLoop()
         device.Submit(submitDesc);
 
         device.DisplayFrame(swapchain);
+        device.WaitFor(QueueType::Graphics);
         glfwPollEvents();
     }
 }

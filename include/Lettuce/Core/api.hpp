@@ -350,6 +350,7 @@ namespace Lettuce::Core
 
         // TextureView
         auto CreateTextureView(const TextureViewDesc&) -> TextureView;
+        auto CreateTextureView(const RenderTargetDesc&) -> TextureView;
         void Destroy(TextureView);
 
         auto GetMemoryViewInfo(MemoryView) const -> MemoryViewInfo;

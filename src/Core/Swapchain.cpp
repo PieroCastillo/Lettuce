@@ -261,9 +261,8 @@ void Device::ResizeSwapchain(Swapchain swapchain, uint32_t w, uint32_t h)
 auto Device::GetCurrentRenderTarget(Swapchain swapchain) const -> TextureView
 {
     // TODO: memory
-    // auto& swc = impl->swapchains.get(swapchain);
-    // return swc.renderTargets[(int)swc.currentImageIndex];
-    return {};
+    auto& swc = impl->swapchains.get(swapchain);
+    return swc.renderTargets[(int)swc.currentImageIndex];
 }
 
 auto Device::GetFrameCount(Swapchain swapchain) -> uint32_t

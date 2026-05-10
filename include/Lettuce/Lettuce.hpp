@@ -3,7 +3,6 @@
 #include "Core/DeviceImpl.hpp"
 #include "Core/HelperStructs.hpp"
 #include "Core/ResourcePool.hpp"
-#include "Core/IGPUMemoryResource.hpp"
 
 // composition
 #include "Composition/api.hpp"

@@ -11,9 +11,9 @@ struct VertexOutput
 };
 
 static const float4 positions[3] = {
-    float4(0.0, -0.75, 0.0, 1.0),
+    float4(-0.75, 0.75, 0.0, 1.0),
     float4(0.75, 0.75, 0.0, 1.0),
-    float4(-0.75, 0.75, 0.0, 1.0)
+    float4(0.0, -0.75, 0.0, 1.0),
 };
 
 static const float4 colors[3] = {

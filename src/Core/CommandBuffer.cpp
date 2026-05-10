@@ -123,15 +123,13 @@ auto CommandBuffer::TextureCopy(const TextureToRenderTargetCopy& copy)
 
 void CommandBuffer::BeginRendering(const RenderPassDesc& desc)
 {
-    auto& renderTargets = impl.device->textures;
-
     int colorCount = desc.colorAttachments.size();
     VkRenderingAttachmentInfo* colorAttachments = (VkRenderingAttachmentInfo*)alloca(sizeof(VkRenderingAttachmentInfo) * colorCount);
 
     for (int i = 0; i < colorCount; ++i)
     {
         const auto& attachment = desc.colorAttachments[i];
-        const auto& rt = renderTargets.get(attachment.renderTarget);
+        const auto& rt = impl.device->textures.get(attachment.renderTarget);
 
         colorAttachments[i] = {
             .sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
@@ -155,7 +153,7 @@ void CommandBuffer::BeginRendering(const RenderPassDesc& desc)
     VkRenderingAttachmentInfo attachmentInfo;
     if (desc.depthStencilAttachment)
     {
-        const auto& rt = renderTargets.get(desc.depthStencilAttachment->renderTarget);
+        const auto& rt = impl.device->textures.get(desc.depthStencilAttachment->renderTarget);
 
         attachmentInfo = {
             .sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,

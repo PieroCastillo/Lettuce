@@ -233,6 +233,7 @@ void DeviceImpl::setupFeaturesExtensions()
     requestedExtensionsNames.push_back(VK_EXT_DESCRIPTOR_BUFFER_EXTENSION_NAME);
     requestedExtensionsNames.push_back(VK_EXT_DYNAMIC_RENDERING_UNUSED_ATTACHMENTS_EXTENSION_NAME);
     requestedExtensionsNames.push_back(VK_EXT_LOAD_STORE_OP_NONE_EXTENSION_NAME);
+    requestedExtensionsNames.push_back(VK_EXT_MEMORY_BUDGET_EXTENSION_NAME);
 
     // recommended features/extensions
     if (exists(availableExtensionsNames, VK_EXT_DEVICE_GENERATED_COMMANDS_EXTENSION_NAME))
