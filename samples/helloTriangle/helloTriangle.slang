@@ -13,9 +13,9 @@ VSOutput vertexMain(uint vertexID : SV_VulkanVertexID)
     VSOutput out;
 
     float2 positions[3] = {
-        float2(0.0, -0.75),
+        float2(-0.75, 0.75),
         float2(0.75, 0.75),
-        float2(-0.75, 0.75)
+        float2(0.0, -0.75),
     };
 
     out.position = float4(positions[vertexID % 3], 0.0, 1.0);
