@@ -10,25 +10,45 @@ Created by @PieroCastillo on 2025-12-26
 #include <string_view>
 #include <optional>
 #include <variant>
+#include "formats.hpp"
+
+// external libs
+#include <glm/glm.hpp>
+#include <glm/gtc/quaternion.hpp>
 
 namespace Lettuce::Core
 {
+    // types
+    using float2 = glm::vec2;
+    using float3 = glm::vec3;
+    using float4 = glm::vec4;
+    using float3x3 = glm::mat3;
+    using float4x4 = glm::mat4;
+    using DeviceAddress = uint64_t;
+    using HostAddress = uint8_t*;
+
     template<typename Tag>
     struct Handle {
         uint32_t index = 0;
         uint32_t generation = 0;
+
+        static constexpr Handle<Tag> Null() noexcept {
+            return {};
+        }
 
         constexpr bool valid() const noexcept {
             return generation != 0;
         }
 
         auto operator<=>(const Handle&) const = default;
+
+        constexpr std::array<uint32_t, 2> get() const noexcept {
+            return { index, generation };
+        }
     };
 
-    struct MemoryHeapTag {};
-    struct BufferTag {};
-    struct TextureTag {};
-    struct RenderTargetTag {};
+    struct MemoryViewTag {};
+    struct TextureViewTag {};
     struct SamplerTag {};
     struct ShaderBinaryTag {};
     struct PipelineTag {};
@@ -37,10 +57,8 @@ namespace Lettuce::Core
     struct SwapchainTag {};
     struct CommandAllocatorTag {};
 
-    using MemoryHeap = Handle<MemoryHeapTag>;
-    using Buffer = Handle<BufferTag>;
-    using Texture = Handle<TextureTag>;
-    using RenderTarget = Handle<RenderTargetTag>;
+    using MemoryView = Handle<MemoryViewTag>;
+    using TextureView = Handle<TextureViewTag>;
     using Sampler = Handle<SamplerTag>;
     using ShaderBinary = Handle<ShaderBinaryTag>;
     using Pipeline = Handle<PipelineTag>;
@@ -50,21 +68,7 @@ namespace Lettuce::Core
     using CommandAllocator = Handle<CommandAllocatorTag>;
 
     // Enums
-    enum class Format : uint8_t {
-        RGBA8_UNORM = 0,
-        RGBA8_SRGB,
-        BGRA8_UNORM,
-        BGRA8_SRGB,
-        RGBA16_FLOAT,
-        D16,
-        D32,
-        D24S8,
-        D32S8,
-        R8,
-        RG8,
-        RG16_FLOAT,
-        COUNT
-    };
+    enum class Format : uint8_t;
     enum class Filter : uint8_t { Nearest, Linear };
     enum class SamplerAddressMode : uint8_t { Repeat, ClampToEdge, ClampToBorder, MirroredRepeat };
     enum class CompareOp : uint8_t { Never, Less, Equal, LessOrEqual, Greater, NotEqual, GreaterOrEqual, Always };
@@ -86,46 +90,25 @@ namespace Lettuce::Core
 
     enum class QueueType : uint8_t { Graphics, Compute, Copy };
     enum class RenderTargetType : uint8_t { ColorRGB_sRGB, ColorRGBA_sRGB, DepthStencilDS40 };
-    enum class IndirectType : uint8_t { Draw, DrawIndexed, DrawMesh, Dispatch, DeviceGenerated };
+    enum class IndirectType : uint8_t { Draw, DrawIndexed, DrawMesh, Dispatch }; // TraceRays, DeviceGenerated
 
     // Resources
-    struct BufferInfo {
+    struct MemoryViewInfo {
         uint64_t size;
         void* cpuAddress;
         uint64_t gpuAddress;
+        uint64_t alignment;
     };
 
-    struct ResourceInfo
+    struct TextureViewInfo
     {
         uint64_t size;
         uint32_t width;
         uint32_t height;
+        uint64_t alignment;
     };
 
     // Descriptions
-    struct MemoryHeapDesc {
-        uint64_t size;
-        bool cpuVisible;
-    };
-
-    struct MemoryBindDesc {
-        MemoryHeap heap;
-        uint64_t heapOffset;
-    };
-
-    struct BufferDesc {
-        uint64_t size;
-    };
-
-    struct TextureDesc {
-        uint32_t width;
-        uint32_t height;
-        uint32_t depth;
-        Format format;
-        uint32_t mipCount;
-        uint32_t layerCount;
-    };
-
     struct ColorClear {
         std::array<float, 4> value;
     };
@@ -137,11 +120,28 @@ namespace Lettuce::Core
 
     using ClearValue = std::variant<ColorClear, DepthStencilClear>;
 
+    struct MemoryViewDesc {
+        uint64_t size;
+        bool cpuVisible;
+    };
+
+    struct TextureViewDesc {
+        uint32_t width;
+        uint32_t height;
+        uint32_t depth;
+        Format format;
+        uint32_t mipCount;
+        uint32_t layerCount;
+        bool isCubeMap;
+        bool cpuVisible;
+    };
+
     struct RenderTargetDesc {
         uint32_t width;
         uint32_t height;
         RenderTargetType type;
         ClearValue defaultClearValue;
+        bool cpuVisible;
     };
 
     struct SamplerDesc {
@@ -197,13 +197,12 @@ namespace Lettuce::Core
         uint32_t sampledImageDescriptorCount;
         uint32_t samplerDescriptorCount;
         uint32_t storageImageDescriptorCount;
-        uint32_t bufferPointerCount;
     };
 
     struct IndirectSetDesc {
         IndirectType type;
         uint32_t maxCount;
-        uint32_t stride;
+        uint32_t userDataSize;
     };
 
     struct SwapchainDesc
@@ -222,16 +221,9 @@ namespace Lettuce::Core
         PipelineStage dstStage;
     };
 
-    struct MemoryView
-    {
-        uint64_t size;
-        void* cpuAddress;
-        uint64_t gpuAddress;
-    };
-
     struct AttachmentDesc
     {
-        RenderTarget renderTarget;
+        TextureView renderTarget;
         LoadOp loadOp;
     };
 
@@ -262,6 +254,77 @@ namespace Lettuce::Core
         std::optional<Swapchain> presentSwapchain;
     };
 
+    struct PushResourceDescriptorsDesc
+    {
+        std::span<const std::pair<uint32_t, TextureView>> sampledTextures;
+        std::span<const std::pair<uint32_t, Sampler>> samplers;
+        std::span<const std::pair<uint32_t, TextureView>> storageTextures;
+        DescriptorTable  descriptorTable;
+    };
+
+    struct ClearTextureDesc
+    {
+        TextureView texture;
+        ColorClear color;
+        uint32_t baseLevel, levelCount, baseLayer, layerCount;
+    };
+
+    struct HostToMemoryCopy
+    {
+        std::span<const uint8_t> srcData;
+        MemoryView dstMemory;
+        uint32_t dstOffset;
+    };
+
+    struct HostToTextureCopy
+    {
+        std::span<const uint8_t> srcData;
+        TextureView dstTexture;
+        uint32_t mipmapLevel;
+        uint32_t layerBaseLevel;
+        uint32_t layerCount;
+        uint32_t x, y, width, height;
+    };
+
+    struct MemoryToMemoryCopy
+    {
+        MemoryView srcMemory;
+        MemoryView dstMemory;
+        uint64_t size;
+    };
+
+    struct MemoryToTextureCopy
+    {
+        MemoryView srcMemory;
+        TextureView dstTexture;
+        uint32_t mipmapLevel;
+        uint32_t layerBaseLevel;
+        uint32_t layerCount;
+        uint32_t x, y, width, height;
+    };
+
+    struct TextureToMemory
+    {
+        TextureView srcTexture;
+        MemoryView dstMemory;
+        uint32_t mipmapLevel;
+        uint32_t layerBaseLevel;
+        uint32_t layerCount;
+        uint32_t x, y, width, height;
+    };
+
+    struct PushAllocationsDesc
+    {
+        std::span<const std::pair<uint32_t, MemoryView>> allocations;
+        DescriptorTable descriptorTable;
+    };
+
+    struct ExecuteIndirectDesc
+    {
+        IndirectSet indirectSet;
+        uint32_t maxDrawCount;
+    };
+
     struct DeviceImpl;
     struct CommandBufferImpl { DeviceImpl* device; uint64_t handle; };
 
@@ -272,77 +335,78 @@ namespace Lettuce::Core
         void Create(const DeviceDesc&);
         void Destroy();
 
-        // Memory 
-        MemoryHeap CreateMemoryHeap(const MemoryHeapDesc&);
-        void Destroy(MemoryHeap);
+        void WaitFor(QueueType);
 
-        // Buffer
-        Buffer CreateBuffer(const BufferDesc&, const MemoryBindDesc&);
-        void Destroy(Buffer);
+        auto SupportMeshShader() -> bool;
+        auto SupportNeuralShading() -> bool;
+        auto SupportNeuralShadingNV() -> bool;
+        auto SupportRayTracing() -> bool;
+        auto SupportRayTracingNV() -> bool;
+        auto SupportFragmentShadingRate() -> bool;
 
-        // Texture
-        Texture CreateTexture(const TextureDesc&, const MemoryBindDesc&);
-        void Destroy(Texture);
+        // MemoryView
+        auto CreateMemoryView(const MemoryViewDesc&) -> MemoryView;
+        void Destroy(MemoryView);
 
-        // Render Target
-        RenderTarget CreateRenderTarget(const RenderTargetDesc&, const MemoryBindDesc&);
-        void Destroy(RenderTarget);
+        // TextureView
+        auto CreateTextureView(const TextureViewDesc&) -> TextureView;
+        auto CreateTextureView(const RenderTargetDesc&) -> TextureView;
+        void Destroy(TextureView);
 
-        BufferInfo GetBufferInfo(Buffer) const;
-        ResourceInfo GetResourceInfo(Texture) const;
-        ResourceInfo GetResourceInfo(RenderTarget) const;
+        auto GetMemoryViewInfo(MemoryView) const -> MemoryViewInfo;
+        auto GetResourceInfo(TextureView) const -> TextureViewInfo;
 
         // Sampler 
-        Sampler CreateSampler(const SamplerDesc&);
+        auto CreateSampler(const SamplerDesc&) -> Sampler;
         void Destroy(Sampler);
 
         // Shader Binary 
-        ShaderBinary CreateShader(const ShaderBinaryDesc&);
+        auto CreateShader(const ShaderBinaryDesc&) -> ShaderBinary;
         void Destroy(ShaderBinary);
 
         // Pipeline 
-        Pipeline CreatePipeline(const PrimitiveShadingPipelineDesc&);
-        Pipeline CreatePipeline(const MeshShadingPipelineDesc&);
-        Pipeline CreatePipeline(const ComputePipelineDesc&);
+        auto CreatePipeline(const PrimitiveShadingPipelineDesc&) -> Pipeline;
+        auto CreatePipeline(const MeshShadingPipelineDesc&) -> Pipeline;
+        auto CreatePipeline(const ComputePipelineDesc&) -> Pipeline;
         void Destroy(Pipeline);
 
         // Descriptor Table
-        DescriptorTable CreateDescriptorTable(const DescriptorTableDesc&);
+        auto CreateDescriptorTable(const DescriptorTableDesc&) -> DescriptorTable;
         void Destroy(DescriptorTable);
 
-        void PushResourceDescriptors(
-            DescriptorTable,
-            std::span<const std::pair<uint32_t, Texture>>,
-            std::span<const std::pair<uint32_t, Sampler>>,
-            std::span<const std::pair<uint32_t, Texture>>);
-
-        void PushAllocations(
-            DescriptorTable,
-            std::span<const std::pair<uint32_t, const MemoryView&>>
-        );
+        void PushResourceDescriptors(const PushResourceDescriptorsDesc&);
+        void PushAllocations(DescriptorTable, std::span<const std::pair<uint32_t, MemoryView>>);
 
         // Indirect Set
-        IndirectSet CreateIndirectSet(const IndirectSetDesc&);
+        auto CreateIndirectSet(const IndirectSetDesc&) -> IndirectSet;
         void Destroy(IndirectSet);
 
+        auto GetIndirectSetView(IndirectSet) -> MemoryView;
+
         // Swapchain
-        Swapchain CreateSwapchain(const SwapchainDesc&);
+        auto CreateSwapchain(const SwapchainDesc&) -> Swapchain;
         void Destroy(Swapchain);
 
         void NextFrame(Swapchain);
         void DisplayFrame(Swapchain);
-        Format GetRenderTargetFormat(Swapchain);
-        RenderTarget GetCurrentRenderTarget(Swapchain) const;
+        auto GetRenderTargetFormat(Swapchain) -> Format;
+        auto GetCurrentRenderTarget(Swapchain) const -> TextureView;
         void ResizeSwapchain(Swapchain, uint32_t w, uint32_t h);
+        auto GetFrameCount(Swapchain) -> uint32_t;
 
         // Command Allocator
-        CommandAllocator CreateCommandAllocator(const CommandAllocatorDesc&);
+        auto CreateCommandAllocator(const CommandAllocatorDesc&) -> CommandAllocator;
         void Destroy(CommandAllocator);
 
         void Reset(CommandAllocator);
-        CommandBuffer AllocateCommandBuffer(CommandAllocator);
+        auto AllocateCommandBuffer(CommandAllocator) -> CommandBuffer;
 
         void Submit(const CommandBufferSubmitDesc&);
+
+        void MemoryCopy(const HostToMemoryCopy&);
+        void MemoryCopy(const HostToTextureCopy&);
+        void MemoryCopy(const MemoryToMemoryCopy&);
+        void MemoryCopy(const MemoryToTextureCopy&);
     };
 
     struct CommandBuffer
@@ -352,29 +416,36 @@ namespace Lettuce::Core
         CommandBufferImpl impl;
         explicit CommandBuffer(CommandBufferImpl cmdImpl) : impl(cmdImpl) {}
     public:
-        void MemoryCopy(
-            const MemoryView& src,
-            const MemoryView& dst,
-            uint64_t srcOffset,
-            uint64_t dstOffset,
-            uint64_t size
-        );
+
+        void MemoryCopy(const HostToMemoryCopy&);
+        void MemoryCopy(const HostToTextureCopy&);
+        void MemoryCopy(const MemoryToMemoryCopy&);
+        void MemoryCopy(const MemoryToTextureCopy&);
+        // Copy from offset[x,y], range[width, height] of the TextureView to the start of the buffer
+        void MemoryCopy(const TextureToMemory&);
+        void Fill(MemoryView view, uint32_t value, uint32_t count);
+
+        void ClearTexture(const ClearTextureDesc&);
 
         void BeginRendering(const RenderPassDesc&);
         void EndRendering();
 
         void BindPipeline(Pipeline);
         void BindDescriptorTable(DescriptorTable, PipelineBindPoint);
+        void PushAllocations(const PushAllocationsDesc&);
 
         void Draw(uint32_t vertexCount, uint32_t instanceCount);
         void DrawIndexed(uint32_t indexCount, uint32_t instanceCount);
         void DrawMesh(uint32_t x, uint32_t y, uint32_t z);
 
-        void ExecuteIndirect(IndirectSet);
+        void ExecuteIndirect(const ExecuteIndirectDesc&);
 
         void Dispatch(uint32_t x, uint32_t y, uint32_t z);
 
         void Barrier(std::span<const BarrierDesc> barriers);
+        void PrepareTexture(TextureView);
+
+        void ResetCount(IndirectSet);
     };
 }
 #endif // LETTUCE_CORE_API_HPP

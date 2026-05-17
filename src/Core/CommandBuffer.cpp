@@ -1,6 +1,8 @@
 // standard headers
-#include <memory>
+#include <algorithm>
 #include <array>
+#include <format>
+#include <memory>
 #include <print>
 
 // external headers
@@ -13,28 +15,121 @@
 
 using namespace Lettuce::Core;
 
-void CommandBuffer::MemoryCopy(
-    const MemoryView& src,
-    const MemoryView& dst,
-    uint64_t srcOffset,
-    uint64_t dstOffset,
-    uint64_t size
-)
+void CommandBuffer::ClearTexture(const ClearTextureDesc& desc)
 {
+    auto& dev = impl.device;
+    auto& imgInfo = dev->textures.get(desc.texture);
 
+    auto color = VkClearColorValue{};
+    color.float32[0] = desc.color.value[0];
+    color.float32[1] = desc.color.value[1];
+    color.float32[2] = desc.color.value[2];
+    color.float32[3] = desc.color.value[3];
+
+    auto range = VkImageSubresourceRange{ VK_IMAGE_ASPECT_COLOR_BIT, desc.baseLevel, desc.levelCount, desc.baseLayer, desc.layerCount };
+
+    vkCmdClearColorImage((VkCommandBuffer)impl.handle, imgInfo.image, VK_IMAGE_LAYOUT_GENERAL, &color, 1, &range);
 }
+/*
+auto CommandBuffer::MemoryCopy(const MemoryToMemoryCopy& copy)
+{
+    VkBufferCopy bufferCopy = {
+        .srcOffset = copy.srcMemory.offset,
+        .dstOffset = copy.dstMemory.offset,
+        .size = copy.size,
+    };
+
+    auto& buffers = impl.device->buffers;
+    vkCmdCopyBuffer(
+        (VkCommandBuffer)impl.handle,
+        buffers.get(copy.srcMemory.buffer).buffer,
+        buffers.get(copy.dstMemory.buffer).buffer,
+        1, &bufferCopy);
+}
+
+auto CommandBuffer::MemoryCopy(const MemoryToTextureCopy& copy)
+{
+    auto& dev = impl.device;
+    auto& imgInfo = dev->textures.get(copy.dstTexture);
+
+    VkBufferImageCopy imageCopy = {
+        .bufferOffset = copy.srcMemory.offset,
+        .bufferRowLength = 0,
+        .bufferImageHeight = 0,
+        .imageSubresource = {VK_IMAGE_ASPECT_COLOR_BIT, copy.mipmapLevel, copy.layerBaseLevel, copy.layerCount},
+        .imageOffset = {0,0,0},
+        .imageExtent = {imgInfo.width, imgInfo.height, 1 },
+    };
+
+    vkCmdCopyBufferToImage(
+        (VkCommandBuffer)impl.handle,
+        dev->buffers.get(copy.srcMemory.buffer).buffer,
+        imgInfo.image,
+        VK_IMAGE_LAYOUT_GENERAL, 1, &imageCopy);
+}
+
+auto CommandBuffer::MemoryCopy(const TextureToMemory& copy)
+{
+    auto& dev = impl.device;
+    auto& imgInfo = dev->textures.get(copy.srcTexture);
+
+    // I don't wanna this crashing the every moment, so I use this checks/clamps
+    auto safeX = std::clamp<int32_t>(copy.x, 0, static_cast<int32_t>(imgInfo.width) - 1);
+    auto safeY = std::clamp<int32_t>(copy.y, 0, static_cast<int32_t>(imgInfo.height) - 1);
+
+    uint32_t maxW = imgInfo.width - static_cast<uint32_t>(safeX);
+    uint32_t maxH = imgInfo.height - static_cast<uint32_t>(safeY);
+
+    auto safeW = std::clamp<uint32_t>(copy.width, 1u, maxW);
+    auto safeH = std::clamp<uint32_t>(copy.height, 1u, maxH);
+
+    // std::println("w: {} h: {} x: {} y: {}", safeW, safeH, safeX, safeY);
+
+    VkBufferImageCopy imageCopy = {
+        .bufferOffset = copy.dstMemory.offset,
+        .bufferRowLength = 0,
+        .bufferImageHeight = 0,
+        .imageSubresource = {VK_IMAGE_ASPECT_COLOR_BIT, copy.mipmapLevel, copy.layerBaseLevel, copy.layerCount},
+        .imageOffset = {safeX, safeY, 0},
+        .imageExtent = {safeW, safeH, 1},
+    };
+
+    vkCmdCopyImageToBuffer((VkCommandBuffer)impl.handle, imgInfo.image, VK_IMAGE_LAYOUT_GENERAL,
+        dev->buffers.get(copy.dstMemory.buffer).buffer, 1, &imageCopy);
+}
+
+auto CommandBuffer::TextureCopy(const TextureToRenderTargetCopy& copy)
+{
+    auto& dev = impl.device;
+    auto& srcTex = dev->textures.get(copy.srcTexture);
+    auto& dstRT = dev->renderTargets.get(copy.dstRenderTarget);
+
+    if (srcTex.width != dstRT.width || srcTex.height != dstRT.height)
+    {
+        return;
+    };
+
+    VkImageCopy imgCopy = {
+        .srcSubresource = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 0},
+        .srcOffset = {0,0,0},
+        .dstSubresource = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 0},
+        .dstOffset = {0,0,0},
+        .extent = {srcTex.width, srcTex.height, 1},
+    };
+
+    vkCmdCopyImage((VkCommandBuffer)impl.handle, srcTex.image, VK_IMAGE_LAYOUT_GENERAL, dstRT.image, VK_IMAGE_LAYOUT_GENERAL, 1, &imgCopy);
+}
+*/
 
 void CommandBuffer::BeginRendering(const RenderPassDesc& desc)
 {
-    auto& renderTargets = impl.device->renderTargets;
-
     int colorCount = desc.colorAttachments.size();
     VkRenderingAttachmentInfo* colorAttachments = (VkRenderingAttachmentInfo*)alloca(sizeof(VkRenderingAttachmentInfo) * colorCount);
 
     for (int i = 0; i < colorCount; ++i)
     {
         const auto& attachment = desc.colorAttachments[i];
-        const auto& rt = renderTargets.get(attachment.renderTarget);
+        const auto& rt = impl.device->textures.get(attachment.renderTarget);
 
         colorAttachments[i] = {
             .sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
@@ -58,7 +153,7 @@ void CommandBuffer::BeginRendering(const RenderPassDesc& desc)
     VkRenderingAttachmentInfo attachmentInfo;
     if (desc.depthStencilAttachment)
     {
-        const auto& rt = renderTargets.get(desc.depthStencilAttachment->renderTarget);
+        const auto& rt = impl.device->textures.get(desc.depthStencilAttachment->renderTarget);
 
         attachmentInfo = {
             .sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
@@ -75,7 +170,7 @@ void CommandBuffer::BeginRendering(const RenderPassDesc& desc)
     auto cmd = (VkCommandBuffer)impl.handle;
     vkCmdBeginRendering(cmd, &renderingInfo);
 
-    VkViewport vw = { 0, 0, desc.width, desc.height, 0, 1 };
+    VkViewport vw = { 0, 0, static_cast<uint32_t>(desc.width), static_cast<uint32_t>(desc.height), 0, 1 };
     VkRect2D scissor = { { 0,0 }, { desc.width, desc.height } };
     vkCmdSetViewport(cmd, 0, 1, &vw);
     vkCmdSetScissor(cmd, 0, 1, &scissor);
@@ -114,7 +209,30 @@ void CommandBuffer::BindDescriptorTable(DescriptorTable descriptorTable, Pipelin
         &bufferOffset);
 
     // push buffer addresses
-    vkCmdPushConstants((VkCommandBuffer)impl.handle, dt.pipelineLayout, VK_SHADER_STAGE_ALL, 0, dt.pushPayloadSize, dt.pushPayloadAddress);
+    // vkCmdPushConstants((VkCommandBuffer)impl.handle, dt.pipelineLayout, VK_SHADER_STAGE_ALL, 0, dt.pushPayloadSize, dt.pushPayloadAddress);
+}
+
+void CommandBuffer::PushAllocations(const PushAllocationsDesc& desc)
+{
+    auto& dt = impl.device->descriptorTables.get(desc.descriptorTable);
+    auto payloadSize = std::min<uint32_t>(impl.device->props.maxPushAllocationsCount, desc.allocations.size()) * sizeof(uint64_t);
+    auto count = payloadSize / sizeof(uint64_t);
+    auto data = (uint64_t*)alloca(payloadSize);
+
+    for (auto const& [idx, memView] : desc.allocations)
+    {
+        if (idx < count)
+            data[idx] = impl.device->memories.get(memView).gpuAddress;
+    }
+
+    // std::print("push allocations addresses: ");
+    // for (size_t i = 0; i < count; ++i)
+    // {
+    //     std::print("{} | ", data[i]);
+    // }
+    // std::println("");
+
+    vkCmdPushConstants((VkCommandBuffer)impl.handle, dt.pipelineLayout, VK_SHADER_STAGE_ALL, 0, payloadSize, data);
 }
 
 void CommandBuffer::Draw(uint32_t vertexCount, uint32_t instanceCount)
@@ -132,9 +250,30 @@ void CommandBuffer::DrawMesh(uint32_t x, uint32_t y, uint32_t z)
     vkCmdDrawMeshTasksEXT((VkCommandBuffer)impl.handle, x, y, z);
 }
 
-void CommandBuffer::ExecuteIndirect(IndirectSet indirectSet)
+void CommandBuffer::ExecuteIndirect(const ExecuteIndirectDesc& desc)
 {
     // TODO: impl execute indirect
+    auto& set = impl.device->indirectSets.get(desc.indirectSet);
+    auto cmd = (VkCommandBuffer)impl.handle;
+    auto buffer = set.indirectSetBuffer;
+
+    switch (set.type)
+    {
+    case IndirectType::Draw:
+        vkCmdDrawIndirectCount(cmd, buffer, 4, buffer, 0, desc.maxDrawCount, set.stride);
+        break;
+    case IndirectType::DrawIndexed:
+        vkCmdDrawIndexedIndirectCount(cmd, buffer, 4, buffer, 0, desc.maxDrawCount, set.stride);
+        break;
+    case IndirectType::DrawMesh:
+        vkCmdDrawMeshTasksIndirectCountEXT(cmd, buffer, 4, buffer, 0, desc.maxDrawCount, set.stride);
+        break;
+    case IndirectType::Dispatch:
+        vkCmdDispatchIndirect(cmd, buffer, 4);
+        break;
+    default:
+        break;
+    }
 }
 
 void CommandBuffer::Dispatch(uint32_t x, uint32_t y, uint32_t z)
@@ -168,4 +307,41 @@ void CommandBuffer::Barrier(std::span<const BarrierDesc> barriers)
         .pMemoryBarriers = memBarriers,
     };
     vkCmdPipelineBarrier2((VkCommandBuffer)impl.handle, &depInfo);
+}
+/*
+auto CommandBuffer::PrepareTexture(Texture texture)
+{
+    auto texInfo = impl.device->textures.get(texture);
+    auto subRes = VkImageSubresourceRange{ VK_IMAGE_ASPECT_COLOR_BIT, 0, texInfo.mipCount, 0, texInfo.layerCount };
+    auto img = texInfo.image;
+
+    VkImageMemoryBarrier2 barrier = {
+        .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2,
+        .srcStageMask = VK_PIPELINE_STAGE_2_TOP_OF_PIPE_BIT,
+        .srcAccessMask = 0,
+        .dstStageMask = VK_PIPELINE_STAGE_2_TRANSFER_BIT,
+        .dstAccessMask = VK_ACCESS_2_TRANSFER_WRITE_BIT,
+        .oldLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+        .newLayout = VK_IMAGE_LAYOUT_GENERAL,
+        .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+        .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+        .image = img,
+        .subresourceRange = subRes,
+    };
+    VkDependencyInfo  depInfo = {
+        .sType = VK_STRUCTURE_TYPE_DEPENDENCY_INFO,
+        .imageMemoryBarrierCount = 1,
+        .pImageMemoryBarriers = &barrier,
+    };
+    vkCmdPipelineBarrier2((VkCommandBuffer)impl.handle, &depInfo);
+}
+
+auto CommandBuffer::Fill(MemoryView view, uint32_t value, uint32_t count)
+{
+    vkCmdFillBuffer((VkCommandBuffer)impl.handle, impl.device->buffers.get(view.buffer).buffer, view.offset, count * sizeof(uint32_t), value);
+}
+*/
+void CommandBuffer::ResetCount(IndirectSet indirectSet)
+{
+    vkCmdFillBuffer((VkCommandBuffer)impl.handle, impl.device->indirectSets.get(indirectSet).indirectSetBuffer, 0, sizeof(uint32_t), 0);
 }

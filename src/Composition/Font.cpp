@@ -1,0 +1,23 @@
+// standard headers
+#include <algorithm>
+#include <atomic>
+#include <limits>
+#include <queue>
+#include <string>
+#include <vector>
+
+// project headers
+#include "Lettuce/Composition/api.hpp"
+#include "Lettuce/Composition/CompositorImpl.hpp"
+#include "Lettuce/Composition/HelperStructs.hpp"
+
+using namespace Lettuce::Composition;
+
+auto Compositor::CreateFont(const FontDesc& desc) -> Font { return {}; }
+
+void Compositor::DestroyFont(Font font)
+{
+    impl->appQueue.addCommand(OpCode::DestroyFont, font.get(), {});
+}
+
+void Compositor::UploadToAtlasTexture(TextureView atlas, std::span<const GlyphUpload> uploads) {}

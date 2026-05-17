@@ -13,11 +13,11 @@
 
 using namespace Lettuce::Core;
 
-Pipeline Device::CreatePipeline(const PrimitiveShadingPipelineDesc& desc)
+auto Device::CreatePipeline(const PrimitiveShadingPipelineDesc& desc) -> Pipeline
 {
     VkPipelineInputAssemblyStateCreateInfo inputAssemblyState = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO,
-        .topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, 
+        .topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
     };
     VkPipelineViewportStateCreateInfo viewportState =
     {
@@ -31,7 +31,7 @@ Pipeline Device::CreatePipeline(const PrimitiveShadingPipelineDesc& desc)
         .depthClampEnable = VK_FALSE,
         .rasterizerDiscardEnable = VK_FALSE,
         .polygonMode = VK_POLYGON_MODE_FILL,
-        .cullMode = VK_CULL_MODE_FRONT_BIT,
+        .cullMode = VK_CULL_MODE_BACK_BIT,
         .frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE,
         //.lineWidth // dynamic;
     };
@@ -47,6 +47,16 @@ Pipeline Device::CreatePipeline(const PrimitiveShadingPipelineDesc& desc)
         .depthTestEnable = VK_FALSE,
         .depthWriteEnable = VK_FALSE,
     };
+    if (desc.depthStencilAttachmentFormat)
+    {
+        depthStencilState.depthTestEnable = VK_TRUE;
+        depthStencilState.depthWriteEnable = VK_TRUE;
+        depthStencilState.depthCompareOp = VK_COMPARE_OP_LESS;
+        depthStencilState.depthBoundsTestEnable = VK_FALSE;
+        depthStencilState.stencilTestEnable = VK_FALSE;
+        depthStencilState.minDepthBounds = 0.0f;
+        depthStencilState.maxDepthBounds = 1.0f;
+    }
 
     VkPipelineColorBlendAttachmentState colorBlendAttachment = {
         .blendEnable = VK_FALSE,
@@ -147,7 +157,7 @@ Pipeline Device::CreatePipeline(const PrimitiveShadingPipelineDesc& desc)
     return impl->pipelines.allocate({ pipeline, VK_PIPELINE_BIND_POINT_GRAPHICS });
 }
 
-Pipeline Device::CreatePipeline(const MeshShadingPipelineDesc& desc)
+auto Device::CreatePipeline(const MeshShadingPipelineDesc& desc) -> Pipeline
 {
     VkPipelineViewportStateCreateInfo viewportState =
     {
@@ -161,7 +171,7 @@ Pipeline Device::CreatePipeline(const MeshShadingPipelineDesc& desc)
         .depthClampEnable = VK_FALSE,
         .rasterizerDiscardEnable = VK_FALSE,
         .polygonMode = VK_POLYGON_MODE_FILL,
-        .cullMode = VK_CULL_MODE_FRONT_BIT,
+        .cullMode = VK_CULL_MODE_BACK_BIT,
         .frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE,
         //.lineWidth // dynamic;
     };
@@ -177,6 +187,16 @@ Pipeline Device::CreatePipeline(const MeshShadingPipelineDesc& desc)
         .depthTestEnable = VK_FALSE,
         .depthWriteEnable = VK_FALSE,
     };
+    if (desc.depthStencilAttachmentFormat)
+    {
+        depthStencilState.depthTestEnable = VK_TRUE;
+        depthStencilState.depthWriteEnable = VK_TRUE;
+        depthStencilState.depthCompareOp = VK_COMPARE_OP_LESS;
+        depthStencilState.depthBoundsTestEnable = VK_FALSE;
+        depthStencilState.stencilTestEnable = VK_FALSE;
+        depthStencilState.minDepthBounds = 0.0f;
+        depthStencilState.maxDepthBounds = 1.0f;
+    }
 
     VkPipelineColorBlendAttachmentState colorBlendAttachment = {
         .blendEnable = VK_FALSE,
@@ -235,19 +255,23 @@ Pipeline Device::CreatePipeline(const MeshShadingPipelineDesc& desc)
         renderingCI.stencilAttachmentFormat = format;
     }
 
+    auto taskEntryPoint = desc.taskEntryPoint ? std::string(*desc.taskEntryPoint) : "";
+    auto meshEntryPoint = std::string(desc.meshEntryPoint);
+    auto fragEntryPoint = std::string(desc.fragEntryPoint);
+
     auto& shaders = impl->shaders;
     std::vector<VkPipelineShaderStageCreateInfo> stages(2);
     stages[0] = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
         .stage = VK_SHADER_STAGE_MESH_BIT_EXT,
         .module = shaders.get(desc.meshShaderBinary),
-        .pName = std::string(desc.meshEntryPoint).c_str(),
+        .pName = meshEntryPoint.c_str(),
     };
     stages[1] = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
         .stage = VK_SHADER_STAGE_FRAGMENT_BIT,
         .module = shaders.get(desc.fragShaderBinary),
-        .pName = std::string(desc.fragEntryPoint).c_str(),
+        .pName = fragEntryPoint.c_str(),
     };
     if (desc.taskShaderBinary != std::nullopt && desc.taskEntryPoint != std::nullopt)
     {
@@ -255,8 +279,8 @@ Pipeline Device::CreatePipeline(const MeshShadingPipelineDesc& desc)
         stages[2] = {
             .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
             .stage = VK_SHADER_STAGE_TASK_BIT_EXT,
-            .module = shaders.get(desc.taskShaderBinary.value()),
-            .pName = std::string(desc.taskEntryPoint.value()).c_str(),
+            .module = shaders.get(*desc.taskShaderBinary),
+            .pName = taskEntryPoint.c_str(),
         };
     }
     auto layout = impl->descriptorTables.get(desc.descriptorTable).pipelineLayout;
@@ -283,13 +307,14 @@ Pipeline Device::CreatePipeline(const MeshShadingPipelineDesc& desc)
     return impl->pipelines.allocate({ pipeline, VK_PIPELINE_BIND_POINT_GRAPHICS });
 }
 
-Pipeline Device::CreatePipeline(const ComputePipelineDesc& desc)
+auto Device::CreatePipeline(const ComputePipelineDesc& desc) -> Pipeline
 {
+    auto entryName = std::string(desc.compEntryPoint);
     VkPipelineShaderStageCreateInfo stageCI = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
         .stage = VK_SHADER_STAGE_COMPUTE_BIT,
         .module = impl->shaders.get(desc.compShaderBinary),
-        .pName = std::string(desc.compEntryPoint).c_str(),
+        .pName = entryName.c_str(),
     };
 
     VkComputePipelineCreateInfo cpipelineCI = {

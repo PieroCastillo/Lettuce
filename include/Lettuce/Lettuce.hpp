@@ -4,6 +4,13 @@
 #include "Core/HelperStructs.hpp"
 #include "Core/ResourcePool.hpp"
 
-// allocators
-#include "Core/Allocators/LinearAllocator.hpp"
-#include "Core/Allocators/IGPUMemoryResource.hpp"
+// composition
+#include "Composition/api.hpp"
+
+// rendering
+#include "Rendering/api.hpp"
+#include "Rendering/HelperStructs.hpp"
+#include "Rendering/SceneGraphImpl.hpp"
+
+// utils
+#include "Utils/api.hpp"

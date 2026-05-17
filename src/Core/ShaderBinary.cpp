@@ -5,7 +5,7 @@
 
 using namespace Lettuce::Core;
 
-ShaderBinary Device::CreateShader(const ShaderBinaryDesc& desc)
+auto Device::CreateShader(const ShaderBinaryDesc& desc) -> ShaderBinary
 {
     VkShaderModuleCreateInfo shaderCI = {
         .sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,

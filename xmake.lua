@@ -4,12 +4,14 @@ add_rules("mode.debug", "mode.release")
 add_rules("plugin.compile_commands.autoupdate", {outputdir = ".vscode"})
 
 add_requires("vulkansdk")
+add_requires("vulkan-memory-allocator")
 add_requires("volk")
 add_requires("glfw")
 add_requires("glm")
 add_requires("fastgltf")
 add_requires("imgui")
 add_requires("ktx", { configs={ vulkan=true, ktx2=true, decoder=true} })
+add_requires("meshoptimizer")
 
 local v = ("0.0.1.0"):split("%.")
 add_defines("VARIANT_VERSION=" .. (v[1] or 0),
@@ -28,15 +30,63 @@ target("Lettuce")
     set_kind("shared")
     add_includedirs("include/")
     add_headerfiles("include/Lettuce/**.hpp")
-    add_files("src/Core/**.cpp")
-    add_packages("volk", "glfw", "ktx", "glm", "fastgltf")
+    add_files("src/**.cpp")
+    add_packages("volk", "glfw", "ktx", "glm", "fastgltf", "meshoptimizer", "vulkan-memory-allocator")
     add_rules("utils.symbols.export_all", {export_classes = true})
 
+    after_build(function (target) 
+        import("core.base.process")
+
+        local slang_files = {}
+        for _, f in ipairs(os.files("src/**.slang")) do
+            if not f:endswith(".part.slang") then
+                table.insert(slang_files, f)
+            end
+        end
+
+        local outdir = path.absolute(target:targetdir())
+        os.mkdir(outdir)
+
+        if #slang_files ~= 0 then
+            for _, f in ipairs(slang_files) do
+                local outfile = path.join(outdir, path.basename(f) .. ".spv")
+
+                local args = { 
+                    '-matrix-layout-column-major',
+                    '-fvk-use-entrypoint-name',
+                    '-fvk-use-scalar-layout', 
+                    "-profile", 
+                    "spirv_1_6",
+                    "-capability", 
+                    "SPV_EXT_descriptor_indexing",
+                    "-target", "spirv",
+                    "-o", outfile, f}
+
+                local proc = process.openv("slangc", args)
+                local ok, status = proc:wait()
+                proc:close()
+
+                if ok < 0 then
+                    print(string.format("warning: failed to compile %s", f))
+                else
+                    print(string.format("compiled %s -> %s", f, path.relative(outfile, outdir)))
+                end
+            end       
+        end
+    end)
+
 local samples = {
-    "cubes",
+    "asyncRecord",
+    "cubemap",
     "grass",
     "helloTriangle",
     "helloTriangleMesh",
+    "indirectDrawing",
+    "loadModel",
+    "movingSquares",
+    "pbr",
+    "textureLoad",
+    "uniform",
 }
 
 for _, name in ipairs(samples) do 
@@ -45,12 +95,17 @@ for _, name in ipairs(samples) do
         add_deps("Lettuce")
         add_includedirs("include")
         add_files("samples/" .. name .. "/app.cpp")
-        add_packages("volk", "glfw", "glm", "imgui", "fastgltf", "slang")
+        add_packages("volk", "glfw", "glm", "imgui", "fastgltf", "slang", "meshoptimizer")
         
         after_build(function (target)
             import("core.base.process")
 
-            local slang_files = os.files("samples/" .. name .. "/*.slang")
+            local slang_files = {}
+            for _, f in ipairs(os.files("samples/" .. name .. "/*.slang")) do
+                if not f:endswith(".part.slang") then
+                    table.insert(slang_files, f)
+                end
+            end
 
             local outdir = path.absolute(target:targetdir())
             os.mkdir(outdir)
@@ -61,19 +116,12 @@ for _, name in ipairs(samples) do
 
                     local args = { 
                         '-matrix-layout-column-major',
-                        -- '-fspv-reflect', 
-                        -- '-fvk-use-scalar-layout', 
-                        -- '-preserve-params', 
+                        '-fvk-use-entrypoint-name',
+                        '-fvk-use-scalar-layout', 
                         "-profile", 
-                        "spirv_1_4",
-                        -- "-capability", 
-                        -- "SPV_EXT_descriptor_indexing",
-                        -- "-capability", 
-                        -- "SPV_KHR_fragment_shader_barycentric",
+                        "spirv_1_6",
                         "-capability", 
-                        "meshshading",
-                        -- "-capability", 
-                        -- "vk_mem_model", 
+                        "SPV_EXT_descriptor_indexing",
                         "-target", "spirv",
                         "-o", outfile, f}
 

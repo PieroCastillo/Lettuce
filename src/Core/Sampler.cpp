@@ -5,7 +5,7 @@
 
 using namespace Lettuce::Core;
 
-Sampler Device::CreateSampler(const SamplerDesc& desc)
+auto Device::CreateSampler(const SamplerDesc& desc) -> Sampler
 {
     VkSamplerCreateInfo samplerCI = {
         .sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
@@ -21,7 +21,7 @@ Sampler Device::CreateSampler(const SamplerDesc& desc)
         .compareEnable = desc.depthCompare,
         .compareOp = desc.depthCompare ? VK_COMPARE_OP_LESS_OR_EQUAL : VK_COMPARE_OP_ALWAYS,
         .minLod = 0,
-        .maxLod = VK_LOD_CLAMP_NONE,
+        .maxLod = 0,
         .borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK,
         .unnormalizedCoordinates = VK_FALSE,
     };

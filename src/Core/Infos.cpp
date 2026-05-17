@@ -14,20 +14,14 @@
 
 using namespace Lettuce::Core;
 
-BufferInfo Device::GetBufferInfo(Buffer buffer) const
+auto Device::GetMemoryViewInfo(MemoryView view) const -> MemoryViewInfo
 {
-    auto res = impl->buffers.get(buffer);
-    return { res.size, res.cpuAddress, res.gpuAddress };
+    auto res = impl->memories.get(view);
+    return { res.size, res.cpuAddress, res.gpuAddress, res.memoryOffset };
 }
 
-ResourceInfo Device::GetResourceInfo(Texture texture) const
+auto Device::GetResourceInfo(TextureView view) const -> TextureViewInfo
 {
-    auto res = impl->textures.get(texture);
-    return { res.size, res.width, res.height };
-}
-
-ResourceInfo Device::GetResourceInfo(RenderTarget renderTarget) const
-{
-    auto res = impl->renderTargets.get(renderTarget);
-    return { res.size, res.width, res.height };
+    auto res = impl->textures.get(view);
+    return { res.size, res.width, res.height, res.memoryOffset };
 }

@@ -13,13 +13,14 @@
 #include <volk.h>
 
 // project headers
+#include "Lettuce/helper.hpp"
 #include "Lettuce/Core/api.hpp"
 #include "Lettuce/Core/DeviceImpl.hpp"
 #include "Lettuce/Core/common.hpp"
 
 using namespace Lettuce::Core;
 
-CommandAllocator Device::CreateCommandAllocator(const CommandAllocatorDesc& desc)
+auto Device::CreateCommandAllocator(const CommandAllocatorDesc& desc) -> CommandAllocator
 {
     VkCommandPoolCreateInfo poolCI = {
         .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
@@ -50,7 +51,7 @@ void Device::Reset(CommandAllocator cmdAlloc)
     handleResult(vkResetCommandPool(impl->m_device, impl->commandAllocators.get(cmdAlloc).pool, 1));
 }
 
-CommandBuffer Device::AllocateCommandBuffer(CommandAllocator cmdAlloc)
+auto Device::AllocateCommandBuffer(CommandAllocator cmdAlloc) -> CommandBuffer
 {
     VkCommandBufferAllocateInfo cmdAI = {
         .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
@@ -69,7 +70,6 @@ CommandBuffer Device::AllocateCommandBuffer(CommandAllocator cmdAlloc)
 
     return CommandBuffer{ CommandBufferImpl{ impl,  (uint64_t)cmd } };
 }
-
 
 void Device::Submit(const CommandBufferSubmitDesc& desc)
 {
@@ -127,7 +127,7 @@ void Device::Submit(const CommandBufferSubmitDesc& desc)
             .sType = VK_STRUCTURE_TYPE_SEMAPHORE_SUBMIT_INFO,
             .semaphore = semaphore,
             .value = waitValue,
-            .stageMask = VK_PIPELINE_STAGE_NONE,
+            .stageMask = VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT,
             .deviceIndex = 0,
         };
         // signal
@@ -135,20 +135,21 @@ void Device::Submit(const CommandBufferSubmitDesc& desc)
             .sType = VK_STRUCTURE_TYPE_SEMAPHORE_SUBMIT_INFO,
             .semaphore = semaphore,
             .value = signalValue,
-            .stageMask = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
+            .stageMask = VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT,
             .deviceIndex = 0,
         };
 
         submits[i] = {
             .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO_2,
-            .waitSemaphoreInfoCount = 1,
+            .waitSemaphoreInfoCount = 1u,
             .pWaitSemaphoreInfos = &semInfos[2 * i],
             .commandBufferInfoCount = (uint32_t)(desc.commandBuffers[i].size()),
             .pCommandBufferInfos = &cmdInfos[i * maxCmdLevels],
             .signalSemaphoreInfoCount = 1,
             .pSignalSemaphoreInfos = &semInfos[2 * i + 1],
         };
-        ++waitValue;
+        
+        waitValue = signalValue;
         ++signalValue;
     }
 
@@ -159,7 +160,7 @@ void Device::Submit(const CommandBufferSubmitDesc& desc)
             .sType = VK_STRUCTURE_TYPE_SEMAPHORE_SUBMIT_INFO,
             .semaphore = semaphore,
             .value = waitValue,
-            .stageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+            .stageMask = VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT,
             .deviceIndex = 0,
         };
         // signal binary semaphore
@@ -167,7 +168,7 @@ void Device::Submit(const CommandBufferSubmitDesc& desc)
         semInfos[semInfos.size() - 1] = {
             .sType = VK_STRUCTURE_TYPE_SEMAPHORE_SUBMIT_INFO,
             .semaphore = swp.presentSemaphores[(int)(swp.currentImageIndex)],
-            .stageMask = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
+            .stageMask = VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT,
             .deviceIndex = 0,
         };
 
