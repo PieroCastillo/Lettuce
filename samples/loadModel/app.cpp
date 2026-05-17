@@ -125,16 +125,20 @@ Pipeline cullPipeline;
 Pipeline rgbPipeline;
 CommandAllocator cmdAlloc;
 
-// Allocators::LinearAllocator memalloc;
-// Allocators::LinearAllocator devalloc;
 MemoryView mvSceneData;
 MemoryView mvIndexB, mvVertexB, mvInstances, mvMeshes, mvPrimitives, mvInstancedPrimitives;
 MemoryView mvIndirectB;
 MemoryView mvDebugBuffer, mvPickInstanceData;
-IndirectSet isIndirect;
-RenderTarget depthTarget;
 
-Texture tPickTexture;
+MemoryViewInfo mviSceneData;
+MemoryViewInfo mviIndexB, mviVertexB, mviInstances, mviMeshes, mviPrimitives, mviInstancedPrimitives;
+MemoryViewInfo mviIndirectB;
+MemoryViewInfo mviDebugBuffer, mviPickInstanceData;
+
+IndirectSet isIndirect;
+
+TextureView tDepthTarget;
+TextureView tPickTexture;
 
 std::vector<MeshInfo> meshes;
 std::vector<PrimitiveInfo> primitives;
@@ -144,16 +148,6 @@ constexpr uint32_t debugBufferItemSize = 4 * sizeof(uint32_t);
 
 FrameTimer timer;
 CameraState camera;
-
-inline uint8_t firstByte(const MemoryView& mv)
-{
-    return *(uint8_t*)mv.cpuAddress;
-}
-
-inline uint64_t firstUInt64(const MemoryView& mv)
-{
-    return *(uint64_t*)mv.cpuAddress;
-}
 
 glm::mat4 calculateViewProjection(
     CameraState& cam,
@@ -234,7 +228,7 @@ void UpdateCamera()
         yprev = ypos;
     }
 
-    ((SceneData*)(mvSceneData.cpuAddress))[0].viewProj = calculateViewProjection(camera, xpos, ypos, xprev, yprev,
+    ((SceneData*)(mviSceneData.cpuAddress))[0].viewProj = calculateViewProjection(camera, xpos, ypos, xprev, yprev,
         mousePressed, wKeyPressed, aKeyPressed, sKeyPressed, dKeyPressed,
         dt, 60.0f, width / float(height), 0.1f, 100.0f);
 
@@ -282,35 +276,22 @@ void initLettuce()
     };
     cmdAlloc = device.CreateCommandAllocator(cmdAllocDesc);
 
-    Allocators::LinearAllocatorDesc lindesc[] =
-    { {
-           .maxBufferMemorySize = 50 * 1024 * 1024, // 50 MB
-           .maxImageMemorySize = 16,
-           .maxRenderTargetsMemorySize = 16,
-           .cpuVisible = true,
-       },
-      {
-           .maxBufferMemorySize = 16,
-           .maxImageMemorySize = 10 * 1024 * 1024, // 10 MB
-           .maxRenderTargetsMemorySize = 16 * 1024 * 1024, // 16 MB
-           .cpuVisible = false,
-    } };
-    memalloc.Create(device, lindesc[0]);
-    devalloc.Create(device, lindesc[1]);
+    mvSceneData = device.CreateMemoryView({ sizeof(SceneData), true });
+    mviSceneData = device.GetMemoryViewInfo(mvSceneData);
 
-    mvSceneData = memalloc.AllocateMemory(sizeof(SceneData));
-    mvPickInstanceData = memalloc.AllocateMemory(sizeof(uint32_t));
+    mvPickInstanceData = device.CreateMemoryView({ sizeof(uint32_t), true });
+    mviPickInstanceData = device.GetMemoryViewInfo(mvPickInstanceData);
 
-    TextureDesc pickDesc = {
+    TextureViewDesc pickDesc = {
         .width = width,
         .height = height,
         .depth = 1,
         .format = Format::Raw_R32_UInt,
         .mipCount = 1,
         .layerCount = 1,
-        .isCubeMap = false,
+        .cpuVisible = false,
     };
-    tPickTexture = devalloc.AllocateTexture(pickDesc);
+    tPickTexture = device.CreateTextureView(pickDesc);
 
     IndirectSetDesc isDesc =
     {
@@ -320,9 +301,11 @@ void initLettuce()
     };
     isIndirect = device.CreateIndirectSet(isDesc);
     mvIndirectB = device.GetIndirectSetView(isIndirect);
+    mviIndirectB = device.GetMemoryViewInfo(mvIndirectB);
 
     // DEBUG BUFFER, CPU READEABLE
-    mvDebugBuffer = memalloc.AllocateMemory(debugBufferCount * debugBufferItemSize);
+    mvDebugBuffer = device.CreateMemoryView({ debugBufferCount * debugBufferItemSize, true });
+    mviDebugBuffer = device.GetMemoryViewInfo(mvDebugBuffer);
 
     RenderTargetDesc depthDesc = {
         .width = width,
@@ -330,7 +313,7 @@ void initLettuce()
         .type = RenderTargetType::DepthStencilDS40,
         .defaultClearValue = DepthStencilClear {1.0f, 0},
     };
-    depthTarget = devalloc.AllocateRenderTarget(depthDesc);
+    tDepthTarget = device.CreateTextureView(depthDesc);
 }
 
 void createRenderingObjects()
@@ -345,7 +328,7 @@ void createRenderingObjects()
     DescriptorTableDesc descriptorTableDesc = { 4,4,4 };
     descriptorTable = device.CreateDescriptorTable(descriptorTableDesc);
 
-    std::array<std::pair<uint32_t, Texture>, 1> texDescs;
+    std::array<std::pair<uint32_t, TextureView>, 1> texDescs;
     texDescs[0] = { 0, tPickTexture };
 
     PushResourceDescriptorsDesc pushDtDesc = {
@@ -459,15 +442,20 @@ void loadModel()
         ++meshCount;
     }
 
-    mvMeshes = memalloc.AllocateMemory(sizeof(MeshInfo) * meshes.size());
-    mvPrimitives = memalloc.AllocateMemory(sizeof(PrimitiveInfo) * primitives.size());
-    mvVertexB = memalloc.AllocateMemory(sizeof(Vertex) * vertexVec.size());
-    mvIndexB = memalloc.AllocateMemory(sizeof(uint32_t) * indexVec.size());
+    mvMeshes = device.CreateMemoryView({ sizeof(MeshInfo) * meshes.size(), true });
+    mvPrimitives = device.CreateMemoryView({ sizeof(PrimitiveInfo) * primitives.size(), true });
+    mvVertexB = device.CreateMemoryView({ sizeof(Vertex) * vertexVec.size(), true });
+    mvIndexB = device.CreateMemoryView({ sizeof(uint32_t) * indexVec.size(), true });
 
-    memcpy(mvMeshes.cpuAddress, meshes.data(), sizeof(MeshInfo) * meshes.size());
-    memcpy(mvPrimitives.cpuAddress, primitives.data(), sizeof(PrimitiveInfo) * primitives.size());
-    memcpy(mvVertexB.cpuAddress, vertexVec.data(), sizeof(Vertex) * vertexVec.size());
-    memcpy(mvIndexB.cpuAddress, indexVec.data(), sizeof(uint32_t) * indexVec.size());
+    mviMeshes = device.GetMemoryViewInfo(mvMeshes);
+    mviPrimitives = device.GetMemoryViewInfo(mvPrimitives);
+    mviVertexB = device.GetMemoryViewInfo(mvVertexB);
+    mviIndexB = device.GetMemoryViewInfo(mvIndexB);
+
+    memcpy(mviMeshes.cpuAddress, meshes.data(), sizeof(MeshInfo) * meshes.size());
+    memcpy(mviPrimitives.cpuAddress, primitives.data(), sizeof(PrimitiveInfo) * primitives.size());
+    memcpy(mviVertexB.cpuAddress, vertexVec.data(), sizeof(Vertex) * vertexVec.size());
+    memcpy(mviIndexB.cpuAddress, indexVec.data(), sizeof(uint32_t) * indexVec.size());
 }
 
 uint32_t instanceCount = 0;
@@ -511,12 +499,16 @@ void loadInstances()
         }
     }
 
-    mvInstances = memalloc.AllocateMemory(sizeof(uint32_t) + (sizeof(Instance) * instances.size()));
-    mvInstancedPrimitives = memalloc.AllocateMemory(sizeof(InstancedPrimitive) * instancedPrimitivesCount);
+    mvInstances = device.CreateMemoryView({ sizeof(uint32_t) + (sizeof(Instance) * instances.size()), true });
+    mvInstancedPrimitives = device.CreateMemoryView({ sizeof(InstancedPrimitive) * instancedPrimitivesCount, true });
+
+    mviInstances = device.GetMemoryViewInfo(mvInstances);
+    mviInstancedPrimitives = device.GetMemoryViewInfo(mvInstancedPrimitives);
+
     // instances Buffer layout: [ count | instances ]
     instanceCount = instances.size();
-    *(uint32_t*)(mvInstances.cpuAddress) = instances.size();
-    memcpy(sizeof(uint32_t) + (uint8_t*)(mvInstances.cpuAddress), instances.data(), sizeof(Instance) * instances.size());
+    *(uint32_t*)(mviInstances.cpuAddress) = instances.size();
+    memcpy(sizeof(uint32_t) + (uint8_t*)(mviInstances.cpuAddress), instances.data(), sizeof(Instance) * instances.size());
 }
 
 void mainLoop()
@@ -553,7 +545,7 @@ void mainLoop()
             }
         };
         AttachmentDesc depthAttachment = {
-            .renderTarget = depthTarget,
+            .renderTarget = tDepthTarget,
             .loadOp = LoadOp::Clear,
         };
 
@@ -651,7 +643,7 @@ void mainLoop()
         }
         else
         {
-            *((uint32_t*)mvPickInstanceData.cpuAddress) = 0;
+            *((uint32_t*)mviPickInstanceData.cpuAddress) = 0;
         }
 
         std::array<std::span<CommandBuffer>, 1> cmds = { std::span(&cmd, 1) };
@@ -667,8 +659,8 @@ void mainLoop()
         device.DisplayFrame(swapchain);
         device.WaitFor(QueueType::Graphics);
         if (isPressed)
-            std::println("picked instance: {}", *((uint32_t*)mvPickInstanceData.cpuAddress) - 1);
-        // auto baseGenDrawCallPtr = (VkDrawIndirectCommand*)mvDebugBuffer.cpuAddress;
+            std::println("picked instance: {}", *((uint32_t*)mviPickInstanceData.cpuAddress) - 1);
+        // auto baseGenDrawCallPtr = (VkDrawIndirectCommand*)mviDebugBuffer.cpuAddress;
         // for (size_t i = 0; i < debugBufferCount; ++i) {
         //     auto genDrawCallPtr = (baseGenDrawCallPtr + i);
         //     std::print(" {},{},{},{} |", genDrawCallPtr->vertexCount, genDrawCallPtr->instanceCount, genDrawCallPtr->firstVertex, genDrawCallPtr->firstVertex);
@@ -686,8 +678,17 @@ void cleanupLettuce()
     device.Destroy(cullPipeline);
     device.Destroy(descriptorTable);
 
-    devalloc.Destroy();
-    memalloc.Destroy();
+    std::vector<MemoryView> destroyableMemoryViews = {
+        mvSceneData,
+        mvIndexB, mvVertexB, mvInstances, mvMeshes, mvPrimitives, mvInstancedPrimitives,
+        mvDebugBuffer, mvPickInstanceData,
+    };
+    for (auto mv : destroyableMemoryViews)
+        device.Destroy(mv);
+
+    device.Destroy(tDepthTarget);
+    device.Destroy(tPickTexture);
+
     device.Destroy(isIndirect);
     device.Destroy(cmdAlloc);
     device.Destroy(swapchain);

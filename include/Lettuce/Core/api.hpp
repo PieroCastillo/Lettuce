@@ -311,6 +311,7 @@ namespace Lettuce::Core
         uint32_t layerBaseLevel;
         uint32_t layerCount;
         uint32_t x, y, width, height;
+        uint32_t dstOffset;
     };
 
     struct PushAllocationsDesc
@@ -407,6 +408,8 @@ namespace Lettuce::Core
         void MemoryCopy(const HostToTextureCopy&);
         void MemoryCopy(const MemoryToMemoryCopy&);
         void MemoryCopy(const MemoryToTextureCopy&);
+
+        [[nodiscard]] auto GetImplementation() const noexcept -> DeviceImpl* { return impl; }
     };
 
     struct CommandBuffer
@@ -446,6 +449,8 @@ namespace Lettuce::Core
         void PrepareTexture(TextureView);
 
         void ResetCount(IndirectSet);
+
+        [[nodiscard]] auto GetImplementation() const noexcept -> const CommandBufferImpl& { return impl; }
     };
 }
 #endif // LETTUCE_CORE_API_HPP
