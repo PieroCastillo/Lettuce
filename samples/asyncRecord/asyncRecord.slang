@@ -42,9 +42,9 @@ VSOutput vertexMain(uint vertexID: SV_VulkanVertexID)
 
     float val = 0.5;
     float2 positions[3] = {
-        float2(0.0, -val),
+        float2(-val, val),
         float2(val, val),
-        float2(-val, val)
+        float2(0.0, -val),
     };
 
     Ptr<ParticleBuffer> particles = reinterpret<Ptr<ParticleBuffer>>(pc.particleAddress);

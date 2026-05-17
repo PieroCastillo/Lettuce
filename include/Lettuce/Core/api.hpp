@@ -291,12 +291,15 @@ namespace Lettuce::Core
         MemoryView srcMemory;
         MemoryView dstMemory;
         uint64_t size;
+        uint32_t srcOffset;
+        uint32_t dstOffset;
     };
 
     struct MemoryToTextureCopy
     {
         MemoryView srcMemory;
         TextureView dstTexture;
+        uint32_t srcOffset;
         uint32_t mipmapLevel;
         uint32_t layerBaseLevel;
         uint32_t layerCount;
@@ -426,7 +429,7 @@ namespace Lettuce::Core
         void MemoryCopy(const MemoryToTextureCopy&);
         // Copy from offset[x,y], range[width, height] of the TextureView to the start of the buffer
         void MemoryCopy(const TextureToMemory&);
-        void Fill(MemoryView view, uint32_t value, uint32_t count);
+        void Fill(MemoryView view, uint32_t offset, uint32_t value, uint32_t count);
 
         void ClearTexture(const ClearTextureDesc&);
 

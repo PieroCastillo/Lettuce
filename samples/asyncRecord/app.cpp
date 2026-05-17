@@ -42,7 +42,6 @@ DescriptorTable descriptorTable;
 Pipeline rgbPipeline;
 
 Rendering::AsyncRecorder rec;
-Allocators::LinearAllocator alloc;
 MemoryView particlesView;
 
 ParticleBuffer particlesData;
@@ -87,21 +86,15 @@ void initLettuce()
         .userDataSize = 0,
     };
 
-    Allocators::LinearAllocatorDesc linAllocDesc = {
-        .maxBufferMemorySize = sizeof(ParticleBuffer),
-                .maxImageMemorySize = 16,
-        .maxRenderTargetsMemorySize = 16,
-        .cpuVisible = true,
-    };
-    alloc.Create(device, linAllocDesc);
-    particlesView = alloc.AllocateMemory(sizeof(ParticleBuffer));
+    particlesView = device.CreateMemoryView({ sizeof(ParticleBuffer),true });
+    auto pvInfo = device.GetMemoryViewInfo(particlesView);
 
     // move data to gpu buffer
     particlesData.idx = 0;
     particlesData.particles[0] = { { .4f,.4f,.4f}, {.4f,.4f} };
     particlesData.particles[1] = { { .7f,.7f,.7f}, {-.4f,-.4f} };
 
-    memcpy(particlesView.cpuAddress, &particlesData, sizeof(ParticleBuffer));
+    memcpy(pvInfo.cpuAddress, &particlesData, sizeof(ParticleBuffer));
 
     Rendering::AsyncRecorderDesc asyncRecDesc = {
         .device = device,
@@ -166,7 +159,7 @@ void mainLoop()
         rec.Reset();
         rec.RecordAsync(std::nullopt, [&](CommandBuffer cmd, std::any _)
             {
-                cmd.Fill(particlesView, 0, 1);
+                cmd.Fill(particlesView, 0, 0, 1);
                 cmd.Barrier(copyVertBarrier);
                 AttachmentDesc colorAttachment[1] = {
                     {
@@ -189,7 +182,7 @@ void mainLoop()
         rec.Barrier();
         rec.RecordAsync(std::nullopt, [&](CommandBuffer cmd, std::any _)
             {
-                cmd.Fill(particlesView, 1, 1);
+                cmd.Fill(particlesView, 0, 1, 1);
                 cmd.Barrier(copyVertBarrier);
                 AttachmentDesc colorAttachment[1] = {
                     {
@@ -222,10 +215,11 @@ void mainLoop()
 void cleanupLettuce()
 {
     rec.Destroy();
-    alloc.Destroy();
     device.WaitFor(QueueType::Graphics);
     device.Destroy(rgbPipeline);
     device.Destroy(descriptorTable);
+
+    device.Destroy(particlesView);
 
     device.Destroy(swapchain);
     device.Destroy();

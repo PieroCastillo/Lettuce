@@ -30,96 +30,6 @@ void CommandBuffer::ClearTexture(const ClearTextureDesc& desc)
 
     vkCmdClearColorImage((VkCommandBuffer)impl.handle, imgInfo.image, VK_IMAGE_LAYOUT_GENERAL, &color, 1, &range);
 }
-/*
-auto CommandBuffer::MemoryCopy(const MemoryToMemoryCopy& copy)
-{
-    VkBufferCopy bufferCopy = {
-        .srcOffset = copy.srcMemory.offset,
-        .dstOffset = copy.dstMemory.offset,
-        .size = copy.size,
-    };
-
-    auto& buffers = impl.device->buffers;
-    vkCmdCopyBuffer(
-        (VkCommandBuffer)impl.handle,
-        buffers.get(copy.srcMemory.buffer).buffer,
-        buffers.get(copy.dstMemory.buffer).buffer,
-        1, &bufferCopy);
-}
-
-auto CommandBuffer::MemoryCopy(const MemoryToTextureCopy& copy)
-{
-    auto& dev = impl.device;
-    auto& imgInfo = dev->textures.get(copy.dstTexture);
-
-    VkBufferImageCopy imageCopy = {
-        .bufferOffset = copy.srcMemory.offset,
-        .bufferRowLength = 0,
-        .bufferImageHeight = 0,
-        .imageSubresource = {VK_IMAGE_ASPECT_COLOR_BIT, copy.mipmapLevel, copy.layerBaseLevel, copy.layerCount},
-        .imageOffset = {0,0,0},
-        .imageExtent = {imgInfo.width, imgInfo.height, 1 },
-    };
-
-    vkCmdCopyBufferToImage(
-        (VkCommandBuffer)impl.handle,
-        dev->buffers.get(copy.srcMemory.buffer).buffer,
-        imgInfo.image,
-        VK_IMAGE_LAYOUT_GENERAL, 1, &imageCopy);
-}
-
-auto CommandBuffer::MemoryCopy(const TextureToMemory& copy)
-{
-    auto& dev = impl.device;
-    auto& imgInfo = dev->textures.get(copy.srcTexture);
-
-    // I don't wanna this crashing the every moment, so I use this checks/clamps
-    auto safeX = std::clamp<int32_t>(copy.x, 0, static_cast<int32_t>(imgInfo.width) - 1);
-    auto safeY = std::clamp<int32_t>(copy.y, 0, static_cast<int32_t>(imgInfo.height) - 1);
-
-    uint32_t maxW = imgInfo.width - static_cast<uint32_t>(safeX);
-    uint32_t maxH = imgInfo.height - static_cast<uint32_t>(safeY);
-
-    auto safeW = std::clamp<uint32_t>(copy.width, 1u, maxW);
-    auto safeH = std::clamp<uint32_t>(copy.height, 1u, maxH);
-
-    // std::println("w: {} h: {} x: {} y: {}", safeW, safeH, safeX, safeY);
-
-    VkBufferImageCopy imageCopy = {
-        .bufferOffset = copy.dstMemory.offset,
-        .bufferRowLength = 0,
-        .bufferImageHeight = 0,
-        .imageSubresource = {VK_IMAGE_ASPECT_COLOR_BIT, copy.mipmapLevel, copy.layerBaseLevel, copy.layerCount},
-        .imageOffset = {safeX, safeY, 0},
-        .imageExtent = {safeW, safeH, 1},
-    };
-
-    vkCmdCopyImageToBuffer((VkCommandBuffer)impl.handle, imgInfo.image, VK_IMAGE_LAYOUT_GENERAL,
-        dev->buffers.get(copy.dstMemory.buffer).buffer, 1, &imageCopy);
-}
-
-auto CommandBuffer::TextureCopy(const TextureToRenderTargetCopy& copy)
-{
-    auto& dev = impl.device;
-    auto& srcTex = dev->textures.get(copy.srcTexture);
-    auto& dstRT = dev->renderTargets.get(copy.dstRenderTarget);
-
-    if (srcTex.width != dstRT.width || srcTex.height != dstRT.height)
-    {
-        return;
-    };
-
-    VkImageCopy imgCopy = {
-        .srcSubresource = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 0},
-        .srcOffset = {0,0,0},
-        .dstSubresource = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 0},
-        .dstOffset = {0,0,0},
-        .extent = {srcTex.width, srcTex.height, 1},
-    };
-
-    vkCmdCopyImage((VkCommandBuffer)impl.handle, srcTex.image, VK_IMAGE_LAYOUT_GENERAL, dstRT.image, VK_IMAGE_LAYOUT_GENERAL, 1, &imgCopy);
-}
-*/
 
 void CommandBuffer::BeginRendering(const RenderPassDesc& desc)
 {
@@ -336,10 +246,6 @@ auto CommandBuffer::PrepareTexture(Texture texture)
     vkCmdPipelineBarrier2((VkCommandBuffer)impl.handle, &depInfo);
 }
 
-auto CommandBuffer::Fill(MemoryView view, uint32_t value, uint32_t count)
-{
-    vkCmdFillBuffer((VkCommandBuffer)impl.handle, impl.device->buffers.get(view.buffer).buffer, view.offset, count * sizeof(uint32_t), value);
-}
 */
 void CommandBuffer::ResetCount(IndirectSet indirectSet)
 {

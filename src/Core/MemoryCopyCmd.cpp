@@ -26,14 +26,38 @@ void CommandBuffer::MemoryCopy(const HostToTextureCopy& desc)
 
 }
 
-void CommandBuffer::MemoryCopy(const MemoryToMemoryCopy& desc)
+void CommandBuffer::MemoryCopy(const MemoryToMemoryCopy& copy)
 {
+    VkBufferCopy bufferCopy = {
+        .srcOffset = copy.srcOffset,
+        .dstOffset = copy.dstOffset,
+        .size = copy.size,
+    };
 
+    vkCmdCopyBuffer(
+        (VkCommandBuffer)impl.handle,
+        impl.device->memories.get(copy.srcMemory).buffer,
+        impl.device->memories.get(copy.dstMemory).buffer,
+        1, &bufferCopy);
 }
 
-void CommandBuffer::MemoryCopy(const MemoryToTextureCopy& desc)
+void CommandBuffer::MemoryCopy(const MemoryToTextureCopy& copy)
 {
+    auto& dev = impl.device;
+    auto& srcMemory = dev->memories.get(copy.srcMemory);
+    auto& dstImg = dev->textures.get(copy.dstTexture);
 
+    VkBufferImageCopy imageCopy = {
+        .bufferOffset = copy.srcOffset,
+        .bufferRowLength = 0,
+        .bufferImageHeight = 0,
+        .imageSubresource = { VK_IMAGE_ASPECT_COLOR_BIT, copy.mipmapLevel, copy.layerBaseLevel, copy.layerCount },
+        .imageOffset = { 0,0,0},
+        .imageExtent = { dstImg.width, dstImg.height, 1 },
+    };
+
+    vkCmdCopyBufferToImage((VkCommandBuffer)impl.handle, srcMemory.buffer, dstImg.image,
+        VK_IMAGE_LAYOUT_GENERAL, 1, &imageCopy);
 }
 
 void CommandBuffer::MemoryCopy(const TextureToMemory& copy)
@@ -68,7 +92,7 @@ void CommandBuffer::MemoryCopy(const TextureToMemory& copy)
         dstMemory.buffer, 1, &imageCopy);
 }
 
-void CommandBuffer::Fill(MemoryView view, uint32_t value, uint32_t count)
+void CommandBuffer::Fill(MemoryView view, uint32_t offset, uint32_t value, uint32_t count)
 {
-
+    vkCmdFillBuffer((VkCommandBuffer)impl.handle, impl.device->memories.get(view).buffer, offset, count * sizeof(uint32_t), value);
 }

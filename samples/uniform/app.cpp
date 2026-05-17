@@ -27,8 +27,8 @@ Swapchain swapchain;
 DescriptorTable descriptorTable;
 Pipeline rgbPipeline;
 CommandAllocator cmdAlloc;
-Allocators::LinearAllocator linAllocator;
 MemoryView uniformData;
+MemoryViewInfo udInfo;
 
 std::vector<uint32_t> loadSpv(std::string path)
 {
@@ -69,16 +69,8 @@ void initLettuce()
     };
     cmdAlloc = device.CreateCommandAllocator(cmdAllocDesc);
 
-    // Allocators::LinearAllocatorDesc linAllocDesc = {
-    //     .maxBufferMemorySize = 4096,
-    //             .maxImageMemorySize = 16,
-    //     .maxRenderTargetsMemorySize = 16,
-    //     .cpuVisible = true,
-    // };
-    // linAllocator.Create(device, linAllocDesc);
-    uniformData = linAllocator.AllocateMemory(3 * sizeof(float));
-
-    std::println("uniform gpu address: ", uniformData.gpuAddress);
+    uniformData = device.CreateMemoryView({3 * sizeof(float), true});
+    udInfo = device.GetMemoryViewInfo(uniformData);
 }
 
 void createRenderingObjects()
@@ -154,9 +146,9 @@ void mainLoop()
         // set uniform value, it could be set anytime
         timeT += delta_time();
         constexpr auto tpi = 2 * std::numbers::pi;
-        ((float*)uniformData.cpuAddress)[0] = 0.5f + (0.5 * std::sin(timeT));
-        ((float*)uniformData.cpuAddress)[1] = 0.5f + (0.5 * std::sin(timeT + (tpi / 3)));
-        ((float*)uniformData.cpuAddress)[2] = 0.5f + (0.5 * std::sin(timeT + (2 * tpi / 3)));
+        ((float*)udInfo.cpuAddress)[0] = 0.5f + (0.5 * std::sin(timeT));
+        ((float*)udInfo.cpuAddress)[1] = 0.5f + (0.5 * std::sin(timeT + (tpi / 3)));
+        ((float*)udInfo.cpuAddress)[2] = 0.5f + (0.5 * std::sin(timeT + (2 * tpi / 3)));
 
         cmd.BindPipeline(rgbPipeline);
         cmd.Draw(6, 1);
@@ -182,7 +174,7 @@ void cleanupLettuce()
     device.Destroy(rgbPipeline);
     device.Destroy(descriptorTable);
 
-    linAllocator.Destroy();
+    device.Destroy(uniformData);
     device.Destroy(cmdAlloc);
     device.Destroy(swapchain);
     device.Destroy();
