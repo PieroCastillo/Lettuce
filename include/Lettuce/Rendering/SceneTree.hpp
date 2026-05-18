@@ -145,8 +145,9 @@ namespace Lettuce::Rendering
     {
     private:
         const CommandBufferImpl* cmdImpl;
+        SceneTree* sTree;
     public:
-        explicit SceneTreeCommandBuffer(CommandBuffer& cmd) : cmdImpl(&cmd.GetImplementation()) {}
+        explicit SceneTreeCommandBuffer(SceneTree& sceneTree, CommandBuffer& cmd) : sTree(&sceneTree), cmdImpl(&cmd.GetImplementation()) {}
 
         void Build(const BuildGeometryClusterTemplateDesc&);
         void Build(const BuildGeometryClusterInstanceDesc&);

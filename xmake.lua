@@ -1,5 +1,6 @@
 set_languages("c++23")
 
+includes("rules/*.lua")
 add_rules("mode.debug", "mode.release")
 add_rules("plugin.compile_commands.autoupdate", {outputdir = ".vscode"})
 
@@ -33,47 +34,10 @@ target("Lettuce")
     add_files("src/**.cpp")
     add_packages("volk", "glfw", "ktx", "glm", "fastgltf", "meshoptimizer", "vulkan-memory-allocator")
     add_rules("utils.symbols.export_all", {export_classes = true})
-
-    after_build(function (target) 
-        import("core.base.process")
-
-        local slang_files = {}
-        for _, f in ipairs(os.files("src/**.slang")) do
-            if not f:endswith(".part.slang") then
-                table.insert(slang_files, f)
-            end
-        end
-
-        local outdir = path.absolute(target:targetdir())
-        os.mkdir(outdir)
-
-        if #slang_files ~= 0 then
-            for _, f in ipairs(slang_files) do
-                local outfile = path.join(outdir, path.basename(f) .. ".spv")
-
-                local args = { 
-                    '-matrix-layout-column-major',
-                    '-fvk-use-entrypoint-name',
-                    '-fvk-use-scalar-layout', 
-                    "-profile", 
-                    "spirv_1_6",
-                    "-capability", 
-                    "SPV_EXT_descriptor_indexing",
-                    "-target", "spirv",
-                    "-o", outfile, f}
-
-                local proc = process.openv("slangc", args)
-                local ok, status = proc:wait()
-                proc:close()
-
-                if ok < 0 then
-                    print(string.format("warning: failed to compile %s", f))
-                else
-                    print(string.format("compiled %s -> %s", f, path.relative(outfile, outdir)))
-                end
-            end       
-        end
-    end)
+    local slangFiles = os.files("src/**.slang")
+    if #slangFiles > 0 then
+        add_files(slangFiles, {rule = "slang"})
+    end
 
 local samples = {
     "asyncRecord",
@@ -96,128 +60,12 @@ for _, name in ipairs(samples) do
         add_includedirs("include")
         add_files("samples/" .. name .. "/app.cpp")
         add_packages("volk", "glfw", "glm", "imgui", "fastgltf", "slang", "meshoptimizer")
-        
-        after_build(function (target)
-            import("core.base.process")
-
-            local slang_files = {}
-            for _, f in ipairs(os.files("samples/" .. name .. "/*.slang")) do
-                if not f:endswith(".part.slang") then
-                    table.insert(slang_files, f)
-                end
-            end
-
-            local outdir = path.absolute(target:targetdir())
-            os.mkdir(outdir)
-
-            if #slang_files ~= 0 then
-                for _, f in ipairs(slang_files) do
-                    local outfile = path.join(outdir, path.basename(f) .. ".spv")
-
-                    local args = { 
-                        '-matrix-layout-column-major',
-                        '-fvk-use-entrypoint-name',
-                        '-fvk-use-scalar-layout', 
-                        "-profile", 
-                        "spirv_1_6",
-                        "-capability", 
-                        "SPV_EXT_descriptor_indexing",
-                        "-target", "spirv",
-                        "-o", outfile, f}
-
-                    local proc = process.openv("slangc", args)
-                    local ok, status = proc:wait()
-                    proc:close()
-
-                    if ok < 0 then
-                        print(string.format("warning: failed to compile %s", f))
-                    else
-                        print(string.format("compiled %s -> %s", f, path.relative(outfile, outdir)))
-                    end
-                end       
-            end
-
-            local hlsl_files = os.files("samples/" .. name .. "/*.hlsl")
-
-            local outdir = path.absolute(target:targetdir())
-            os.mkdir(outdir)
-
-            local dxc_path = "dxc"
-
-            if #hlsl_files ~= 0 then
-                for _, f in ipairs(hlsl_files) do
-                    local outfile = path.join(outdir, path.basename(f) .. ".spv")
-                    
-                    local profile = ''
-                    local target = ''
-                    local additional_exts = ''
-                    
-                    if f:find('%.vert%.') then
-                        profile = 'vs_6_1'
-                    elseif f:find('%.frag%.') then
-                        profile = 'ps_6_4'
-                    elseif f:find('%.comp%.') then
-                        profile = 'cs_6_1'
-                    elseif f:find('%.geom%.') then
-                        profile = 'gs_6_1'
-                    elseif f:find('%.tesc%.') then
-                        profile = 'hs_6_1'
-                    elseif f:find('%.tese%.') then
-                        profile = 'ds_6_1'
-                    elseif f:find('%.rgen%.') or f:find('%.rchit%.') or f:find('%.rmiss%.') then
-                        target = '-fspv-target-env=vulkan1.2'
-                        profile = 'lib_6_3'
-                    elseif f:find('%.mesh%.') then
-                        target = '-fspv-target-env=vulkan1.2'
-                        additional_exts = '-fspv-extension=SPV_EXT_mesh_shader'
-                        profile = 'ms_6_6'
-                    elseif f:find('%.task%.') then
-                        target = '-fspv-target-env=vulkan1.2'
-                        additional_exts = '-fspv-extension=SPV_EXT_mesh_shader'
-                        profile = 'as_6_6'
-                    end
-                    
-                    -- Extensión adicional para debugprintf
-                    if f:find('debugprintf') then
-                        additional_exts = '-fspv-extension=SPV_KHR_non_semantic_info'
-                    end
-                    
-                    -- Construir argumentos
-                    local args = {
-                        '-spirv',
-                        '-T', profile,
-                        '-E', 'main',
-                        '-fspv-extension=SPV_KHR_ray_tracing',
-                        '-fspv-extension=SPV_KHR_multiview',
-                        '-fspv-extension=SPV_KHR_shader_draw_parameters',
-                        '-fspv-extension=SPV_EXT_descriptor_indexing',
-                        '-fspv-extension=SPV_KHR_ray_query',
-                        '-fspv-extension=SPV_KHR_fragment_shading_rate',
-                    }
-                    
-                    if additional_exts ~= '' then
-                        table.insert(args, additional_exts)
-                    end
-                    if target ~= '' then
-                        table.insert(args, target)
-                    end
-                    
-                    table.insert(args, f)
-                    table.insert(args, '-Fo')
-                    table.insert(args, outfile)
-                    
-                    print(string.format("Compiling %s", f))
-                    
-                    local proc = process.openv(dxc_path, args)
-                    local ok, status = proc:wait()
-                    proc:close()
-                    
-                    if ok < 0 then
-                        print(string.format("warning: failed to compile %s", f))
-                    else
-                        print(string.format("compiled %s -> %s", f, path.relative(outfile, outdir)))
-                    end
-                end       
-            end
-        end)
+        local slangFiles = os.files("samples/" .. name .. "/**.slang")
+        local hlslFiles = os.files("samples/" .. name .. "/**.hlsl")
+        if #slangFiles > 0 then
+            add_files(slangFiles, {rule = "slang"})
+        end
+        if #hlslFiles > 0 then
+            add_files(hlslFiles, {rule = "hlsl"})
+        end
 end

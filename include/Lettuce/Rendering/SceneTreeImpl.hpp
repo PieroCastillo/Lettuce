@@ -14,9 +14,16 @@ namespace Lettuce::Rendering
     {
         Device* device = nullptr;
 
-       void Create(const SceneTreeDesc& desc);
-       void Destroy();
+        DescriptorTable dtSceneTree;
+        Pipeline pBuildGeometryClusterTemplate;
+        Pipeline pBuildGeometryClusterInstance;
+        Pipeline pBuildScenePartition;
+        Pipeline pUpdateGeometryClusterTemplate;
+        Pipeline pUpdateGeometryClusterInstance;
+        Pipeline pUpdateScenePartition;
+
+        void Create(const SceneTreeDesc& desc);
+        void Destroy();
     };
 };
-
 #endif // LETTUCE_RENDERING_SCENE_TREE_IMPL_HPP
