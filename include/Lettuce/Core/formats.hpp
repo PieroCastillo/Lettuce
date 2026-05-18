@@ -5,6 +5,7 @@ Created by @PieroCastillo on 2025-01-07
 #define LETTUCE_CORE_FORMATS_HPP
 
 #include <cstdint>
+
 namespace Lettuce::Core
 {
     enum class Format : uint8_t
