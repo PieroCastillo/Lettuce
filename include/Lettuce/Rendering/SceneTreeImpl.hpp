@@ -4,12 +4,18 @@ Created by @PieroCastillo on 2026-05-17
 #ifndef LETTUCE_RENDERING_SCENE_TREE_IMPL_HPP
 #define LETTUCE_RENDERING_SCENE_TREE_IMPL_HPP
 
+// project headers
 #include "../Core/api.hpp"
+#include "../Core/ResourcePool.hpp"
 
 using namespace Lettuce::Core;
 
 namespace Lettuce::Rendering
 {
+    struct ScenePartitionData {};
+    struct GeometryClusterTemplateData {};
+    struct GeometryClusterInstanceData {};
+
     struct SceneTreeImpl
     {
         Device* device = nullptr;
@@ -21,6 +27,10 @@ namespace Lettuce::Rendering
         Pipeline pUpdateGeometryClusterTemplate;
         Pipeline pUpdateGeometryClusterInstance;
         Pipeline pUpdateScenePartition;
+
+        ResourcePool<ScenePartition, ScenePartitionData> scenePartitions;
+        ResourcePool<GeometryClusterTemplate, GeometryClusterTemplateData> templatesDatas;
+        ResourcePool<GeometryClusterInstance, GeometryClusterInstanceData> instanceDatas;
 
         void Create(const SceneTreeDesc& desc);
         void Destroy();

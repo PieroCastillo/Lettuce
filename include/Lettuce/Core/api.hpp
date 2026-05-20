@@ -412,7 +412,7 @@ namespace Lettuce::Core
         void MemoryCopy(const MemoryToMemoryCopy&);
         void MemoryCopy(const MemoryToTextureCopy&);
 
-        [[nodiscard]] auto GetImplementation() const noexcept -> DeviceImpl* { return impl; }
+        [[nodiscard]] auto GetImplementation() noexcept -> DeviceImpl* { return impl; }
     };
 
     struct CommandBuffer
@@ -453,7 +453,7 @@ namespace Lettuce::Core
 
         void ResetCount(IndirectSet);
 
-        [[nodiscard]] auto GetImplementation() const noexcept -> const CommandBufferImpl& { return impl; }
+        [[nodiscard]] auto GetImplementation() noexcept -> CommandBufferImpl* { return &impl; }
     };
 }
 #endif // LETTUCE_CORE_API_HPP

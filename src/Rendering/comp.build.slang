@@ -1,0 +1,30 @@
+const static uint computeNumThreadsX = 32;
+
+// shader inputs
+Texture2D<float4> sampledTextures[];
+SamplerState samplers[];
+RWTexture2D<float4> storageTextures[];
+
+[require(compute, spirv_1_6)]
+[numthreads(computeNumThreadsX, 1, 1)]
+void buildInstance(uint3 gid: SV_DispatchThreadID, uint3 groupThreadID: SV_GroupThreadID)
+{
+    uint localIdx = groupThreadID.x;
+    uint globalIdx = gid.x;
+}
+
+[require(compute, spirv_1_6)]
+[numthreads(computeNumThreadsX, 1, 1)]
+void buildTemplate(uint3 gid: SV_DispatchThreadID, uint3 groupThreadID: SV_GroupThreadID)
+{
+    uint localIdx = groupThreadID.x;
+    uint globalIdx = gid.x;
+}
+
+[require(compute, spirv_1_6)]
+[numthreads(computeNumThreadsX, 1, 1)]
+void buildPartition(uint3 gid: SV_DispatchThreadID, uint3 groupThreadID: SV_GroupThreadID)
+{
+    uint localIdx = groupThreadID.x;
+    uint globalIdx = gid.x;
+}

@@ -117,10 +117,12 @@ namespace Lettuce::Rendering
     };
 
     struct SceneTreeImpl;
+    struct SceneTreeCommandBuffer;
 
     struct SceneTree
     {
     private:
+        friend class SceneTreeCommandBuffer;
         SceneTreeImpl* impl = nullptr;
     public:
         void Create(const SceneTreeDesc&);
@@ -144,10 +146,10 @@ namespace Lettuce::Rendering
     struct SceneTreeCommandBuffer
     {
     private:
-        const CommandBufferImpl* cmdImpl;
+        uint64_t cmdHandle;
         SceneTree* sTree;
     public:
-        explicit SceneTreeCommandBuffer(SceneTree& sceneTree, CommandBuffer& cmd) : sTree(&sceneTree), cmdImpl(&cmd.GetImplementation()) {}
+        explicit SceneTreeCommandBuffer(SceneTree& sceneTree, CommandBuffer& cmd) : sTree(&sceneTree), cmdHandle(cmd.GetImplementation()->handle) {}
 
         void Build(const BuildGeometryClusterTemplateDesc&);
         void Build(const BuildGeometryClusterInstanceDesc&);

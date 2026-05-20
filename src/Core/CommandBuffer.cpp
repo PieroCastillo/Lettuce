@@ -117,9 +117,6 @@ void CommandBuffer::BindDescriptorTable(DescriptorTable descriptorTable, Pipelin
         1,
         &bufferIdx,
         &bufferOffset);
-
-    // push buffer addresses
-    // vkCmdPushConstants((VkCommandBuffer)impl.handle, dt.pipelineLayout, VK_SHADER_STAGE_ALL, 0, dt.pushPayloadSize, dt.pushPayloadAddress);
 }
 
 void CommandBuffer::PushAllocations(const PushAllocationsDesc& desc)
@@ -134,13 +131,6 @@ void CommandBuffer::PushAllocations(const PushAllocationsDesc& desc)
         if (idx < count)
             data[idx] = impl.device->memories.get(memView).gpuAddress;
     }
-
-    // std::print("push allocations addresses: ");
-    // for (size_t i = 0; i < count; ++i)
-    // {
-    //     std::print("{} | ", data[i]);
-    // }
-    // std::println("");
 
     vkCmdPushConstants((VkCommandBuffer)impl.handle, dt.pipelineLayout, VK_SHADER_STAGE_ALL, 0, payloadSize, data);
 }
