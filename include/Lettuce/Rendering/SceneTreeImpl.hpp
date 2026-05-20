@@ -13,8 +13,7 @@ using namespace Lettuce::Core;
 namespace Lettuce::Rendering
 {
     struct ScenePartitionData {};
-    struct GeometryClusterTemplateData {};
-    struct GeometryClusterInstanceData {};
+    struct GeometryClusterData {};
 
     struct SceneTreeImpl
     {
@@ -29,8 +28,7 @@ namespace Lettuce::Rendering
         Pipeline pUpdateScenePartition;
 
         ResourcePool<ScenePartition, ScenePartitionData> scenePartitions;
-        ResourcePool<GeometryClusterTemplate, GeometryClusterTemplateData> templatesDatas;
-        ResourcePool<GeometryClusterInstance, GeometryClusterInstanceData> instanceDatas;
+        ResourcePool<GeometryCluster, GeometryClusterData> clusterDatas;
 
         void Create(const SceneTreeDesc& desc);
         void Destroy();

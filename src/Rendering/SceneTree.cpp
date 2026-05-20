@@ -25,27 +25,23 @@ void SceneTree::Destroy()
     delete impl;
 }
 
-auto SceneTree::CreateTemplate(const GeometryClusterTemplateDesc& desc) -> GeometryClusterTemplate
+auto SceneTree::CreateCluster(const GeometryClusterDesc& desc) -> GeometryCluster
 {
-    return impl->templatesDatas.allocate({});
+    return impl->clusterDatas.allocate({});
 }
 
-auto SceneTree::CreateInstance(const GeometryClusterInstanceDesc& desc) -> GeometryClusterInstance
-{
-    return impl->instanceDatas.allocate({});
-}
 
 auto SceneTree::CreatePartition(const ScenePartitionDesc& desc) -> ScenePartition
 {
     return impl->scenePartitions.allocate({});
 }
 
-auto SceneTree::GetPartitionAddress(ScenePartition partition) const -> DeviceAddress
+auto SceneTree::GetClusterAddress(GeometryCluster) const -> DeviceAddress
 {
     return {};
 }
 
-auto SceneTree::GetTemplateAddress(GeometryClusterTemplate templateHandle) const -> DeviceAddress
+auto SceneTree::GetPartitionAddress(ScenePartition partition) const -> DeviceAddress
 {
     return {};
 }

@@ -13,12 +13,7 @@
 using namespace Lettuce::Rendering;
 using namespace Lettuce::Core;
 
-void SceneTreeCommandBuffer::Build(const BuildGeometryClusterTemplateDesc& build)
-{
-
-}
-
-void SceneTreeCommandBuffer::Build(const BuildGeometryClusterInstanceDesc& build)
+void SceneTreeCommandBuffer::Build(const BuildGeometryClusterDesc& build)
 {
 
 }
