@@ -47,6 +47,7 @@ namespace Lettuce::Core
         uint32_t transferQueueFamilyIdx;
         uint32_t maxPushAllocationsCount;
         float maxSamplerAnisotropy;
+        uint32_t preferredThreadCount;
     };
 
     enum class DeviceQueueType

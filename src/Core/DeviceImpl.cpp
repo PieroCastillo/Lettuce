@@ -500,9 +500,15 @@ void DeviceImpl::setupDevice()
     vkGetDeviceQueue(m_device, computeQueueFamilyIndex, 0, &m_computeQueue);
     vkGetDeviceQueue(m_device, transferQueueFamilyIndex, 0, &m_transferQueue);
 
+    VkPhysicalDeviceSubgroupProperties subgroupProps =
+    {
+        .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SUBGROUP_PROPERTIES,
+    };
+
     VkPhysicalDeviceDescriptorBufferPropertiesEXT dbProps =
     {
         .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_BUFFER_PROPERTIES_EXT,
+        .pNext = &subgroupProps,
     };
 
     VkPhysicalDeviceProperties2 props2 = {
@@ -519,6 +525,7 @@ void DeviceImpl::setupDevice()
     props.transferQueueFamilyIdx = transferQueueFamilyIndex;
     props.maxSamplerAnisotropy = props2.properties.limits.maxSamplerAnisotropy;
     props.maxPushAllocationsCount = props2.properties.limits.maxPushConstantsSize / sizeof(uint64_t);
+    props.preferredThreadCount = subgroupProps.subgroupSize;
 
     graphicsCurrentValue = 0;
     computeCurrentValue = 0;

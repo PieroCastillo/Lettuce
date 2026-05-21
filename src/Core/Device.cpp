@@ -58,3 +58,7 @@ auto Device::SupportFragmentShadingRate() -> bool
 {
     return impl->features.FragmentShadingRate;
 }
+auto Device::QueryPreferredThreadCount() -> uint32_t
+{
+    return impl->props.preferredThreadCount;
+}

@@ -347,6 +347,7 @@ namespace Lettuce::Core
         auto SupportRayTracing() -> bool;
         auto SupportRayTracingNV() -> bool;
         auto SupportFragmentShadingRate() -> bool;
+        auto QueryPreferredThreadCount() -> uint32_t;
 
         // MemoryView
         auto CreateMemoryView(const MemoryViewDesc&) -> MemoryView;

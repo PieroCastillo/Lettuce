@@ -132,6 +132,7 @@ void mainLoop()
             .presentSwapchain = swapchain,
         };
         device.Submit(submitDesc);
+        device.WaitFor(QueueType::Graphics);
 
         device.DisplayFrame(swapchain);
         glfwPollEvents();
@@ -169,6 +170,7 @@ int main()
     std::setvbuf(stdout, nullptr, _IONBF, 0);
     initWindow();
     initLettuce();
+    std::println("thread count per thread group: {}", device.QueryPreferredThreadCount());
     createRenderingObjects();
     mainLoop();
     cleanupLettuce();

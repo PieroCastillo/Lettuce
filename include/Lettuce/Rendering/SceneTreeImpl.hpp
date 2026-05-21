@@ -20,11 +20,9 @@ namespace Lettuce::Rendering
         Device* device = nullptr;
 
         DescriptorTable dtSceneTree;
-        Pipeline pBuildGeometryClusterTemplate;
-        Pipeline pBuildGeometryClusterInstance;
+        Pipeline pBuildGeometryCluster;
         Pipeline pBuildScenePartition;
-        Pipeline pUpdateGeometryClusterTemplate;
-        Pipeline pUpdateGeometryClusterInstance;
+        Pipeline pUpdateGeometryCluster;
         Pipeline pUpdateScenePartition;
 
         ResourcePool<ScenePartition, ScenePartitionData> scenePartitions;
