@@ -62,7 +62,7 @@ namespace Lettuce::Rendering
         return static_cast<ScenePartitionInstanceFlags>(static_cast<uint32_t>(a) | static_cast<uint32_t>(b));
     }
 
-    struct ClusterDesc
+    struct ClusterBuildIndirectCommand
     {
         float3 bboxMin;
         float3 bboxMax;
@@ -74,6 +74,26 @@ namespace Lettuce::Rendering
         uint32_t indexCount;
         uint32_t vertexOffset;
         uint32_t vertexCount;
+    };
+    
+    struct ScenePartitionBuildIndirectCommand
+    {
+        DeviceAddress geometryClusterAddr;
+        float4x4 transform;
+        float explicitAABB[6];
+        uint32_t instanceID;
+        uint32_t instanceMask;
+        uint32_t instanceContributionToHitGroupIndex;
+        ScenePartitionInstanceFlags flags;
+        uint32_t instanceIndex;
+        uint32_t partitionIndex;
+    };
+
+    struct ScenePartitionUpdateIndirectCommand
+    {
+        DeviceAddress geometryClusterAddr;
+        uint32_t instanceIndex;
+        uint32_t instanceContributionToHitGroupIndex;
     };
 
     struct GeometryClusterDesc
@@ -93,43 +113,17 @@ namespace Lettuce::Rendering
         ScenePartitionFlags flags;
     };
 
-    struct ScenePartitionWriteInstanceDesc
-    {
-        float4x4 transform;
-        float explicitAABB[6];
-        uint32_t instanceID;
-        uint32_t instanceMask;
-        uint32_t instanceContributionToHitGroupIndex;
-        ScenePartitionInstanceFlags flags;
-        uint32_t instanceIndex;
-        uint32_t partitionIndex;
-        GeometryCluster cluster;
-    };
-
-    struct ScenePartitionUpdateInstanceDesc
-    {
-        uint32_t instanceIndex;
-        uint32_t instanceContributionToHitGroupIndex;
-        GeometryCluster cluster;
-    };
-
-    struct ScenePartitionWriteTranslationDesc
-    {
-        uint32_t partitionIndex;
-        float partitionTranslation[3];
-    };
-
     struct BuildGeometryClusterDesc
     {
         GeometryCluster dstCluster;
         SceneTreeFlags flags;
         MemoryView positions;
-        uint64_t positionsOffset;
+        uint64_t positionsByteOffset;
         uint32_t vertexStride;
         MemoryView indices;
-        uint64_t indicesOffset;
+        uint64_t indicesByteOffset;
         MemoryView clusterDescs;
-        uint64_t clusterDescsOffset;
+        uint64_t clusterDescsByteOffset;
         uint32_t clusterCount;
     };
 
@@ -137,22 +131,16 @@ namespace Lettuce::Rendering
     {
         ScenePartition dstPartition;
         MemoryView instanceWrites;
-        uint64_t instanceWritesOffset;
+        uint64_t instanceWritesByteOffset;
         uint32_t instanceCount;
-        MemoryView partitionTranslations;
-        uint64_t partitionTranslationsOffset;
-        uint32_t partitionTranslationCount;
     };
 
     struct UpdateScenePartitionDesc
     {
-        ScenePartition targetPartition;
+        ScenePartition dstPartition;
         MemoryView instanceUpdates;
-        uint64_t instanceUpdatesOffset;
+        uint64_t instanceUpdatesByteOffset;
         uint32_t instanceUpdateCount;
-        MemoryView partitionTranslations;
-        uint64_t partitionTranslationsOffset;
-        uint32_t partitionTranslationCount;
     };
 
     struct SceneTreeDesc

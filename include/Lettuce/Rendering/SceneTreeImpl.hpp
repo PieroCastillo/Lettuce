@@ -12,17 +12,24 @@ using namespace Lettuce::Core;
 
 namespace Lettuce::Rendering
 {
-    struct ScenePartitionData {};
-    struct GeometryClusterData {};
+    struct ScenePartitionData
+    {
+        uint64_t scenePartitionAddr;
+    };
+
+    struct GeometryClusterData
+    {
+        uint64_t geometryClusterAddr;
+    };
 
     struct SceneTreeImpl
     {
         Device* device = nullptr;
 
         DescriptorTable dtSceneTree;
+
         Pipeline pBuildGeometryCluster;
         Pipeline pBuildScenePartition;
-        Pipeline pUpdateGeometryCluster;
         Pipeline pUpdateScenePartition;
 
         ResourcePool<ScenePartition, ScenePartitionData> scenePartitions;

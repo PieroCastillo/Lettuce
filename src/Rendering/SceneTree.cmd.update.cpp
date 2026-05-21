@@ -21,11 +21,21 @@ we need to call a dispatch kernel to configure indirect calls
 fillKernel(Updates) -> dispatch indirect commands
 after that we can call Dispatch indirect and do the updates
 */
+namespace Lettuce::Rendering
+{
+    struct UpdateScenePartitionPayload
+    {
+        uint64_t dstPartitionAddr;
+        uint64_t instancesAddr;
+        uint32_t instanceCount;
+    };
+}
+
 void SceneTreeCommandBuffer::Update(const UpdateScenePartitionDesc& update)
 {
     auto deviceImpl = sTree->impl->device->GetImplementation();
     auto cmd = (VkCommandBuffer)cmdHandle;
-    auto pipeline = (VkPipeline)deviceImpl->pipelines.get(sTree->impl->pUpdateScenePartition).pipeline;
+    auto pUpdate = (VkPipeline)deviceImpl->pipelines.get(sTree->impl->pUpdateScenePartition).pipeline;
     auto& dt = deviceImpl->descriptorTables.get(sTree->impl->dtSceneTree);
     auto tCount = deviceImpl->props.preferredThreadCount;
 
@@ -38,12 +48,16 @@ void SceneTreeCommandBuffer::Update(const UpdateScenePartitionDesc& update)
         .usage = VK_BUFFER_USAGE_RESOURCE_DESCRIPTOR_BUFFER_BIT_EXT | VK_BUFFER_USAGE_SAMPLER_DESCRIPTOR_BUFFER_BIT_EXT,
     };
 
-    auto payloadSize = 128;
-    auto payload = (uint8_t*)alloca(payloadSize);
+    auto payloadSize = sizeof(UpdateScenePartitionPayload);
+    auto payload = (UpdateScenePartitionPayload*)alloca(payloadSize);
 
-    vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_COMPUTE, pipeline);
+    payload->dstPartitionAddr = sTree->impl->scenePartitions.get(update.dstPartition).scenePartitionAddr;
+    payload->instancesAddr = deviceImpl->memories.get(update.instanceUpdates).gpuAddress + update.instanceUpdatesByteOffset;
+    payload->instanceCount = update.instanceUpdateCount;
+
+    vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_COMPUTE, pUpdate);
     vkCmdBindDescriptorBuffersEXT(cmd, 1, &bindingInfo);
     vkCmdSetDescriptorBufferOffsetsEXT(cmd, VK_PIPELINE_BIND_POINT_COMPUTE, dt.pipelineLayout, 0, 1, &bufferIdx, &bufferOffset);
     vkCmdPushConstants(cmd, dt.pipelineLayout, VK_SHADER_STAGE_ALL, 0, payloadSize, &payload);
-    // vkCmdDispatchIndirect(cmd, , );
+    vkCmdDispatch(cmd, ceil(update.instanceUpdateCount / tCount), 1, 1);
 }
