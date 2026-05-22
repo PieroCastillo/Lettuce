@@ -17,7 +17,7 @@ uint32_t Lettuce::Core::findMemoryTypeIndex(VkDevice device, VkPhysicalDevice gp
     }
 
     for (uint32_t i = 0; i < memProperties.memoryTypeCount; i++) {
-        if ((memProperties.memoryTypes[i].propertyFlags & props) == props) {
+        if ((typeFilter & (1 << i)) && ((memProperties.memoryTypes[i].propertyFlags & props) == props)) {
             return i;
         }
     }
