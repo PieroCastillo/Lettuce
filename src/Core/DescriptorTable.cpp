@@ -26,7 +26,7 @@ using namespace Lettuce::Core;
     |---                       Buffer                      --|
     |----Sampled Images -----|--Samplers--|--Storage Images--|
 
-    The Descriptor Table have 3 binding & 1 set
+    The Descriptor Table has 3 binding & 1 set
 */
 
 auto Device::CreateDescriptorTable(const DescriptorTableDesc& desc) -> DescriptorTable

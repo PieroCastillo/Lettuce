@@ -35,6 +35,11 @@ namespace Lettuce::Rendering
         ResourcePool<ScenePartition, ScenePartitionData> scenePartitions;
         ResourcePool<GeometryCluster, GeometryClusterData> clusterDatas;
 
+        MemoryView mvPartitions;
+        MemoryView mvPartitionNodes;
+        MemoryView mvGeometryClusters;
+        MemoryView mvGeometryClusterNodes;
+
         void Create(const SceneTreeDesc& desc);
         void Destroy();
     };

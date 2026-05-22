@@ -146,6 +146,9 @@ namespace Lettuce::Rendering
     struct SceneTreeDesc
     {
         Device& device;
+        uint32_t maxPartitionCount;
+        uint32_t maxTotalInstancedGeometryClusterCount;
+        uint32_t maxTotalClusterCount;
     };
 
     struct SceneTreeImpl;

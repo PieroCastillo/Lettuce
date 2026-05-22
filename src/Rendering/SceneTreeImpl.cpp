@@ -39,6 +39,12 @@ void SceneTreeImpl::Create(const SceneTreeDesc& desc)
     pBuildScenePartition = device->CreatePipeline({ "buildPartition", shaderBin, dtSceneTree });
     pUpdateScenePartition = device->CreatePipeline({ "updatePartition", shaderBin, dtSceneTree });
     device->Destroy(shaderBin);
+
+    // reserve memory
+    // mvPartitions
+    // mvPartitionNodes
+    // mvGeometryClusters
+    // mvGeometryClusterNodes
 }
 
 void SceneTreeImpl::Destroy()

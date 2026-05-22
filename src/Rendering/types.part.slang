@@ -59,3 +59,51 @@ struct ScenePartitionUpdateIndirectCommand
     uint32_t instanceIndex;
     uint32_t instanceContributionToHitGroupIndex;
 };
+
+// gpu data structs
+struct BVH2NodeStorage
+{
+};
+
+struct BVH8NodeStorage
+{
+    float3 aabbMin[8];
+    float3 aabbMax[8];
+
+    uint32_t parentNodeIdx[8];
+    uint32_t childBaseIdx[8];
+    uint32_t childCount[8];
+    uint32_t validChildMask[8];
+};
+
+struct ScenePartitionStorage
+{
+    uint64_t nodesAddr;
+    uint64_t nodeCount;
+};
+
+struct ScenePartitionNodeStorage
+{
+    uint64_t geometryClusterAddr;
+    float4x4 transform;
+    float4 cone;
+};
+
+struct GeometryClusterStorage
+{
+    uint64_t nodesAddr;
+    uint32_t nodeCount;
+};
+
+struct GeometryClusterNodeStorage
+{
+    uint64_t clusterAddr;
+};
+
+struct ClusterStorage
+{
+    uint64_t positionsAddr;
+    uint64_t indicesAddr;
+    uint32_t indexCount;
+    float3 centroid;
+};
