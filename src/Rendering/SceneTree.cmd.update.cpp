@@ -15,12 +15,6 @@
 using namespace Lettuce::Rendering;
 using namespace Lettuce::Core;
 
-/*
-TODO:
-we need to call a dispatch kernel to configure indirect calls
-fillKernel(Updates) -> dispatch indirect commands
-after that we can call Dispatch indirect and do the updates
-*/
 namespace Lettuce::Rendering
 {
     struct UpdateScenePartitionPayload

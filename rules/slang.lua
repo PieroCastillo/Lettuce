@@ -1,5 +1,4 @@
 rule("slang")
-
     set_extensions(".slang")
 
     on_buildcmd_file(function(target, batchcmds, sourcefile, opt)

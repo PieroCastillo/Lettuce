@@ -30,13 +30,12 @@ auto SceneTree::CreateCluster(const GeometryClusterDesc& desc) -> GeometryCluste
     return impl->clusterDatas.allocate({});
 }
 
-
 auto SceneTree::CreatePartition(const ScenePartitionDesc& desc) -> ScenePartition
 {
     return impl->scenePartitions.allocate({});
 }
 
-auto SceneTree::GetClusterAddress(GeometryCluster) const -> DeviceAddress
+auto SceneTree::GetClusterAddress(GeometryCluster cluster) const -> DeviceAddress
 {
     return {};
 }

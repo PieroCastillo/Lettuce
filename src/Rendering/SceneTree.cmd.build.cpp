@@ -15,12 +15,6 @@
 using namespace Lettuce::Rendering;
 using namespace Lettuce::Core;
 
-/*
-build  cblas: dispatch( ceil(clasCount/threadPerGroup) ) per build
-build  ptlas: dispatch( ceil(instanceCount/threadPerGroup) ) per build
-update ptlas: dispatch( ceil(instanceCount/threadPerGroup) ) per update
-*/
-
 namespace Lettuce::Rendering
 {
     struct BuildGeometryClusterPayload
