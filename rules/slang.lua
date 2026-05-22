@@ -7,10 +7,15 @@ rule("slang")
         end
 
         local outdir = target:targetdir()
+        local relativedir = path.directory(path.relative(sourcefile, os.projectdir()))
         local filename = path.basename(sourcefile)
-        local outfile = path.join(outdir, filename .. ".spv")
-        local depdir = path.join(target:autogendir(), "rules", "slang")
+
+        local shaderoutdir = path.join(outdir, relativedir)
+        local depdir = path.join(target:autogendir(), "rules", "slang", relativedir)
+
+        local outfile = path.join(shaderoutdir, filename .. ".spv")
         local depfile = path.join(depdir, filename .. ".d")
+        local dependfile = target:dependfile(outfile)
 
         batchcmds:show_progress(
             opt.progress,
@@ -18,7 +23,7 @@ rule("slang")
             sourcefile
         )
 
-        batchcmds:mkdir(outdir)
+        batchcmds:mkdir(shaderoutdir)
         batchcmds:mkdir(depdir)
 
         local args = {
@@ -39,9 +44,7 @@ rule("slang")
 
         batchcmds:vrunv("slangc", args)
 
-        batchcmds:add_depfiles(depfile)
+        batchcmds:add_depfiles(sourcefile, depfile)
         batchcmds:set_depmtime(os.mtime(outfile))
-        batchcmds:set_depcache(
-            target:dependfile(outfile)
-        )
+        batchcmds:set_depcache(dependfile)
     end)

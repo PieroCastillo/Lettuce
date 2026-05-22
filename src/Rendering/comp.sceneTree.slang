@@ -31,6 +31,8 @@ void buildPartition([[vk::push_constant]]BuildScenePartitionPayload payload,
 
     if (globalIdx >= payload.instanceCount)
         return;
+
+    ScenePartitionBuildIndirectCommand cmd;
 }
 
 [require(compute, spirv_1_6)]
