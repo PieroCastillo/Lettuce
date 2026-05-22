@@ -11,26 +11,38 @@ RWTexture2D<float4> storageTextures[];
 
 [require(compute, spirv_1_6)]
 [numthreads(computeNumThreadsX, 1, 1)]
-void buildCluster(uint3 gid: SV_DispatchThreadID, uint3 groupThreadID: SV_GroupThreadID)
+void buildCluster([[vk::push_constant]]BuildGeometryClusterPayload payload,
+                    uint3 gid: SV_DispatchThreadID, uint3 groupThreadID: SV_GroupThreadID)
 {
     uint localIdx = groupThreadID.x;
     uint globalIdx = gid.x;
+
+    if (globalIdx >= payload.clusterCount)
+        return;
 }
 
 [require(compute, spirv_1_6)]
 [numthreads(computeNumThreadsX, 1, 1)]
-void buildPartition(uint3 gid: SV_DispatchThreadID, uint3 groupThreadID: SV_GroupThreadID)
+void buildPartition([[vk::push_constant]]BuildScenePartitionPayload payload,
+                    uint3 gid: SV_DispatchThreadID, uint3 groupThreadID: SV_GroupThreadID)
 {
     uint localIdx = groupThreadID.x;
     uint globalIdx = gid.x;
+
+    if (globalIdx >= payload.instanceCount)
+        return;
 }
 
 [require(compute, spirv_1_6)]
 [numthreads(computeNumThreadsX, 1, 1)]
-void updatePartition(uint3 gid: SV_DispatchThreadID, uint3 groupThreadID: SV_GroupThreadID)
+void updatePartition([[vk::push_constant]]UpdateScenePartitionPayload payload,
+                    uint3 gid: SV_DispatchThreadID, uint3 groupThreadID: SV_GroupThreadID)
 {
     uint localIdx = groupThreadID.x;
     uint globalIdx = gid.x;
+
+    if (globalIdx >= payload.instanceCount)
+        return;
 
     ScenePartitionUpdateIndirectCommand cmd;
 }

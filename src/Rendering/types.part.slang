@@ -1,5 +1,31 @@
 implementing LettuceRendering;
 
+struct BuildGeometryClusterPayload
+{
+    uint64_t dstGeometryClusterAddr;
+    uint64_t clustersAddr;
+    uint64_t positionsAddr;
+    uint64_t indicesAddr;
+
+    uint32_t clusterCount;
+    uint32_t positionStride;
+    uint32_t flags;
+};
+
+struct BuildScenePartitionPayload
+{
+    uint64_t dstScenePartitionAddr;
+    uint64_t instancesAddr;
+    uint32_t instanceCount;
+};
+
+struct UpdateScenePartitionPayload
+{
+    uint64_t dstPartitionAddr;
+    uint64_t instancesAddr;
+    uint32_t instanceCount;
+};
+
 struct ClusterBuildIndirectCommand
 {
     float3 bboxMin;
