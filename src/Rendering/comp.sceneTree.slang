@@ -17,6 +17,12 @@ groupshared uint64_t parentIDs[1024];        // BVH2parentIDs, initialized to âˆ
 groupshared uint64_t clusterIDs[computeNumThreadsX]; // per wave cluster indices
 groupshared uint64_t nearestN[computeNumThreadsX];   // per wave nearest Neighbors
 
+uint64_t encodeRelativeOffset(uint64_t id, uint64_t neighborID)
+{
+    var offset = neighborID - id;
+    return abs(offset << 1) | (offset >> 31);
+}
+
 // Apetrei, 2014
 bool findParentID(uint64_t L, uint64_t R, uint64_t clusterCount)
 {
