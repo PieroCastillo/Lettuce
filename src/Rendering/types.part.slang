@@ -6,6 +6,7 @@ struct BuildGeometryClusterPayload
     uint64_t clustersAddr;
     uint64_t positionsAddr;
     uint64_t indicesAddr;
+    uint64_t scratchAddr;
 
     uint32_t clusterCount;
     uint32_t positionStride;
@@ -16,14 +17,20 @@ struct BuildScenePartitionPayload
 {
     uint64_t dstScenePartitionAddr;
     uint64_t instancesAddr;
+    uint64_t instanceBuildsAddr;
+    uint64_t scratchAddr;
     uint32_t instanceCount;
+    uint32_t instanceBuildCount;
 };
 
 struct UpdateScenePartitionPayload
 {
     uint64_t dstPartitionAddr;
     uint64_t instancesAddr;
+    uint64_t instanceUpdatesAddr;
+    uint64_t scratchAddr;
     uint32_t instanceCount;
+    uint32_t instanceUpdateCount;
 };
 
 struct ClusterBuildIndirectCommand
@@ -60,9 +67,16 @@ struct ScenePartitionUpdateIndirectCommand
     uint32_t instanceContributionToHitGroupIndex;
 };
 
-// gpu data structs
 struct BVH2NodeStorage
 {
+    float3 aabbMin;
+    uint32_t leftChild;
+    float3 aabbMax;
+    uint32_t rightChild;
+    uint32_t parent;
+    uint32_t primitiveCount;
+    uint32_t firstPrimitive;
+    uint32_t flags;
 };
 
 struct BVH8NodeStorage
@@ -80,6 +94,7 @@ struct ScenePartitionStorage
 {
     uint64_t nodesAddr;
     uint64_t nodeCount;
+    uint64_t bvh8RootAddr;
 };
 
 struct ScenePartitionNodeStorage
@@ -93,6 +108,7 @@ struct GeometryClusterStorage
 {
     uint64_t nodesAddr;
     uint32_t nodeCount;
+    uint64_t bvh8RootAddr;
 };
 
 struct GeometryClusterNodeStorage

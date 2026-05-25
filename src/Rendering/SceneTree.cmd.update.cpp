@@ -21,6 +21,7 @@ namespace Lettuce::Rendering
     {
         uint64_t dstPartitionAddr;
         uint64_t instancesAddr;
+        uint64_t scratchAddr;
         uint32_t instanceCount;
     };
 }

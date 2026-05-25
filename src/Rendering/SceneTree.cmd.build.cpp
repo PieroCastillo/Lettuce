@@ -23,6 +23,7 @@ namespace Lettuce::Rendering
         uint64_t clustersAddr;
         uint64_t positionsAddr;
         uint64_t indicesAddr;
+        uint64_t scratchAddr;
 
         uint32_t clusterCount;
         uint32_t positionStride;
@@ -33,6 +34,7 @@ namespace Lettuce::Rendering
     {
         uint64_t dstScenePartitionAddr;
         uint64_t instancesAddr;
+        uint64_t scratchAddr;
         uint32_t instanceCount;
     };
 }
