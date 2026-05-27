@@ -4,18 +4,17 @@ __include "types.part.slang";
 
 const static uint computeNumThreadsX = 32;
 
-// shader inputs
 Texture2D<float4> sampledTextures[];
 SamplerState samplers[];
 RWTexture2D<float4> storageTextures[];
 
-groupshared BVH2NodeStorage bvh2nodes[1024]; // BVH2 nodes, first entries are set to leaf bounding boxes
-groupshared uint mortonCodes[1024];          // Morton codes sorted in ascending order
-groupshared uint mcClusterIDs[1024];         // cluster indices extracted from sorted Morton codes
-groupshared uint64_t parentIDs[1024];        // BVH2parentIDs, initialized to −1
+groupshared uint64_t clusterIDs[computeNumThreadsX];
+groupshared uint64_t nearestN[computeNumThreadsX];
 
-groupshared uint64_t clusterIDs[computeNumThreadsX]; // per wave cluster indices
-groupshared uint64_t nearestN[computeNumThreadsX];   // per wave nearest Neighbors
+Ptr<T> loadAddr<T>(uint64_t addr, uint32_t offset = 0)
+{
+    return reinterpret<Ptr<T>>(addr + (offset * sizeof(T)));
+}
 
 uint64_t encodeRelativeOffset(uint64_t id, uint64_t neighborID)
 {
@@ -23,10 +22,40 @@ uint64_t encodeRelativeOffset(uint64_t id, uint64_t neighborID)
     return abs(offset << 1) | (offset >> 31);
 }
 
-// Apetrei, 2014
-bool findParentID(uint64_t L, uint64_t R, uint64_t clusterCount)
+uint clz64(uint64_t x)
 {
-    return true; // TODO: impl
+    uint hi = uint(x >> 32);
+    uint lo = uint(x & 0xFFFFFFFF);
+    return hi != 0 ? firstbithigh(hi) : (lo != 0 ? 32 + firstbithigh(lo) : 64);
+}
+
+int delta(uint64_t i, uint64_t j, Ptr<uint64_t> mCodes, uint64_t clusterCount)
+{
+    if (j < 0 || j >= clusterCount)
+        return -1;
+
+    uint64_t codeI = mCodes[i];
+    uint64_t codeJ = mCodes[j];
+
+    if (codeI == codeJ)
+        return int(clz64(i ^ j)) + 64;
+
+    return int(clz64(codeI ^ codeJ));
+}
+
+bool findParentID(uint64_t L, uint64_t R, uint64_t clusterCount, Ptr<uint64_t> mCodes)
+{
+    int dLeft = delta(L, L - 1, mCodes, clusterCount);
+    int dRight = delta(R, R + 1, mCodes, clusterCount);
+    return dRight < dLeft;
+}
+
+float calculateSAH(float3 aMin1, float3 aMax1, float3 aMin2, float3 aMax2)
+{
+    float3 mergedMin = min(aMin1, aMin2);
+    float3 mergedMax = max(aMax1, aMax2);
+    float3 extent = mergedMax - mergedMin;
+    return 2.0f * (extent.x * extent.y + extent.y * extent.z + extent.z * extent.x);
 }
 
 [require(compute, spirv_1_6)]
@@ -37,81 +66,32 @@ void buildCluster([[vk::push_constant]] BuildGeometryClusterPayload payload,
     uint localIdx = groupThreadID.x;
     uint globalIdx = gid.x;
 
-    if (globalIdx >= payload.clusterCount)
+    if (globalIdx >= payload.clusterBuildCount)
         return;
 
-    // HPLOC start
-    var bvh2nodesBuffer = reinterpret<Ptr<BVH2NodeStorage>>(0); // BVH2 nodes, first entries are set to leaf bounding boxes
-    var mortonCodes = reinterpret<Ptr<uint64_t>>(0);            // Morton codes sorted in ascending order
-    var mcClusterIDs = reinterpret<Ptr<uint64_t>>(0);           // cluster indices extracted from sorted Morton codes
-    var parentIDs = reinterpret<Ptr<uint64_t>>(0);              // BVH2parentIDs, initialized to −1
+    var gcluster = loadAddr<GeometryClusterStorage>(payload.dstGeometryClusterAddr);
+    var nodes = loadAddr<BVH8NodeStorage>(payload.geometryClusterNodesAddr);
 
-    // HPLOC algorithm (benthin et al, 2024)
-    uint64_t L = globalIdx;
-    uint64_t R = globalIdx;
-    var laneActive = globalIdx < payload.clusterCount;
+    var tCmd = loadAddr<ClusterBuildIndirectCommand>(payload.clusterBuildsAddr)[globalIdx];
+    var tCluster = loadAddr<ClusterStorage>(payload.clusterStorageAddr)[globalIdx];
+    var tLeaf = loadAddr<GeometryClusterLeafStorage>(payload.geometryClusterLeavesAddr)[globalIdx];
 
-    [loop]
-    while (laneActive) // do bottom-up traversal as long as active waves in wave
-    {
-        uint64_t split = 0;
-        if (laneActive)
-        {
-            uint64_t previousID = 0;
-            if (findParentID(L, R, payload.clusterCount))
-            {
-                InterlockedExchange(parentIDs[R], L, previousID);
-                if (previousID != 1)
-                {
-                    split = R + 1;
-                    R = previousID;
-                }
-            }
-            else
-            {
-                InterlockedExchange(parentIDs[L - 1], R, previousID);
-                if (previousID != 1)
-                {
-                    split = L;
-                    L = previousID;
-                }
-            }
-            if (previousID == -1)
-                laneActive = false;
-        }
-        var size = R - L + 1;
-        var final = laneActive & (size == payload.clusterCount); // reached top of morton tree
-        var waveMask = WaveActiveBallot((laneActive & (size > (computeNumThreadsX / 2))) | final);
-        while (any(waveMask > 0))
-        {
-            var laneID = firstbitlow(waveMask);
-            
-            // FUNCTION: plocMerge(laneID, L, R, split, final) // wave-based ploc++
-            // var Lstart = WaveBroadcastLaneAt(L, laneID);
-            // var Rend = WaveBroadcastLaneAt(R, laneID);
-            // var Lend = WaveBroadcastLaneAt(split, laneID);
-            // var Rstart = WaveBroadcastLaneAt(split, laneID);
-            // var numLeft = 0;
-            // var numRight = 0;
-            // var numPrims = numLeft + numRight;
-            // var threshold = WaveReadLaneFirst(final) == true ? 1 : computeNumThreadsX / 2;
+    // build cluster per leave
+    tCluster.centroid = tCmd.bboxMin + 0.5f * (tCmd.bboxMax - tCmd.bboxMin);
+    tCluster.indexCount = tCmd.indexCount;
+    tCluster.indicesBaseOffset = tCmd.indexBaseOffset;
+    tCluster.positionsBaseOffset = tCmd.vertexBaseOffset;
+    tLeaf.clusterIdx = globalIdx;
 
-            // while (numPrims > threshold)
-            // {
-                // function findNearestNeighbor() : benthin et al, 2022
-
-                // end function
-                // function mergeClustersCreateBVH2Nodes() : benthin et al, 2022
-
-                // end function
-            // }
-            // store Indices
-
-            // end function
-
-            // waveMask = waveMask & (waveMask - 1); // done with current lane
-        }
-    }
+    // h ploc
+    /*
+    1. calc morton codes and setup other stuff
+    barrier()
+    2. do outer loop
+          inner loop
+    barrier()
+    3. convert to wide bvh8
+    */
 }
 
 [require(compute, spirv_1_6)]
@@ -122,10 +102,26 @@ void buildPartition([[vk::push_constant]] BuildScenePartitionPayload payload,
     uint localIdx = groupThreadID.x;
     uint globalIdx = gid.x;
 
-    if (globalIdx >= payload.instanceCount)
+    if (globalIdx >= payload.partitionBuildCount)
         return;
 
-    ScenePartitionBuildIndirectCommand cmd;
+    var partition = loadAddr<ScenePartitionStorage>(payload.dstScenePartitionAddr);
+    var nodes = loadAddr<BVH8NodeStorage>(payload.scenePartitionNodesStorageAddr);
+
+    var tCmd = loadAddr<ScenePartitionBuildIndirectCommand>(payload.partitionBuildsAddr)[globalIdx];
+    var tLeaf = loadAddr<ScenePartitionLeafStorage>(payload.scenePartitionNodesStorageAddr)[globalIdx];
+    var tCluster = loadAddr<GeometryClusterStorage>(payload.geometryClusterStorageAddr)[globalIdx];
+    
+    
+    // h ploc
+    /*
+    1. calc morton codes and setup other stuff
+    barrier()
+    2. do outer loop
+          inner loop
+    barrier()
+    3. convert to wide bvh8
+    */
 }
 
 [require(compute, spirv_1_6)]
@@ -136,8 +132,19 @@ void updatePartition([[vk::push_constant]] UpdateScenePartitionPayload payload,
     uint localIdx = groupThreadID.x;
     uint globalIdx = gid.x;
 
-    if (globalIdx >= payload.instanceCount)
+    if (globalIdx >= payload.partitionUpdateCount)
         return;
 
-    ScenePartitionUpdateIndirectCommand cmd;
+    var partition = reinterpret<Ptr<ScenePartitionBuildIndirectCommand>>(payload.dstScenePartitionAddr);
+    var cmd = reinterpret<Ptr<ScenePartitionUpdateIndirectCommand>>(payload.partitionUpdatesAddr)[globalIdx];
+
+    // h ploc
+    /*
+    1. calc morton codes and setup other stuff
+    barrier()
+    2. do outer loop
+          inner loop
+    barrier()
+    3. convert to wide bvh8
+    */
 }
