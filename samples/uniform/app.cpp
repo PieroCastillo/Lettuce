@@ -75,7 +75,7 @@ void initLettuce()
 
 void createRenderingObjects()
 {
-    auto shadersBuffer = loadSpv("uniform.spv");
+    auto shadersBuffer = loadSpv("samples/uniform/uniform.spv");
 
     ShaderBinaryDesc shaderDesc = {
         .bytecode = std::span<uint32_t>(shadersBuffer.data(), shadersBuffer.size()),

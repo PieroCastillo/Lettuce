@@ -105,7 +105,7 @@ void initLettuce()
 
 void createRenderingObjects()
 {
-    auto shadersBuffer = loadSpv("asyncRecord.spv");
+    auto shadersBuffer = loadSpv("samples/asyncRecord/asyncRecord.spv");
 
     ShaderBinaryDesc shaderDesc = {
         .bytecode = std::span<uint32_t>(shadersBuffer.data(), shadersBuffer.size()),

@@ -310,7 +310,7 @@ void initLettuce()
     RenderTargetDesc depthDesc = {
         .width = width,
         .height = height,
-        .type = RenderTargetType::DepthStencilDS40,
+        .type = RenderTargetType::Depth_D32,
         .defaultClearValue = DepthStencilClear {1.0f, 0},
     };
     tDepthTarget = device.CreateTextureView(depthDesc);
@@ -318,7 +318,7 @@ void initLettuce()
 
 void createRenderingObjects()
 {
-    auto shadersBuffer = loadSpv("loadModel.spv");
+    auto shadersBuffer = loadSpv("samples/loadModel/loadModel.spv");
 
     ShaderBinaryDesc shaderDesc = {
         .bytecode = std::span<uint32_t>(shadersBuffer.data(), shadersBuffer.size()),

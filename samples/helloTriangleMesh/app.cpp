@@ -71,20 +71,12 @@ void initLettuce()
 
 void createRenderingObjects()
 {
-    auto taskShaderBuffer = loadSpv("hellotriangleMesh.task.spv");
-    auto meshShaderBuffer = loadSpv("hellotriangleMesh.mesh.spv");
-    auto fragShaderBuffer = loadSpv("hellotriangleMesh.frag.spv");
+    auto shaderBuffer = loadSpv("samples/helloTriangleMesh/helloTriangleMesh.spv");
 
     ShaderBinaryDesc shaderDesc = {
-        .bytecode = std::span(taskShaderBuffer),
+        .bytecode = std::span(shaderBuffer),
     };
-    auto taskShader = device.CreateShader(shaderDesc);
-
-    shaderDesc.bytecode = std::span(meshShaderBuffer);
-    auto meshShader = device.CreateShader(shaderDesc);
-    
-    shaderDesc.bytecode = std::span(fragShaderBuffer);
-    auto fragShader = device.CreateShader(shaderDesc);
+    auto shader = device.CreateShader(shaderDesc);
 
     DescriptorTableDesc descriptorTableDesc = { 4,4,4 };
     descriptorTable = device.CreateDescriptorTable(descriptorTableDesc);
@@ -92,20 +84,18 @@ void createRenderingObjects()
     std::array<Format, 1> formatArr = { device.GetRenderTargetFormat(swapchain) };
     MeshShadingPipelineDesc pipelineDesc = {
         .fragmentShadingRate = false,
-        .taskEntryPoint = "main",
-        .meshEntryPoint = "main",
-        .fragEntryPoint = "main",
-        .taskShaderBinary = taskShader,
-        .meshShaderBinary = meshShader,
-        .fragShaderBinary = fragShader,
+        .taskEntryPoint = "taskMain",
+        .meshEntryPoint = "meshMain",
+        .fragEntryPoint = "fragMain",
+        .taskShaderBinary = shader,
+        .meshShaderBinary = shader,
+        .fragShaderBinary = shader,
         .colorAttachmentFormats = std::span(formatArr),
         .descriptorTable = descriptorTable,
     };
     rgbPipeline = device.CreatePipeline(pipelineDesc);
 
-    device.Destroy(fragShader);
-    device.Destroy(meshShader);
-    device.Destroy(taskShader);
+    device.Destroy(shader);
 }
 
 void mainLoop()

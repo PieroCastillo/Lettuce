@@ -95,7 +95,7 @@ void initLettuce()
 
 void createRenderingObjects()
 {
-    auto shadersBuffer = loadSpv("indirectDrawing.spv");
+    auto shadersBuffer = loadSpv("samples/indirectDrawing/indirectDrawing.spv");
 
     ShaderBinaryDesc shaderDesc = {
         .bytecode = std::span<uint32_t>(shadersBuffer.data(), shadersBuffer.size()),

@@ -161,6 +161,8 @@ auto Device::CreateTextureView(const RenderTargetDesc& desc) -> TextureView
 {
     VkImageUsageFlags usageFlags = 0;
     VkFormat format;
+    VkImageSubresourceRange subresourceRange = { VK_IMAGE_ASPECT_COLOR_BIT,    0,1,0,1 };
+
     switch (desc.type)
     {
     case RenderTargetType::ColorRGB_sRGB:
@@ -175,18 +177,15 @@ auto Device::CreateTextureView(const RenderTargetDesc& desc) -> TextureView
         format = VK_FORMAT_R32G32B32A32_SFLOAT;
         break;
     }
-    case RenderTargetType::DepthStencilDS40:
+    case RenderTargetType::Depth_D32:
     {
         usageFlags = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_STORAGE_BIT;
-        format = VK_FORMAT_D32_SFLOAT_S8_UINT;
+        format = VK_FORMAT_D32_SFLOAT;
+        subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
         break;
     }
     }
 
-    VkImageSubresourceRange subresourceRange = {
-        VK_IMAGE_ASPECT_COLOR_BIT,
-        0,1,0,1
-    };
 
     VkImage image;
     VmaAllocation alloc;
@@ -219,7 +218,7 @@ auto Device::CreateTextureView(const RenderTargetDesc& desc) -> TextureView
         .viewType = VK_IMAGE_VIEW_TYPE_2D,
         .format = format,
         .components = {VK_COMPONENT_SWIZZLE_IDENTITY, VK_COMPONENT_SWIZZLE_IDENTITY,VK_COMPONENT_SWIZZLE_IDENTITY,VK_COMPONENT_SWIZZLE_IDENTITY},
-        .subresourceRange = { VK_IMAGE_ASPECT_COLOR_BIT, 0,1,0,1 },
+        .subresourceRange = subresourceRange,
     };
     handleResult(vkCreateImageView(impl->m_device, &viewCI, nullptr, &imageView));
 

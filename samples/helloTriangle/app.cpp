@@ -71,7 +71,7 @@ void initLettuce()
 
 void createRenderingObjects()
 {
-    auto shadersBuffer = loadSpv("helloTriangle.spv");
+    auto shadersBuffer = loadSpv("samples/helloTriangle/helloTriangle.spv");
 
     ShaderBinaryDesc shaderDesc = {
         .bytecode = std::span<uint32_t>(shadersBuffer.data(), shadersBuffer.size()),
