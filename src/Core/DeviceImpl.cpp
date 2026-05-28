@@ -417,6 +417,16 @@ void DeviceImpl::setupFeaturesExtensions()
         next = &cooperativeMatrix2Feature;
         requestedExtensionsNames.push_back(VK_NV_COOPERATIVE_MATRIX_2_EXTENSION_NAME);
     }
+
+    /*
+        new feature? : linuxDRM
+        VK_KHR_external_memory_fd
+        VK_KHR_external_semaphore_fd
+        VK_EXT_external_memory_dma_buf
+        VK_EXT_image_drm_format_modifier
+        VK_EXT_physical_device_drm
+        VK_EXT_queue_family_foreign
+     */
 }
 
 void DeviceImpl::setupDevice()
