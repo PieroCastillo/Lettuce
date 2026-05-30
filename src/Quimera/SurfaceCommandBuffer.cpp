@@ -30,7 +30,7 @@ void SurfaceCommandBuffer::DrawSurface()
     uint32_t cmdCount = surfImpl->bDrawCommands.offset + 1;
     uint32_t tileXCount = (surfImpl->dstWidth + 15) / 16;
     uint32_t tileYCount = (surfImpl->dstHeight + 15) / 16;
-    uint32_t threadGroupCount = surfImpl->device->QueryPreferredThreadCount();
+    uint32_t threadGroupCount = surfImpl->pDevice->QueryPreferredThreadCount();
 
     cmd->BindDescriptorTable(surfImpl->dtSurface, PipelineBindPoint::Compute);
 

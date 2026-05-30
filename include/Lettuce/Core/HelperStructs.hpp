@@ -28,7 +28,7 @@ namespace Lettuce::Core
         uint64_t size;
         uint64_t memoryOffset;
 
-        void* cpuAddress;
+        uint8_t* cpuAddress;
         uint64_t gpuAddress;
         VmaAllocation allocation;
 

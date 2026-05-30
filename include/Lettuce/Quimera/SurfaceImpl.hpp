@@ -11,10 +11,15 @@ Created by @PieroCastillo on 2026-05-29
 
 namespace Lettuce::Quimera
 {
-    struct ImplicitGeometry
+    struct ImplicitGeometryStorage
     {
         float x, y, w, h;
         float ctl, ctr, cbl, cbr; // corners
+    };
+
+    struct BrushStorage
+    {
+        uint32_t b;
     };
 
     constexpr uint32_t Draw_GeometryParam = 1 << 0;
@@ -30,17 +35,19 @@ namespace Lettuce::Quimera
         uint32_t flags;
     };
 
+    template<typename T>
     struct Buffer
     {
         MemoryView mv;
         HostAddress addr;
         uint32_t offset;
         uint32_t maxCount;
+        static constexpr uint32_t elementSize = sizeof(T);
     };
 
     struct SurfaceImpl
     {
-        Device* device = nullptr;
+        Device* pDevice = nullptr;
         
         TextureView dstTexture;
         uint32_t dstWidth, dstHeight;
@@ -52,10 +59,10 @@ namespace Lettuce::Quimera
         Pipeline pBrushes;
         Pipeline pEffects;
 
-        Buffer bDrawCommands;
-        Buffer bTransforms;
-        Buffer bImplicitGeometries;
-        Buffer bBrushes;
+        Buffer<DrawCommand> bDrawCommands;
+        Buffer<float3x3> bTransforms;
+        Buffer<ImplicitGeometryStorage> bImplicitGeometries;
+        Buffer<BrushStorage> bBrushes;
 
         void Create(const SurfaceDesc&);
         void Destroy();

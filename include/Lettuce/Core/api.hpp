@@ -96,7 +96,7 @@ namespace Lettuce::Core
     // Resources
     struct MemoryViewInfo {
         uint64_t size;
-        void* cpuAddress;
+        uint8_t* cpuAddress;
         uint64_t gpuAddress;
         uint64_t alignment;
     };

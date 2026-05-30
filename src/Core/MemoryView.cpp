@@ -44,9 +44,9 @@ auto Device::CreateMemoryView(const MemoryViewDesc& desc) -> MemoryView
     };
     auto devAddr = vkGetBufferDeviceAddress(impl->m_device, &bdaInfo);
 
-    void* buffCPUAddr = nullptr;
+    uint8_t* buffCPUAddr = nullptr;
     if(desc.cpuVisible)
-        vmaMapMemory(impl->m_allocator, alloc, &buffCPUAddr);
+        vmaMapMemory(impl->m_allocator, alloc, (void**)(&buffCPUAddr));
 
     return impl->memories.allocate({buffer, allocI.deviceMemory, allocI.size, allocI.offset, buffCPUAddr, devAddr, alloc});
 }
