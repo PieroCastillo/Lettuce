@@ -30,10 +30,21 @@ namespace Lettuce::Quimera
         uint32_t flags;
     };
 
+    struct Buffer
+    {
+        MemoryView mv;
+        HostAddress addr;
+        uint32_t offset;
+        uint32_t maxCount;
+    };
+
     struct SurfaceImpl
     {
         Device* device = nullptr;
+        
         TextureView dstTexture;
+        uint32_t dstWidth, dstHeight;
+
         DescriptorTable dtSurface;
 
         Pipeline pPrepare;
@@ -41,13 +52,15 @@ namespace Lettuce::Quimera
         Pipeline pBrushes;
         Pipeline pEffects;
 
-        MemoryView mvDrawCommands;
-        MemoryView mvTransforms;
-        MemoryView mvImplicitGeometries;
-        MemoryView mvBrushes;
+        Buffer bDrawCommands;
+        Buffer bTransforms;
+        Buffer bImplicitGeometries;
+        Buffer bBrushes;
 
         void Create(const SurfaceDesc&);
         void Destroy();
+
+        void SetRenderTarget(TextureView);
     };
 };
 
