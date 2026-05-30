@@ -21,20 +21,21 @@ void Surface::Create(const SurfaceDesc& desc)
 
 void Surface::Destroy()
 {
+    impl->Destroy();
     delete impl;
 }
 
 auto Surface::CreateGeometry(const ImplicitGeometryDesc& desc) -> Geometry
 {
-
+    return {};
 }
 
 auto Surface::CreateBrush(const SolidColorBrushDesc& desc) -> Brush
 {
-    
+    return {};
 }
 
-void Surface::Draw(Geometry geometry, Brush brush, float3x3 transform)
+void Surface::Draw(uint32_t zOrder, Geometry geometry, Brush brush, float3x3 transform)
 {
 
 }

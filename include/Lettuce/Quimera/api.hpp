@@ -26,7 +26,7 @@ namespace Lettuce::Quimera
     using Animation = Handle<AnimationTag>;
 
     struct Color { float r, g, b, a; };
-    struct Rect { float x, y, w, h; }
+    struct Rect { float x, y, w, h; };
 
     struct SolidColorBrushDesc
     {
@@ -81,5 +81,4 @@ namespace Lettuce::Quimera
         void DrawSurface();
     };
 };
-
 #endif // LETTUCE_QUIMERA_API_HPP

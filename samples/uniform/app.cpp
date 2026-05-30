@@ -138,7 +138,7 @@ void mainLoop()
         cmd.BindDescriptorTable(descriptorTable, PipelineBindPoint::Graphics);
         
         PushAllocationsDesc pushDesc = {
-           .allocations = std::array{ std::pair(0u, uniformData) }, 
+           .allocations = std::array{ uniformData }, 
            .descriptorTable = descriptorTable,  
         };
         cmd.PushAllocations(pushDesc);
@@ -162,6 +162,8 @@ void mainLoop()
             .presentSwapchain = swapchain,
         };
         device.Submit(submitDesc);
+        device.WaitFor(QueueType::Graphics);
+        
         device.DisplayFrame(swapchain);
 
         glfwPollEvents();

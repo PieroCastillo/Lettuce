@@ -126,10 +126,11 @@ void CommandBuffer::PushAllocations(const PushAllocationsDesc& desc)
     auto count = payloadSize / sizeof(uint64_t);
     auto data = (uint64_t*)alloca(payloadSize);
 
-    for (auto const& [idx, memView] : desc.allocations)
+    int idx = 0;
+    for (auto memView : desc.allocations)
     {
-        if (idx < count)
-            data[idx] = impl.device->memories.get(memView).gpuAddress;
+        data[idx] = impl.device->memories.get(memView).gpuAddress;
+        ++idx;
     }
 
     vkCmdPushConstants((VkCommandBuffer)impl.handle, dt.pipelineLayout, VK_SHADER_STAGE_ALL, 0, payloadSize, data);

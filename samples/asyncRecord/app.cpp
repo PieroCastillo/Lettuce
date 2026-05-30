@@ -154,7 +154,7 @@ void mainLoop()
 
         PushAllocationsDesc pushDesc;
         pushDesc.descriptorTable = descriptorTable;
-        pushDesc.allocations = std::array{ std::pair(0u, particlesView) };
+        pushDesc.allocations = std::array{ particlesView };
 
         rec.Reset();
         rec.RecordAsync(std::nullopt, [&](CommandBuffer cmd, std::any _)

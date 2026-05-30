@@ -7,6 +7,7 @@ Created by @PieroCastillo on 2026-05-29
 // project headers
 #include "../Core/api.hpp"
 #include "../Core/ResourcePool.hpp"
+#include "../Quimera/api.hpp"
 
 namespace Lettuce::Quimera
 {
@@ -32,10 +33,13 @@ namespace Lettuce::Quimera
     struct SurfaceImpl
     {
         Device* device = nullptr;
-        Texture dstTexture;
+        TextureView dstTexture;
         DescriptorTable dtSurface;
 
-        // Pipeline 
+        Pipeline pPrepare;
+        Pipeline pTileBinning;
+        Pipeline pBrushes;
+        Pipeline pEffects;
 
         MemoryView mvDrawCommands;
         MemoryView mvTransforms;

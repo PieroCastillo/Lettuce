@@ -41,14 +41,11 @@ target("Lettuce")
 
 local samples = {
     "asyncRecord",
-    "cubemap",
-    "grass",
     "helloTriangle",
     "helloTriangleMesh",
     "indirectDrawing",
     "loadModel",
     "movingSquares",
-    "pbr",
     "textureLoad",
     "uniform",
 }

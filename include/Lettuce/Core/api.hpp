@@ -6,9 +6,10 @@ Created by @PieroCastillo on 2025-12-26
 
 #include <array>
 #include <cstdint>
+#include <optional>
+#include <ranges>
 #include <span>
 #include <string_view>
-#include <optional>
 #include <variant>
 #include "formats.hpp"
 
@@ -319,7 +320,7 @@ namespace Lettuce::Core
 
     struct PushAllocationsDesc
     {
-        std::span<const std::pair<uint32_t, MemoryView>> allocations;
+        std::span<const MemoryView> allocations;
         DescriptorTable descriptorTable;
     };
 
@@ -380,7 +381,6 @@ namespace Lettuce::Core
         void Destroy(DescriptorTable);
 
         void PushResourceDescriptors(const PushResourceDescriptorsDesc&);
-        void PushAllocations(DescriptorTable, std::span<const std::pair<uint32_t, MemoryView>>);
 
         // Indirect Set
         auto CreateIndirectSet(const IndirectSetDesc&) -> IndirectSet;
@@ -450,7 +450,7 @@ namespace Lettuce::Core
         void Dispatch(uint32_t x, uint32_t y, uint32_t z);
 
         void Barrier(std::span<const BarrierDesc> barriers);
-        void PrepareTexture(TextureView);
+        void Barrier(std::initializer_list<BarrierDesc> barriers) { Barrier(std::span(barriers.begin(), barriers.end())); }
 
         void ResetCount(IndirectSet);
 

@@ -15,15 +15,33 @@ using namespace Lettuce::Core;
 
 void SurfaceCommandBuffer::DrawSurface()
 {
-    cmd->BindDescriptorTable(surfPtr->impl->dtSurface, PipelineBindPoint::Compute);
+    auto surfImpl = surfPtr->impl;
+    auto compBarrier = BarrierDesc { 
+        PipelineAccess::Write, PipelineStage::ComputeShader,
+        PipelineAccess::Read, PipelineStage::ComputeShader
+    };
     uint32_t cmdCount = 0;
     uint32_t tileXCount = (1920 + 15) / 16;
     uint32_t tileYCount = (1080 + 15) / 16;
     uint32_t threadGroupCount = 32;
-    
+
+    cmd->BindDescriptorTable(surfImpl->dtSurface, PipelineBindPoint::Compute);
+
+    cmd->BindPipeline(surfImpl->pPrepare);
     cmd->Dispatch(ceil(cmdCount / threadGroupCount), 1, 1);
 
-    cmd->Dispatch(tileXCount, tileYCount, 1);
+    cmd->Barrier({compBarrier });
 
+    cmd->BindPipeline(surfImpl->pTileBinning);
+    cmd->Dispatch(ceil(cmdCount / threadGroupCount), 1, 1);
+
+    cmd->Barrier({compBarrier });
+
+    cmd->BindPipeline(surfImpl->pBrushes);
     cmd->Dispatch(tileXCount, tileYCount, 1);
+    /* for Effects
+    cmd->Barrier({compBarrier });
+    cmd->BindPipeline(surfImpl->pEffects);
+    cmd->Dispatch(tileXCount, tileYCount, 1);
+    */
 }

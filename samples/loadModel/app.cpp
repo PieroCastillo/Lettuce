@@ -556,19 +556,21 @@ void mainLoop()
             .depthStencilAttachment = depthAttachment,
         };
 
+        auto allocs = std::array {
+            mvSceneData,
+            mvInstances,
+            mvMeshes,
+            mvPrimitives,
+            mvVertexB,
+            mvIndexB,
+            mvIndirectB,
+            mvInstancedPrimitives,
+            mvPickInstanceData,
+            mvDebugBuffer,
+        };
+
         PushAllocationsDesc pushDesc = {
-             .allocations = std::array {
-                std::pair(0u, mvSceneData),
-                std::pair(1u, mvInstances),
-                std::pair(2u, mvMeshes),
-                std::pair(3u, mvPrimitives),
-                std::pair(4u, mvVertexB),
-                std::pair(5u, mvIndexB),
-                std::pair(6u, mvIndirectB),
-                std::pair(7u, mvInstancedPrimitives),
-                std::pair(8u, mvPickInstanceData),
-                std::pair(9u, mvDebugBuffer),
-            },
+            .allocations = allocs,
             .descriptorTable = descriptorTable,
         };
 

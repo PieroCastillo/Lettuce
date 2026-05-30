@@ -140,7 +140,7 @@ void mainLoop()
         cmd.BindDescriptorTable(descriptorTable, PipelineBindPoint::Compute);
         cmd.BindPipeline(cullPipeline);
         PushAllocationsDesc pushDesc;
-        pushDesc.allocations = std::array{ std::pair(0u, indirectView),  std::pair(1u, particlesView) };
+        pushDesc.allocations = std::array{ indirectView,  particlesView };
         pushDesc.descriptorTable = descriptorTable;
         cmd.PushAllocations(pushDesc);
         cmd.Dispatch(8, 1, 1);
