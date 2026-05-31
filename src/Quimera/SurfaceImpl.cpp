@@ -1,4 +1,6 @@
 // standard headers
+#include <iostream>
+#include <fstream>
 #include <memory>
 #include <memory_resource>
 #include <span>
@@ -16,6 +18,15 @@ using namespace Lettuce::Core;
 void SurfaceImpl::Create(const SurfaceDesc& desc)
 {
     pDevice = &desc.device;
+
+    std::vector<uint32_t> shadersBuffer;
+    auto path = std::string("./comp.surface.spv");
+    auto shadersFile = std::ifstream(path, std::ios::ate | std::ios::binary);
+    if (!shadersFile) throw std::runtime_error(path + " does not exist");
+    auto fileSize = (uint32_t)shadersFile.tellg();
+    shadersBuffer.resize(fileSize / sizeof(uint32_t));
+    shadersFile.seekg(0);
+    shadersFile.read((char*)shadersBuffer.data(), fileSize);
 
     // initialize buffers / memory views
     bDrawCommands.mv = pDevice->CreateMemoryView({ desc.maxDrawCommands * sizeof(DrawCommand), true });
@@ -39,10 +50,20 @@ void SurfaceImpl::Create(const SurfaceDesc& desc)
     bBrushes.addr = pDevice->GetMemoryViewInfo(bBrushes.mv).cpuAddress;
 
     dtSurface = pDevice->CreateDescriptorTable({ 4,4,4 });
+
+    auto shaderBin = pDevice->CreateShader({ shadersBuffer });
+    pPrepare = pDevice->CreatePipeline({ "pPrepareMain", shaderBin, dtSurface });
+    pTileBinning = pDevice->CreatePipeline({ "pTileBinningMain", shaderBin, dtSurface });
+    pBrushes = pDevice->CreatePipeline({ "pBrushesMain", shaderBin, dtSurface });
+
+    pDevice->Destroy(shaderBin);
 }
 
 void SurfaceImpl::Destroy()
 {
+    pDevice->Destroy(pBrushes);
+    pDevice->Destroy(pTileBinning);
+    pDevice->Destroy(pPrepare);
     pDevice->Destroy(dtSurface);
     pDevice->Destroy(bBrushes.mv);
     pDevice->Destroy(bImplicitGeometries.mv);
