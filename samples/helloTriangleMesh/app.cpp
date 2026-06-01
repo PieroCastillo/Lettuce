@@ -71,12 +71,7 @@ void initLettuce()
 
 void createRenderingObjects()
 {
-    auto shaderBuffer = loadSpv("samples/helloTriangleMesh/helloTriangleMesh.spv");
-
-    ShaderBinaryDesc shaderDesc = {
-        .bytecode = std::span(shaderBuffer),
-    };
-    auto shader = device.CreateShader(shaderDesc);
+    auto shader = Lettuce::Utils::AssetLoader::LoadSpirv(&device, "samples/helloTriangleMesh/helloTriangleMesh.spv");
 
     DescriptorTableDesc descriptorTableDesc = { 4,4,4 };
     descriptorTable = device.CreateDescriptorTable(descriptorTableDesc);
