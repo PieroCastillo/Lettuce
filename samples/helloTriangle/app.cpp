@@ -17,6 +17,7 @@
 #include <functional>
 
 using namespace Lettuce::Core;
+using namespace Lettuce::Utils;
 
 GLFWwindow* window;
 
@@ -28,21 +29,6 @@ Swapchain swapchain;
 DescriptorTable descriptorTable;
 Pipeline rgbPipeline;
 CommandAllocator cmdAlloc;
-
-std::vector<uint32_t> loadSpv(std::string path)
-{
-    auto shadersFile = std::ifstream(path, std::ios::ate | std::ios::binary);
-    if (!shadersFile) throw std::runtime_error(path + " does not exist");
-
-    auto fileSize = (uint32_t)shadersFile.tellg();
-    std::vector<uint32_t> shadersBuffer;
-    shadersBuffer.resize(fileSize / sizeof(uint32_t));
-
-    shadersFile.seekg(0);
-    shadersFile.read((char*)shadersBuffer.data(), fileSize);
-
-    return shadersBuffer;
-}
 
 void initLettuce()
 {
@@ -71,12 +57,7 @@ void initLettuce()
 
 void createRenderingObjects()
 {
-    auto shadersBuffer = loadSpv("samples/helloTriangle/helloTriangle.spv");
-
-    ShaderBinaryDesc shaderDesc = {
-        .bytecode = std::span<uint32_t>(shadersBuffer.data(), shadersBuffer.size()),
-    };
-    auto shaders = device.CreateShader(shaderDesc);
+    auto shaders = Lettuce::Utils::AssetLoader::LoadSpirv(&device, "samples/helloTriangle/helloTriangle.spv");
 
     DescriptorTableDesc descriptorTableDesc = { 4,4,4 };
     descriptorTable = device.CreateDescriptorTable(descriptorTableDesc);

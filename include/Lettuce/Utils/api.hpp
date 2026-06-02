@@ -14,5 +14,7 @@ Created by @PieroCastillo on 2025-01-5
 using namespace Lettuce::Core;
 
 #include "./AssetLoader.hpp"
+#include "./Camera3D.hpp"
+#include "./FrameTimer.hpp"
 
 #endif // LETTUCE_UTILS_API_HPP

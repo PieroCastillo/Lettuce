@@ -1,3 +1,6 @@
 [submodule "external/KTX2-Samples"]
 	path = external/KTX2-Samples
 	url = https://github.com/donmccurdy/KTX2-Samples.git
+[submodule "external/niagara_bistro"]
+	path = external/niagara_bistro
+	url = https://github.com/zeux/niagara_bistro.git

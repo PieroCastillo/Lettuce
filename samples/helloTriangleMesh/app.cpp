@@ -29,21 +29,6 @@ DescriptorTable descriptorTable;
 Pipeline rgbPipeline;
 CommandAllocator cmdAlloc;
 
-std::vector<uint32_t> loadSpv(std::string path)
-{
-    auto shadersFile = std::ifstream(path, std::ios::ate | std::ios::binary);
-    if (!shadersFile) throw std::runtime_error(path + " does not exist");
-
-    auto fileSize = (uint32_t)shadersFile.tellg();
-    std::vector<uint32_t> shadersBuffer;
-    shadersBuffer.resize(fileSize / sizeof(uint32_t));
-
-    shadersFile.seekg(0);
-    shadersFile.read((char*)shadersBuffer.data(), fileSize);
-
-    return shadersBuffer;
-}
-
 void initLettuce()
 {
     auto hwnd = glfwGetWin32Window(window);
