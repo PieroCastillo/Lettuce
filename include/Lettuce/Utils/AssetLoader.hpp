@@ -12,7 +12,7 @@ namespace Lettuce::Utils
 {
     struct PrimitiveInfo
     {
-        uint32_t positionOffset;
+        uint32_t vertexOffset;
         uint32_t vertexCount;
         uint32_t indexOffset;
         uint32_t indexCount;
@@ -22,6 +22,14 @@ namespace Lettuce::Utils
     {
         uint32_t primitiveOffset;
         uint32_t primitiveCount;
+    };
+
+    struct MeshT
+    {
+        float3 aabbMin;
+        float4 aabbMax;
+        uint32_t clusterOffset;
+        uint32_t clusterCount;
     };
 
     class ModelGeometry

@@ -8,6 +8,7 @@
 Clone the repository.
 ```cmd
 git clone --recurse-submodules https://github.com/PieroCastillo/Lettuce.git
+git submodule update --init --recursive
 ```
 ## Step 2
 Build with xmake.

@@ -27,6 +27,7 @@ void SceneTree::Destroy()
 
 auto SceneTree::CreateCluster(const GeometryClusterDesc& desc) -> GeometryCluster
 {
+    // auto mvClusters = impl->device->CreateMemoryView({desc.maxClusterCount * sizeof(Cluster)});
     return impl->clusterDatas.allocate({});
 }
 

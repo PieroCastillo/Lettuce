@@ -8,36 +8,90 @@
 #include <glm/gtx/quaternion.hpp>
 #include <windows.h>
 
-#include <memory>
-#include <vector>
-#include <expected>
-#include <thread>
 #include <chrono>
-#include <print>
-#include <fstream>
+#include <expected>
 #include <filesystem>
-#include <optional>
+#include <fstream>
 #include <functional>
+#include <memory>
+#include <optional>
+#include <print>
+#include <thread>
+#include <vector>
 
 using namespace Lettuce::Core;
 using namespace Lettuce::Rendering;
 using namespace Lettuce::Utils;
 
-Device device;
+struct SceneData
+{
+    float4x4 viewProj;
+};
+
+GLFWwindow* window;
+
+constexpr uint32_t width = 1366;
+constexpr uint32_t height = 768;
+double xprev = width / 2;
+double yprev = height / 2;
+bool wasMousePressed = false;
+
+std::unique_ptr<Device> device;
+std::unique_ptr<SceneTree> sceneTree;
+
 Swapchain swapchain;
 CommandAllocator cmdAlloc;
+
+MemoryView mvSceneData;
+MemoryViewInfo mviSceneData;
+
 FrameTimer timer;
-CameraState camera;
+Camera3D camera(Camera3DDesc{});
+
+void UpdateCamera()
+{
+    double dt = timer.GetDeltaTime();
+
+    double xpos, ypos;
+    glfwGetCursorPos(window, &xpos, &ypos);
+
+    bool mousePressed = GLFW_PRESS == glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT);
+
+    bool aKeyPressed = GLFW_PRESS == glfwGetKey(window, GLFW_KEY_A) || GLFW_PRESS == glfwGetKey(window, GLFW_KEY_LEFT);
+    bool wKeyPressed = GLFW_PRESS == glfwGetKey(window, GLFW_KEY_W) || GLFW_PRESS == glfwGetKey(window, GLFW_KEY_UP);
+    bool sKeyPressed = GLFW_PRESS == glfwGetKey(window, GLFW_KEY_S) || GLFW_PRESS == glfwGetKey(window, GLFW_KEY_DOWN);
+    bool dKeyPressed = GLFW_PRESS == glfwGetKey(window, GLFW_KEY_D) || GLFW_PRESS == glfwGetKey(window, GLFW_KEY_RIGHT);
+
+    if (mousePressed && !wasMousePressed)
+    {
+        xprev = xpos;
+        yprev = ypos;
+    }
+
+    if (mousePressed)
+    {
+        camera.Rotate({ static_cast<float>(xpos - xprev), static_cast<float>(ypos - yprev) });
+    }
+
+    auto scenePtr = ((SceneData*)(mviSceneData.cpuAddress));
+    scenePtr->viewProj = camera.Update({ wKeyPressed,aKeyPressed,sKeyPressed, dKeyPressed,static_cast<float>(dt) });
+
+    xprev = xpos;
+    yprev = ypos;
+    wasMousePressed = mousePressed;
+}
 
 void initLettuce()
 {
     auto hwnd = glfwGetWin32Window(window);
     auto hmodule = GetModuleHandle(NULL);
 
+    device = std::make_unique<Device>();
+    
     DeviceDesc deviceCI = {
         .preferDedicated = true,
     };
-    device.Create(deviceCI);
+    device->Create(deviceCI);
 
     SwapchainDesc swapchainDesc = {
         .width = width,
@@ -46,13 +100,18 @@ void initLettuce()
         .windowPtr = &hwnd,
         .applicationPtr = &hmodule,
     };
-    swapchain = device.CreateSwapchain(swapchainDesc);
+    swapchain = device->CreateSwapchain(swapchainDesc);
 
     CommandAllocatorDesc cmdAllocDesc = {
         .queueType = QueueType::Graphics,
     };
-    cmdAlloc = device.CreateCommandAllocator(cmdAllocDesc);
+    cmdAlloc = device->CreateCommandAllocator(cmdAllocDesc);
+}
 
+void createResources()
+{
+    mvSceneData = device->CreateMemoryView({ sizeof(SceneData), true });
+    mviSceneData = device->GetMemoryViewInfo(mvSceneData);
 }
 
 void createRenderingObjects()
@@ -78,13 +137,12 @@ void mainLoop()
             xCursorPos = width / 2;
             yCursorPos = height / 2;
         }
-        // std::println("cursor at x: {} y: {}", xCursorPos, yCursorPos);
 
-        device.NextFrame(swapchain);
+        device->NextFrame(swapchain);
 
-        device.Reset(cmdAlloc);
-        auto frame = device.GetCurrentRenderTarget(swapchain);
-        auto cmd = device.AllocateCommandBuffer(cmdAlloc);
+        device->Reset(cmdAlloc);
+        auto frame = device->GetCurrentRenderTarget(swapchain);
+        auto cmd = device->AllocateCommandBuffer(cmdAlloc);
 
         // commands go here
 
@@ -96,10 +154,10 @@ void mainLoop()
             .presentSwapchain = swapchain,
         };
 
-        device.Submit(submitDesc);
+        device->Submit(submitDesc);
 
-        device.DisplayFrame(swapchain);
-        device.WaitFor(QueueType::Graphics);
+        device->DisplayFrame(swapchain);
+        device->WaitFor(QueueType::Graphics);
 
         glfwPollEvents();
     }
@@ -107,11 +165,13 @@ void mainLoop()
 
 void cleanupLettuce()
 {
-    device.WaitFor(QueueType::Graphics);
+    device->WaitFor(QueueType::Graphics);
 
-    device.Destroy(cmdAlloc);
-    device.Destroy(swapchain);
-    device.Destroy();
+    device->Destroy(mvSceneData);
+
+    device->Destroy(cmdAlloc);
+    device->Destroy(swapchain);
+    device->Destroy();
 }
 
 void initWindow()
@@ -119,7 +179,7 @@ void initWindow()
     glfwInit();
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
     glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
-    window = glfwCreateWindow(width, height, "My Lettuce Window", NULL, NULL);
+    window = glfwCreateWindow(width, height, "Scene Tree Demo", NULL, NULL);
 }
 
 void cleanupWindow()
@@ -134,9 +194,8 @@ int main()
     std::setvbuf(stdout, nullptr, _IONBF, 0);
     initWindow();
     initLettuce();
+    createResources();
     createRenderingObjects();
-    loadModel();
-    loadInstances();
     mainLoop();
     cleanupLettuce();
     cleanupWindow();

@@ -46,6 +46,7 @@ local samples = {
     "indirectDrawing",
     "loadModel",
     "movingSquares",
+    "sceneTreeDemo",
     "textureLoad",
     "uniform",
 }
