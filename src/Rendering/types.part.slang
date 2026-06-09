@@ -48,10 +48,11 @@ struct ClusterBuildIndirectCommand
     float4 cone;
     float lodError;
     uint32_t clusterID;
-    uint32_t indexBaseOffset;
-    uint32_t indexCount;
+    uint32_t triangleBaseOffset;
+    uint32_t triangleCount;
     uint32_t vertexBaseOffset;
     uint32_t vertexCount;
+    uint32_t vertexStride;
 };
 
 // each build is a new instance into the partition
@@ -138,8 +139,10 @@ struct ClusterStorage
     float3 bboxMax;
     float3 centroid;
     uint32_t positionsBaseOffset;
-    uint32_t indicesBaseOffset;
+    uint32_t positionCount;
+    uint32_t positionStride;
+    uint32_t trianglesBaseOffset;
+    uint32_t triangleCount;
     uint32_t clusterID;
-    uint32_t indexCount;
     float lodError;
 };

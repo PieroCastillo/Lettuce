@@ -31,7 +31,7 @@ rule("slang")
             "-target", "spirv",
             "-profile", "spirv_1_6",
             "-fvk-use-entrypoint-name",
-            "-fvk-use-scalar-layout",
+            "-fvk-use-c-layout",
             "-capability",
             "SPV_EXT_descriptor_indexing",
 

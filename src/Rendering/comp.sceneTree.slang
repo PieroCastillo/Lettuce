@@ -78,9 +78,11 @@ void buildCluster([[vk::push_constant]] BuildGeometryClusterPayload payload,
 
     // build cluster per leave
     tCluster.centroid = tCmd.bboxMin + 0.5f * (tCmd.bboxMax - tCmd.bboxMin);
-    tCluster.indexCount = tCmd.indexCount;
-    tCluster.indicesBaseOffset = tCmd.indexBaseOffset;
+    tCluster.triangleCount = tCmd.triangleCount;
+    tCluster.trianglesBaseOffset = tCmd.triangleBaseOffset;
     tCluster.positionsBaseOffset = tCmd.vertexBaseOffset;
+    tCluster.positionCount = tCmd.vertexCount;
+    tCluster.positionStride = tCmd.vertexStride;
     tLeaf.clusterIdx = globalIdx;
 
     // h ploc

@@ -112,7 +112,7 @@ auto Device::CreatePipeline(const PrimitiveShadingPipelineDesc& desc) -> Pipelin
     {
         auto format = ToVkFormat(*desc.depthStencilAttachmentFormat);
         renderingCI.depthAttachmentFormat = format;
-        renderingCI.stencilAttachmentFormat = format;
+        // renderingCI.stencilAttachmentFormat = format;
     }
 
     auto& shaders = impl->shaders;

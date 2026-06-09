@@ -1,6 +1,7 @@
 // standard headers
 #include <fstream>
 #include <filesystem>
+#include <limits>
 #include <memory>
 #include <print>
 #include <span>
@@ -165,17 +166,23 @@ auto AssetLoader::LoadGltfModel(Device* pDevice, std::string_view pathStr) -> Mo
     auto asset = parser.loadGltf(gltfData.get(), path.parent_path(), fastgltf::Options::None);
 
     /* GET PRIMITIVES*/
+    struct PrimitiveInfo
+    {
+        uint32_t vertexOffset;
+        uint32_t vertexCount;
+        uint32_t indexOffset;
+        uint32_t indexCount;
+    };
+
+    struct MeshInfo
+    {
+        uint32_t primitiveOffset;
+        uint32_t primitiveCount;
+    };
 
     auto meshes = std::vector<MeshInfo>();
     auto primitives = std::vector<PrimitiveInfo>();
-    // temp vertex streams
-    struct TempVertex
-    {
-        float3 pos;
-        float3 norm;
-        float2 texCoord0;
-    };
-    auto tempVerts = std::vector<TempVertex>();
+    auto tempVerts = std::vector<VertexL>();
 
     // temp index stream
     auto indexVec = std::vector<uint32_t>();
@@ -185,18 +192,16 @@ auto AssetLoader::LoadGltfModel(Device* pDevice, std::string_view pathStr) -> Mo
     for (auto& mesh : asset->meshes)
     {
         uint32_t primCount = 0;
+
         for (auto& prim : mesh.primitives)
         {
             auto* posIt = prim.findAttribute("POSITION");
             auto* norIt = prim.findAttribute("NORMAL");
-            // auto* tanIt = prim.findAttribute("TANGENT");
             auto* uvsIt = prim.findAttribute("TEXCOORD_0");
 
             auto& posAcc = asset->accessors[posIt->accessorIndex];
             auto& norAcc = asset->accessors[norIt->accessorIndex];
-            // auto& tanAcc = asset->accessors[tanIt->accessorIndex];
             auto& uvsAcc = asset->accessors[uvsIt->accessorIndex];
-
             auto& idxAcc = asset->accessors[prim.indicesAccessor.value()];
 
             auto baseVertexIdx = tempVerts.size();
@@ -205,101 +210,144 @@ auto AssetLoader::LoadGltfModel(Device* pDevice, std::string_view pathStr) -> Mo
             tempVerts.resize(baseVertexIdx + posAcc.count);
             indexVec.resize(baseIndexIdx + idxAcc.count);
 
-            PrimitiveInfo primInfo = { baseVertexIdx, posAcc.count, baseIndexIdx, idxAcc.count };
-            primitives.push_back(primInfo);
-
-            // required streams
-            fastgltf::iterateAccessorWithIndex<float3>(asset.get(), posAcc, [&](float3 pos, size_t idx) {
-                tempVerts[baseVertexIdx + idx].pos = pos;
+            primitives.push_back({
+                static_cast<uint32_t>(baseVertexIdx),
+                static_cast<uint32_t>(posAcc.count),
+                static_cast<uint32_t>(baseIndexIdx),
+                static_cast<uint32_t>(idxAcc.count)
                 });
 
-            fastgltf::iterateAccessorWithIndex<uint32_t>(asset.get(), idxAcc, [&](uint32_t index, size_t idx) {
-                indexVec[baseIndexIdx + idx] = index;
+            fastgltf::iterateAccessorWithIndex<float3>(asset.get(), posAcc, [&](float3 pos, size_t idx)
+                {
+                    tempVerts[baseVertexIdx + idx].pos = pos;
                 });
 
-            // optional streams
-            fastgltf::iterateAccessorWithIndex<float3>(asset.get(), norAcc, [&](float3 normal, size_t idx) {
-                tempVerts[baseVertexIdx + idx].norm = normal;
+            fastgltf::iterateAccessorWithIndex<uint32_t>(asset.get(), idxAcc, [&](uint32_t index, size_t idx)
+                {
+                    indexVec[baseIndexIdx + idx] = index;
                 });
 
-            // fastgltf::iterateAccessorWithIndex<float4>(asset.get(), tanAcc, [&](float4 tang, size_t idx) {
-            //     tanVec[baseVertexIdx + idx] = tang;
-            //     });
-
-            fastgltf::iterateAccessorWithIndex<float2>(asset.get(), uvsAcc, [&](float2 uv, size_t idx) {
-                tempVerts[baseVertexIdx + idx].texCoord0 = uv;
+            fastgltf::iterateAccessorWithIndex<float3>(asset.get(), norAcc, [&](float3 normal, size_t idx)
+                {
+                    tempVerts[baseVertexIdx + idx].norm = normal;
                 });
 
+            fastgltf::iterateAccessorWithIndex<float2>(asset.get(), uvsAcc, [&](float2 uv, size_t idx)
+                {
+                    tempVerts[baseVertexIdx + idx].texCoord0 = uv;
+                });
 
             ++primCount;
         }
-        meshes.push_back(MeshInfo{ totalPrims, primCount });
+
+        meshes.push_back({ totalPrims, primCount });
         totalPrims += primCount;
         ++meshCount;
     }
+    DebugPrint("[ASSET LOADER]", "{} parsed successfully", path.filename().string());
 
     /* CONVERT TO MESHLETS */
-    // nvidia settings
     constexpr uint32_t maxVertices = 64;
     constexpr uint32_t minTriangles = 32;
     constexpr uint32_t maxTriangles = 126;
-    constexpr float coneWeight = 0.5;
+    constexpr float coneWeight = 0.5f;
 
     // output
-    std::vector<TempVertex> globalVertexTable;
-    std::vector<uint32_t> globalIndexTable;
-    std::vector<ClusterBuildIndirectCommand> clusterBuilds;
-    std::vector<MeshT> outMeshes;
+    ModelGeometry outModel = {};
+
+    uint32_t geometryIdx = 0;
+    uint32_t clusterIdx = 0;
 
     for (auto& mesh : meshes)
     {
-        std::vector<meshopt_Meshlet> meshlets;
-        for (int i = mesh.primitiveOffset; i < mesh.primitiveCount; i++)
-        {
-            auto prim = primitives[i];
+        auto firstCluster = clusterIdx;
 
-            // declare initial data
+        auto meshAabbMin = float3(std::numeric_limits<float>::max());
+        auto meshAabbMax = float3(std::numeric_limits<float>::lowest());
+
+        for (uint32_t primIdx = mesh.primitiveOffset;
+            primIdx < mesh.primitiveOffset + mesh.primitiveCount;
+            ++primIdx)
+        {
+            auto& prim = primitives[primIdx];
+
             auto maxMeshlets = meshopt_buildMeshletsBound(prim.indexCount, maxVertices, maxTriangles);
+
             auto meshlets = std::vector<meshopt_Meshlet>(maxMeshlets);
             auto meshletVerts = std::vector<uint32_t>(prim.indexCount);
-            auto meshletTris = std::vector<uint32_t>(prim.indexCount);
+            auto meshletTris = std::vector<uint8_t>(prim.indexCount);
 
-            // build meshlets
-            auto meshletCount = meshopt_buildMeshletsSpatial<uint32_t>(&meshlets[0], &meshletVerts[0],
-                (unsigned char*)&meshletTris[0],
-                &indexVec[prim.indexOffset], prim.indexCount,
-                &tempVerts[prim.vertexOffset].pos.x, prim.vertexCount, sizeof(TempVertex),
-                maxVertices, minTriangles, maxTriangles, coneWeight);
+            auto meshletCount = meshopt_buildMeshletsSpatial(
+                meshlets.data(),
+                meshletVerts.data(),
+                meshletTris.data(),
+                &indexVec[prim.indexOffset],
+                prim.indexCount,
+                &tempVerts[prim.vertexOffset].pos.x,
+                prim.vertexCount,
+                sizeof(VertexL),
+                maxVertices,
+                minTriangles,
+                maxTriangles,
+                coneWeight);
 
-            // resize meshlet pool
             meshlets.resize(meshletCount);
+
+            for (auto& meshlet : meshlets)
+            {
+                auto aabbMin = float3(std::numeric_limits<float>::max());
+                auto aabbMax = float3(std::numeric_limits<float>::lowest());
+
+                uint32_t globalVertexOffset = static_cast<uint32_t>(outModel.vertexTable.size());
+                uint32_t globalTriangleOffset = static_cast<uint32_t>(outModel.trianglesTable.size());
+
+                for (uint32_t v = 0; v < meshlet.vertex_count; ++v)
+                {
+                    auto localVertex = meshletVerts[meshlet.vertex_offset + v];
+                    auto& vertex = tempVerts[prim.vertexOffset + localVertex];
+
+                    outModel.vertexTable.push_back(vertex);
+
+                    aabbMin = { std::min(aabbMin.x, vertex.pos.x), std::min(aabbMin.y, vertex.pos.y), std::min(aabbMin.z, vertex.pos.z) };
+                    aabbMax = { std::max(aabbMax.x, vertex.pos.x), std::max(aabbMax.y, vertex.pos.y), std::max(aabbMax.z, vertex.pos.z) };
+                }
+
+                auto triangleCount = meshlet.triangle_count * 3;
+                for (uint32_t t = 0; t < triangleCount; ++t)
+                {
+                    outModel.trianglesTable.push_back(meshletTris[meshlet.triangle_offset + t]);
+                }
+
+                meshAabbMin = { std::min(meshAabbMin.x, aabbMin.x), std::min(meshAabbMin.y, aabbMin.y), std::min(meshAabbMin.z, aabbMin.z) };
+                meshAabbMax = { std::max(meshAabbMax.x, aabbMax.x), std::max(meshAabbMax.y, aabbMax.y), std::max(meshAabbMax.z, aabbMax.z) };
+
+                outModel.clusterBuilds.push_back({
+                    .bboxMin = aabbMin,
+                    .bboxMax = aabbMax,
+                    .cone = {},
+                    .lodError = 0.0f,
+                    .clusterID = clusterIdx,
+                    .geometryIndex = geometryIdx,
+                    .triangleOffset = globalTriangleOffset,
+                    .triangleCount = meshlet.triangle_count,
+                    .vertexOffset = globalVertexOffset,
+                    .vertexCount = meshlet.vertex_count,
+                    .vertexStride = sizeof(VertexL),
+                    });
+
+                ++clusterIdx;
+            }
         }
+
+        outModel.meshes.push_back({ meshAabbMin,meshAabbMax,firstCluster, clusterIdx - firstCluster });
+
+        ++geometryIdx;
     }
 
-    // do copy
+    /*TODO: get scene */
 
-    /*
-    1. model[] { primitives[] : vertex streams, index stream, primitiveInfo }
-    ->
-    2. model[] { clusters[] : vertexStream[i], index stream, other cluster data }
-    */
-    // auto mvMeshes = pDevice->CreateMemoryView({ sizeof(MeshInfo) * meshes.size(), true });
-    // auto mvPrimitives = pDevice->CreateMemoryView({ sizeof(PrimitiveInfo) * primitives.size(), true });
-    // auto mvPosB = pDevice->CreateMemoryView({ sizeof(float3) * posVec.size(), true });
-    // auto mvIndexB = pDevice->CreateMemoryView({ sizeof(uint32_t) * indexVec.size(), true });
+    DebugPrint("[ASSET LOADER STATISTICS]", "\n Mesh count: {}\n Cluster count: {}\n Triangle count: {}",
+                outModel.meshes.size(), outModel.clusterBuilds.size(), outModel.trianglesTable.size());
 
-    // auto mviMeshes = pDevice->GetMemoryViewInfo(mvMeshes);
-    // auto mviPrimitives = pDevice->GetMemoryViewInfo(mvPrimitives);
-    // auto mviPosB = pDevice->GetMemoryViewInfo(mvPosB);
-    // auto mviIndexB = pDevice->GetMemoryViewInfo(mvIndexB);
-
-    // memcpy(mviMeshes.cpuAddress, meshes.data(), sizeof(MeshInfo) * meshes.size());
-    // memcpy(mviPrimitives.cpuAddress, primitives.data(), sizeof(PrimitiveInfo) * primitives.size());
-    // memcpy(mviPosB.cpuAddress, posVec.data(), sizeof(float3) * posVec.size());
-    // memcpy(mviIndexB.cpuAddress, indexVec.data(), sizeof(uint32_t) * indexVec.size());
-
-
-
-    // return { mvPosB, mvIndexB, primitives, meshes };
-    return {};
+    return std::move(outModel);
 }

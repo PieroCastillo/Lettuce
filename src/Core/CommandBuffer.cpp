@@ -74,7 +74,7 @@ void CommandBuffer::BeginRendering(const RenderPassDesc& desc)
             .clearValue = rt.defaultClearValue,
         };
         renderingInfo.pDepthAttachment = &attachmentInfo;
-        renderingInfo.pStencilAttachment = &attachmentInfo;
+        // renderingInfo.pStencilAttachment = &attachmentInfo;
     }
 
     auto cmd = (VkCommandBuffer)impl.handle;

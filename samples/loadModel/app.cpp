@@ -227,7 +227,7 @@ void createRenderingObjects()
         .vertShaderBinary = shaders,
         .fragShaderBinary = shaders,
         .colorAttachmentFormats = std::span(formatArr),
-        .depthStencilAttachmentFormat = Format::Universal_DepthStencil_D32_SFloat_S8_UInt,
+        .depthStencilAttachmentFormat = Format::Universal_Depth_D32_SFloat,
         .descriptorTable = descriptorTable,
     };
     rgbPipeline = device.CreatePipeline(pipelineDesc);

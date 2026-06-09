@@ -70,10 +70,11 @@ namespace Lettuce::Rendering
         float lodError;
         uint32_t clusterID;
         uint32_t geometryIndex;
-        uint32_t indexOffset;
-        uint32_t indexCount;
+        uint32_t triangleOffset;
+        uint32_t triangleCount;
         uint32_t vertexOffset;
         uint32_t vertexCount;
+        uint32_t vertexStride;
     };
     
     struct ScenePartitionBuildIndirectCommand

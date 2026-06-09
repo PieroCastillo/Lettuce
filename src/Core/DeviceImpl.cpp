@@ -167,7 +167,7 @@ void DeviceImpl::setupFeaturesExtensions()
     gpuFeatures12.shaderBufferInt64Atomics = VK_TRUE;
     gpuFeatures12.shaderSharedInt64Atomics = VK_TRUE;
     gpuFeatures12.shaderFloat16 = VK_FALSE;
-    gpuFeatures12.shaderInt8 = VK_FALSE;
+    gpuFeatures12.shaderInt8 = VK_TRUE;
     gpuFeatures12.descriptorIndexing = VK_TRUE;
     gpuFeatures12.shaderInputAttachmentArrayDynamicIndexing = VK_TRUE;
     gpuFeatures12.shaderUniformTexelBufferArrayDynamicIndexing = VK_TRUE;

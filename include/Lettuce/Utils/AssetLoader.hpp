@@ -5,41 +5,40 @@ Created by @PieroCastillo on 2026-05-30
 #define LETTUCE_UTILS_ASSET_LOADER_HPP
 
 #include "../Core/api.hpp"
+#include "../Rendering/api.hpp"
 
 using namespace Lettuce::Core;
+using namespace Lettuce::Rendering;
 
 namespace Lettuce::Utils
 {
-    struct PrimitiveInfo
-    {
-        uint32_t vertexOffset;
-        uint32_t vertexCount;
-        uint32_t indexOffset;
-        uint32_t indexCount;
-    };
-
-    struct MeshInfo
-    {
-        uint32_t primitiveOffset;
-        uint32_t primitiveCount;
-    };
-
-    struct MeshT
+    struct MeshL
     {
         float3 aabbMin;
-        float4 aabbMax;
+        float3 aabbMax;
         uint32_t clusterOffset;
         uint32_t clusterCount;
     };
 
-    class ModelGeometry
+    struct VertexL
     {
-    public:
-        MemoryView mvPositions;
-        MemoryView mvIndices;
+        float3 pos;
+        float3 norm;
+        float2 texCoord0;
+    };
 
-        std::vector<PrimitiveInfo> primitives;
-        std::vector<MeshInfo> meshes;
+    struct Instance
+    {
+        float4x4 transform;
+        uint32_t meshIdx;
+    };
+
+    struct ModelGeometry
+    {
+        std::vector<VertexL> vertexTable;
+        std::vector<uint8_t> trianglesTable;
+        std::vector<ClusterBuildIndirectCommand> clusterBuilds;
+        std::vector<MeshL> meshes;
     };
 
     struct AssetLoader
