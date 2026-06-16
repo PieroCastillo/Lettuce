@@ -127,7 +127,7 @@ void CommandBuffer::PushAllocations(const PushAllocationsDesc& desc)
     auto data = (uint64_t*)alloca(payloadSize);
 
     int idx = 0;
-    for (auto memView : desc.allocations)
+    for (const auto& memView : desc.allocations)
     {
         data[idx] = impl.device->memories.get(memView).gpuAddress;
         ++idx;
@@ -157,20 +157,21 @@ void CommandBuffer::ExecuteIndirect(const ExecuteIndirectDesc& desc)
     auto& set = impl.device->indirectSets.get(desc.indirectSet);
     auto cmd = (VkCommandBuffer)impl.handle;
     auto buffer = set.indirectSetBuffer;
+    auto offset = std::max<uint32_t>(0, desc.offset);
 
     switch (set.type)
     {
     case IndirectType::Draw:
-        vkCmdDrawIndirectCount(cmd, buffer, 4, buffer, 0, desc.maxDrawCount, set.stride);
+        vkCmdDrawIndirectCount(cmd, buffer, 4 + offset, buffer, 0, desc.maxDrawCount, set.stride);
         break;
     case IndirectType::DrawIndexed:
-        vkCmdDrawIndexedIndirectCount(cmd, buffer, 4, buffer, 0, desc.maxDrawCount, set.stride);
+        vkCmdDrawIndexedIndirectCount(cmd, buffer, 4 + offset, buffer, 0, desc.maxDrawCount, set.stride);
         break;
     case IndirectType::DrawMesh:
-        vkCmdDrawMeshTasksIndirectCountEXT(cmd, buffer, 4, buffer, 0, desc.maxDrawCount, set.stride);
+        vkCmdDrawMeshTasksIndirectCountEXT(cmd, buffer, 4 + offset, buffer, 0, desc.maxDrawCount, set.stride);
         break;
     case IndirectType::Dispatch:
-        vkCmdDispatchIndirect(cmd, buffer, 4);
+        vkCmdDispatchIndirect(cmd, buffer, 4 + offset);
         break;
     default:
         break;

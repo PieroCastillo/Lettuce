@@ -327,6 +327,7 @@ namespace Lettuce::Core
     struct ExecuteIndirectDesc
     {
         IndirectSet indirectSet;
+        uint32_t offset;
         uint32_t maxDrawCount;
     };
 

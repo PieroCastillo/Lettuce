@@ -339,7 +339,7 @@ auto AssetLoader::LoadGltfModel(Device* pDevice, std::string_view pathStr) -> Mo
             }
         }
 
-        outModel.meshes.push_back({ meshAabbMin,meshAabbMax,firstCluster, clusterIdx - firstCluster });
+        outModel.meshes.push_back({ meshAabbMin, meshAabbMax, firstCluster, clusterIdx - firstCluster });
 
         ++geometryIdx;
     }
@@ -347,7 +347,7 @@ auto AssetLoader::LoadGltfModel(Device* pDevice, std::string_view pathStr) -> Mo
     /*TODO: get scene */
 
     DebugPrint("[ASSET LOADER STATISTICS]", "\n Mesh count: {}\n Cluster count: {}\n Triangle count: {}",
-                outModel.meshes.size(), outModel.clusterBuilds.size(), outModel.trianglesTable.size());
+        outModel.meshes.size(), outModel.clusterBuilds.size(), outModel.trianglesTable.size());
 
     return std::move(outModel);
 }
