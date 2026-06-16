@@ -233,6 +233,7 @@ namespace Lettuce::Core
         uint32_t width, height;
         std::span<const AttachmentDesc> colorAttachments;
         std::optional<const AttachmentDesc> depthStencilAttachment;
+        std::optional<uint32_t> presentAttachmentIdx;
     };
 
     struct DeviceDesc
@@ -332,7 +333,7 @@ namespace Lettuce::Core
     };
 
     struct DeviceImpl;
-    struct CommandBufferImpl { DeviceImpl* device; uint64_t handle; };
+    struct CommandBufferImpl { DeviceImpl* device; uint64_t handle; std::optional<TextureView> currentPresentTarget; };
 
     struct Device {
     private:

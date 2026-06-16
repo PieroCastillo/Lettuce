@@ -77,6 +77,31 @@ void CommandBuffer::BeginRendering(const RenderPassDesc& desc)
         // renderingInfo.pStencilAttachment = &attachmentInfo;
     }
 
+    impl.currentPresentTarget = std::nullopt;
+    if(desc.presentAttachmentIdx && desc.presentAttachmentIdx.value() < desc.colorAttachments.size())
+    {
+        impl.currentPresentTarget = desc.colorAttachments[desc.presentAttachmentIdx.value()].renderTarget;
+
+        VkImageMemoryBarrier2 imgBar = {
+            .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2,
+            .srcStageMask = VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT,
+            .srcAccessMask =  0,
+            .dstStageMask = VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT,
+            .dstAccessMask = VK_ACCESS_2_MEMORY_READ_BIT | VK_ACCESS_2_MEMORY_WRITE_BIT,
+            .oldLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+            .newLayout = VK_IMAGE_LAYOUT_GENERAL,
+            .image = impl.device->textures.get(impl.currentPresentTarget.value()).image,
+            .subresourceRange = {VK_IMAGE_ASPECT_COLOR_BIT, 0,1,0,1},
+        };
+
+        VkDependencyInfo depInfo = {
+            .sType = VK_STRUCTURE_TYPE_DEPENDENCY_INFO,
+            .imageMemoryBarrierCount = 1,
+            .pImageMemoryBarriers = &imgBar,
+        };
+        vkCmdPipelineBarrier2((VkCommandBuffer)impl.handle, &depInfo);
+    }
+
     auto cmd = (VkCommandBuffer)impl.handle;
     vkCmdBeginRendering(cmd, &renderingInfo);
 
@@ -89,6 +114,29 @@ void CommandBuffer::BeginRendering(const RenderPassDesc& desc)
 void CommandBuffer::EndRendering()
 {
     vkCmdEndRendering((VkCommandBuffer)impl.handle);
+
+    if (impl.currentPresentTarget)
+    {
+        VkImageMemoryBarrier2 imgBar = {
+            .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2,
+            .srcStageMask = VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT,
+            .srcAccessMask = VK_ACCESS_2_MEMORY_WRITE_BIT,
+            .dstStageMask = VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT,
+            .dstAccessMask = VK_ACCESS_2_MEMORY_READ_BIT,
+            .oldLayout = VK_IMAGE_LAYOUT_GENERAL,
+            .newLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
+            .image = impl.device->textures.get(impl.currentPresentTarget.value()).image,
+            .subresourceRange = {VK_IMAGE_ASPECT_COLOR_BIT, 0,1,0,1},
+        };
+
+        VkDependencyInfo depInfo = {
+            .sType = VK_STRUCTURE_TYPE_DEPENDENCY_INFO,
+            .imageMemoryBarrierCount = 1,
+            .pImageMemoryBarriers = &imgBar,
+        };
+        vkCmdPipelineBarrier2((VkCommandBuffer)impl.handle, &depInfo);
+    }
+    impl.currentPresentTarget = std::nullopt;
 }
 
 void CommandBuffer::BindPipeline(Pipeline pipeline)

@@ -179,7 +179,7 @@ auto Device::CreateTextureView(const RenderTargetDesc& desc) -> TextureView
     }
     case RenderTargetType::Depth_D32:
     {
-        usageFlags = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_STORAGE_BIT;
+        usageFlags = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT; // | VK_IMAGE_USAGE_STORAGE_BIT;
         format = VK_FORMAT_D32_SFLOAT;
         subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
         break;

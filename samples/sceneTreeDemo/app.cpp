@@ -141,10 +141,10 @@ void createResources()
     {
     std::println("mesh, count: {} , offset: {}", meshL.clusterCount, meshL.clusterOffset);
     }
-    const auto& mesh = modelData.meshes[1];
+    const auto& mesh = modelData.meshes[0];
     // TODO: FIX STRANGE BEHAVIOUR
-    drawCallsOffset = mesh.clusterOffset * (sizeof(VkDrawIndirectCommand));
-    drawCallCount = mesh.clusterCount; // SET DRAW COUNT
+    drawCallsOffset = 0; //mesh.clusterOffset * (sizeof(VkDrawIndirectCommand));
+    drawCallCount = modelData.meshes[0].clusterCount +modelData.meshes[1].clusterCount; // SET DRAW COUNT
     std::println("{} : {}", drawCallCount, drawCallsOffset);
 
     indirectSet = device->CreateIndirectSet({ IndirectType::Draw, (uint32_t)modelData.clusterBuilds.size(), 0 });
@@ -271,6 +271,7 @@ void mainLoop()
             .height = height,
             .colorAttachments = std::span(colorAttachment),
             .depthStencilAttachment = depthAttachment,
+            .presentAttachmentIdx = 0,
         };
 
         cmd.BeginRendering(renderPassDesc);
