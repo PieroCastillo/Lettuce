@@ -30,6 +30,11 @@ struct SceneData
     float4x4 viewProj;
 };
 
+struct DrawParams
+{
+    uint32_t baseDrawClusterIdx;
+};
+
 GLFWwindow* window;
 
 constexpr uint32_t width = 1366;
@@ -56,10 +61,12 @@ MemoryView mvClusterBuildCmds;
 MemoryView mvTriangleBuffer;
 MemoryView mvVertexBuffer;
 MemoryView mvIndirectCalls;
+MemoryView mvDrawParams;
 MemoryViewInfo mviSceneData;
 MemoryViewInfo mviClusterBuildCmds;
 MemoryViewInfo mviTriangleBuffer;
 MemoryViewInfo mviVertexBuffer;
+MemoryViewInfo mviDrawParams;
 
 FrameTimer timer;
 Camera3D camera(Camera3DDesc{});
@@ -108,6 +115,7 @@ void initLettuce()
         .preferDedicated = true,
     };
     device->Create(deviceCI);
+    std::println("device created");
 
     SwapchainDesc swapchainDesc = {
         .width = width,
@@ -117,6 +125,7 @@ void initLettuce()
         .applicationPtr = &hmodule,
     };
     swapchain = device->CreateSwapchain(swapchainDesc);
+    std::println("swapchain created");
 
     CommandAllocatorDesc cmdAllocDesc = {
         .queueType = QueueType::Graphics,
@@ -137,14 +146,14 @@ void createResources()
 
     /* create indirect calls*/
     // select second mesh (dragon)
-    for(auto& meshL : modelData.meshes)
+    for (auto& meshL : modelData.meshes)
     {
-    std::println("mesh, count: {} , offset: {}", meshL.clusterCount, meshL.clusterOffset);
+        std::println("mesh, count: {} , offset: {}", meshL.clusterCount, meshL.clusterOffset);
     }
     const auto& mesh = modelData.meshes[0];
     // TODO: FIX STRANGE BEHAVIOUR
-    drawCallsOffset = 0; //mesh.clusterOffset * (sizeof(VkDrawIndirectCommand));
-    drawCallCount = modelData.meshes[0].clusterCount +modelData.meshes[1].clusterCount; // SET DRAW COUNT
+    drawCallsOffset = mesh.clusterOffset * (sizeof(VkDrawIndirectCommand));
+    drawCallCount = mesh.clusterCount;// + modelData.meshes[1].clusterCount; // SET DRAW COUNT
     std::println("{} : {}", drawCallCount, drawCallsOffset);
 
     indirectSet = device->CreateIndirectSet({ IndirectType::Draw, (uint32_t)modelData.clusterBuilds.size(), 0 });
@@ -154,11 +163,12 @@ void createResources()
     mvTriangleBuffer = device->CreateMemoryView({ sizeof(uint8_t) * modelData.trianglesTable.size(), true });
     mvVertexBuffer = device->CreateMemoryView({ sizeof(VertexL) * modelData.vertexTable.size(), true });
     mvIndirectCalls = device->GetIndirectSetView(indirectSet);
+    mvDrawParams = device->CreateMemoryView({ sizeof(DrawParams), true });
 
     indirectCalls.reserve(modelData.clusterBuilds.size());
     for (const auto& build : modelData.clusterBuilds)
     {
-        indirectCalls.push_back({ build.triangleCount * 3, 1,0,0 });
+        indirectCalls.push_back({ build.triangleCount * 3 , 1,0,0 });
     }
 
     /* prepare staging buffer*/
@@ -168,11 +178,13 @@ void createResources()
     mviTriangleBuffer = device->GetMemoryViewInfo(mvTriangleBuffer);
     mviVertexBuffer = device->GetMemoryViewInfo(mvVertexBuffer);
     auto mviTempIndirectCalls = device->GetMemoryViewInfo(mvTempIndirectCalls);
+    mviDrawParams = device->GetMemoryViewInfo(mvDrawParams);
 
     memcpy(mviClusterBuildCmds.cpuAddress, modelData.clusterBuilds.data(), sizeof(ClusterBuildIndirectCommand) * modelData.clusterBuilds.size());
     memcpy(mviTriangleBuffer.cpuAddress, modelData.trianglesTable.data(), sizeof(uint8_t) * modelData.trianglesTable.size());
     memcpy(mviVertexBuffer.cpuAddress, modelData.vertexTable.data(), sizeof(VertexL) * modelData.vertexTable.size());
     memcpy(mviTempIndirectCalls.cpuAddress, indirectCalls.data(), sizeof(VkDrawIndirectCommand) * indirectCalls.size());
+    ((DrawParams*)mviDrawParams.cpuAddress)->baseDrawClusterIdx = drawCallsOffset;
 
     // perform commands copy
     auto cmd = device->AllocateCommandBuffer(cmdAlloc);
@@ -192,6 +204,24 @@ void createResources()
     device->Submit(submitDesc);
     device->WaitFor(QueueType::Graphics);
     device->Destroy(mvTempIndirectCalls); // destroy temp buffer
+
+    for (auto drawIdx = drawCallsOffset; drawIdx < drawCallCount; ++drawIdx)
+    {
+        auto drawCmd = indirectCalls[drawIdx];
+        for (auto vertexID = 0; vertexID < drawCmd.vertexCount; ++vertexID)
+        {
+            auto baseClusterIdx = ((DrawParams*)mviDrawParams.cpuAddress)->baseDrawClusterIdx;
+            auto cmd = ((ClusterBuildIndirectCommand*)mviClusterBuildCmds.cpuAddress)[baseClusterIdx + drawIdx];
+            auto idx = ((uint8_t*)mviTriangleBuffer.cpuAddress)[cmd.triangleOffset + vertexID];
+            auto vertex = ((VertexL*)mviVertexBuffer.cpuAddress)[cmd.vertexOffset + idx];
+            // std::print("vx: {}", vertex.pos.x);
+        }
+    }
+
+    // for (auto& cmd : modelData.clusterBuilds)
+    // {
+    //     std::println("cluster={} vo={} vc={} to={} tc={}", cmd.clusterID, cmd.vertexOffset, cmd.vertexCount, cmd.triangleOffset, cmd.triangleCount);
+    // }
 }
 
 void createRenderingObjects()
@@ -219,6 +249,7 @@ void drawScene(CommandBuffer& cmd)
 {
     auto allocs = std::array{
         mvSceneData,
+        mvDrawParams,
         mvClusterBuildCmds,
         mvTriangleBuffer,
         mvVertexBuffer,
@@ -302,6 +333,7 @@ void cleanupLettuce()
     device->Destroy(pDrawScene);
     device->Destroy(dtScene);
 
+    device->Destroy(mvDrawParams);
     device->Destroy(mvVertexBuffer);
     device->Destroy(mvTriangleBuffer);
     device->Destroy(mvClusterBuildCmds);
@@ -333,8 +365,11 @@ int main()
 {
     std::ios::sync_with_stdio(true);
     std::setvbuf(stdout, nullptr, _IONBF, 0);
+    std::println("app init.");
     initWindow();
+    std::println("window created!");
     initLettuce();
+    std::println("vulkan loaded!");
     createResources();
     createRenderingObjects();
     mainLoop();

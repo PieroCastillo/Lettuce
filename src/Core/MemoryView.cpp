@@ -26,17 +26,18 @@ auto Device::CreateMemoryView(const MemoryViewDesc& desc) -> MemoryView
     VkBuffer buffer;
     VmaAllocation alloc;
     VmaAllocationInfo allocI;
+    constexpr uint64_t minBufferAligment = 16;
 
     VkBufferCreateInfo bufferCI = {
         .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
-        .size = desc.size,
+        .size = align_up(desc.size, minBufferAligment),
         .usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT ,
     };
     VmaAllocationCreateInfo allocCI = {
         .flags = desc.cpuVisible ? VMA_ALLOCATION_CREATE_MAPPED_BIT : (VmaAllocationCreateFlags)0,
         .requiredFlags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT | (desc.cpuVisible ? VK_MEMORY_PROPERTY_HOST_COHERENT_BIT : (VkMemoryPropertyFlags)0),
     };
-    handleResult(vmaCreateBuffer(impl->m_allocator, &bufferCI, &allocCI, &buffer, &alloc, &allocI));
+    handleResult(vmaCreateBufferWithAlignment(impl->m_allocator, &bufferCI, &allocCI, minBufferAligment, &buffer, &alloc, &allocI));
 
     VkBufferDeviceAddressInfo bdaInfo = {
         .sType = VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO,

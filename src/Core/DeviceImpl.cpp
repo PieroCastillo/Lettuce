@@ -225,7 +225,7 @@ void DeviceImpl::setupFeaturesExtensions()
 
     requestedExtensionsNames.push_back(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
     requestedExtensionsNames.push_back(VK_GOOGLE_HLSL_FUNCTIONALITY1_EXTENSION_NAME);
-    // requestedExtensionsNames.push_back(VK_GOOGLE_USER_TYPE_EXTENSION_NAME);
+    requestedExtensionsNames.push_back(VK_GOOGLE_USER_TYPE_EXTENSION_NAME);
 
     requestedExtensionsNames.push_back(VK_KHR_PIPELINE_LIBRARY_EXTENSION_NAME);
     requestedExtensionsNames.push_back(VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME);

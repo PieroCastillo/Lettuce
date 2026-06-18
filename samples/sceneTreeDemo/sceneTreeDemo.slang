@@ -41,6 +41,11 @@ struct SceneData
     float4x4 viewProj;
 };
 
+struct DrawParams
+{
+    uint32_t baseDrawClusterIdx;
+};
+
 struct ClusterBuildIndirectCommand
 {
     float3 bboxMin;
@@ -66,6 +71,7 @@ struct VertexL
 struct PushConstants
 {
     uint64_t sceneDataAddr;
+    uint64_t drawParamsAddr;
     uint64_t clusterBuildCmdsAddr;
     uint64_t triangleBufferAddr;
     uint64_t vertexBufferAddr;
@@ -80,7 +86,8 @@ VSOutput vertMain(uint vertexID: SV_VulkanVertexID, uint drawID: SV_DrawIndex)
     VSOutput output;
 
     var scene = reinterpret<Ptr<SceneData>>(pc.sceneDataAddr)[0];
-    var cmd = reinterpret<Ptr<ClusterBuildIndirectCommand>>(pc.clusterBuildCmdsAddr)[drawID];
+    var drawParams = reinterpret<Ptr<DrawParams>>(pc.drawParamsAddr)[0];
+    var cmd = reinterpret<Ptr<ClusterBuildIndirectCommand>>(pc.clusterBuildCmdsAddr)[drawParams.baseDrawClusterIdx + drawID];
     var idx = reinterpret<Ptr<uint8_t>>(pc.triangleBufferAddr)[cmd.triangleOffset + vertexID];
     var vertex = reinterpret<Ptr<VertexL>>(pc.vertexBufferAddr)[cmd.vertexOffset + idx];
 

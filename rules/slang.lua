@@ -45,6 +45,16 @@ rule("slang")
             sourcefile
         }
 
+        if is_mode("debug") then
+            table.join2(args, {
+                "-fspv-reflect",
+            })
+        else
+            table.join2(args, {
+                "-O3"
+            })
+        end
+
         batchcmds:vrunv("slangc", args)
 
         batchcmds:add_depfiles(sourcefile, depfile)
