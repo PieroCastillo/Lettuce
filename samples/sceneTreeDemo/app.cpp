@@ -150,7 +150,7 @@ void createResources()
     {
         std::println("mesh, count: {} , offset: {}", meshL.clusterCount, meshL.clusterOffset);
     }
-    const auto& mesh = modelData.meshes[0];
+    const auto& mesh = modelData.meshes[1];
     // TODO: FIX STRANGE BEHAVIOUR
     drawCallsOffset = mesh.clusterOffset * (sizeof(VkDrawIndirectCommand));
     drawCallCount = mesh.clusterCount;// + modelData.meshes[1].clusterCount; // SET DRAW COUNT
@@ -168,7 +168,7 @@ void createResources()
     indirectCalls.reserve(modelData.clusterBuilds.size());
     for (const auto& build : modelData.clusterBuilds)
     {
-        indirectCalls.push_back({ build.triangleCount * 3 , 1,0,0 });
+        indirectCalls.push_back({ build.triangleCount * 3, 1,0,0 });
     }
 
     /* prepare staging buffer*/
