@@ -34,8 +34,3 @@ auto Surface::CreateBrush(const SolidColorBrushDesc& desc) -> Brush
 {
     return {};
 }
-
-void Surface::Draw(uint32_t zOrder, Geometry geometry, Brush brush, float3x3 transform)
-{
-
-}

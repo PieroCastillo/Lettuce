@@ -20,7 +20,7 @@ void SurfaceImpl::Create(const SurfaceDesc& desc)
     pDevice = &desc.device;
 
     std::vector<uint32_t> shadersBuffer;
-    auto path = std::string("./comp.surface.spv");
+    auto path = std::string("./src/Quimera/comp.surface.spv");
     auto shadersFile = std::ifstream(path, std::ios::ate | std::ios::binary);
     if (!shadersFile) throw std::runtime_error(path + " does not exist");
     auto fileSize = (uint32_t)shadersFile.tellg();
@@ -69,12 +69,4 @@ void SurfaceImpl::Destroy()
     pDevice->Destroy(bImplicitGeometries.mv);
     pDevice->Destroy(bTransforms.mv);
     pDevice->Destroy(bDrawCommands.mv);
-}
-
-void SurfaceImpl::SetRenderTarget(TextureView tex)
-{
-    dstTexture = tex;
-    auto info = pDevice->GetResourceInfo(dstTexture);
-    dstHeight = info.height;
-    dstWidth = info.width;
 }

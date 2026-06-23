@@ -151,6 +151,7 @@ void mainLoop()
                     .width = width,
                     .height = height,
                     .colorAttachments = std::span(colorAttachment),
+                    .presentAttachmentIdx = 0,
                 };
                 cmd.BeginRendering(renderPassDesc);
                 cmd.BindDescriptorTable(descriptorTable, PipelineBindPoint::Graphics);
@@ -174,6 +175,7 @@ void mainLoop()
                     .width = width,
                     .height = height,
                     .colorAttachments = std::span(colorAttachment),
+                    .presentAttachmentIdx = 0,
                 };
 
                 cmd.BeginRendering(renderPassDesc);

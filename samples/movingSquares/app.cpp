@@ -16,7 +16,7 @@
 #include <vector>
 
 using namespace Lettuce::Core;
-using namespace Lettuce::Composition;
+using namespace Lettuce::Quimera;
 
 GLFWwindow* window;
 
@@ -24,7 +24,7 @@ constexpr uint32_t width = 1366;
 constexpr uint32_t height = 768;
 
 std::unique_ptr<Device> device;
-std::unique_ptr<Compositor> compositor;
+std::unique_ptr<Surface> surface;
 
 Swapchain swapchain;
 CommandAllocator cmdAlloc;
@@ -33,29 +33,55 @@ void mainLoop()
 {
     while (!glfwWindowShouldClose(window))
     {
-        // device->NextFrame(swapchain);
+        device->NextFrame(swapchain);
 
-        // device->Reset(cmdAlloc);
-        // auto frame = device->GetCurrentRenderTarget(swapchain);
-        // auto cmd = device->AllocateCommandBuffer(cmdAlloc);
+        device->Reset(cmdAlloc);
+        auto frame = device->GetCurrentRenderTarget(swapchain);
+        auto cmd = device->AllocateCommandBuffer(cmdAlloc);
 
-        // std::array<std::span<CommandBuffer>, 1> cmds = { std::span(&cmd, 1) };
+        AttachmentDesc colorAttachment[1] = {
+            {
+                .renderTarget = frame,
+                .loadOp = LoadOp::Clear,
+            }
+        };
 
-        // CommandBufferSubmitDesc submitDesc = {
-        //     .queueType = QueueType::Graphics,
-        //     .commandBuffers = std::span(cmds),
-        //     .presentSwapchain = swapchain,
-        // };
+        RenderPassDesc renderPassDesc = {
+            .width = width,
+            .height = height,
+            .colorAttachments = std::span(colorAttachment),
+            .presentAttachmentIdx = 0,
+        };
 
-        // device->Submit(submitDesc);
+        cmd.BeginRendering(renderPassDesc);
 
-        // device->DisplayFrame(swapchain);
-        // device->WaitFor(QueueType::Graphics);
-        std::println("app thread");
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        cmd.EndRendering();
+
+        std::array<std::span<CommandBuffer>, 1> cmds = { std::span(&cmd, 1) };
+
+        CommandBufferSubmitDesc submitDesc = {
+            .queueType = QueueType::Graphics,
+            .commandBuffers = std::span(cmds),
+            .presentSwapchain = swapchain,
+        };
+
+        device->Submit(submitDesc);
+
+        device->DisplayFrame(swapchain);
+        device->WaitFor(QueueType::Graphics);
 
         glfwPollEvents();
     }
+}
+
+void create2dResources()
+{
+
+}
+
+void cleanup2dResources()
+{
+
 }
 
 void initWindow()
@@ -91,6 +117,15 @@ void initLettuce()
     };
     swapchain = device->CreateSwapchain(swapchainDesc);
 
+    SurfaceDesc surfaceCI = {
+        .device = *device,
+        .maxImplicitGeometries = 10000,
+        .maxBrushes = 10000,
+        .maxDrawCommands = 10000,
+    };
+    surface = std::make_unique<Surface>();
+    surface->Create(surfaceCI);
+
     CommandAllocatorDesc cmdAllocDesc = {
         .queueType = QueueType::Graphics,
     };
@@ -100,50 +135,10 @@ void initLettuce()
 void cleanupLettuce()
 {
     device->WaitFor(QueueType::Graphics);
+    surface->Destroy();
     device->Destroy(cmdAlloc);
     device->Destroy(swapchain);
     device->Destroy();
-}
-
-void initCompositionEngine()
-{
-    CompositorDesc compositorCI = {
-        .device = device.get(),
-        .swapchain = swapchain,
-        .maxAnimations = 1000,
-        .maxLights = 64,
-        .maxLinkedTextures = 64,
-        .maxMaterials = 256,
-        .maxVisuals = 1024,
-    };
-    compositor = std::make_unique<Compositor>();
-    compositor->Create(compositorCI);
-
-    auto geom = compositor->CreateGeometry(ImplicitGeometryDesc{ .shape = ImplicitShape::Rectangle });
-    auto matColor = compositor->CreateMaterial(SolidColorMaterialDesc{ .color = {0.565, 0.933, 0.565} });
-
-    auto myButtonVisual = compositor->CreateVisual(SpriteVisualDesc{ .size = {100, 50}, .geometry = geom, .material = matColor });
-
-    auto hoverSpring = compositor->CreateAnimation(NaturalMotionAnimationDesc{ .stiffness = 300.0f, .damping = 15.0f });
-    compositor->BindImplicitAnimation(myButtonVisual, AnimatableProperty::Scale, hoverSpring);
-
-    // OnMouseEnter
-    compositor->SetScale(myButtonVisual, { 1.1f, 1.1f });
-
-    // auto missingGlyphs = RasterizeMissingGlyphs("🌍あ");
-    // compositor.UploadToAtlasTexture(globalTextAtlas, missingGlyphs);
-    // std::vector<AtlasInstance> glyphInstances;
-    // glyphInstances.push_back({ uvH, rectH, {0,0,0,1}, AtlasInstanceFlags::None });
-    // glyphInstances.push_back({ uvEarth, rectEarth, {1,1,1,1}, AtlasInstanceFlags::IsColorBitmap });
-
-    // compositor.UpdateAtlasedInstances(myTextGeometry, glyphInstances);
-
-    compositor->Commit();
-}
-
-void cleanupCompositionEngine()
-{
-    compositor->Destroy();
 }
 
 int main()
@@ -151,9 +146,9 @@ int main()
     setvbuf(stdout, nullptr, _IONBF, 0);
     initWindow();
     initLettuce();
-    initCompositionEngine();
+    create2dResources();
     mainLoop();
-    cleanupCompositionEngine();
+    cleanup2dResources();
     cleanupLettuce();
     cleanupWindow();
     return 0;

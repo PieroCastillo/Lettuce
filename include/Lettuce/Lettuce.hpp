@@ -10,3 +10,6 @@
 
 // utils
 #include "Utils/api.hpp"
+
+// 2d
+#include "Quimera/api.hpp"

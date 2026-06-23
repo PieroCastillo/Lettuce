@@ -32,6 +32,7 @@ namespace Lettuce::Quimera
         uint32_t transformIdx;
         uint32_t geometryIdx;
         uint32_t brushIdx;
+        uint32_t zOrder;
         uint32_t flags;
     };
 
@@ -48,10 +49,7 @@ namespace Lettuce::Quimera
     struct SurfaceImpl
     {
         Device* pDevice = nullptr;
-        
-        TextureView dstTexture;
-        uint32_t dstWidth, dstHeight;
-
+    
         DescriptorTable dtSurface;
 
         Pipeline pPrepare;
@@ -64,11 +62,11 @@ namespace Lettuce::Quimera
         Buffer<ImplicitGeometryStorage> bImplicitGeometries;
         Buffer<BrushStorage> bBrushes;
 
+        std::vector<DrawCommand> vDrawCommands;
+        std::vector<float3x3> vTransforms;
+
         void Create(const SurfaceDesc&);
         void Destroy();
-
-        void SetRenderTarget(TextureView);
     };
 };
-
 #endif // LETTUCE_QUIMERA_SURFACE_IMPL_HPP

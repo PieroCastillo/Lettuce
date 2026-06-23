@@ -41,12 +41,16 @@ namespace Lettuce::Quimera
         float rightTopCornerRadious;
         float rightBottomCornerRadious;
     };
+
+    struct DrawSurfaceDesc
+    {
+        TextureView dstTexture;
+        Rect renderArea;
+    };
     
     struct SurfaceDesc
     {
         Device& device;
-        TextureView dstTexture;
-        Rect renderArea;
 
         uint32_t maxImplicitGeometries;
         uint32_t maxBrushes;
@@ -68,8 +72,6 @@ namespace Lettuce::Quimera
 
         auto CreateGeometry(const ImplicitGeometryDesc&) -> Geometry;
         auto CreateBrush(const SolidColorBrushDesc&) -> Brush;
-
-        void Draw(uint32_t zOrder, Geometry geometry, Brush brush, float3x3 transform);
     };
 
     struct SurfaceCommandBuffer
@@ -80,7 +82,8 @@ namespace Lettuce::Quimera
     public:
         explicit SurfaceCommandBuffer(Surface& surface, CommandBuffer& commandBuffer) : surfPtr(&surface), cmd(&commandBuffer) {}
 
-        void DrawSurface();
+        void Draw(uint32_t zOrder, Geometry geometry, Brush brush, float3x3 transform);
+        void DrawSurface(const DrawSurfaceDesc&);
     };
 };
 #endif // LETTUCE_QUIMERA_API_HPP
