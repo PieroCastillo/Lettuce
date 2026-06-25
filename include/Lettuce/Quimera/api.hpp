@@ -67,9 +67,7 @@ namespace Lettuce::Quimera
     public:
         void Create(const SurfaceDesc&);
         void Destroy();
-
-        void SetRenderTarget(TextureView, Rect);
-
+        
         auto CreateGeometry(const ImplicitGeometryDesc&) -> Geometry;
         auto CreateBrush(const SolidColorBrushDesc&) -> Brush;
     };

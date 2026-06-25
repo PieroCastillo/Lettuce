@@ -29,44 +29,25 @@ void SurfaceImpl::Create(const SurfaceDesc& desc)
     shadersFile.read((char*)shadersBuffer.data(), fileSize);
 
     // initialize buffers / memory views
-    bDrawCommands.mv = pDevice->CreateMemoryView({ desc.maxDrawCommands * sizeof(DrawCommand), true });
-    bDrawCommands.maxCount = desc.maxDrawCommands;
-    bDrawCommands.offset = 0;
-    bDrawCommands.addr = pDevice->GetMemoryViewInfo(bDrawCommands.mv).cpuAddress;
-
-    bTransforms.mv = pDevice->CreateMemoryView({ desc.maxDrawCommands * sizeof(float3x3), true });
-    bTransforms.maxCount = desc.maxDrawCommands;
-    bTransforms.offset = 0;
-    bTransforms.addr = pDevice->GetMemoryViewInfo(bTransforms.mv).cpuAddress;
-
-    bImplicitGeometries.mv = pDevice->CreateMemoryView({ desc.maxImplicitGeometries * sizeof(ImplicitGeometryStorage), true });
-    bImplicitGeometries.maxCount = desc.maxImplicitGeometries;
-    bImplicitGeometries.offset = 0;
-    bImplicitGeometries.addr = pDevice->GetMemoryViewInfo(bImplicitGeometries.mv).cpuAddress;
-
-    bBrushes.mv = pDevice->CreateMemoryView({ desc.maxBrushes * sizeof(BrushStorage), true });
-    bBrushes.maxCount = desc.maxBrushes;
-    bBrushes.offset = 0;
-    bBrushes.addr = pDevice->GetMemoryViewInfo(bBrushes.mv).cpuAddress;
+    bDrawCommands = Buffer<DrawCommand>(pDevice, desc.maxDrawCommands);
+    bTransforms = Buffer<float3x3>(pDevice, desc.maxDrawCommands);
+    bImplicitGeometry = Buffer<ImplicitGeometryStorage>(pDevice, desc.maxImplicitGeometries);
+    bSolidColorBrush = Buffer<SolidColorBrushStorage>(pDevice, desc.maxBrushes);
 
     dtSurface = pDevice->CreateDescriptorTable({ 4,4,4 });
 
     auto shaderBin = pDevice->CreateShader({ shadersBuffer });
-    pPrepare = pDevice->CreatePipeline({ "pPrepareMain", shaderBin, dtSurface });
-    pTileBinning = pDevice->CreatePipeline({ "pTileBinningMain", shaderBin, dtSurface });
-    pBrushes = pDevice->CreatePipeline({ "pBrushesMain", shaderBin, dtSurface });
+    pDrawCommands = pDevice->CreatePipeline({ "pDrawCommandsMain", shaderBin, dtSurface });
 
     pDevice->Destroy(shaderBin);
 }
 
 void SurfaceImpl::Destroy()
 {
-    pDevice->Destroy(pBrushes);
-    pDevice->Destroy(pTileBinning);
-    pDevice->Destroy(pPrepare);
+    pDevice->Destroy(pDrawCommands);
     pDevice->Destroy(dtSurface);
-    pDevice->Destroy(bBrushes.mv);
-    pDevice->Destroy(bImplicitGeometries.mv);
-    pDevice->Destroy(bTransforms.mv);
     pDevice->Destroy(bDrawCommands.mv);
+    pDevice->Destroy(bTransforms.mv);
+    pDevice->Destroy(bImplicitGeometry.mv);
+    pDevice->Destroy(bSolidColorBrush.mv);
 }

@@ -29,6 +29,49 @@ std::unique_ptr<Surface> surface;
 Swapchain swapchain;
 CommandAllocator cmdAlloc;
 
+Geometry square;
+Geometry circle;
+Brush redBrush;
+Brush blueBrush;
+
+void draw2dScene(CommandBuffer& lcmd, TextureView frame)
+{
+    auto cmd = SurfaceCommandBuffer(*surface, lcmd);
+    cmd.Draw(67, circle, redBrush, float3x3(1.0f));
+    cmd.Draw(66, square, blueBrush, float3x3(1.0f));
+    cmd.DrawSurface({ frame, {0,0, width, height } });
+}
+
+void create2dResources()
+{
+    ImplicitGeometryDesc squareData = {
+        { 30, 30, 30, 30 },
+        0, 0, 0, 0,
+    };
+    square = surface->CreateGeometry(squareData);
+
+    ImplicitGeometryDesc circleData = {
+        { 40, 40, 30, 40 },
+        50, 50, 50, 50,
+    };
+    circle = surface->CreateGeometry(circleData);
+
+    SolidColorBrushDesc redData = {
+        { 1, 0, 0, 1},
+    };
+    redBrush = surface->CreateBrush(redData);
+
+    SolidColorBrushDesc blueData = {
+        { 1, 0, 0, 1},
+    };
+    blueBrush = surface->CreateBrush(blueData);
+}
+
+void cleanup2dResources()
+{
+
+}
+
 void mainLoop()
 {
     while (!glfwWindowShouldClose(window))
@@ -38,6 +81,13 @@ void mainLoop()
         device->Reset(cmdAlloc);
         auto frame = device->GetCurrentRenderTarget(swapchain);
         auto cmd = device->AllocateCommandBuffer(cmdAlloc);
+
+        BarrierDesc bFragComp = {
+            PipelineAccess::Write,
+            PipelineStage::ColorAttachmentOutput,
+            PipelineAccess::Read,
+            PipelineStage::ComputeShader,
+        };
 
         AttachmentDesc colorAttachment[1] = {
             {
@@ -54,8 +104,11 @@ void mainLoop()
         };
 
         cmd.BeginRendering(renderPassDesc);
-
         cmd.EndRendering();
+
+        cmd.Barrier({ bFragComp });
+
+        // draw2dScene(cmd, frame);
 
         std::array<std::span<CommandBuffer>, 1> cmds = { std::span(&cmd, 1) };
 
@@ -72,16 +125,6 @@ void mainLoop()
 
         glfwPollEvents();
     }
-}
-
-void create2dResources()
-{
-
-}
-
-void cleanup2dResources()
-{
-
 }
 
 void initWindow()

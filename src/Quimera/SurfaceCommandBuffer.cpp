@@ -1,5 +1,6 @@
 // standard headers
 #include <algorithm>
+#include <array>
 #include <memory>
 #include <memory_resource>
 #include <ranges>
@@ -17,10 +18,16 @@ using namespace Lettuce::Core;
 
 void SurfaceCommandBuffer::Draw(uint32_t zOrder, Geometry geometry, Brush brush, float3x3 transform)
 {
-    surfPtr->impl->vTransforms.push_back(transform);
-    uint32_t transformIdx = surfPtr->impl->vTransforms.size() - 1;
+    auto surfImpl = surfPtr->impl;
+    surfImpl->vTransforms.push_back(transform);
+    uint32_t transformIdx = surfImpl->vTransforms.size() - 1;
 
-    surfPtr->impl->vDrawCommands.push_back(DrawCommand{ transformIdx, geometry.index, brush.index, zOrder, 0 });
+    const auto& geoInfo = surfImpl->geometries.get(geometry);
+    const auto& brushInfo = surfImpl->brushes.get(brush);
+
+    auto flags = DrawCommandPackFlags(geoInfo.geometryHeapIdx, brushInfo.brushHeapIdx, 0, false, false);
+
+    surfImpl->vDrawCommands.push_back(DrawCommand{ transformIdx, geoInfo.geometryIdx, brushInfo.brushIdx, zOrder, false });
 }
 
 void SurfaceCommandBuffer::DrawSurface(const DrawSurfaceDesc& desc)
@@ -28,51 +35,43 @@ void SurfaceCommandBuffer::DrawSurface(const DrawSurfaceDesc& desc)
     auto surfImpl = surfPtr->impl;
 
     // sort commands by depth
-    struct
-    {
-        bool operator()(DrawCommand a, DrawCommand b) const { return a.zOrder < b.zOrder; }
-    } customLess;
     auto& drawCmds = surfImpl->vDrawCommands;
-    std::ranges::sort(drawCmds, customLess);
+    std::ranges::stable_sort(drawCmds, std::ranges::greater{}, &DrawCommand::zOrder);
 
     // avoid UB
     if (drawCmds.size() >= surfImpl->bDrawCommands.maxCount || surfImpl->vTransforms.size() >= surfImpl->bTransforms.maxCount)
-    {
         return;
-    }
 
-    auto compBarrier = BarrierDesc{
-        PipelineAccess::Write, PipelineStage::ComputeShader,
-        PipelineAccess::Read, PipelineStage::ComputeShader
+    // copy commands
+    memcpy(surfImpl->bDrawCommands.addr, drawCmds.data(), drawCmds.size() * sizeof(DrawCommand));
+    memcpy(surfImpl->bTransforms.addr, surfImpl->vTransforms.data(), surfImpl->vTransforms.size() * sizeof(float4x4));
+
+    // clear immediate render info for the next frame
+    surfImpl->vDrawCommands.clear();
+    surfImpl->vTransforms.clear();
+
+    auto stgTextures = std::array{
+        std::make_pair(0u, desc.dstTexture),
     };
+    PushResourceDescriptorsDesc pushResDesc = {
+        .storageTextures = std::span(stgTextures),
+        .descriptorTable = surfImpl->dtSurface,
+    };
+    surfImpl->pDevice->PushResourceDescriptors(pushResDesc);
 
-    auto allocs = std::array {
+    auto allocs = std::array{
         surfImpl->bDrawCommands.mv,
         surfImpl->bTransforms.mv,
-        surfImpl->bImplicitGeometries.mv,
-        surfImpl->bBrushes.mv,
+        surfImpl->bImplicitGeometry.mv,
+        surfImpl->bSolidColorBrush.mv,
     };
 
     uint32_t cmdCount = surfImpl->bDrawCommands.offset + 1;
     uint32_t tileXCount = (desc.renderArea.w + 15) / 16;
     uint32_t tileYCount = (desc.renderArea.h + 15) / 16;
-    uint32_t threadGroupCount = surfImpl->pDevice->QueryPreferredThreadCount();
 
     cmd->BindDescriptorTable(surfImpl->dtSurface, PipelineBindPoint::Compute);
-
-    cmd->BindPipeline(surfImpl->pPrepare);
-    cmd->PushAllocations({ allocs, surfImpl->dtSurface });
-    cmd->Dispatch(ceil(cmdCount / threadGroupCount), 1, 1);
-
-    cmd->Barrier({ compBarrier });
-
-    cmd->BindPipeline(surfImpl->pTileBinning);
-    cmd->PushAllocations({ allocs, surfImpl->dtSurface });
-    cmd->Dispatch(ceil(cmdCount / threadGroupCount), 1, 1);
-
-    cmd->Barrier({ compBarrier });
-
-    cmd->BindPipeline(surfImpl->pBrushes);
+    cmd->BindPipeline(surfImpl->pDrawCommands);
     cmd->PushAllocations({ allocs, surfImpl->dtSurface });
     cmd->Dispatch(tileXCount, tileYCount, 1);
 }

@@ -27,10 +27,17 @@ void Surface::Destroy()
 
 auto Surface::CreateGeometry(const ImplicitGeometryDesc& desc) -> Geometry
 {
-    return {};
+    auto geoIdx = impl->bImplicitGeometry.Push({
+        desc.bounds.x, desc.bounds.y, desc.bounds.w, desc.bounds.h,
+        desc.leftTopCornerRadious, desc.rightTopCornerRadious,
+        desc.leftBottomCornerRadious, desc.rightBottomCornerRadious,
+        });
+
+    return impl->geometries.allocate({ geoIdx, (uint32_t)GeometryHeap::Implicit});
 }
 
 auto Surface::CreateBrush(const SolidColorBrushDesc& desc) -> Brush
 {
-    return {};
+    auto brushIdx = impl->bSolidColorBrush.Push({ desc.color });
+    return impl->brushes.allocate({ brushIdx, (uint32_t)BrushHeap::SolidColor });
 }

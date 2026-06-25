@@ -11,21 +11,38 @@ Created by @PieroCastillo on 2026-05-29
 
 namespace Lettuce::Quimera
 {
+    enum class GeometryHeap : uint32_t
+    { 
+        Implicit = 0,
+    };
+    
+    enum class BrushHeap : uint32_t
+    {
+        SolidColor = 0,
+    };
+
+    struct GeometryAccessData
+    {
+        uint32_t geometryIdx;
+        uint32_t geometryHeapIdx;
+    };
+
+    struct BrushAccessData
+    {
+        uint32_t brushIdx;
+        uint32_t brushHeapIdx;
+    };
+
     struct ImplicitGeometryStorage
     {
         float x, y, w, h;
         float ctl, ctr, cbl, cbr; // corners
     };
 
-    struct BrushStorage
+    struct SolidColorBrushStorage
     {
-        uint32_t b;
+        float4 color;
     };
-
-    constexpr uint32_t Draw_GeometryParam = 1 << 0;
-    constexpr uint32_t Draw_GeometryPath = 1 << 1;
-    constexpr uint32_t Draw_GeometryAtlas = 1 << 2;
-    constexpr uint32_t Draw_TransformIgnore = 1 << 4;
 
     struct DrawCommand
     {
@@ -33,8 +50,21 @@ namespace Lettuce::Quimera
         uint32_t geometryIdx;
         uint32_t brushIdx;
         uint32_t zOrder;
+        // [ 1 bit (clipped) | 1 bit (ignoreTransform) | ... | 4 bit (effect heap) | 4 bit (brush heap) | 4 bit (geometry heap)]
         uint32_t flags;
+        uint32_t reserved1;
+        uint32_t reserved2;
+        uint32_t reserved3;
     };
+
+    inline uint32_t DrawCommandPackFlags(uint32_t geometryHeap, uint32_t brushHeap, uint32_t effectHeap, bool ignoreTransform, bool clipped)
+    {
+        return (geometryHeap & 0xF) |
+            ((brushHeap & 0xF) << 4) |
+            ((effectHeap & 0xF) << 8) |
+            (uint32_t(ignoreTransform) << 30) |
+            (uint32_t(clipped) << 31);
+    }
 
     template<typename T>
     struct Buffer
@@ -43,24 +73,58 @@ namespace Lettuce::Quimera
         HostAddress addr;
         uint32_t offset;
         uint32_t maxCount;
+        std::vector<uint32_t> freeIndices;
+
         static constexpr uint32_t elementSize = sizeof(T);
+
+        Buffer() = default;
+
+        explicit Buffer(Device* pDevice, uint32_t maxcount)
+        {
+            mv = pDevice->CreateMemoryView({ maxCount * sizeof(T), true });
+            maxCount = maxcount;
+            offset = 0;
+            addr = pDevice->GetMemoryViewInfo(mv).cpuAddress;
+        }
+
+        uint32_t Push(const T& value)
+        {
+            uint32_t index;
+
+            if (!freeIndices.empty())
+            {
+                index = freeIndices.back();
+                freeIndices.pop_back();
+            }
+            else
+            {
+                index = offset++;
+            }
+
+            reinterpret_cast<T*>(addr)[index] = value;
+            return index;
+        }
+
+        void Free(uint32_t index)
+        {
+            freeIndices.push_back(index);
+        }
     };
 
     struct SurfaceImpl
     {
         Device* pDevice = nullptr;
-    
-        DescriptorTable dtSurface;
 
-        Pipeline pPrepare;
-        Pipeline pTileBinning;
-        Pipeline pBrushes;
-        Pipeline pEffects;
+        DescriptorTable dtSurface;
+        Pipeline pDrawCommands;
+
+        ResourcePool<Geometry, GeometryAccessData> geometries;
+        ResourcePool<Brush, BrushAccessData> brushes;
 
         Buffer<DrawCommand> bDrawCommands;
         Buffer<float3x3> bTransforms;
-        Buffer<ImplicitGeometryStorage> bImplicitGeometries;
-        Buffer<BrushStorage> bBrushes;
+        Buffer<ImplicitGeometryStorage> bImplicitGeometry;
+        Buffer<SolidColorBrushStorage> bSolidColorBrush;
 
         std::vector<DrawCommand> vDrawCommands;
         std::vector<float3x3> vTransforms;
