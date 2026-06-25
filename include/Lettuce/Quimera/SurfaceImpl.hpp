@@ -12,13 +12,21 @@ Created by @PieroCastillo on 2026-05-29
 namespace Lettuce::Quimera
 {
     enum class GeometryHeap : uint32_t
-    { 
+    {
         Implicit = 0,
     };
-    
+
     enum class BrushHeap : uint32_t
     {
         SolidColor = 0,
+    };
+
+    struct SurfaceData
+    {
+        uint32_t width;
+        uint32_t height;
+        uint32_t drawCommandCount;
+        uint32_t reserved1;
     };
 
     struct GeometryAccessData
@@ -119,6 +127,9 @@ namespace Lettuce::Quimera
         ResourcePool<Geometry, GeometryAccessData> geometries;
         ResourcePool<Brush, BrushAccessData> brushes;
 
+        MemoryView mvSurfaceData;
+        SurfaceData* mvSurfaceDataPtr;
+
         Buffer<DrawCommand> bDrawCommands;
         Buffer<float3x3> bTransforms;
         Buffer<ImplicitGeometryStorage> bImplicitGeometry;
@@ -126,6 +137,8 @@ namespace Lettuce::Quimera
 
         std::vector<DrawCommand> vDrawCommands;
         std::vector<float3x3> vTransforms;
+
+        TextureView twLastRenderTarget;
 
         void Create(const SurfaceDesc&);
         void Destroy();

@@ -190,8 +190,8 @@ void Device::PushResourceDescriptors(const PushResourceDescriptorsDesc& desc)
         // TODO: impl bounds checking
         uint64_t offset = dt.sampledImagesBindingOffset + (idx * sampledImageDescriptorSize);
         vkGetDescriptorEXT(device, &getInfo, sampledImageDescriptorSize, (void*)(dt.cpuAddress + offset));
-        DebugPrint("[DESCRIPTOR TABLE]", "sampled Img offset: {}", offset);
-        DebugPrint("[                ]", "data: {}", hexData(dt.cpuAddress + offset, sampledImageDescriptorSize));
+        // DebugPrint("[DESCRIPTOR TABLE]", "sampled Img offset: {}", offset);
+        // DebugPrint("[                ]", "data: {}", hexData(dt.cpuAddress + offset, sampledImageDescriptorSize));
     }
 
     for (auto& [idx, samplerHandle] : samplers)
@@ -225,10 +225,10 @@ void Device::PushResourceDescriptors(const PushResourceDescriptorsDesc& desc)
         // TODO: impl bounds checking
         uint64_t offset = dt.storageImagesBindingOffset + (idx * storageImageDescriptorSize);
         vkGetDescriptorEXT(device, &getInfo, storageImageDescriptorSize, (void*)(dt.cpuAddress + offset));
-        DebugPrint("[DESCRIPTOR TABLE]", "storage Img offset : {}", offset);
+        // DebugPrint("[DESCRIPTOR TABLE]", "storage Img offset : {}", offset);
     }
 
-    DebugPrint("[DESCRIPTOR BUFFER]", "data: {}", hexData(dt.cpuAddress, dt.bufferSize));
+    // DebugPrint("[DESCRIPTOR BUFFER]", "data: {}", hexData(dt.cpuAddress, dt.bufferSize));
 
     // TODO: in the future, enable acceleration structures
 }

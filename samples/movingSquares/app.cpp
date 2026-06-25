@@ -69,7 +69,6 @@ void create2dResources()
 
 void cleanup2dResources()
 {
-
 }
 
 void mainLoop()
@@ -87,6 +86,13 @@ void mainLoop()
             PipelineStage::ColorAttachmentOutput,
             PipelineAccess::Read,
             PipelineStage::ComputeShader,
+        };
+
+        BarrierDesc bCompCopy = {
+            PipelineAccess::Write,
+            PipelineStage::ComputeShader,
+            PipelineAccess::Read,
+            PipelineStage::Copy,
         };
 
         AttachmentDesc colorAttachment[1] = {
@@ -108,7 +114,7 @@ void mainLoop()
 
         cmd.Barrier({ bFragComp });
 
-        // draw2dScene(cmd, frame);
+        draw2dScene(cmd, frame);
 
         std::array<std::span<CommandBuffer>, 1> cmds = { std::span(&cmd, 1) };
 

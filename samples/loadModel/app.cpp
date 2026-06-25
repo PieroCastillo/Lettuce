@@ -461,7 +461,7 @@ void mainLoop()
             .maxDrawCount = instancedPrimitivesCount,
         };
 
-        TextureToMemory tmPixelCopy =
+        TextureToMemoryCopy tmPixelCopy =
         {
             .srcTexture = tPickTexture,
             .dstMemory = mvPickInstanceData,

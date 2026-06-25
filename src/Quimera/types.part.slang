@@ -2,6 +2,14 @@ implementing LettuceQuimera;
 
 /* lib structs */
 
+struct SurfaceData
+{
+    uint32_t width;
+    uint32_t height;
+    uint32_t drawCommandCount;
+    uint32_t reserved1;
+};
+
 struct ImplicitGeometryStorage
 {
     float x, y, w, h;
@@ -34,6 +42,7 @@ struct TileMemory
 
 struct PushConstants
 {
+    uint64_t surfaceDataAddr;
     uint64_t drawCommandsAddr;
     uint64_t transformsAddr;
     uint64_t implicitGeometriesAddr;

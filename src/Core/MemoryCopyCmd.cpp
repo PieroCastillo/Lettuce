@@ -52,7 +52,7 @@ void CommandBuffer::MemoryCopy(const MemoryToTextureCopy& copy)
         .bufferRowLength = 0,
         .bufferImageHeight = 0,
         .imageSubresource = { VK_IMAGE_ASPECT_COLOR_BIT, copy.mipmapLevel, copy.layerBaseLevel, copy.layerCount },
-        .imageOffset = { 0,0,0},
+        .imageOffset = { 0,0,0 },
         .imageExtent = { dstImg.width, dstImg.height, 1 },
     };
 
@@ -60,7 +60,7 @@ void CommandBuffer::MemoryCopy(const MemoryToTextureCopy& copy)
         VK_IMAGE_LAYOUT_GENERAL, 1, &imageCopy);
 }
 
-void CommandBuffer::MemoryCopy(const TextureToMemory& copy)
+void CommandBuffer::MemoryCopy(const TextureToMemoryCopy& copy)
 {
     auto& dev = impl.device;
 
@@ -90,6 +90,38 @@ void CommandBuffer::MemoryCopy(const TextureToMemory& copy)
 
     vkCmdCopyImageToBuffer((VkCommandBuffer)impl.handle, srcImg.image, VK_IMAGE_LAYOUT_GENERAL,
         dstMemory.buffer, 1, &imageCopy);
+}
+
+void CommandBuffer::MemoryCopy(const TextureToTextureCopy& copy)
+{
+    auto& dev = impl.device;
+    auto& srcImg = dev->textures.get(copy.srcTexture);
+    auto& dstImg = dev->textures.get(copy.dstTexture);
+
+    auto srcX = std::clamp<int32_t>(copy.srcX, 0, static_cast<int32_t>(srcImg.width));
+    auto srcY = std::clamp<int32_t>(copy.srcY, 0, static_cast<int32_t>(srcImg.height));
+    auto dstX = std::clamp<int32_t>(copy.dstX, 0, static_cast<int32_t>(dstImg.width));
+    auto dstY = std::clamp<int32_t>(copy.dstY, 0, static_cast<int32_t>(dstImg.height));
+
+    auto srcMaxW = srcImg.width - static_cast<uint32_t>(srcX);
+    auto srcMaxH = srcImg.height - static_cast<uint32_t>(srcY);
+
+    auto dstMaxW = dstImg.width - static_cast<uint32_t>(dstX);
+    auto dstMaxH = dstImg.height - static_cast<uint32_t>(dstY);
+
+    auto safeW = std::min({ copy.width, srcMaxW, dstMaxW });
+    auto safeH = std::min({ copy.height, srcMaxH, dstMaxH });
+
+    VkImageCopy imgCopy = {
+        .srcSubresource = { VK_IMAGE_ASPECT_COLOR_BIT, 0, copy.srcLayer, 1 },
+        .srcOffset = { srcX, srcY, 0 },
+        .dstSubresource = { VK_IMAGE_ASPECT_COLOR_BIT, 0, copy.dstLayer, 1 },
+        .dstOffset = { dstX, dstY, 0 },
+        .extent = { safeW, safeH, 1 },
+    };
+
+    vkCmdCopyImage((VkCommandBuffer)impl.handle, srcImg.image, VK_IMAGE_LAYOUT_GENERAL,
+        dstImg.image, VK_IMAGE_LAYOUT_GENERAL, 1, &imgCopy);
 }
 
 void CommandBuffer::Fill(MemoryView view, uint32_t offset, uint32_t value, uint32_t count)

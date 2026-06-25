@@ -37,6 +37,7 @@ void SurfaceCommandBuffer::DrawSurface(const DrawSurfaceDesc& desc)
     // sort commands by depth
     auto& drawCmds = surfImpl->vDrawCommands;
     std::ranges::stable_sort(drawCmds, std::ranges::greater{}, &DrawCommand::zOrder);
+    auto drawCmdCount = (uint32_t)drawCmds.size();
 
     // avoid UB
     if (drawCmds.size() >= surfImpl->bDrawCommands.maxCount || surfImpl->vTransforms.size() >= surfImpl->bTransforms.maxCount)
@@ -49,17 +50,27 @@ void SurfaceCommandBuffer::DrawSurface(const DrawSurfaceDesc& desc)
     // clear immediate render info for the next frame
     surfImpl->vDrawCommands.clear();
     surfImpl->vTransforms.clear();
+    
+    // set render target
+    if (surfImpl->twLastRenderTarget != desc.dstTexture) [[likely]]
+    {
+        auto stgTextures = std::array{
+            std::make_pair(0u, desc.dstTexture),
+        };
+        PushResourceDescriptorsDesc pushResDesc = {
+            .storageTextures = std::span(stgTextures),
+            .descriptorTable = surfImpl->dtSurface,
+        };
+        surfImpl->pDevice->PushResourceDescriptors(pushResDesc);
 
-    auto stgTextures = std::array{
-        std::make_pair(0u, desc.dstTexture),
-    };
-    PushResourceDescriptorsDesc pushResDesc = {
-        .storageTextures = std::span(stgTextures),
-        .descriptorTable = surfImpl->dtSurface,
-    };
-    surfImpl->pDevice->PushResourceDescriptors(pushResDesc);
+        surfImpl->twLastRenderTarget = desc.dstTexture;
+    }
+
+    // set width & height
+    *(surfImpl->mvSurfaceDataPtr) = { static_cast<uint32_t>(desc.renderArea.w), static_cast<uint32_t>(desc.renderArea.h), drawCmdCount };
 
     auto allocs = std::array{
+        surfImpl->mvSurfaceData,
         surfImpl->bDrawCommands.mv,
         surfImpl->bTransforms.mv,
         surfImpl->bImplicitGeometry.mv,

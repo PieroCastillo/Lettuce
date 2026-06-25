@@ -19,28 +19,82 @@ groupshared TileMemory tileMemory[tileMaxCommands];
 
 [require(compute, spirv_1_6)]
 [numthreads(tileSize, tileSize, 1)]
-void pDrawCommandsMain(uint3 dispatchThreadId: SV_DispatchThreadID,
-                       uint3 groupThreadId: SV_GroupThreadID,
+void pDrawCommandsMain(uint3 gid: SV_DispatchThreadID,
+                       uint3 lid: SV_GroupThreadID,
                        uint3 groupId: SV_GroupID)
 {
+    var surfaceData = reinterpret<Ptr<SurfaceData>>(pc.surfaceDataAddr)[0];
     var drawCmds = reinterpret<Ptr<DrawCommand>>(pc.drawCommandsAddr);
     var transforms = reinterpret<Ptr<float3x3>>(pc.transformsAddr);
     var implicitGeometries = reinterpret<Ptr<ImplicitGeometryStorage>>(pc.implicitGeometriesAddr);
     var solidColorBrushes = reinterpret<Ptr<SolidColorBrushStorage>>(pc.solidColorBrushesAddr);
 
-    // tile sort by depth
-    /*
-    // each thread will test a tile
-    foreach drawCmd in drawCmds[i, i+(tileSize*tileSize)] and tileDrawCallCount < tileMaxCommands:
-        if testIntersection(drawCmd, tile):
-            add drawCmd to tileMemory
-    */
-    // GroupMemoryBarrierWithGroupSync();
+    if (gid.x >= surfaceData.width || gid.y >= surfaceData.height)
+        return;
+
+    if (lid.x == 0 && lid.y == 0)
+        tileDrawCallCount = 0;
+
+    var color = float4(0.5, 0.5, 0.5, 1);
+
+    // tile sort by depth and intersection
+    uint localIndex = gid.y * tileSize + gid.x;
+
+    for (uint k = 0; k < surfaceData.drawCommandCount && tileDrawCallCount < tileMaxCommands; k += tileSize * tileSize)
+    {
+        uint i = k + localIndex;
+
+        if (i < surfaceData.drawCommandCount)
+        {
+            uint slot;
+            InterlockedAdd(tileDrawCallCount, 1, slot);
+
+            if (slot < tileMaxCommands)
+                tileMemory[slot].drawCommandId = i;
+
+            color = float4(1, 0, 0, 1);
+        }
+    }
+
+    GroupMemoryBarrierWithGroupSync();
+
+    // clamp tileDrawCallCount
+    var tileDrawCallCount = min(tileDrawCallCount, tileMaxCommands);
+
     // execute draw commands
+    // each thread will test a pixel
+    /// TODO: convert from local coords to screen coords 
+    for (uint j = 0; j < tileDrawCallCount; ++j)
+    {
+        var drawCmd = drawCmds[tileMemory[j].drawCommandId];
+        uint brushHeap, geometryHeap, effectHeap;
+        bool ignoreTransform, clipped;
+        UnpackDrawCommandFlags(drawCmd.flags, geometryHeap, brushHeap, effectHeap, ignoreTransform, clipped);
+
+        if (brushHeap == 0 && geometryHeap == 0)
+        {
+            var brush = solidColorBrushes[drawCmd.brushIdx];
+            var geometry = implicitGeometries[drawCmd.geometryIdx];
+            var transform = transforms[drawCmd.transformIdx];
+            var pixelPos = float2(gid.xy);
+
+            // if(!ignoreTransform)
+            pixelPos = mul(transform, float3(pixelPos, 1)).xy;
+
+            if (pixelPos.x >= geometry.x && pixelPos.x <= geometry.x + geometry.w &&
+                pixelPos.y >= geometry.y && pixelPos.y <= geometry.y + geometry.h)
+            {
+                color = brush.color;
+            }
+
+            if (brush.color.a >= 1.0)
+                break;
+        }
+    }
+
+    storageTextures[0][uint2(gid.xy)] = color;
     /*
     // each thread will test a pixel
-    if (pixel is not in target)
-        return;
 
     for each drawCmd in tileMemory:
         load brush

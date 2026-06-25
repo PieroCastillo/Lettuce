@@ -161,19 +161,19 @@ auto Device::CreateTextureView(const RenderTargetDesc& desc) -> TextureView
 {
     VkImageUsageFlags usageFlags = 0;
     VkFormat format;
-    VkImageSubresourceRange subresourceRange = { VK_IMAGE_ASPECT_COLOR_BIT,    0,1,0,1 };
+    VkImageSubresourceRange subresourceRange = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 };
 
     switch (desc.type)
     {
     case RenderTargetType::ColorRGB_sRGB:
     {
-        usageFlags = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_STORAGE_BIT;
+        usageFlags = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
         format = VK_FORMAT_R32G32B32_SFLOAT;
         break;
     }
     case RenderTargetType::ColorRGBA_sRGB:
     {
-        usageFlags = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_STORAGE_BIT;
+        usageFlags = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
         format = VK_FORMAT_R32G32B32A32_SFLOAT;
         break;
     }

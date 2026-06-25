@@ -29,6 +29,8 @@ void SurfaceImpl::Create(const SurfaceDesc& desc)
     shadersFile.read((char*)shadersBuffer.data(), fileSize);
 
     // initialize buffers / memory views
+    mvSurfaceData =  pDevice->CreateMemoryView({sizeof(SurfaceData), true});
+    mvSurfaceDataPtr = (SurfaceData*)pDevice->GetMemoryViewInfo(mvSurfaceData).cpuAddress;
     bDrawCommands = Buffer<DrawCommand>(pDevice, desc.maxDrawCommands);
     bTransforms = Buffer<float3x3>(pDevice, desc.maxDrawCommands);
     bImplicitGeometry = Buffer<ImplicitGeometryStorage>(pDevice, desc.maxImplicitGeometries);
@@ -50,4 +52,5 @@ void SurfaceImpl::Destroy()
     pDevice->Destroy(bTransforms.mv);
     pDevice->Destroy(bImplicitGeometry.mv);
     pDevice->Destroy(bSolidColorBrush.mv);
+    pDevice->Destroy(mvSurfaceData);
 }

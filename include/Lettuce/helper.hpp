@@ -4,13 +4,15 @@ Created by @PieroCastillo on 2025-01-9
 #ifndef LETTUCE_HELPER_HPP
 #define LETTUCE_HELPER_HPP
 
+#include <cstdint>
+#include <format>
+#include <string>
+
 #ifndef NDEBUG
 
-#include <cstdint>
 #include <iostream>
 #include <print>
 #include <stacktrace>
-#include <string>
 
     #define DEBUG_YELLOW_BOLD "\033[1;33m"
     #define DEBUG_RESET       "\033[0m"
@@ -25,7 +27,7 @@ Created by @PieroCastillo on 2025-01-9
     do {                                                          \
         if (!(cond)) [[unlikely]] {                               \
             std::println(std::cerr,                               \
-                "\033[1;31m[ASSERTION FAILED]\033[0m");             \
+                "\033[1;31m[ASSERTION FAILED]\033[0m");           \
             std::println(std::cerr, "Condition: {}", #cond);      \
             std::println(std::cerr, "Message: {}", msg);          \
             std::println(std::cerr, "{}",                         \
@@ -38,7 +40,6 @@ Created by @PieroCastillo on 2025-01-9
     #define DebugPrint(...)  ((void)0)
     #define DebugAssert(...) ((void)0)
 #endif
-
 
 inline std::string hexData(const void* ptr, std::size_t size)
 {

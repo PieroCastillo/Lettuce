@@ -308,7 +308,7 @@ namespace Lettuce::Core
         uint32_t x, y, width, height;
     };
 
-    struct TextureToMemory
+    struct TextureToMemoryCopy
     {
         TextureView srcTexture;
         MemoryView dstMemory;
@@ -317,6 +317,17 @@ namespace Lettuce::Core
         uint32_t layerCount;
         uint32_t x, y, width, height;
         uint32_t dstOffset;
+    };
+
+    struct TextureToTextureCopy
+    {
+        TextureView srcTexture;
+        TextureView dstTexture;
+        uint32_t srcLayer;
+        uint32_t dstLayer;
+        uint32_t srcX, srcY;
+        uint32_t dstX, dstY;
+        uint32_t width, height;
     };
 
     struct PushAllocationsDesc
@@ -431,7 +442,8 @@ namespace Lettuce::Core
         void MemoryCopy(const MemoryToMemoryCopy&);
         void MemoryCopy(const MemoryToTextureCopy&);
         // Copy from offset[x,y], range[width, height] of the TextureView to the start of the buffer
-        void MemoryCopy(const TextureToMemory&);
+        void MemoryCopy(const TextureToMemoryCopy&);
+        void MemoryCopy(const TextureToTextureCopy&);
         void Fill(MemoryView view, uint32_t offset, uint32_t value, uint32_t count);
 
         void ClearTexture(const ClearTextureDesc&);
