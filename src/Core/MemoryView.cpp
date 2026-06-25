@@ -1,8 +1,10 @@
 // standard headers
 #include <array>
+#include <cassert>
 #include <memory>
 #include <print>
 #include <unordered_map>
+#include <stacktrace>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -28,16 +30,18 @@ auto Device::CreateMemoryView(const MemoryViewDesc& desc) -> MemoryView
     VmaAllocationInfo allocI;
     constexpr uint64_t minBufferAligment = 16;
 
+    DebugAssert(desc.size > 0, "MemoryViewDesc.size MUST be greater than 0");
+
     VkBufferCreateInfo bufferCI = {
         .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
         .size = align_up(desc.size, minBufferAligment),
-        .usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT ,
+        .usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
     };
     VmaAllocationCreateInfo allocCI = {
-        .flags = desc.cpuVisible ? VMA_ALLOCATION_CREATE_MAPPED_BIT : (VmaAllocationCreateFlags)0,
+        .flags = (desc.cpuVisible ? VMA_ALLOCATION_CREATE_MAPPED_BIT : (VmaAllocationCreateFlags)0),
         .requiredFlags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT | (desc.cpuVisible ? VK_MEMORY_PROPERTY_HOST_COHERENT_BIT : (VkMemoryPropertyFlags)0),
     };
-    handleResult(vmaCreateBufferWithAlignment(impl->m_allocator, &bufferCI, &allocCI, minBufferAligment, &buffer, &alloc, &allocI));
+    handleResult(vmaCreateBuffer(impl->m_allocator, &bufferCI, &allocCI, &buffer, &alloc, &allocI));
 
     VkBufferDeviceAddressInfo bdaInfo = {
         .sType = VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO,
@@ -46,20 +50,20 @@ auto Device::CreateMemoryView(const MemoryViewDesc& desc) -> MemoryView
     auto devAddr = vkGetBufferDeviceAddress(impl->m_device, &bdaInfo);
 
     uint8_t* buffCPUAddr = nullptr;
-    if(desc.cpuVisible)
+    if (desc.cpuVisible)
         vmaMapMemory(impl->m_allocator, alloc, (void**)(&buffCPUAddr));
 
-    return impl->memories.allocate({buffer, allocI.deviceMemory, allocI.size, allocI.offset, buffCPUAddr, devAddr, alloc});
+    return impl->memories.allocate({ buffer, allocI.deviceMemory, allocI.size, allocI.offset, buffCPUAddr, devAddr, alloc });
 }
 
 void Device::Destroy(MemoryView view)
 {
     auto info = impl->memories.get(view);
 
-    if(info.isView)
+    if (info.isView)
         return;
 
-    if(info.cpuAddress)
+    if (info.cpuAddress)
         vmaUnmapMemory(impl->m_allocator, info.allocation);
 
     vmaDestroyBuffer(impl->m_allocator, info.buffer, info.allocation);

@@ -79,11 +79,9 @@ namespace Lettuce::Quimera
 
         Buffer() = default;
 
-        explicit Buffer(Device* pDevice, uint32_t maxcount)
+        explicit Buffer(Device* pDevice, uint32_t count) : offset(0), maxCount(count)
         {
             mv = pDevice->CreateMemoryView({ maxCount * sizeof(T), true });
-            maxCount = maxcount;
-            offset = 0;
             addr = pDevice->GetMemoryViewInfo(mv).cpuAddress;
         }
 
