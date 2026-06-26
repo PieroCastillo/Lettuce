@@ -46,7 +46,7 @@ inline glm::mat3 createTransform2D(float angleRad, float x, float y,
     return glm::mat3(
         /* column 0 */ scaleX * (c + s * skewY), scaleX * (s - c * skewY), 0.0f,
         /* column 1 */ scaleY * (c * skewX - s), scaleY * (s * skewX + c), 0.0f,
-        /* column 2 */ x, y, 1.0f,
+        /* column 2 */ x, y, 1.0f
     );
 }
 
