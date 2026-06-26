@@ -40,7 +40,7 @@ void pDrawCommandsMain(uint3 gid: SV_DispatchThreadID,
     // tile sort by depth and intersection
     uint localIndex = gid.y * tileSize + gid.x;
 
-    for (uint k = 0; k < surfaceData.drawCommandCount && tileDrawCallCount < tileMaxCommands; k += tileSize * tileSize)
+    for (uint k = 0; k < surfaceData.drawCommandCount; k += tileSize * tileSize)
     {
         uint i = k + localIndex;
 
@@ -50,21 +50,26 @@ void pDrawCommandsMain(uint3 gid: SV_DispatchThreadID,
             InterlockedAdd(tileDrawCallCount, 1, slot);
 
             if (slot < tileMaxCommands)
+            {
                 tileMemory[slot].drawCommandId = i;
-
-            color = float4(1, 0, 0, 1);
+                color = float4(1, 0, 0, 1);
+            }
+            else
+            {
+                break;
+            }
         }
     }
 
     GroupMemoryBarrierWithGroupSync();
 
     // clamp tileDrawCallCount
-    var tileDrawCallCount = min(tileDrawCallCount, tileMaxCommands);
+    var tileDrawCmdCount = min(tileDrawCallCount, tileMaxCommands);
 
     // execute draw commands
     // each thread will test a pixel
     /// TODO: convert from local coords to screen coords 
-    for (uint j = 0; j < tileDrawCallCount; ++j)
+    for (uint j = 0; j < tileDrawCmdCount; ++j)
     {
         var drawCmd = drawCmds[tileMemory[j].drawCommandId];
         uint brushHeap, geometryHeap, effectHeap;
@@ -75,14 +80,13 @@ void pDrawCommandsMain(uint3 gid: SV_DispatchThreadID,
         {
             var brush = solidColorBrushes[drawCmd.brushIdx];
             var geometry = implicitGeometries[drawCmd.geometryIdx];
-            var transform = transforms[drawCmd.transformIdx];
+            var transform = transforms[drawCmd.transformIdx]; // inverses
             var pixelPos = float2(gid.xy);
 
             // if(!ignoreTransform)
-            pixelPos = mul(transform, float3(pixelPos, 1)).xy;
+            // pixelPos = mul(transform, float3(pixelPos, 1)).xy;
 
-            if (pixelPos.x >= geometry.x && pixelPos.x <= geometry.x + geometry.w &&
-                pixelPos.y >= geometry.y && pixelPos.y <= geometry.y + geometry.h)
+            if(IntersectImplicit(uint2(pixelPos), geometry, transform))
             {
                 color = brush.color;
             }

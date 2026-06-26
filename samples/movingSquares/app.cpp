@@ -45,13 +45,13 @@ void draw2dScene(CommandBuffer& lcmd, TextureView frame)
 void create2dResources()
 {
     ImplicitGeometryDesc squareData = {
-        { 30, 30, 30, 30 },
+        { 30, 30 },
         0, 0, 0, 0,
     };
     square = surface->CreateGeometry(squareData);
 
     ImplicitGeometryDesc circleData = {
-        { 40, 40, 30, 40 },
+        { 30, 40 },
         50, 50, 50, 50,
     };
     circle = surface->CreateGeometry(circleData);

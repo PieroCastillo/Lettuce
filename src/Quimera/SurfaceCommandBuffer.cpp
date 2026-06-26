@@ -19,7 +19,7 @@ using namespace Lettuce::Core;
 void SurfaceCommandBuffer::Draw(uint32_t zOrder, Geometry geometry, Brush brush, float3x3 transform)
 {
     auto surfImpl = surfPtr->impl;
-    surfImpl->vTransforms.push_back(transform);
+    surfImpl->vTransforms.push_back(glm::inverse(transform));
     uint32_t transformIdx = surfImpl->vTransforms.size() - 1;
 
     const auto& geoInfo = surfImpl->geometries.get(geometry);

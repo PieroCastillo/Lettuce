@@ -28,7 +28,7 @@ void Surface::Destroy()
 auto Surface::CreateGeometry(const ImplicitGeometryDesc& desc) -> Geometry
 {
     auto geoIdx = impl->bImplicitGeometry.Push({
-        desc.bounds.x, desc.bounds.y, desc.bounds.w, desc.bounds.h,
+        desc.size.w, desc.size.h,
         desc.leftTopCornerRadious, desc.rightTopCornerRadious,
         desc.leftBottomCornerRadious, desc.rightBottomCornerRadious,
         });

@@ -43,7 +43,7 @@ namespace Lettuce::Quimera
 
     struct ImplicitGeometryStorage
     {
-        float x, y, w, h;
+        float w, h;
         float ctl, ctr, cbl, cbr; // corners
     };
 

@@ -26,6 +26,7 @@ namespace Lettuce::Quimera
     using Animation = Handle<AnimationTag>;
 
     struct Color { float r, g, b, a; };
+    struct Size { float w, h; };
     struct Rect { float x, y, w, h; };
 
     struct SolidColorBrushDesc
@@ -35,7 +36,7 @@ namespace Lettuce::Quimera
 
     struct ImplicitGeometryDesc
     {
-        Rect bounds;
+        Size size;
         float leftTopCornerRadious;
         float leftBottomCornerRadious;
         float rightTopCornerRadious;
