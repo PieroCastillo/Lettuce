@@ -31,40 +31,69 @@ CommandAllocator cmdAlloc;
 
 Geometry square;
 Geometry circle;
+Geometry roundRect;
 Brush redBrush;
 Brush blueBrush;
+Brush yellowBrush;
+
+inline glm::mat3 createTransform2D(float angleRad, float x, float y,
+    float scaleX = 1.0f, float scaleY = 1.0f,
+    float skewX = 0.0f, float skewY = 0.0f)
+{
+    auto c = std::cos(angleRad);
+    auto s = std::sin(angleRad);
+
+    return glm::mat3(
+        /* column 0 */ scaleX * (c + s * skewY), scaleX * (s - c * skewY), 0.0f,
+        /* column 1 */ scaleY * (c * skewX - s), scaleY * (s * skewX + c), 0.0f,
+        /* column 2 */  x, y, 1.0f
+    );
+}
+
 
 void draw2dScene(CommandBuffer& lcmd, TextureView frame)
 {
     auto cmd = SurfaceCommandBuffer(*surface, lcmd);
-    cmd.Draw(67, circle, redBrush, float3x3(1.0f));
-    cmd.Draw(66, square, blueBrush, float3x3(1.0f));
-    cmd.DrawSurface({ frame, {0,0, width, height } });
+    cmd.Draw(1, square, blueBrush, createTransform2D(0, 500, 420));
+    cmd.Draw(2, circle, redBrush, createTransform2D(0, 760, 310));
+    cmd.Draw(3, roundRect, yellowBrush, createTransform2D(0, 830, 470));
+    cmd.DrawSurface({ frame, { 0, 0, width, height } });
 }
 
 void create2dResources()
 {
     ImplicitGeometryDesc squareData = {
-        { 30, 30 },
-        0, 0, 0, 0,
+          { 360, 360 },
+          0, 0, 0, 0,
     };
     square = surface->CreateGeometry(squareData);
 
     ImplicitGeometryDesc circleData = {
-        { 30, 40 },
-        50, 50, 50, 50,
+        { 320, 320 },
+        160, 160, 160, 160,
     };
     circle = surface->CreateGeometry(circleData);
 
+    ImplicitGeometryDesc yellowRoundRectData = {
+      { 300, 180 },
+      45, 45, 45, 45,
+    };
+    roundRect = surface->CreateGeometry(yellowRoundRectData);
+
     SolidColorBrushDesc redData = {
-        { 1, 0, 0, 1},
+        { 1, 0, 0, 1 },
     };
     redBrush = surface->CreateBrush(redData);
 
     SolidColorBrushDesc blueData = {
-        { 1, 0, 0, 1},
+        { 0, 0, 1, 1 },
     };
     blueBrush = surface->CreateBrush(blueData);
+
+    SolidColorBrushDesc yellowData = {
+        { 1, 1, 0, 1 },
+    };
+    yellowBrush = surface->CreateBrush(yellowData);
 }
 
 void cleanup2dResources()
@@ -138,7 +167,7 @@ void initWindow()
     glfwInit();
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
     glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
-    window = glfwCreateWindow(width, height, "Lettuce Composition Test", NULL, NULL);
+    window = glfwCreateWindow(width, height, "Lettuce Quimera 2D Test", NULL, NULL);
 }
 void cleanupWindow()
 {

@@ -14,12 +14,20 @@ void UnpackDrawCommandFlags(uint flags, out uint geometryHeap, out uint brushHea
 bool IntersectImplicit(uint2 pos, ImplicitGeometryStorage geom, float3x3 invTransform)
 {
     // centers using 0.5; next convert to local coords
-    var localPos = mul(invTransform, float3(pos + float2(0.5), 1)).xy;
+    float2 screenPos = float2(pos) + 0.5;
+    float2 localPos = mul(float3(screenPos, 1.0), transpose(invTransform)).xy;
+
+    float maxRadius = 0.5 * min(geom.w, geom.h);
+    // clamps values
+    float ctl = clamp(geom.ctl, 0.0, maxRadius);
+    float ctr = clamp(geom.ctr, 0.0, maxRadius);
+    float cbl = clamp(geom.cbl, 0.0, maxRadius);
+    float cbr = clamp(geom.cbr, 0.0, maxRadius);
+
+    float radius = (localPos.x < 0.0) ? ((localPos.y < 0.0) ? cbl : ctl) : ((localPos.y < 0.0) ? cbr : ctr);
+    float2 q = abs(localPos) - 0.5 * float2(geom.w, geom.h) + radius;
     // uses SDF
-    var radious = (localPos.x < 0) ? ((localPos.y < 0) ? geom.cbl : geom.ctl) : ((localPos.y < 0) ? geom.cbr : geom.ctr);
+    float sd = length(max(q, 0.0)) + min(max(q.x, q.y), 0.0) - radius;
 
-    var q = float2(abs(localPos.x) - (0.5 * geom.w) + radious, abs(localPos.y) - (0.5 * geom.h) + radious);
-    var sd = length(max(q, float2(0, 0))) + min(max(q.x, q.y), 0) - radious;
-
-    return sd <= 0;
+    return sd <= 0.0;
 }

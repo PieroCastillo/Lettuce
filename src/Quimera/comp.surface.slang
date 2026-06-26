@@ -29,16 +29,17 @@ void pDrawCommandsMain(uint3 gid: SV_DispatchThreadID,
     var implicitGeometries = reinterpret<Ptr<ImplicitGeometryStorage>>(pc.implicitGeometriesAddr);
     var solidColorBrushes = reinterpret<Ptr<SolidColorBrushStorage>>(pc.solidColorBrushesAddr);
 
-    if (gid.x >= surfaceData.width || gid.y >= surfaceData.height)
-        return;
+    bool inBounds = gid.x < surfaceData.width && gid.y < surfaceData.height;
 
     if (lid.x == 0 && lid.y == 0)
         tileDrawCallCount = 0;
 
+    GroupMemoryBarrierWithGroupSync();
+
     var color = float4(0.5, 0.5, 0.5, 1);
 
     // tile sort by depth and intersection
-    uint localIndex = gid.y * tileSize + gid.x;
+    uint localIndex = lid.y * tileSize + lid.x;
 
     for (uint k = 0; k < surfaceData.drawCommandCount; k += tileSize * tileSize)
     {
@@ -52,12 +53,9 @@ void pDrawCommandsMain(uint3 gid: SV_DispatchThreadID,
             if (slot < tileMaxCommands)
             {
                 tileMemory[slot].drawCommandId = i;
-                color = float4(1, 0, 0, 1);
+                continue;
             }
-            else
-            {
-                break;
-            }
+            break;
         }
     }
 
@@ -66,9 +64,42 @@ void pDrawCommandsMain(uint3 gid: SV_DispatchThreadID,
     // clamp tileDrawCallCount
     var tileDrawCmdCount = min(tileDrawCallCount, tileMaxCommands);
 
+    // sort tiles by depth; TODO: impl parallel sort
+    if (lid.x == 0 && lid.y == 0)
+    {
+        for (uint a = 0; a < tileDrawCmdCount; ++a)
+        {
+            uint best = a;
+            uint bestId = tileMemory[a].drawCommandId;
+            uint bestZ = drawCmds[bestId].zOrder;
+
+            for (uint b = a + 1; b < tileDrawCmdCount; ++b)
+            {
+                uint candidateId = tileMemory[b].drawCommandId;
+                uint candidateZ = drawCmds[candidateId].zOrder;
+
+                if (candidateZ > bestZ ||
+                    (candidateZ == bestZ && candidateId < bestId))
+                {
+                    best = b;
+                    bestId = candidateId;
+                    bestZ = candidateZ;
+                }
+            }
+
+            if (best != a)
+            {
+                TileMemory tmp = tileMemory[a];
+                tileMemory[a] = tileMemory[best];
+                tileMemory[best] = tmp;
+            }
+        }
+    }
+
+    GroupMemoryBarrierWithGroupSync();
+
     // execute draw commands
     // each thread will test a pixel
-    /// TODO: convert from local coords to screen coords 
     for (uint j = 0; j < tileDrawCmdCount; ++j)
     {
         var drawCmd = drawCmds[tileMemory[j].drawCommandId];
@@ -83,20 +114,20 @@ void pDrawCommandsMain(uint3 gid: SV_DispatchThreadID,
             var transform = transforms[drawCmd.transformIdx]; // inverses
             var pixelPos = float2(gid.xy);
 
-            // if(!ignoreTransform)
-            // pixelPos = mul(transform, float3(pixelPos, 1)).xy;
+            // if (!ignoreTransform)
 
-            if(IntersectImplicit(uint2(pixelPos), geometry, transform))
+            if (IntersectImplicit(uint2(pixelPos), geometry, transform))
             {
                 color = brush.color;
-            }
 
-            if (brush.color.a >= 1.0)
-                break;
+                if (brush.color.a >= 1.0)
+                    break;
+            }
         }
     }
 
-    storageTextures[0][uint2(gid.xy)] = color;
+    if (inBounds)
+        storageTextures[0][uint2(gid.xy)] = color;
     /*
     // each thread will test a pixel
 
