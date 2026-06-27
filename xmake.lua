@@ -4,6 +4,24 @@ includes("rules/*.lua")
 add_rules("mode.debug", "mode.release")
 add_rules("plugin.compile_commands.autoupdate", {outputdir = ".vscode"})
 
+option("san")
+    set_default("none")
+    set_values("none", "asan", "tsan", "ubsan")
+    set_showmenu(true)
+option_end()
+
+if is_mode("debug") then
+    local san = get_config("san")
+
+    if san == "asan" then
+        set_policy("build.sanitizer.address", true)
+    elseif san == "tsan" then
+        set_policy("build.sanitizer.thread", true)
+    elseif san == "ubsan" then
+        set_policy("build.sanitizer.undefined", true)
+    end
+end
+
 add_requires("vulkansdk")
 add_requires("vulkan-memory-allocator")
 add_requires("volk")
