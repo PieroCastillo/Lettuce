@@ -45,7 +45,7 @@ void SurfaceCommandBuffer::DrawSurface(const DrawSurfaceDesc& desc)
 
     // copy commands
     memcpy(surfImpl->bDrawCommands.addr, drawCmds.data(), drawCmds.size() * sizeof(DrawCommand));
-    memcpy(surfImpl->bTransforms.addr, surfImpl->vTransforms.data(), surfImpl->vTransforms.size() * sizeof(float4x4));
+    memcpy(surfImpl->bTransforms.addr, surfImpl->vTransforms.data(), surfImpl->vTransforms.size() * sizeof(float3x3));
 
     // clear immediate render info for the next frame
     surfImpl->vDrawCommands.clear();
