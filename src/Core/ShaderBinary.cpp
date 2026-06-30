@@ -21,5 +21,5 @@ auto Device::CreateShader(const ShaderBinaryDesc& desc) -> ShaderBinary
 void Device::Destroy(ShaderBinary shader)
 {
     vkDestroyShaderModule(impl->m_device, impl->shaders.get(shader), nullptr);
-    impl->shaders.free(shader);
+    impl->shaders.release(shader);
 }

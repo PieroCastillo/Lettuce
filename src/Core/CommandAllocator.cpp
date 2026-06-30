@@ -43,7 +43,7 @@ void Device::Destroy(CommandAllocator cmdAlloc)
     auto poolInfo = impl->commandAllocators.get(cmdAlloc);
     handleResult(vkResetCommandPool(impl->m_device, poolInfo.pool, 1));
     vkDestroyCommandPool(impl->m_device, poolInfo.pool, nullptr);
-    impl->commandAllocators.free(cmdAlloc);
+    impl->commandAllocators.release(cmdAlloc);
 }
 
 void Device::Reset(CommandAllocator cmdAlloc)

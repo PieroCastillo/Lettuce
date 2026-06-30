@@ -41,6 +41,11 @@ namespace Lettuce::Quimera
         uint32_t brushHeapIdx;
     };
 
+    struct LayoutAccessData
+    {
+        uint32_t layoutIdx;
+    };
+
     struct ImplicitGeometryStorage
     {
         float w, h;
@@ -52,9 +57,18 @@ namespace Lettuce::Quimera
         float4 color;
     };
 
+    struct LayoutStorage
+    {
+        float2 position;
+        float2 scale;
+        float2 skew;
+        float2 anchorPoint;
+        float rotation;
+    };
+
     struct DrawCommand
     {
-        uint32_t transformIdx;
+        uint32_t layoutIdx;
         uint32_t geometryIdx;
         uint32_t brushIdx;
         uint32_t zOrder;
@@ -126,17 +140,19 @@ namespace Lettuce::Quimera
 
         ResourcePool<Geometry, GeometryAccessData> geometries;
         ResourcePool<Brush, BrushAccessData> brushes;
+        ResourcePool<Layout, LayoutAccessData> layouts;
 
         MemoryView mvSurfaceData;
         SurfaceData* mvSurfaceDataPtr;
 
+        MemoryView mvScratchTransforms;
+
         Buffer<DrawCommand> bDrawCommands;
-        Buffer<float3x3> bTransforms;
+        Buffer<LayoutStorage> bLayouts;
         Buffer<ImplicitGeometryStorage> bImplicitGeometry;
         Buffer<SolidColorBrushStorage> bSolidColorBrush;
 
         std::vector<DrawCommand> vDrawCommands;
-        std::vector<float3x3> vTransforms;
 
         TextureView twLastRenderTarget;
 

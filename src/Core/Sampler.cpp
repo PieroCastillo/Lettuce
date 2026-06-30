@@ -34,5 +34,5 @@ auto Device::CreateSampler(const SamplerDesc& desc) -> Sampler
 void Device::Destroy(Sampler sampler)
 {
     vkDestroySampler(impl->m_device, impl->samplers.get(sampler), nullptr);
-    impl->samplers.free(sampler);
+    impl->samplers.release(sampler);
 }

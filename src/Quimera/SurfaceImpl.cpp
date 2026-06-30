@@ -32,7 +32,7 @@ void SurfaceImpl::Create(const SurfaceDesc& desc)
     mvSurfaceData =  pDevice->CreateMemoryView({sizeof(SurfaceData), true});
     mvSurfaceDataPtr = (SurfaceData*)pDevice->GetMemoryViewInfo(mvSurfaceData).cpuAddress;
     bDrawCommands = Buffer<DrawCommand>(pDevice, desc.maxDrawCommands);
-    bTransforms = Buffer<float3x3>(pDevice, desc.maxDrawCommands);
+    bLayouts = Buffer<LayoutStorage>(pDevice, desc.maxDrawCommands);
     bImplicitGeometry = Buffer<ImplicitGeometryStorage>(pDevice, desc.maxImplicitGeometries);
     bSolidColorBrush = Buffer<SolidColorBrushStorage>(pDevice, desc.maxBrushes);
 
@@ -49,7 +49,7 @@ void SurfaceImpl::Destroy()
     pDevice->Destroy(pDrawCommands);
     pDevice->Destroy(dtSurface);
     pDevice->Destroy(bDrawCommands.mv);
-    pDevice->Destroy(bTransforms.mv);
+    pDevice->Destroy(bLayouts.mv);
     pDevice->Destroy(bImplicitGeometry.mv);
     pDevice->Destroy(bSolidColorBrush.mv);
     pDevice->Destroy(mvSurfaceData);

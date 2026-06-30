@@ -33,11 +33,17 @@ auto Surface::CreateGeometry(const ImplicitGeometryDesc& desc) -> Geometry
         desc.leftBottomCornerRadious, desc.rightBottomCornerRadious,
         });
 
-    return impl->geometries.allocate({ geoIdx, (uint32_t)GeometryHeap::Implicit});
+    return impl->geometries.allocate({ geoIdx, (uint32_t)GeometryHeap::Implicit });
 }
 
 auto Surface::CreateBrush(const SolidColorBrushDesc& desc) -> Brush
 {
     auto brushIdx = impl->bSolidColorBrush.Push({ desc.color });
     return impl->brushes.allocate({ brushIdx, (uint32_t)BrushHeap::SolidColor });
+}
+
+auto Surface::CreateLayout(const LayoutDesc& desc) -> Layout
+{
+    auto layoutIdx = impl->bLayouts.Push({ desc.position, desc.scale, desc.skew, desc.anchorPoint, desc.rotation });
+    return impl->layouts.allocate({ layoutIdx });
 }

@@ -67,5 +67,5 @@ void Device::Destroy(MemoryView view)
         vmaUnmapMemory(impl->m_allocator, info.allocation);
 
     vmaDestroyBuffer(impl->m_allocator, info.buffer, info.allocation);
-    impl->memories.free(view);
+    impl->memories.release(view);
 }

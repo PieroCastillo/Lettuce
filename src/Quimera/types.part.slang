@@ -21,9 +21,18 @@ struct SolidColorBrushStorage
     float4 color;
 };
 
+struct LayoutStorage
+{
+    float2 position;
+    float2 scale;
+    float2 skew;
+    float2 anchorPoint;
+    float rotation;
+};
+
 struct DrawCommand
 {
-    uint32_t transformIdx;
+    uint32_t layoutIdx;
     uint32_t geometryIdx;
     uint32_t brushIdx;
     uint32_t zOrder;
@@ -43,8 +52,9 @@ struct TileMemory
 struct PushConstants
 {
     uint64_t surfaceDataAddr;
+    uint64_t scratchTransformsAddr;
     uint64_t drawCommandsAddr;
-    uint64_t transformsAddr;
+    uint64_t layoutsAddr;
     uint64_t implicitGeometriesAddr;
     uint64_t solidColorBrushesAddr;
 };

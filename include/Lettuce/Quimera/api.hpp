@@ -18,11 +18,13 @@ namespace Lettuce::Quimera
     struct GeometryTag {};
     struct BrushTag {};
     struct LightTag {};
+    struct LayoutTag {};
     struct AnimationTag {};
 
     using Geometry = Handle<GeometryTag>;
     using Brush = Handle<BrushTag>;
     using Light = Handle<LightTag>;
+    using Layout = Handle<LayoutTag>;
     using Animation = Handle<AnimationTag>;
 
     struct Color { float r, g, b, a; };
@@ -41,6 +43,15 @@ namespace Lettuce::Quimera
         float leftBottomCornerRadious;
         float rightTopCornerRadious;
         float rightBottomCornerRadious;
+    };
+
+    struct LayoutDesc
+    {
+        float2 position;
+        float2 scale;
+        float2 skew;
+        float2 anchorPoint;
+        float rotation;
     };
 
     struct DrawSurfaceDesc
@@ -71,6 +82,7 @@ namespace Lettuce::Quimera
         
         auto CreateGeometry(const ImplicitGeometryDesc&) -> Geometry;
         auto CreateBrush(const SolidColorBrushDesc&) -> Brush;
+        auto CreateLayout(const LayoutDesc&) -> Layout;
     };
 
     struct SurfaceCommandBuffer
@@ -81,7 +93,7 @@ namespace Lettuce::Quimera
     public:
         explicit SurfaceCommandBuffer(Surface& surface, CommandBuffer& commandBuffer) : surfPtr(&surface), cmd(&commandBuffer) {}
 
-        void Draw(uint32_t zOrder, Geometry geometry, Brush brush, float3x3 transform);
+        void Draw(uint32_t zOrder, Geometry geometry, Brush brush, Layout layout);
         void DrawSurface(const DrawSurfaceDesc&);
     };
 };

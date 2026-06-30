@@ -11,6 +11,13 @@ option("san")
 option_end()
 
 if is_mode("debug") then
+    -- Debug STL / CRT checks
+    if is_plat("windows") and not is_config("toolchain", "mingw", "clang", "llvm") then
+        add_defines("_ITERATOR_DEBUG_LEVEL=2", "_CRTDBG_MAP_ALLOC")
+    elseif is_config("toolchain", "gcc", "mingw", "clang", "llvm") then
+        add_defines("_GLIBCXX_DEBUG", "_GLIBCXX_DEBUG_PEDANTIC")
+    end
+
     local san = get_config("san")
 
     if san == "asan" then

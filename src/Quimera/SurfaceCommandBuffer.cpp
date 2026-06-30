@@ -16,18 +16,17 @@
 using namespace Lettuce::Quimera;
 using namespace Lettuce::Core;
 
-void SurfaceCommandBuffer::Draw(uint32_t zOrder, Geometry geometry, Brush brush, float3x3 transform)
+void SurfaceCommandBuffer::Draw(uint32_t zOrder, Geometry geometry, Brush brush, Layout layout)
 {
     auto surfImpl = surfPtr->impl;
-    surfImpl->vTransforms.push_back(glm::inverse(transform));
-    uint32_t transformIdx = surfImpl->vTransforms.size() - 1;
 
     const auto& geoInfo = surfImpl->geometries.get(geometry);
     const auto& brushInfo = surfImpl->brushes.get(brush);
+    const auto& layoutInfo = surfImpl->layouts.get(layout);
 
     auto flags = DrawCommandPackFlags(geoInfo.geometryHeapIdx, brushInfo.brushHeapIdx, 0, false, false);
 
-    surfImpl->vDrawCommands.push_back(DrawCommand{ transformIdx, geoInfo.geometryIdx, brushInfo.brushIdx, zOrder, false });
+    surfImpl->vDrawCommands.push_back(DrawCommand{ layoutInfo.layoutIdx, geoInfo.geometryIdx, brushInfo.brushIdx, zOrder, false });
 }
 
 void SurfaceCommandBuffer::DrawSurface(const DrawSurfaceDesc& desc)
@@ -40,17 +39,15 @@ void SurfaceCommandBuffer::DrawSurface(const DrawSurfaceDesc& desc)
     auto drawCmdCount = (uint32_t)drawCmds.size();
 
     // avoid UB
-    if (drawCmds.size() >= surfImpl->bDrawCommands.maxCount || surfImpl->vTransforms.size() >= surfImpl->bTransforms.maxCount)
+    if (drawCmds.size() >= surfImpl->bDrawCommands.maxCount)
         return;
 
     // copy commands
     memcpy(surfImpl->bDrawCommands.addr, drawCmds.data(), drawCmds.size() * sizeof(DrawCommand));
-    memcpy(surfImpl->bTransforms.addr, surfImpl->vTransforms.data(), surfImpl->vTransforms.size() * sizeof(float3x3));
 
     // clear immediate render info for the next frame
     surfImpl->vDrawCommands.clear();
-    surfImpl->vTransforms.clear();
-    
+
     // set render target
     if (surfImpl->twLastRenderTarget != desc.dstTexture) [[likely]]
     {
@@ -71,8 +68,9 @@ void SurfaceCommandBuffer::DrawSurface(const DrawSurfaceDesc& desc)
 
     auto allocs = std::array{
         surfImpl->mvSurfaceData,
+        surfImpl->mvScratchTransforms,
         surfImpl->bDrawCommands.mv,
-        surfImpl->bTransforms.mv,
+        surfImpl->bLayouts.mv,
         surfImpl->bImplicitGeometry.mv,
         surfImpl->bSolidColorBrush.mv,
     };

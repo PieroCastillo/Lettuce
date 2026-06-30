@@ -332,5 +332,5 @@ void Device::Destroy(Pipeline pipeline)
 {
     auto vkPipeline = impl->pipelines.get(pipeline);
     vkDestroyPipeline(impl->m_device, vkPipeline.pipeline, nullptr);
-    impl->pipelines.free(pipeline);
+    impl->pipelines.release(pipeline);
 }

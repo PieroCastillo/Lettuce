@@ -11,6 +11,39 @@ void UnpackDrawCommandFlags(uint flags, out uint geometryHeap, out uint brushHea
     clipped = ((flags >> 31) & 1) != 0;
 }
 
+float3x3 InverseTransform2D(float2 position, float2 scale, float2 skew, float2 anchorPoint, float rotation)
+{
+    float s, c;
+    sincos(rotation, s, c);
+
+    float sx = scale.x;
+    float sy = scale.y;
+    float kx = skew.x;
+    float ky = skew.y;
+
+    // A = R * Skew * Scale
+    float a = sx * (c - s * ky);
+    float b = sy * (c * kx - s);
+    float d = sy * (s * kx + c);
+    float e = sx * (s + c * ky);
+
+    float invDet = rcp(sx * sy * (1.0 - kx * ky));
+
+    // inv(A)
+    float m00 = d * invDet;
+    float m01 = -b * invDet;
+    float m10 = -e * invDet;
+    float m11 = a * invDet;
+
+    // local = inv(A) * screen + anchor - inv(A) * position
+    float tx = anchorPoint.x - (m00 * position.x + m01 * position.y);
+    float ty = anchorPoint.y - (m10 * position.x + m11 * position.y);
+
+    return float3x3(m00, m01, tx,
+                    m10, m11, ty,
+                    0.0, 0.0, 1.0);
+}
+
 bool IntersectImplicit(uint2 pos, ImplicitGeometryStorage geom, float3x3 invTransform)
 {
     // centers using 0.5; next convert to local coords

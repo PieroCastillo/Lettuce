@@ -29,6 +29,9 @@ std::unique_ptr<Surface> surface;
 Swapchain swapchain;
 CommandAllocator cmdAlloc;
 
+Layout squareLayout;
+Layout circleLayout;
+Layout roundRectLayout;
 Geometry square;
 Geometry circle;
 Geometry roundRect;
@@ -54,17 +57,33 @@ inline glm::mat3 createTransform2D(float angleRad, float x, float y,
 void draw2dScene(CommandBuffer& lcmd, TextureView frame)
 {
     auto cmd = SurfaceCommandBuffer(*surface, lcmd);
-    cmd.Draw(1, square, blueBrush, createTransform2D(0, 500, 420));
-    cmd.Draw(2, circle, redBrush, createTransform2D(0, 760, 310));
-    cmd.Draw(3, roundRect, yellowBrush, createTransform2D(0, 830, 470));
+    cmd.Draw(1, square, blueBrush, squareLayout);
+    cmd.Draw(2, circle, redBrush, circleLayout);
+    cmd.Draw(3, roundRect, yellowBrush, roundRectLayout);
     cmd.DrawSurface({ frame, { 0, 0, width, height } });
 }
 
 void create2dResources()
 {
+    LayoutDesc layoutDesc = {
+        .position = float2(500, 420),
+        .scale = float2(1),
+        .skew = float2(2),
+        .anchorPoint = float2(0),
+        .rotation = 0,
+    };
+    squareLayout = surface->CreateLayout(layoutDesc);
+    layoutDesc.position = { 760, 310 };
+    circleLayout = surface->CreateLayout(layoutDesc);
+    layoutDesc.position = { 830, 470 };
+    roundRectLayout = surface->CreateLayout(layoutDesc);
+
     ImplicitGeometryDesc squareData = {
-          { 360, 360 },
-          0, 0, 0, 0,
+        .size = { 360, 360 },
+        .leftTopCornerRadious = 0,
+        .leftBottomCornerRadious = 0,
+        .rightTopCornerRadious = 0,
+        .rightBottomCornerRadious = 0,
     };
     square = surface->CreateGeometry(squareData);
 
@@ -75,23 +94,23 @@ void create2dResources()
     circle = surface->CreateGeometry(circleData);
 
     ImplicitGeometryDesc yellowRoundRectData = {
-      { 300, 180 },
-      45, 45, 45, 45,
+        { 300, 180 },
+        45, 45, 45, 45,
     };
     roundRect = surface->CreateGeometry(yellowRoundRectData);
 
     SolidColorBrushDesc redData = {
-        { 1, 0, 0, 1 },
+        .color = { 1, 0, 0, 1 },
     };
     redBrush = surface->CreateBrush(redData);
 
     SolidColorBrushDesc blueData = {
-        { 0, 0, 1, 1 },
+        .color = { 0, 0, 1, 1 },
     };
     blueBrush = surface->CreateBrush(blueData);
 
     SolidColorBrushDesc yellowData = {
-        { 1, 1, 0, 1 },
+        .color = { 1, 1, 0, 1 },
     };
     yellowBrush = surface->CreateBrush(yellowData);
 }

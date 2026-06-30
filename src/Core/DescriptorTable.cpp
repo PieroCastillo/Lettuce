@@ -158,7 +158,7 @@ void Device::Destroy(DescriptorTable descriptorTable)
     vkDestroyBuffer(device, dt.descriptorBuffer, nullptr);
     vkFreeMemory(device, dt.descriptorBufferMemory, nullptr);
 
-    impl->descriptorTables.free(descriptorTable);
+    impl->descriptorTables.release(descriptorTable);
 }
 
 void Device::PushResourceDescriptors(const PushResourceDescriptorsDesc& desc)

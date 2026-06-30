@@ -90,7 +90,7 @@ void Device::Destroy(IndirectSet indirectSet)
 
     vkDestroyBuffer(impl->m_device, info.indirectSetBuffer, 0);
     vkFreeMemory(impl->m_device, info.indirectSetMemory, 0);
-    impl->indirectSets.free(indirectSet);
+    impl->indirectSets.release(indirectSet);
 }
 
 auto Device::GetIndirectSetView(IndirectSet indirectSet) -> MemoryView

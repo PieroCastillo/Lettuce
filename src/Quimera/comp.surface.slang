@@ -24,15 +24,31 @@ void pDrawCommandsMain(uint3 gid: SV_DispatchThreadID,
                        uint3 groupId: SV_GroupID)
 {
     var surfaceData = reinterpret<Ptr<SurfaceData>>(pc.surfaceDataAddr)[0];
+    var transforms = reinterpret<Ptr<float3x3>>(pc.scratchTransformsAddr);
+
     var drawCmds = reinterpret<Ptr<DrawCommand>>(pc.drawCommandsAddr);
-    var transforms = reinterpret<Ptr<float3x3>>(pc.transformsAddr);
+    var layouts = reinterpret<Ptr<LayoutStorage>>(pc.layoutsAddr);
     var implicitGeometries = reinterpret<Ptr<ImplicitGeometryStorage>>(pc.implicitGeometriesAddr);
     var solidColorBrushes = reinterpret<Ptr<SolidColorBrushStorage>>(pc.solidColorBrushesAddr);
 
     bool inBounds = gid.x < surfaceData.width && gid.y < surfaceData.height;
 
+    // shared mem reset per tile
     if (lid.x == 0 && lid.y == 0)
         tileDrawCallCount = 0;
+
+    // TODO: impl
+    // var stride = surfaceData.width * surfaceData.height;
+    // for (uint i = 0; i < layoutCount; i += stride)
+    // {
+        
+    // }
+
+    // calculate transforms
+    /*
+    foreach layout
+        transforms[layoutIdx] = InverseTransform2D(layout.position, layout.scale, layout.skew, layout.anchorPoint, layout.rotation);
+    */
 
     GroupMemoryBarrierWithGroupSync();
 
@@ -111,7 +127,7 @@ void pDrawCommandsMain(uint3 gid: SV_DispatchThreadID,
         {
             var brush = solidColorBrushes[drawCmd.brushIdx];
             var geometry = implicitGeometries[drawCmd.geometryIdx];
-            var transform = transforms[drawCmd.transformIdx]; // inverses
+            var transform = transforms[drawCmd.layoutIdx]; // inverses
             var pixelPos = float2(gid.xy);
 
             // if (!ignoreTransform)

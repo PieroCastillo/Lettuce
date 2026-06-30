@@ -206,7 +206,7 @@ void Device::Destroy(Swapchain swapchain)
     for (int i = 0; i < info.swapchainViews.size(); ++i)
     {
         vkDestroyImageView(device, info.swapchainViews[i], nullptr);
-        impl->textures.free(info.renderTargets[i]);
+        impl->textures.release(info.renderTargets[i]);
     }
     info.swapchainViews.clear();
     info.swapchainImages.clear();

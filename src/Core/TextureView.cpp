@@ -249,5 +249,5 @@ void Device::Destroy(TextureView texture)
     vkDestroyImageView(impl->m_device, info.imageView, nullptr);
     vmaDestroyImage(impl->m_allocator, info.image, info.allocation);
 
-    impl->textures.free(texture);
+    impl->textures.release(texture);
 }
