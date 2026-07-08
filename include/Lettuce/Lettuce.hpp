@@ -2,9 +2,6 @@
 #include "Core/common.hpp"
 #include "Core/ResourcePool.hpp"
 
-// composition
-#include "Composition/api.hpp"
-
 // rendering
 #include "Rendering/api.hpp"
 
