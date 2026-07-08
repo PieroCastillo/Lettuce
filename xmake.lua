@@ -1,4 +1,4 @@
-set_languages("c++23")
+set_languages("c++26")
 
 includes("rules/*.lua")
 add_rules("mode.debug", "mode.release")
