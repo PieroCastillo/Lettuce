@@ -15,8 +15,6 @@
 
 using namespace Lettuce::Core;
 
-// TODO: memory
-
 [[nodiscard]] constexpr size_t alignUp(size_t v, size_t a) noexcept
 {
     return (v + a - 1) / a * a;

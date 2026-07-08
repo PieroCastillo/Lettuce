@@ -14,24 +14,22 @@
 
 using namespace Lettuce::Core;
 
-// TODO: memory
-
 void Device::MemoryCopy(const HostToMemoryCopy& desc)
 {
-
+    throw LettuceException(LettuceResult::NotImplemented);
 }
 
 void Device::MemoryCopy(const HostToTextureCopy& desc)
 {
-
+    throw LettuceException(LettuceResult::NotImplemented);
 }
 
 void Device::MemoryCopy(const MemoryToMemoryCopy& desc)
 {
-
+    throw LettuceException(LettuceResult::NotImplemented);
 }
 
 void Device::MemoryCopy(const MemoryToTextureCopy& desc)
 {
-
+    throw LettuceException(LettuceResult::NotImplemented);
 }

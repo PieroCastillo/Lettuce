@@ -255,12 +255,11 @@ auto Device::GetRenderTargetFormat(Swapchain swapchain) -> Format
 
 void Device::ResizeSwapchain(Swapchain swapchain, uint32_t w, uint32_t h)
 {
-    // TODO: impl
+    throw LettuceException(LettuceResult::NotImplemented);
 }
 
 auto Device::GetCurrentRenderTarget(Swapchain swapchain) const -> TextureView
 {
-    // TODO: memory
     auto& swc = impl->swapchains.get(swapchain);
     return swc.renderTargets[(int)swc.currentImageIndex];
 }

@@ -239,7 +239,6 @@ auto Device::CreatePipeline(const MeshShadingPipelineDesc& desc) -> Pipeline
         tmp.push_back(ToVkFormat(e));
     }
 
-    // TODO: impl Depth Testing
     VkPipelineRenderingCreateInfo renderingCI = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO,
         .pNext = desc.fragmentShadingRate ? &fragmentShadingRate : nullptr,
