@@ -68,7 +68,7 @@ void create2dResources()
     LayoutDesc layoutDesc = {
         .position = float2(500, 420),
         .scale = float2(1),
-        .skew = float2(2),
+        .skew = float2(0),
         .anchorPoint = float2(0),
         .rotation = 0,
     };

@@ -115,6 +115,7 @@ namespace Lettuce::Utils
         void clear() noexcept { m_size = 0; }
 
         auto deviceData() const noexcept -> DeviceAddress { return m_info.gpuAddress; }
+        auto getView() const noexcept -> MemoryView { return m_memView; }
     };
 };
 #endif // LETTUCE_UTILS_GPU_MAPPED_VECTOR

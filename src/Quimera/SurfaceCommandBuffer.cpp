@@ -64,11 +64,11 @@ void SurfaceCommandBuffer::DrawSurface(const DrawSurfaceDesc& desc)
     }
 
     // set width & height
-    *(surfImpl->mvSurfaceDataPtr) = { static_cast<uint32_t>(desc.renderArea.w), static_cast<uint32_t>(desc.renderArea.h), drawCmdCount };
+    *(surfImpl->mvSurfaceDataPtr) = { static_cast<uint32_t>(desc.renderArea.w), static_cast<uint32_t>(desc.renderArea.h), drawCmdCount, (uint32_t)(surfImpl->bLayouts.maxCount / sizeof(LayoutStorage)) };
 
     auto allocs = std::array{
         surfImpl->mvSurfaceData,
-        surfImpl->mvScratchTransforms,
+        surfImpl->vScratchTransforms.getView(),
         surfImpl->bDrawCommands.mv,
         surfImpl->bLayouts.mv,
         surfImpl->bImplicitGeometry.mv,

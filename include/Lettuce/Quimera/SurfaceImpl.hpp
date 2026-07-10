@@ -8,6 +8,9 @@ Created by @PieroCastillo on 2026-05-29
 #include "../Core/api.hpp"
 #include "../Core/ResourcePool.hpp"
 #include "../Quimera/api.hpp"
+#include "../Utils/api.hpp"
+
+using namespace Lettuce::Utils;
 
 namespace Lettuce::Quimera
 {
@@ -26,7 +29,7 @@ namespace Lettuce::Quimera
         uint32_t width;
         uint32_t height;
         uint32_t drawCommandCount;
-        uint32_t reserved1;
+        uint32_t layoutCount;
     };
 
     struct GeometryAccessData
@@ -145,7 +148,7 @@ namespace Lettuce::Quimera
         MemoryView mvSurfaceData;
         SurfaceData* mvSurfaceDataPtr;
 
-        MemoryView mvScratchTransforms;
+        GpuStorageVector<float3x3> vScratchTransforms;
 
         Buffer<DrawCommand> bDrawCommands;
         Buffer<LayoutStorage> bLayouts;

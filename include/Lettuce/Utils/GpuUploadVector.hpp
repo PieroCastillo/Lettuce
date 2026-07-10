@@ -37,17 +37,20 @@ namespace Lettuce::Utils
         std::atomic<UploadState> m_state = { UploadState::Writable };
         void assertWritable() const noexcept
         {
-            DebugAssert(m_state == UploadState::Writable, "GpuUploadVector: temporary CPU memory is no longer writable/readable after Upload().");
+            DebugAssert(m_state.load(std::memory_order_acquire) == UploadState::Writable, "GpuUploadVector: temporary CPU memory is no longer writable/readable after Upload().");
         }
 
         void assertReady() const noexcept
         {
-            DebugAssert(m_state == UploadState::Ready, "GpuUploadVector: deviceData() is only valid after upload finished.");
+            DebugAssert(m_state.load(std::memory_order_acquire) == UploadState::Ready, "GpuUploadVector: deviceData() is only valid after upload finished.");
         }
     public:
+        using iterator = T*;
+        using const_iterator = const T*;
+
         GpuUploadVector() noexcept = default;
 
-        explicit GpuUploadVector(Device& device, uint32_t capacity) :
+        explicit GpuUploadVector(Device& device, uint32_t capacity)
             : m_device(&device), m_capacity(capacity), m_size(0)
         {
             DebugAssert(capacity > 0, "Capacity MUST be greater than 0");
@@ -69,8 +72,10 @@ namespace Lettuce::Utils
             m_tempInfo(std::exchange(other.m_tempInfo, {})),
             m_size(std::exchange(other.m_size, 0)),
             m_capacity(std::exchange(other.m_capacity, 0)),
-            m_state(std::exchange(other.m_state, UploadState::Writable))
+            m_state(other.m_state.load(std::memory_order_acquire))
         {
+            DebugAssert(other.m_state.load(std::memory_order_acquire) != UploadState::Submitted, "Cannot move GpuUploadVector while upload is submitted.");
+            other.m_state.store(UploadState::Writable, std::memory_order_release);
         }
 
         auto operator=(const GpuUploadVector&) -> GpuUploadVector & = delete;
@@ -78,10 +83,10 @@ namespace Lettuce::Utils
 
         ~GpuUploadVector()
         {
-            if (m_memView.generation > 0)
+            if (m_device && m_memView.generation > 0)
                 m_device->Destroy(m_memView);
 
-            if (m_tempView.generation > 0)
+            if (m_device && m_tempView.generation > 0)
                 m_device->Destroy(m_tempView);
 
             m_info = {};
@@ -94,6 +99,11 @@ namespace Lettuce::Utils
         {
             assertWritable();
             return reinterpret_cast<T*>(m_tempInfo.cpuAddress);
+        }
+        auto data() const noexcept -> const T*
+        {
+            assertWritable();
+            return reinterpret_cast<const T*>(m_tempInfo.cpuAddress);
         }
 
         auto begin() noexcept -> iterator {
@@ -115,27 +125,33 @@ namespace Lettuce::Utils
 
         auto operator[](uint32_t index) noexcept -> T& {
             assertWritable();
+            DebugAssert(index < m_size, "Index out of bounds.");
             return ((T*)m_tempInfo.cpuAddress)[index];
         }
         auto operator[](uint32_t index) const noexcept -> const T& {
             assertWritable();
+            DebugAssert(index < m_size, "Index out of bounds.");
             return ((T*)m_tempInfo.cpuAddress)[index];
         }
 
         auto first() noexcept -> T& {
             assertWritable();
+            DebugAssert(m_size > 0, "GpuUploadVector is empty.");
             return ((T*)m_tempInfo.cpuAddress)[0];
         }
         auto last() noexcept -> T& {
             assertWritable();
+            DebugAssert(m_size > 0, "GpuUploadVector is empty.");
             return ((T*)m_tempInfo.cpuAddress)[m_size - 1];
         }
         auto first() const noexcept -> const T& {
             assertWritable();
+            DebugAssert(m_size > 0, "GpuUploadVector is empty.");
             return ((T*)m_tempInfo.cpuAddress)[0];
         }
         auto last() const noexcept -> const T& {
             assertWritable();
+            DebugAssert(m_size > 0, "GpuUploadVector is empty.");
             return ((T*)m_tempInfo.cpuAddress)[m_size - 1];
         }
 
@@ -172,18 +188,40 @@ namespace Lettuce::Utils
             m_size = 0;
         }
 
-        /// @brief Upload to device memory. It's a blocking operation.
-        /// @param cmd Command Buffer to use.
-        void Upload(CommandBuffer& cmd)
+        /// @brief Upload Data to device memory. It's a blocking operation.
+        void Upload()
         {
+            DebugAssert(m_device != nullptr, "GpuUploadVector is not initialized.");
+
             assertWritable();
-            DebugAssert(false, "TODO: impl");
+            m_state.store(UploadState::Submitted, std::memory_order_release);
+
+            MemoryToMemoryCopy copy = {
+                .srcMemory = m_tempView,
+                .dstMemory = m_memView,
+                .size = sizeof(T) * m_size,
+                .srcOffset = 0,
+                .dstOffset = 0,
+            };
+
+            m_device->MemoryCopy(copy);
+
+            m_device->Destroy(m_tempView);
+            m_tempView = {};
+            m_tempInfo = {};
+
+            m_state.store(UploadState::Ready, std::memory_order_release);
         }
 
         auto deviceData() const noexcept -> DeviceAddress
         {
             assertReady();
             return m_info.gpuAddress;
+        }
+        auto getView() const noexcept -> MemoryView
+        {
+            assertReady(); 
+            return m_memView;
         }
     };
 };

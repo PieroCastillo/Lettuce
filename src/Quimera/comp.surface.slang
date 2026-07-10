@@ -17,6 +17,12 @@ PushConstants pc;
 groupshared uint32_t tileDrawCallCount;
 groupshared TileMemory tileMemory[tileMaxCommands];
 
+groupshared uint32_t tileSortZA[tileMaxCommands];
+groupshared uint32_t tileSortZB[tileMaxCommands];
+
+groupshared uint32_t tileSortIdA[tileMaxCommands];
+groupshared uint32_t tileSortIdB[tileMaxCommands];
+
 [require(compute, spirv_1_6)]
 [numthreads(tileSize, tileSize, 1)]
 void pDrawCommandsMain(uint3 gid: SV_DispatchThreadID,
@@ -30,36 +36,33 @@ void pDrawCommandsMain(uint3 gid: SV_DispatchThreadID,
     var layouts = reinterpret<Ptr<LayoutStorage>>(pc.layoutsAddr);
     var implicitGeometries = reinterpret<Ptr<ImplicitGeometryStorage>>(pc.implicitGeometriesAddr);
     var solidColorBrushes = reinterpret<Ptr<SolidColorBrushStorage>>(pc.solidColorBrushesAddr);
-
-    bool inBounds = gid.x < surfaceData.width && gid.y < surfaceData.height;
+    
+    const uint globalIdx = gid.x + (gid.y * surfaceData.width);
+    const uint localIdx = lid.x + (lid.y * tileSize);
+    const uint tileXCount = (surfaceData.width + 15) / 16;
+    const uint tileYCount = (surfaceData.height + 15) / 16;
+    const uint totalThreadsPerFrame = tileXCount * tileYCount * tileSize * tileSize;
+    const bool inBounds = gid.x < surfaceData.width && gid.y < surfaceData.height;
 
     // shared mem reset per tile
     if (lid.x == 0 && lid.y == 0)
         tileDrawCallCount = 0;
 
-    // TODO: impl
-    // var stride = surfaceData.width * surfaceData.height;
-    // for (uint i = 0; i < layoutCount; i += stride)
-    // {
-        
-    // }
-
-    // calculate transforms
-    /*
-    foreach layout
-        transforms[layoutIdx] = InverseTransform2D(layout.position, layout.scale, layout.skew, layout.anchorPoint, layout.rotation);
-    */
+    // we need to calculate transforms at global memory
+    for (uint layoutIdx = globalIdx; layoutIdx < surfaceData.layoutCount; layoutIdx += totalThreadsPerFrame)
+    {
+        var layoutT = layouts[layoutIdx];
+        transforms[layoutIdx] = InverseTransform2D(layoutT.position, layoutT.scale, layoutT.skew, layoutT.anchorPoint, layoutT.rotation);
+    }
 
     GroupMemoryBarrierWithGroupSync();
 
     var color = float4(0.5, 0.5, 0.5, 1);
 
     // tile sort by depth and intersection
-    uint localIndex = lid.y * tileSize + lid.x;
-
     for (uint k = 0; k < surfaceData.drawCommandCount; k += tileSize * tileSize)
     {
-        uint i = k + localIndex;
+        uint i = k + localIdx;
 
         if (i < surfaceData.drawCommandCount)
         {
@@ -77,39 +80,71 @@ void pDrawCommandsMain(uint3 gid: SV_DispatchThreadID,
 
     GroupMemoryBarrierWithGroupSync();
 
-    // clamp tileDrawCallCount
-    var tileDrawCmdCount = min(tileDrawCallCount, tileMaxCommands);
+    uint tileDrawCmdCount = min(tileDrawCallCount, tileMaxCommands);
 
-    // sort tiles by depth; TODO: impl parallel sort
-    if (lid.x == 0 && lid.y == 0)
+    if (localIdx < tileDrawCmdCount && localIdx < tileMaxCommands)
     {
-        for (uint a = 0; a < tileDrawCmdCount; ++a)
+        uint drawCommandId = tileMemory[localIdx].drawCommandId;
+
+        tileSortIdA[localIdx] = drawCommandId;
+        tileSortZA[localIdx] = drawCmds[drawCommandId].zOrder;
+    }
+    else if (localIdx < tileMaxCommands)
+    {
+        tileSortIdA[localIdx] = 0xFFFFFFFFu;
+        tileSortZA[localIdx] = 0u;
+    }
+
+    GroupMemoryBarrierWithGroupSync();
+
+    uint stage = 0;
+    for (uint sequenceSize = 2; sequenceSize <= tileMaxCommands; sequenceSize <<= 1)
+    {
+        for (uint compareDistance = sequenceSize >> 1; compareDistance > 0; compareDistance >>= 1)
         {
-            uint best = a;
-            uint bestId = tileMemory[a].drawCommandId;
-            uint bestZ = drawCmds[bestId].zOrder;
-
-            for (uint b = a + 1; b < tileDrawCmdCount; ++b)
+            if (localIdx < tileMaxCommands)
             {
-                uint candidateId = tileMemory[b].drawCommandId;
-                uint candidateZ = drawCmds[candidateId].zOrder;
+                uint partner = localIdx ^ compareDistance;
 
-                if (candidateZ > bestZ ||
-                    (candidateZ == bestZ && candidateId < bestId))
+                bool comp = (stage & 1u) == 0u;
+
+                var ownId = comp ? tileSortIdA[localIdx] : tileSortIdB[localIdx];
+                var ownZ = comp ? tileSortZA[localIdx] : tileSortZB[localIdx];
+
+                var partnerId = comp ? tileSortIdA[partner] : tileSortIdB[partner];
+                var partnerZ = comp ? tileSortZA[partner] : tileSortZB[partner];
+
+                bool ownBeforePartner = ownZ > partnerZ || (ownZ == partnerZ && ownId < partnerId);
+                bool partnerBeforeOwn = partnerZ > ownZ || (partnerZ == ownZ && partnerId < ownId);
+                bool ownIsLowerLane = localIdx < partner;
+                bool forward = (localIdx & sequenceSize) == 0u;
+                bool wantEarlier = forward ? ownIsLowerLane : !ownIsLowerLane;
+                bool keepOwn = wantEarlier ? !partnerBeforeOwn : !ownBeforePartner;
+
+                uint resultId = keepOwn ? ownId : partnerId;
+                uint resultZ = keepOwn ? ownZ : partnerZ;
+
+                if ((stage & 1u) == 0u)
                 {
-                    best = b;
-                    bestId = candidateId;
-                    bestZ = candidateZ;
+                    tileSortIdB[localIdx] = resultId;
+                    tileSortZB[localIdx] = resultZ;
+                }
+                else
+                {
+                    tileSortIdA[localIdx] = resultId;
+                    tileSortZA[localIdx] = resultZ;
                 }
             }
 
-            if (best != a)
-            {
-                TileMemory tmp = tileMemory[a];
-                tileMemory[a] = tileMemory[best];
-                tileMemory[best] = tmp;
-            }
+            GroupMemoryBarrierWithGroupSync();
+            ++stage;
         }
+    }
+
+    // 15 iterations
+    if (localIdx < tileDrawCmdCount)
+    {
+        tileMemory[localIdx].drawCommandId = tileSortIdB[localIdx];
     }
 
     GroupMemoryBarrierWithGroupSync();

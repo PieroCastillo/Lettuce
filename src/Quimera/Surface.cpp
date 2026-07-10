@@ -9,6 +9,7 @@
 #include "Lettuce/Core/api.hpp"
 #include "Lettuce/Quimera/SurfaceImpl.hpp"
 #include "Lettuce/Quimera/api.hpp"
+#include "Lettuce/Utils/api.hpp"
 
 using namespace Lettuce::Quimera;
 using namespace Lettuce::Core;

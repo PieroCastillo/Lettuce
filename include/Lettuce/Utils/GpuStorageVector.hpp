@@ -19,10 +19,10 @@ namespace Lettuce::Utils
     class GpuStorageVector
     {
     private:
-        Device* m_device;
-        MemoryView m_memView;
-        MemoryViewInfo m_info;
-        uint32_t m_capacity;
+        Device* m_device = nullptr;
+        MemoryView m_memView = {};
+        MemoryViewInfo m_info = {};
+        uint32_t m_capacity = 0;
     public:
         GpuStorageVector() noexcept = default;
 
@@ -53,8 +53,21 @@ namespace Lettuce::Utils
         /// @brief Copy assignment operator. Deleted.
         auto operator=(const GpuStorageVector&) -> GpuStorageVector & = delete;
 
-        /// @brief Move assignment operator. Deleted.
-        auto operator=(GpuStorageVector&&) -> GpuStorageVector & = delete;
+        /// @brief Move assignment operator
+        auto operator=(GpuStorageVector&& other) -> GpuStorageVector&
+        {
+            DebugAssert(m_memView.generation == 0, "GpuStorageVector cannot be reassigned");
+
+            if (this == &other)
+                return *this;
+
+            m_device = std::exchange(other.m_device, nullptr);
+            m_memView = std::exchange(other.m_memView, {});
+            m_info = std::exchange(other.m_info, {});
+            m_capacity = std::exchange(other.m_capacity, 0);
+
+            return *this;
+        }
 
         /// @brief Destructor.
         ~GpuStorageVector()
@@ -69,11 +82,12 @@ namespace Lettuce::Utils
         }
 
         auto byteSize() const noexcept -> uint32_t { return m_info.size; }
-        auto size() const noexcept -> uint32_t { return m_size; }
+        auto size() const noexcept -> uint32_t { return m_capacity; }
         auto capacity() const noexcept -> uint32_t { return m_capacity; }
-        auto empty() const noexcept -> bool { return m_size == 0; }
+        auto empty() const noexcept -> bool { return m_capacity == 0; }
 
         auto deviceData() const noexcept -> DeviceAddress { return m_info.gpuAddress; }
+        auto getView() const noexcept -> MemoryView { return m_memView; }
     };
 };
 #endif // LETTUCE_UTILS_GPU_STORAGE_VECTOR
