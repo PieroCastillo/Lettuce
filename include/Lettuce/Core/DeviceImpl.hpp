@@ -57,11 +57,6 @@ namespace Lettuce::Core
         Transfer,
     };
 
-    struct DeviceCreateInfo
-    {
-        bool preferDedicated;
-    };
-
     class DeviceImpl
     {
     public:
@@ -199,12 +194,12 @@ namespace Lettuce::Core
         void setDebugName(VkObjectType type, uint64_t handle, const std::string& name);
 
         void setupInstance();
-        void selectGPU(const DeviceCreateInfo& createInfo);
+        void selectGPU(const DeviceDesc& createInfo);
         void setupFeaturesExtensions();
         void setupDevice();
         void setupAllocators();
 
-        void Create(const DeviceCreateInfo& createInfo);
+        void Create(const DeviceDesc& createInfo);
         void Release();
 
         bool isDebug() { return true; };

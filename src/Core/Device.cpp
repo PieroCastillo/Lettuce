@@ -44,7 +44,7 @@ void Device::Create(const DeviceDesc& desc)
 
     try
     {
-        nimpl->Create({ desc.preferDedicated });
+        nimpl->Create(desc);
     }
     catch (...)
     {

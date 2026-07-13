@@ -39,21 +39,6 @@ Brush redBrush;
 Brush blueBrush;
 Brush yellowBrush;
 
-inline glm::mat3 createTransform2D(float angleRad, float x, float y,
-    float scaleX = 1.0f, float scaleY = 1.0f,
-    float skewX = 0.0f, float skewY = 0.0f)
-{
-    auto c = std::cos(angleRad);
-    auto s = std::sin(angleRad);
-
-    return glm::mat3(
-        /* column 0 */ scaleX * (c + s * skewY), scaleX * (s - c * skewY), 0.0f,
-        /* column 1 */ scaleY * (c * skewX - s), scaleY * (s * skewX + c), 0.0f,
-        /* column 2 */ x, y, 1.0f
-    );
-}
-
-
 void draw2dScene(CommandBuffer& lcmd, TextureView frame)
 {
     auto cmd = SurfaceCommandBuffer(*surface, lcmd);
@@ -202,8 +187,7 @@ void initLettuce()
     DeviceDesc deviceCI = {
         .preferDedicated = true,
     };
-    device = std::make_unique<Device>();
-    device->Create(deviceCI);
+    device = std::make_unique<Device>(deviceCI);
 
     SwapchainDesc swapchainDesc = {
         .width = width,
@@ -220,8 +204,7 @@ void initLettuce()
         .maxBrushes = 10000,
         .maxDrawCommands = 10000,
     };
-    surface = std::make_unique<Surface>();
-    surface->Create(surfaceCI);
+    surface = std::make_unique<Surface>(surfaceCI);
 
     CommandAllocatorDesc cmdAllocDesc = {
         .queueType = QueueType::Graphics,
@@ -232,10 +215,10 @@ void initLettuce()
 void cleanupLettuce()
 {
     device->WaitFor(QueueType::Graphics);
-    surface->Destroy();
+    surface.reset();
     device->Destroy(cmdAlloc);
     device->Destroy(swapchain);
-    device->Destroy();
+    device.reset();
 }
 
 int main()

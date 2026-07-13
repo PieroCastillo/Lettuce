@@ -50,7 +50,7 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
     return VK_FALSE;
 }
 
-void DeviceImpl::Create(const DeviceCreateInfo& createInfo)
+void DeviceImpl::Create(const DeviceDesc& createInfo)
 {
     setupInstance();
     selectGPU(createInfo);
@@ -131,7 +131,7 @@ void DeviceImpl::setupInstance()
     handleResult(vkCreateDebugUtilsMessengerEXT(m_instance, &messengerCI, nullptr, &m_messenger));
 }
 
-void DeviceImpl::selectGPU(const DeviceCreateInfo& createInfo)
+void DeviceImpl::selectGPU(const DeviceDesc& createInfo)
 {
     uint32_t gpuCount;
     vkEnumeratePhysicalDevices(m_instance, &gpuCount, nullptr);

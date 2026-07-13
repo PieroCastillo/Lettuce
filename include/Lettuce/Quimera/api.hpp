@@ -59,7 +59,7 @@ namespace Lettuce::Quimera
         TextureView dstTexture;
         Rect renderArea;
     };
-    
+
     struct SurfaceDesc
     {
         Device& device;
@@ -75,11 +75,23 @@ namespace Lettuce::Quimera
     {
     private:
         friend class SurfaceCommandBuffer;
-        SurfaceImpl* impl;
+        SurfaceImpl* impl = nullptr;
     public:
+        Surface() noexcept = default;
+        explicit Surface(const SurfaceDesc& desc);
+
+        ~Surface();
+
+        Surface(const Surface&) = delete;
+        Surface& operator=(const Surface&) = delete;
+
+        Surface(Surface&&) noexcept;
+        Surface& operator=(Surface&&) noexcept;
+
         void Create(const SurfaceDesc&);
-        void Destroy();
-        
+        void Destroy() noexcept;
+        [[nodiscard]] bool IsValid() const noexcept { return impl != nullptr; }
+
         auto CreateGeometry(const ImplicitGeometryDesc&) -> Geometry;
         auto CreateBrush(const SolidColorBrushDesc&) -> Brush;
         auto CreateLayout(const LayoutDesc&) -> Layout;

@@ -14,16 +14,57 @@
 using namespace Lettuce::Quimera;
 using namespace Lettuce::Core;
 
-void Surface::Create(const SurfaceDesc& desc)
+Surface::Surface(const SurfaceDesc& desc)
 {
-    impl = new SurfaceImpl;
-    impl->Create(desc);
+    Create(desc);
 }
 
-void Surface::Destroy()
+Surface::~Surface()
 {
+    Destroy();
+}
+
+Surface::Surface(Surface&& other) noexcept : impl(std::exchange(other.impl, nullptr))
+{
+}
+
+Surface& Surface::operator=(Surface&& other) noexcept
+{
+    if (this != &other)
+    {
+        Destroy();
+        impl = std::exchange(other.impl, nullptr);
+    }
+    return *this;
+}
+
+void Surface::Create(const SurfaceDesc& desc)
+{
+    if (impl)
+        throw std::logic_error("Surface::Create cannot be called from initizalized Surface.");
+
+    auto nimpl = new SurfaceImpl;
+
+    try
+    {
+        nimpl->Create(desc);
+    }
+    catch (...)
+    {
+        delete nimpl;
+        throw;
+    }
+    impl = nimpl;
+}
+
+void Surface::Destroy() noexcept
+{
+    if(!impl)
+        return;
+
     impl->Destroy();
     delete impl;
+    impl = nullptr;
 }
 
 auto Surface::CreateGeometry(const ImplicitGeometryDesc& desc) -> Geometry
