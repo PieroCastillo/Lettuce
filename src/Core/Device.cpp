@@ -10,16 +10,59 @@
 
 using namespace Lettuce::Core;
 
-void Device::Create(const DeviceDesc& desc)
+Device::Device(const DeviceDesc& desc)
 {
-    impl = new DeviceImpl;
-    impl->Create({ desc.preferDedicated });
+    Create(desc);
 }
 
-void Device::Destroy()
+Device::~Device()
 {
+    Destroy();
+}
+
+Device::Device(Device&& other) noexcept : impl(std::exchange(other.impl, nullptr))
+{
+}
+
+Device& Device::operator=(Device&& other) noexcept
+{
+    if (this != &other)
+    {
+        Destroy();
+        impl = std::exchange(other.impl, nullptr);
+    }
+
+    return *this;
+}
+
+void Device::Create(const DeviceDesc& desc)
+{
+    if (impl)
+        throw std::logic_error("Device::Create cannot be called from initizalized Device.");
+
+    auto nimpl = new DeviceImpl;
+
+    try
+    {
+        nimpl->Create({ desc.preferDedicated });
+    }
+    catch (...)
+    {
+        delete nimpl;
+        throw;
+    }
+
+    impl = nimpl;
+}
+
+void Device::Destroy() noexcept
+{
+    if (!impl)
+        return;
+
     impl->Release();
     delete impl;
+    impl = nullptr;
 }
 
 void Device::WaitFor(QueueType queueType)

@@ -348,10 +348,22 @@ namespace Lettuce::Core
 
     struct Device {
     private:
-        DeviceImpl* impl;
+        DeviceImpl* impl = nullptr;
     public:
+        Device() noexcept = default;
+        explicit Device(const DeviceDesc& desc);
+
+        ~Device();
+
+        Device(const Device&) = delete;
+        Device& operator=(const Device&) = delete;
+
+        Device(Device&&) noexcept;
+        Device& operator=(Device&&) noexcept;
+
         void Create(const DeviceDesc&);
-        void Destroy();
+        void Destroy() noexcept;
+        [[nodiscard]] bool IsValid() const noexcept { return impl != nullptr; }
 
         void WaitFor(QueueType);
 
