@@ -1,5 +1,6 @@
 // standard headers
 #include <array>
+#include <limits>
 #include <memory>
 #include <memory_resource>
 #include <print>
@@ -73,6 +74,11 @@ auto Device::AllocateCommandBuffer(CommandAllocator cmdAlloc) -> CommandBuffer
 
 void Device::Submit(const CommandBufferSubmitDesc& desc)
 {
+    auto token = SubmitAsync(desc);
+}
+
+auto Device::SubmitAsync(const CommandBufferSubmitDesc& desc) -> WaitToken
+{
     VkQueue queue;
     VkSemaphore semaphore;
     uint64_t currentValue;
@@ -116,7 +122,7 @@ void Device::Submit(const CommandBufferSubmitDesc& desc)
             auto cmd = (VkCommandBuffer)(desc.commandBuffers[i][j].impl.handle);
             handleResult(vkEndCommandBuffer(cmd));
 
-            cmdInfos[(i * maxCmdLevels) + j] = {
+            cmdInfos[(i * maxCmdCountPerLevel) + j] = {
                 .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_SUBMIT_INFO,
                 .commandBuffer = cmd,
                 .deviceMask = 0,
@@ -148,7 +154,7 @@ void Device::Submit(const CommandBufferSubmitDesc& desc)
             .signalSemaphoreInfoCount = 1,
             .pSignalSemaphoreInfos = &semInfos[2 * i + 1],
         };
-        
+
         waitValue = signalValue;
         ++signalValue;
     }
@@ -189,4 +195,33 @@ void Device::Submit(const CommandBufferSubmitDesc& desc)
     case QueueType::Compute: impl->computeCurrentValue = signalValue - 1; break;
     case QueueType::Copy: impl->transferCurrentValue = signalValue - 1; break;
     }
+
+    return impl->waitTokens.allocate({signalValue - 1, desc.queueType});
+}
+
+void Device::WaitFor(WaitToken token)
+{
+    auto& tokenInfo = impl->waitTokens.get(token);
+
+    VkSemaphore semaphore;
+
+    switch (tokenInfo.queue)
+    {
+    case QueueType::Graphics:
+        semaphore = impl->graphicsSemaphore; break;
+    case QueueType::Compute:
+        semaphore = impl->computeSemaphore; break;
+    case QueueType::Copy:
+        semaphore = impl->transferSemaphore; break;
+    }
+
+    VkSemaphoreWaitInfo waitInfo = {
+        .sType =  VK_STRUCTURE_TYPE_SEMAPHORE_WAIT_INFO,
+        .semaphoreCount = 1,
+        .pSemaphores = &semaphore,
+        .pValues = &tokenInfo.value,
+    };
+
+    handleResult(vkWaitSemaphores(impl->m_device, &waitInfo, (std::numeric_limits<uint64_t>::max)()));
+    impl->waitTokens.release(token);
 }

@@ -142,8 +142,8 @@ void mainLoop()
             .commandBuffers = std::span(cmds),
             .presentSwapchain = swapchain,
         };
-        device.Submit(submitDesc);
-        device.WaitFor(QueueType::Graphics);
+        auto token = device.SubmitAsync(submitDesc);
+        device.WaitFor(token);
         
         device.DisplayFrame(swapchain);
 

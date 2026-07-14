@@ -14,18 +14,6 @@
 
 using namespace Lettuce::Core;
 
-// TODO: memory
-
-void CommandBuffer::MemoryCopy(const HostToMemoryCopy& desc)
-{
-
-}
-
-void CommandBuffer::MemoryCopy(const HostToTextureCopy& desc)
-{
-
-}
-
 void CommandBuffer::MemoryCopy(const MemoryToMemoryCopy& copy)
 {
     VkBufferCopy bufferCopy = {

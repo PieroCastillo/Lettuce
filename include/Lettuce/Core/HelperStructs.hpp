@@ -15,6 +15,12 @@ Created by @PieroCastillo on 2025-12-26
 
 namespace Lettuce::Core
 {
+    struct WaitTokenVK
+    {
+        uint64_t value;
+        QueueType queue;
+    };
+
     struct PipelineVK
     {
         VkPipeline pipeline;

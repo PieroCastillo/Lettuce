@@ -157,10 +157,10 @@ void mainLoop()
             .presentSwapchain = swapchain,
         };
 
-        device->Submit(submitDesc);
+        auto token = device->SubmitAsync(submitDesc);
+        device->WaitFor(token);
 
         device->DisplayFrame(swapchain);
-        device->WaitFor(QueueType::Graphics);
 
         glfwPollEvents();
     }

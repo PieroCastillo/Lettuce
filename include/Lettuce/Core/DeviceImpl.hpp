@@ -92,6 +92,7 @@ namespace Lettuce::Core
         ResourcePool<IndirectSet, IndirectSetVK> indirectSets;
         ResourcePool<Swapchain, SwapchainVK> swapchains;
         ResourcePool<CommandAllocator, CommandAllocatorVK> commandAllocators;
+        ResourcePool<WaitToken, WaitTokenVK> waitTokens;
         
         // physical device features structs
         // required features/extensions

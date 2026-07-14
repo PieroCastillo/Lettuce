@@ -57,6 +57,7 @@ namespace Lettuce::Core
     struct IndirectSetTag {};
     struct SwapchainTag {};
     struct CommandAllocatorTag {};
+    struct WaitTokenTag {};
 
     using MemoryView = Handle<MemoryViewTag>;
     using TextureView = Handle<TextureViewTag>;
@@ -67,6 +68,7 @@ namespace Lettuce::Core
     using IndirectSet = Handle<IndirectSetTag>;
     using Swapchain = Handle<SwapchainTag>;
     using CommandAllocator = Handle<CommandAllocatorTag>;
+    using WaitToken = Handle<WaitTokenTag>;
 
     // Enums
     enum class Format : uint8_t;
@@ -121,12 +123,14 @@ namespace Lettuce::Core
 
     using ClearValue = std::variant<ColorClear, DepthStencilClear>;
 
-    struct MemoryViewDesc {
+    struct MemoryViewDesc
+    {
         uint64_t size;
         bool cpuVisible;
     };
 
-    struct TextureViewDesc {
+    struct TextureViewDesc
+    {
         uint32_t width;
         uint32_t height;
         uint32_t depth;
@@ -137,7 +141,8 @@ namespace Lettuce::Core
         bool cpuVisible;
     };
 
-    struct RenderTargetDesc {
+    struct RenderTargetDesc
+    {
         uint32_t width;
         uint32_t height;
         RenderTargetType type;
@@ -145,7 +150,8 @@ namespace Lettuce::Core
         bool cpuVisible;
     };
 
-    struct SamplerDesc {
+    struct SamplerDesc
+    {
         Filter magFilter;
         Filter minFilter;
         Filter mipmap;
@@ -156,7 +162,8 @@ namespace Lettuce::Core
         bool depthCompare;
     };
 
-    struct ShaderBinaryDesc {
+    struct ShaderBinaryDesc
+    {
         std::span<uint32_t> bytecode;
     };
 
@@ -200,7 +207,8 @@ namespace Lettuce::Core
         uint32_t storageImageDescriptorCount;
     };
 
-    struct IndirectSetDesc {
+    struct IndirectSetDesc
+    {
         IndirectType type;
         uint32_t maxCount;
         uint32_t userDataSize;
@@ -215,7 +223,8 @@ namespace Lettuce::Core
         void* applicationPtr;
     };
 
-    struct BarrierDesc {
+    struct BarrierDesc
+    {
         PipelineAccess srcAccess;
         PipelineStage srcStage;
         PipelineAccess dstAccess;
@@ -269,23 +278,6 @@ namespace Lettuce::Core
         TextureView texture;
         ColorClear color;
         uint32_t baseLevel, levelCount, baseLayer, layerCount;
-    };
-
-    struct HostToMemoryCopy
-    {
-        std::span<const uint8_t> srcData;
-        MemoryView dstMemory;
-        uint32_t dstOffset;
-    };
-
-    struct HostToTextureCopy
-    {
-        std::span<const uint8_t> srcData;
-        TextureView dstTexture;
-        uint32_t mipmapLevel;
-        uint32_t layerBaseLevel;
-        uint32_t layerCount;
-        uint32_t x, y, width, height;
     };
 
     struct MemoryToMemoryCopy
@@ -366,6 +358,7 @@ namespace Lettuce::Core
         [[nodiscard]] bool IsValid() const noexcept { return impl != nullptr; }
 
         void WaitFor(QueueType);
+        void WaitFor(WaitToken);
 
         auto SupportMeshShader() -> bool;
         auto SupportNeuralShading() -> bool;
@@ -432,11 +425,7 @@ namespace Lettuce::Core
         auto AllocateCommandBuffer(CommandAllocator) -> CommandBuffer;
 
         void Submit(const CommandBufferSubmitDesc&);
-
-        void MemoryCopy(const HostToMemoryCopy&);
-        void MemoryCopy(const HostToTextureCopy&);
-        void MemoryCopy(const MemoryToMemoryCopy&);
-        void MemoryCopy(const MemoryToTextureCopy&);
+        [[nodiscard]] auto SubmitAsync(const CommandBufferSubmitDesc&) -> WaitToken;
 
         [[nodiscard]] auto GetImplementation() noexcept -> DeviceImpl* { return impl; }
     };
@@ -449,8 +438,6 @@ namespace Lettuce::Core
         explicit CommandBuffer(CommandBufferImpl cmdImpl) : impl(cmdImpl) {}
     public:
 
-        void MemoryCopy(const HostToMemoryCopy&);
-        void MemoryCopy(const HostToTextureCopy&);
         void MemoryCopy(const MemoryToMemoryCopy&);
         void MemoryCopy(const MemoryToTextureCopy&);
         // Copy from offset[x,y], range[width, height] of the TextureView to the start of the buffer

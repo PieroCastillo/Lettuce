@@ -189,12 +189,15 @@ namespace Lettuce::Utils
         }
 
         /// @brief Upload Data to device memory. It's a blocking operation.
-        void Upload()
+        /// @param cmdAllocator : Must be defined using QueueType::Copy.
+        void Upload(CommandAllocator cmdAllocator)
         {
             DebugAssert(m_device != nullptr, "GpuUploadVector is not initialized.");
 
             assertWritable();
             m_state.store(UploadState::Submitted, std::memory_order_release);
+
+            auto cmd = m_device->AllocateCommandBuffer(cmdAllocator);
 
             MemoryToMemoryCopy copy = {
                 .srcMemory = m_tempView,
@@ -204,7 +207,16 @@ namespace Lettuce::Utils
                 .dstOffset = 0,
             };
 
-            m_device->MemoryCopy(copy);
+            cmd.MemoryCopy(copy);
+
+            std::array<std::span<CommandBuffer>, 1> cmds = { std::span(&cmd, 1) };
+
+            CommandBufferSubmitDesc submitDesc = {
+                .queueType = QueueType::Copy,
+                .commandBuffers = std::span(cmds),
+            };
+
+            m_device->Submit(submitDesc);
 
             m_device->Destroy(m_tempView);
             m_tempView = {};
@@ -220,7 +232,7 @@ namespace Lettuce::Utils
         }
         auto getView() const noexcept -> MemoryView
         {
-            assertReady(); 
+            assertReady();
             return m_memView;
         }
     };

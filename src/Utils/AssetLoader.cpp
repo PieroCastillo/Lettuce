@@ -138,10 +138,8 @@ auto AssetLoader::LoadKtx2Texture(Device* pDevice, CommandAllocator commandAlloc
         .queueType = QueueType::Copy,
         .commandBuffers = std::span(cmdArr),
     };
-    pDevice->Submit(cmdDesc);
-
-    // here the host waits; delete it for future async impls
-    pDevice->WaitFor(QueueType::Copy);
+    auto token = pDevice->SubmitAsync(cmdDesc);
+    pDevice->WaitFor(token);
 
     pDevice->Destroy(stagingBuff);
     ktxTexture2_Destroy(kTexture);
