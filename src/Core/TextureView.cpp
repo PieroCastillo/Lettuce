@@ -158,7 +158,25 @@ auto Device::CreateTextureView(const TextureViewDesc& desc) -> TextureView
                                         false });
     }
     else
-    {  
+    {
+        imageCI.flags |= VK_IMAGE_CREATE_SPARSE_BINDING_BIT | VK_IMAGE_CREATE_SPARSE_RESIDENCY_BIT | VK_IMAGE_CREATE_SPARSE_ALIASED_BIT;
+
+        VkDeviceImageMemoryRequirements devImgReqs = {
+            .sType = VK_STRUCTURE_TYPE_DEVICE_IMAGE_MEMORY_REQUIREMENTS,
+            .pCreateInfo = &imageCI,
+            .planeAspect = VK_IMAGE_ASPECT_COLOR_BIT,
+        };
+        uint32_t reqCount;
+        vkGetDeviceImageSparseMemoryRequirements(impl->m_device, &devImgReqs, &reqCount, nullptr);
+
+        auto reqs = (VkSparseImageMemoryRequirements2*)alloca(reqCount * sizeof(VkSparseImageMemoryRequirements2));
+        vkGetDeviceImageSparseMemoryRequirements(impl->m_device, &devImgReqs, &reqCount, reqs);
+
+        for(uint32_t i = 0; i < reqCount; ++i)
+        {
+            auto req = reqs[i].memoryRequirements;
+        }
+
         throw NotImplemented("Sparse Resources are not implemented yet.");
     }
 }

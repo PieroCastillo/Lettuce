@@ -30,6 +30,7 @@ namespace Lettuce::Quimera
     struct Color { float r, g, b, a; };
     struct Size { float w, h; };
     struct Rect { float x, y, w, h; };
+    struct Extend { uint32_t x, y, w, h; };
 
     struct SolidColorBrushDesc
     {
@@ -57,7 +58,7 @@ namespace Lettuce::Quimera
     struct DrawSurfaceDesc
     {
         TextureView dstTexture;
-        Rect renderArea;
+        Extend renderArea;
     };
 
     struct SurfaceDesc

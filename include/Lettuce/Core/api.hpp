@@ -125,6 +125,12 @@ namespace Lettuce::Core
     };
 
     using ClearValue = std::variant<ColorClear, DepthStencilClear>;
+    
+    struct Size
+    {
+        uint32_t width;
+        uint32_t height;
+    };
 
     struct MemoryViewDesc
     {
@@ -221,8 +227,6 @@ namespace Lettuce::Core
 
     struct SwapchainDesc
     {
-        uint32_t width;
-        uint32_t height;
         bool clipped;
         void* windowPtr;
         void* applicationPtr;
@@ -432,11 +436,10 @@ namespace Lettuce::Core
         auto CreateSwapchain(const SwapchainDesc&) -> Swapchain;
         void Destroy(Swapchain);
 
-        void NextFrame(Swapchain);
+        auto NextFrame(Swapchain) -> Size;
         void DisplayFrame(Swapchain);
         auto GetRenderTargetFormat(Swapchain) -> Format;
         auto GetCurrentRenderTarget(Swapchain) const -> TextureView;
-        void ResizeSwapchain(Swapchain, uint32_t w, uint32_t h);
         auto GetFrameCount(Swapchain) -> uint32_t;
 
         // Command Allocator

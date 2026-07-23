@@ -20,8 +20,8 @@ using namespace Lettuce::Quimera;
 
 GLFWwindow* window;
 
-constexpr uint32_t width = 1366;
-constexpr uint32_t height = 768;
+uint32_t width = 1366;
+uint32_t height = 768;
 
 std::unique_ptr<Device> device;
 std::unique_ptr<Surface> surface;
@@ -108,7 +108,15 @@ void mainLoop()
 {
     while (!glfwWindowShouldClose(window))
     {
-        device->NextFrame(swapchain);
+        glfwGetFramebufferSize(window, (int*)&width, (int*)&height);
+
+        if (width == 0 || height == 0)
+        {
+            glfwWaitEvents();
+            continue;
+        }
+
+        auto fbSize = device->NextFrame(swapchain);
 
         device->Reset(cmdAlloc);
         auto frame = device->GetCurrentRenderTarget(swapchain);
@@ -136,8 +144,8 @@ void mainLoop()
         };
 
         RenderPassDesc renderPassDesc = {
-            .width = width,
-            .height = height,
+            .width = fbSize.width,
+            .height = fbSize.height,
             .colorAttachments = std::span(colorAttachment),
             .presentAttachmentIdx = 0,
         };
@@ -170,7 +178,7 @@ void initWindow()
 {
     glfwInit();
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-    glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
+    glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
     window = glfwCreateWindow(width, height, "Lettuce Quimera 2D Test", NULL, NULL);
 }
 void cleanupWindow()
@@ -190,8 +198,6 @@ void initLettuce()
     device = std::make_unique<Device>(deviceCI);
 
     SwapchainDesc swapchainDesc = {
-        .width = width,
-        .height = height,
         .clipped = true,
         .windowPtr = &hwnd,
         .applicationPtr = &hmodule,

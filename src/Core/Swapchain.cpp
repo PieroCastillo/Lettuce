@@ -41,9 +41,11 @@ void setupVkSurface(SwapchainVK& swapchainVK, VkInstance instance, const Swapcha
     swapchainVK.surface = surface;
 }
 
-void setupVkSwapchain(SwapchainVK& swapchainVK, VkDevice device, VkPhysicalDevice gpu, const SwapchainDesc& createInfo)
+void setupVkSwapchain(SwapchainVK& swapchainVK, DeviceImpl* impl, VkPhysicalDevice gpu, const SwapchainDesc& createInfo)
 {
+    VkDevice device = impl->m_device;
     VkSurfaceKHR surface = swapchainVK.surface;
+    VkSwapchainKHR oldSwapchain = swapchainVK.swapchain;
 
     // query surface capabilities
     VkSurfaceCapabilitiesKHR sc;
@@ -65,13 +67,14 @@ void setupVkSwapchain(SwapchainVK& swapchainVK, VkDevice device, VkPhysicalDevic
 
     surfaceFormat = formats[0];
 
-    surfaceExtent.width = std::clamp(createInfo.width, sc.minImageExtent.width, sc.maxImageExtent.width);
-    surfaceExtent.height = std::clamp(createInfo.height, sc.minImageExtent.height, sc.maxImageExtent.height);
+    surfaceExtent.width = std::clamp(sc.currentExtent.width, sc.minImageExtent.width, sc.maxImageExtent.width);
+    surfaceExtent.height = std::clamp(sc.currentExtent.width, sc.minImageExtent.height, sc.maxImageExtent.height);
 
     swapchainVK.ltFormat = FromVkFormat(surfaceFormat.format);
     swapchainVK.format = surfaceFormat.format;
     swapchainVK.width = surfaceExtent.width;
     swapchainVK.height = surfaceExtent.height;
+    swapchainVK.clipped = createInfo.clipped;
 
     // get most appropiate present mode
     for (int i = 0; i < presentModeCount; i++)
@@ -103,11 +106,11 @@ void setupVkSwapchain(SwapchainVK& swapchainVK, VkDevice device, VkPhysicalDevic
         .imageArrayLayers = 1,
         .imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT,
         .imageSharingMode = VK_SHARING_MODE_EXCLUSIVE,
-        .preTransform = sc.currentTransform ,
+        .preTransform = sc.currentTransform,
         .compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR,
         .presentMode = surfacePresentMode,
-        .clipped = VK_FALSE,
-        .oldSwapchain = VK_NULL_HANDLE,
+        .clipped = createInfo.clipped,
+        .oldSwapchain = oldSwapchain,
     };
 
     // TODO: handle errors (as OUT_OF_DATE or SUBOPTIMAL)
@@ -116,7 +119,6 @@ void setupVkSwapchain(SwapchainVK& swapchainVK, VkDevice device, VkPhysicalDevic
     switch (res)
     {
     case VK_SUCCESS:
-    case VK_ERROR_OUT_OF_DATE_KHR:
     case VK_SUBOPTIMAL_KHR:
         break;
     default:
@@ -124,6 +126,18 @@ void setupVkSwapchain(SwapchainVK& swapchainVK, VkDevice device, VkPhysicalDevic
         break;
     }
     swapchainVK.swapchain = swapchain;
+
+    if (oldSwapchain != VK_NULL_HANDLE) {
+        for (int i = 0; i < swapchainVK.swapchainViews.size(); ++i)
+        {
+            vkDestroyImageView(device, swapchainVK.swapchainViews[i], nullptr);
+            impl->textures.release(swapchainVK.renderTargets[i]);
+        }
+        swapchainVK.renderTargets.clear();
+        swapchainVK.swapchainViews.clear();
+        swapchainVK.swapchainImages.clear();
+        vkDestroySwapchainKHR(device, oldSwapchain, nullptr);
+    }
 }
 
 void setupImagesAndView(SwapchainVK& swapchainVK, ResourcePool<TextureView, TextureVK>& textures, VkDevice device, VkPhysicalDevice gpu, const SwapchainDesc& createInfo)
@@ -175,7 +189,7 @@ auto Device::CreateSwapchain(const SwapchainDesc& desc) -> Swapchain
     SwapchainVK swapchainVK = {};
     swapchainVK.currentImageIndex = 0;
     setupVkSurface(swapchainVK, instance, desc);
-    setupVkSwapchain(swapchainVK, device, gpu, desc);
+    setupVkSwapchain(swapchainVK, impl, gpu, desc);
     setupImagesAndView(swapchainVK, impl->textures, device, gpu, desc);
     VkFenceCreateInfo fenceCI = {
         .sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO,
@@ -214,18 +228,26 @@ void Device::Destroy(Swapchain swapchain)
     vkDestroySurfaceKHR(impl->m_instance, info.surface, nullptr);
 }
 
-void Device::NextFrame(Swapchain swapchain)
+auto Device::NextFrame(Swapchain swapchain) -> Size
 {
     auto& info = impl->swapchains.get(swapchain);
     auto device = impl->m_device;
     vkResetFences(device, 1, &info.waitForAcquireFence);
     constexpr auto timeout = (std::numeric_limits<uint32_t>::max)();
-    vkAcquireNextImageKHR(device, info.swapchain, timeout, VK_NULL_HANDLE, info.waitForAcquireFence, &info.currentImageIndex);
-    // if (auto res = vkAcquireNextImageKHR(device, info.swapchain, timeout, VK_NULL_HANDLE, info.waitForAcquireFence, &info.currentImageIndex); res != VK_SUCCESS)
-    // {
+    auto res = vkAcquireNextImageKHR(device, info.swapchain, timeout, VK_NULL_HANDLE, info.waitForAcquireFence, &info.currentImageIndex);
+    if (res == VK_ERROR_OUT_OF_DATE_KHR)
+    {
+        handleResult(vkQueueWaitIdle(impl->m_graphicsQueue));
+        SwapchainDesc desc = { .clipped = info.clipped };
 
-    // }
+        setupVkSwapchain(info, impl, impl->m_physicalDevice, desc);
+        setupImagesAndView(info, impl->textures, device, impl->m_physicalDevice, desc);
+
+        handleResult(vkAcquireNextImageKHR(device, info.swapchain, timeout, VK_NULL_HANDLE, info.waitForAcquireFence, &info.currentImageIndex));
+    }
     handleResult(vkWaitForFences(device, 1, &info.waitForAcquireFence, VK_TRUE, timeout));
+
+    return { info.width, info.height };
 }
 
 void Device::DisplayFrame(Swapchain swapchain)
@@ -242,20 +264,25 @@ void Device::DisplayFrame(Swapchain swapchain)
     };
     // TODO: further, we need to replace this usign a better sync system
     // handleResult(vkQueueWaitIdle(impl->m_graphicsQueue));
-    handleResult(vkQueuePresentKHR(impl->m_graphicsQueue, &presentI));
-    // wait for present complete
-    info.currentImageIndex = (info.currentImageIndex + 1) % info.imageCount;
+    auto res = vkQueuePresentKHR(impl->m_graphicsQueue, &presentI);
+    switch (res)
+    {
+    case VK_SUCCESS:
+    case VK_SUBOPTIMAL_KHR:
+    case VK_ERROR_OUT_OF_DATE_KHR:
+        info.currentImageIndex = (info.currentImageIndex + 1) % info.imageCount;
+        break;
+
+    default:
+        handleResult(res);
+        break;
+    }
 }
 
 auto Device::GetRenderTargetFormat(Swapchain swapchain) -> Format
 {
     auto& swp = impl->swapchains.get(swapchain);
     return swp.ltFormat;
-}
-
-void Device::ResizeSwapchain(Swapchain swapchain, uint32_t w, uint32_t h)
-{
-    throw NotImplemented("Swapchain Resizing is not implemented yet.");
 }
 
 auto Device::GetCurrentRenderTarget(Swapchain swapchain) const -> TextureView

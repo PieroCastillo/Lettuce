@@ -150,8 +150,6 @@ void initLettuce()
     device.Create(deviceCI);
 
     SwapchainDesc swapchainDesc = {
-        .width = width,
-        .height = height,
         .clipped = true,
         .windowPtr = &hwnd,
         .applicationPtr = &hmodule,
@@ -170,8 +168,6 @@ void initLettuce()
     mviPickInstanceData = device.GetMemoryViewInfo(mvPickInstanceData);
 
     TextureViewDesc pickDesc = {
-        .width = width,
-        .height = height,
         .depth = 1,
         .format = Format::Raw_R32_UInt,
         .mipCount = 1,
@@ -195,8 +191,6 @@ void initLettuce()
     mviDebugBuffer = device.GetMemoryViewInfo(mvDebugBuffer);
 
     RenderTargetDesc depthDesc = {
-        .width = width,
-        .height = height,
         .type = RenderTargetType::Depth_D32,
         .defaultClearValue = DepthStencilClear {1.0f, 0},
     };
@@ -414,7 +408,7 @@ void mainLoop()
         }
         // std::println("cursor at x: {} y: {}", xCursorPos, yCursorPos);
 
-        device.NextFrame(swapchain);
+        auto fbSize = device.NextFrame(swapchain);
 
         device.Reset(cmdAlloc);
         auto frame = device.GetCurrentRenderTarget(swapchain);
@@ -432,8 +426,8 @@ void mainLoop()
         };
 
         RenderPassDesc renderPassDesc = {
-            .width = width,
-            .height = height,
+            .width = fbSize.width,
+            .height = fbSize.height,
             .colorAttachments = std::span(colorAttachment),
             .depthStencilAttachment = depthAttachment,
         };
@@ -583,7 +577,7 @@ void initWindow()
 {
     glfwInit();
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-    glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
+    glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
     window = glfwCreateWindow(width, height, "My Lettuce Window", NULL, NULL);
 }
 

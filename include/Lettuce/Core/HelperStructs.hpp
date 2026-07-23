@@ -94,6 +94,7 @@ namespace Lettuce::Core
         std::vector<VkSemaphore> presentSemaphores;
         uint32_t imageCount;
         uint32_t currentImageIndex;
+        bool clipped;
     };
 
     struct CommandAllocatorVK

@@ -41,8 +41,6 @@ void initLettuce()
     device.Create(deviceCI);
 
     SwapchainDesc swapchainDesc = {
-        .width = width,
-        .height = height,
         .clipped = true,
         .windowPtr = &hwnd,
         .applicationPtr = &hmodule,
@@ -81,7 +79,7 @@ void mainLoop()
 {
     while (!glfwWindowShouldClose(window))
     {
-        device.NextFrame(swapchain);
+        auto fbSize = device.NextFrame(swapchain);
 
         device.Reset(cmdAlloc);
         auto frame = device.GetCurrentRenderTarget(swapchain);
@@ -95,8 +93,8 @@ void mainLoop()
         };
 
         RenderPassDesc renderPassDesc = {
-            .width = width,
-            .height = height,
+            .width = fbSize.width,
+            .height = fbSize.height,
             .colorAttachments = std::span(colorAttachment),
             .presentAttachmentIdx = 0,
         };
@@ -135,7 +133,7 @@ void initWindow()
 {
     glfwInit();
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-    glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
+    glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
     window = glfwCreateWindow(width, height, "My Lettuce Window", NULL, NULL);
 }
 
