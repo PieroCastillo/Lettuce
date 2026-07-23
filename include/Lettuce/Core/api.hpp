@@ -96,7 +96,8 @@ namespace Lettuce::Core
     enum class IndirectType : uint8_t { Draw, DrawIndexed, DrawMesh, Dispatch }; // TraceRays, DeviceGenerated
 
     // Resources
-    struct MemoryViewInfo {
+    struct MemoryViewInfo
+    {
         uint64_t size;
         uint8_t* cpuAddress;
         uint64_t gpuAddress;
@@ -112,11 +113,13 @@ namespace Lettuce::Core
     };
 
     // Descriptions
-    struct ColorClear {
+    struct ColorClear
+    {
         std::array<float, 4> value;
     };
 
-    struct DepthStencilClear {
+    struct DepthStencilClear
+    {
         float depth;
         uint32_t stencil;
     };
@@ -127,6 +130,7 @@ namespace Lettuce::Core
     {
         uint64_t size;
         bool cpuVisible;
+        bool sparseResident;
     };
 
     struct TextureViewDesc
@@ -139,6 +143,7 @@ namespace Lettuce::Core
         uint32_t layerCount;
         bool isCubeMap;
         bool cpuVisible;
+        bool sparseResident;
     };
 
     struct RenderTargetDesc
@@ -335,6 +340,23 @@ namespace Lettuce::Core
         uint32_t maxDrawCount;
     };
 
+    struct SparseMemoryBind
+    {
+        MemoryView srcMemory;
+        uint32_t srcOffset;
+        uint32_t dstOffset;
+    };
+
+    struct SparseTextureBind
+    {
+        uint32_t dstTileCoordX;
+        uint32_t dstTileCoordY;
+        uint32_t dstTileCountX;
+        uint32_t dstTileCountY;
+        MemoryView srcMemory;
+        uint32_t srcOffset;
+    };
+
     struct DeviceImpl;
     struct CommandBufferImpl { DeviceImpl* device; uint64_t handle; std::optional<TextureView> currentPresentTarget; };
 
@@ -426,6 +448,12 @@ namespace Lettuce::Core
 
         void Submit(const CommandBufferSubmitDesc&);
         [[nodiscard]] auto SubmitAsync(const CommandBufferSubmitDesc&) -> WaitToken;
+
+        // sparse resources
+        [[nodiscard]] auto SparseBindAsync(QueueType, MemoryView, std::span<const SparseMemoryBind>) -> WaitToken;
+        [[nodiscard]] auto SparseBindAsync(QueueType, TextureView, std::span<const SparseTextureBind>) -> WaitToken;
+        [[nodiscard]] auto SparseBindAsync(QueueType queue, MemoryView view, std::initializer_list<SparseMemoryBind> binds) -> WaitToken { return SparseBindAsync(queue, view, binds); }
+        [[nodiscard]] auto SparseBindAsync(QueueType queue, TextureView view, std::initializer_list<SparseTextureBind> binds) -> WaitToken { return SparseBindAsync(queue, view, binds); }
 
         [[nodiscard]] auto GetImplementation() noexcept -> DeviceImpl* { return impl; }
     };

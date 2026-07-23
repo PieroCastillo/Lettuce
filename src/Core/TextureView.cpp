@@ -25,6 +25,8 @@ auto Device::CreateTextureView(const TextureViewDesc& desc) -> TextureView
     auto device = impl->m_device;
 
     VkImageUsageFlags usageFlags = 0;
+    VkImage image;
+    VkImageView imageView;
 
     switch (desc.format)
     {
@@ -106,12 +108,8 @@ auto Device::CreateTextureView(const TextureViewDesc& desc) -> TextureView
     // TODO: impl tryCompression
     VkImageSubresourceRange subresourceRange = {
         VK_IMAGE_ASPECT_COLOR_BIT,
-        0,desc.mipCount,0,desc.layerCount
+        0, desc.mipCount, 0, desc.layerCount
     };
-
-    VkImage image;
-    VmaAllocation alloc;
-    VmaAllocationInfo allocI;
 
     VkImageCreateInfo imageCI = {
         .sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
@@ -127,32 +125,42 @@ auto Device::CreateTextureView(const TextureViewDesc& desc) -> TextureView
         .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
         .initialLayout = VK_IMAGE_LAYOUT_PREINITIALIZED,
     };
-    VmaAllocationCreateInfo allocCI = {
-        .flags = desc.cpuVisible ? VMA_ALLOCATION_CREATE_MAPPED_BIT : (VmaAllocationCreateFlags)0,
-        .requiredFlags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT | (desc.cpuVisible ? VK_MEMORY_PROPERTY_HOST_COHERENT_BIT : (VkMemoryPropertyFlags)0),
-    };
 
-    handleResult(vmaCreateImage(impl->m_allocator, &imageCI, &allocCI, &image, &alloc, &allocI));
-
-    VkImageView imageView;
     VkImageViewCreateInfo viewCI = {
         .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
-        .image = image,
         .viewType = desc.isCubeMap ? VK_IMAGE_VIEW_TYPE_CUBE : VK_IMAGE_VIEW_TYPE_2D,
         .format = format,
         .components = {VK_COMPONENT_SWIZZLE_IDENTITY, VK_COMPONENT_SWIZZLE_IDENTITY,VK_COMPONENT_SWIZZLE_IDENTITY,VK_COMPONENT_SWIZZLE_IDENTITY},
         .subresourceRange = subresourceRange,
     };
-    handleResult(vkCreateImageView(device, &viewCI, nullptr, &imageView));
 
-    void* buffCPUAddr = nullptr;
-    if (desc.cpuVisible)
-        vmaMapMemory(impl->m_allocator, alloc, &buffCPUAddr);
+    if (!desc.sparseResident) {
+        VmaAllocation alloc;
+        VmaAllocationInfo allocI;
 
-    return impl->textures.allocate({ desc.width, desc.height, desc.mipCount, desc.layerCount,
-                                    format, image, imageView, allocI.deviceMemory,
-                                    allocI.size, allocI.offset, alloc, buffCPUAddr,
-                                    false });
+        VmaAllocationCreateInfo allocCI = {
+            .flags = desc.cpuVisible ? VMA_ALLOCATION_CREATE_MAPPED_BIT : (VmaAllocationCreateFlags)0,
+            .requiredFlags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT | (desc.cpuVisible ? VK_MEMORY_PROPERTY_HOST_COHERENT_BIT : (VkMemoryPropertyFlags)0),
+        };
+
+        handleResult(vmaCreateImage(impl->m_allocator, &imageCI, &allocCI, &image, &alloc, &allocI));
+
+        viewCI.image = image;
+        handleResult(vkCreateImageView(device, &viewCI, nullptr, &imageView));
+
+        void* buffCPUAddr = nullptr;
+        if (desc.cpuVisible)
+            vmaMapMemory(impl->m_allocator, alloc, &buffCPUAddr);
+
+        return impl->textures.allocate({ desc.width, desc.height, desc.mipCount, desc.layerCount,
+                                        format, image, imageView, allocI.deviceMemory,
+                                        allocI.size, allocI.offset, alloc, buffCPUAddr,
+                                        false });
+    }
+    else
+    {  
+        throw NotImplemented("Sparse Resources are not implemented yet.");
+    }
 }
 
 auto Device::CreateTextureView(const RenderTargetDesc& desc) -> TextureView

@@ -486,6 +486,11 @@ void DeviceImpl::setupDevice()
         .shaderFloat64 = VK_TRUE,
         .shaderInt64 = VK_TRUE,
         .shaderInt16 = VK_TRUE,
+        .shaderResourceResidency = VK_TRUE,
+        .sparseBinding = VK_TRUE,
+        .sparseResidencyBuffer = VK_TRUE,
+        .sparseResidencyImage2D = VK_TRUE,
+        .sparseResidencyAliased = VK_TRUE,
     };
 
     VkPhysicalDeviceFeatures2 deviceFeatures2 = {
