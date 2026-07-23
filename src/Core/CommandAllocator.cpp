@@ -198,30 +198,3 @@ auto Device::SubmitAsync(const CommandBufferSubmitDesc& desc) -> WaitToken
 
     return impl->waitTokens.allocate({signalValue - 1, desc.queueType});
 }
-
-void Device::WaitFor(WaitToken token)
-{
-    auto& tokenInfo = impl->waitTokens.get(token);
-
-    VkSemaphore semaphore;
-
-    switch (tokenInfo.queue)
-    {
-    case QueueType::Graphics:
-        semaphore = impl->graphicsSemaphore; break;
-    case QueueType::Compute:
-        semaphore = impl->computeSemaphore; break;
-    case QueueType::Copy:
-        semaphore = impl->transferSemaphore; break;
-    }
-
-    VkSemaphoreWaitInfo waitInfo = {
-        .sType =  VK_STRUCTURE_TYPE_SEMAPHORE_WAIT_INFO,
-        .semaphoreCount = 1,
-        .pSemaphores = &semaphore,
-        .pValues = &tokenInfo.value,
-    };
-
-    handleResult(vkWaitSemaphores(impl->m_device, &waitInfo, (std::numeric_limits<uint64_t>::max)()));
-    impl->waitTokens.release(token);
-}

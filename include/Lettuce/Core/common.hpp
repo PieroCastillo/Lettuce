@@ -145,7 +145,6 @@ namespace Lettuce::Core
         NotReady,
         NotFound,
         Unknown,
-        NotImplemented,
     };
 
     uint32_t findMemoryTypeIndex(VkDevice device, VkPhysicalDevice gpu, uint32_t typeFilter, MemoryAccess access);
@@ -156,6 +155,11 @@ namespace Lettuce::Core
         size_t size = first.size();
         return ((rest.size() == size) && ...);
     }
+
+    class NotImplemented : public std::logic_error  {
+    public:
+        explicit NotImplemented(std::string msg) : std::logic_error(msg) {}
+    };
 
     class LettuceException : public std::runtime_error {
     public:
@@ -189,7 +193,6 @@ namespace Lettuce::Core
             case LettuceResult::NotReady: return "Not Ready";
             case LettuceResult::NotFound: return "Not Found";
             case LettuceResult::Unknown: return "Unknown Error";
-            case LettuceResult::NotImplemented: return "Not Implemented";
             }
         }
 

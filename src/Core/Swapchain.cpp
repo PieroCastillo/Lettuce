@@ -255,7 +255,7 @@ auto Device::GetRenderTargetFormat(Swapchain swapchain) -> Format
 
 void Device::ResizeSwapchain(Swapchain swapchain, uint32_t w, uint32_t h)
 {
-    throw LettuceException(LettuceResult::NotImplemented);
+    throw NotImplemented("Swapchain Resizing is not implemented yet.");
 }
 
 auto Device::GetCurrentRenderTarget(Swapchain swapchain) const -> TextureView
