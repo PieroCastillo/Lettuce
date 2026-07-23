@@ -168,6 +168,8 @@ void initLettuce()
     mviPickInstanceData = device.GetMemoryViewInfo(mvPickInstanceData);
 
     TextureViewDesc pickDesc = {
+        .width = width,
+        .height = height,
         .depth = 1,
         .format = Format::Raw_R32_UInt,
         .mipCount = 1,
@@ -191,6 +193,8 @@ void initLettuce()
     mviDebugBuffer = device.GetMemoryViewInfo(mvDebugBuffer);
 
     RenderTargetDesc depthDesc = {
+        .width = width,
+        .height = height,
         .type = RenderTargetType::Depth_D32,
         .defaultClearValue = DepthStencilClear {1.0f, 0},
     };
