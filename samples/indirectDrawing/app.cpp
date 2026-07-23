@@ -26,8 +26,8 @@ struct ParticleOut
     float pos[2];
 };
 
-constexpr uint32_t width = 1366;
-constexpr uint32_t height = 768;
+uint32_t width = 1366;
+uint32_t height = 768;
 
 Device device;
 Swapchain swapchain;
@@ -108,7 +108,15 @@ void createRenderingObjects()
 void mainLoop()
 {
     while (!glfwWindowShouldClose(window))
-    {
+    { 
+        glfwGetFramebufferSize(window, (int*)&width, (int*)&height);
+
+        if (width == 0 || height == 0)
+        {
+            glfwWaitEvents();
+            continue;
+        }
+
         auto fbSize = device.NextFrame(swapchain);
 
         device.Reset(cmdAlloc);
