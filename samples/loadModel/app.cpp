@@ -391,6 +391,8 @@ void loadInstances()
     memcpy(sizeof(uint32_t) + (uint8_t*)(mviInstances.cpuAddress), instances.data(), sizeof(Instance) * instances.size());
 }
 
+uint32_t oldFbWidth = width;
+uint32_t oldFbHeight = height;
 void mainLoop()
 {
     timer.Start();
@@ -410,7 +412,7 @@ void mainLoop()
             xCursorPos = width / 2;
             yCursorPos = height / 2;
         }
-        
+
         glfwGetFramebufferSize(window, (int*)&width, (int*)&height);
 
         if (width == 0 || height == 0)
@@ -420,6 +422,35 @@ void mainLoop()
         }
 
         auto fbSize = device.NextFrame(swapchain);
+
+        if (fbSize.width != oldFbWidth || fbSize.height != oldFbHeight) [[unlikely]]
+        {
+            device.WaitFor(QueueType::Graphics);
+            device.Destroy(tDepthTarget);
+            device.Destroy(tPickTexture);
+
+            TextureViewDesc pickDesc = {
+                .width = width,
+                .height = height,
+                .depth = 1,
+                .format = Format::Raw_R32_UInt,
+                .mipCount = 1,
+                .layerCount = 1,
+                .cpuVisible = false,
+            };
+            tPickTexture = device.CreateTextureView(pickDesc);
+
+            RenderTargetDesc depthDesc = {
+                .width = width,
+                .height = height,
+                .type = RenderTargetType::Depth_D32,
+                .defaultClearValue = DepthStencilClear {1.0f, 0},
+            };
+            tDepthTarget = device.CreateTextureView(depthDesc);
+
+            oldFbWidth = fbSize.width;
+            oldFbHeight = fbSize.height;
+        }
 
         device.Reset(cmdAlloc);
         auto frame = device.GetCurrentRenderTarget(swapchain);

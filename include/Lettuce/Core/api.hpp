@@ -11,6 +11,7 @@ Created by @PieroCastillo on 2025-12-26
 #include <span>
 #include <string_view>
 #include <variant>
+#include "basicTypes.hpp"
 #include "formats.hpp"
 
 // external libs
@@ -19,35 +20,6 @@ Created by @PieroCastillo on 2025-12-26
 
 namespace Lettuce::Core
 {
-    // types
-    using float2 = glm::vec2;
-    using float3 = glm::vec3;
-    using float4 = glm::vec4;
-    using float3x3 = glm::mat3;
-    using float4x4 = glm::mat4;
-    using DeviceAddress = uint64_t;
-    using HostAddress = uint8_t*;
-
-    template<typename Tag>
-    struct Handle {
-        uint32_t index = 0;
-        uint32_t generation = 0;
-
-        static constexpr Handle<Tag> Null() noexcept {
-            return {};
-        }
-
-        constexpr bool valid() const noexcept {
-            return generation != 0;
-        }
-
-        auto operator<=>(const Handle&) const = default;
-
-        constexpr std::array<uint32_t, 2> get() const noexcept {
-            return { index, generation };
-        }
-    };
-
     struct MemoryViewTag {};
     struct TextureViewTag {};
     struct SamplerTag {};

@@ -10,6 +10,7 @@ Created by @PieroCastillo on 2026-06-29
 #include <string>
 
 #include "../Core/api.hpp"
+#include "colors.hpp"
 
 using namespace Lettuce::Core;
 
