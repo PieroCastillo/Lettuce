@@ -28,10 +28,30 @@ namespace Lettuce::Quimera
     using Layout = Handle<LayoutTag>;
     using Animation = Handle<AnimationTag>;
 
-    struct Color { float r, g, b, a; };
     struct Size { float w, h; };
     struct Rect { float x, y, w, h; };
     struct Extend { uint32_t x, y, w, h; };
+
+    enum class SolidColorBrushProperties
+    {
+        Color,
+    };
+
+    enum class ImplicitGeometryProperties
+    {
+        Width, Height,
+        LeftTop, LeftBottom,
+        RightTop, RightBottom,
+    };
+
+    enum class LayoutProperties
+    {
+        Position,
+        Scale,
+        Skew,
+        AnchorPoint,
+        Rotation,
+    };
 
     struct SolidColorBrushDesc
     {
@@ -56,6 +76,13 @@ namespace Lettuce::Quimera
         float rotation;
     };
 
+    struct NaturalMotionAnimationDesc
+    {
+        float mass;
+        float stiffness;
+        float dumping;
+    };
+
     struct DrawSurfaceDesc
     {
         TextureView dstTexture;
@@ -66,6 +93,7 @@ namespace Lettuce::Quimera
     {
         Device& device;
 
+        uint32_t maxAnimations;
         uint32_t maxImplicitGeometries;
         uint32_t maxBrushes;
         uint32_t maxDrawCommands;
@@ -94,6 +122,7 @@ namespace Lettuce::Quimera
         void Destroy() noexcept;
         [[nodiscard]] bool IsValid() const noexcept { return impl != nullptr; }
 
+        auto CreateAnimation(const NaturalMotionAnimationDesc&) -> Animation;
         auto CreateGeometry(const ImplicitGeometryDesc&) -> Geometry;
         auto CreateBrush(const SolidColorBrushDesc&) -> Brush;
         auto CreateLayout(const LayoutDesc&) -> Layout;
@@ -106,6 +135,10 @@ namespace Lettuce::Quimera
         Surface* surfPtr;
     public:
         explicit SurfaceCommandBuffer(Surface& surface, CommandBuffer& commandBuffer) : surfPtr(&surface), cmd(&commandBuffer) {}
+
+        void SetChange(Layout obj, LayoutProperties prop, float4 target, std::optional<Animation> animation);
+        void SetChange(Geometry obj, ImplicitGeometryProperties prop, float4 target, std::optional<Animation> animation);
+        void SetChange(Brush obj, SolidColorBrushProperties prop, float4 target, std::optional<Animation> animation);
 
         void Draw(uint32_t zOrder, Geometry geometry, Brush brush, Layout layout);
         void DrawSurface(const DrawSurfaceDesc&);

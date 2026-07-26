@@ -18,6 +18,7 @@ using namespace Lettuce::Core;
 void SurfaceImpl::Create(const SurfaceDesc& desc)
 {
     pDevice = &desc.device;
+    m_startTime = std::chrono::steady_clock::now();
 
     std::vector<uint32_t> shadersBuffer;
     auto path = std::string("./src/Quimera/comp.surface.spv");

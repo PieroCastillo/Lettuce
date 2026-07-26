@@ -8,7 +8,7 @@ Created by @PieroCastillo on 2026-07-23
 
 using namespace Lettuce::Core;
 
-namespace Lettuce::Quimera
+namespace Lettuce::Quimera::Colors
 {
     constexpr auto Transparent = float4(0.0f, 0.0f, 0.0f, 0.0f);
 

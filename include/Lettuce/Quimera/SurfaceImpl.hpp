@@ -82,6 +82,27 @@ namespace Lettuce::Quimera
         uint32_t reserved3;
     };
 
+    struct AnimationData
+    {
+        bool isNaturalMotion;
+
+        // natural motion
+        float mass;
+        float stiffness;
+        float dumping;
+    };
+
+    struct AnimationInstance
+    {
+        Animation srcAnim;
+        HostAddress heapAddr;
+        uint32_t floatCount;
+        float4 srcValue;
+        float4 dstValue;
+        float4 velocity;
+        std::chrono::steady_clock::time_point lastUpdate;
+    };
+
     inline uint32_t DrawCommandPackFlags(uint32_t geometryHeap, uint32_t brushHeap, uint32_t effectHeap, bool ignoreTransform, bool clipped)
     {
         return (geometryHeap & 0xF) |
@@ -137,6 +158,7 @@ namespace Lettuce::Quimera
     struct SurfaceImpl
     {
         Device* pDevice = nullptr;
+        std::chrono::steady_clock::time_point m_startTime;
 
         DescriptorTable dtSurface;
         Pipeline pDrawCommands;
@@ -144,6 +166,7 @@ namespace Lettuce::Quimera
         ResourcePool<Geometry, GeometryAccessData> geometries;
         ResourcePool<Brush, BrushAccessData> brushes;
         ResourcePool<Layout, LayoutAccessData> layouts;
+        ResourcePool<Animation, AnimationData> animations;
 
         MemoryView mvSurfaceData;
         SurfaceData* mvSurfaceDataPtr;
@@ -155,6 +178,7 @@ namespace Lettuce::Quimera
         Buffer<ImplicitGeometryStorage> bImplicitGeometry;
         Buffer<SolidColorBrushStorage> bSolidColorBrush;
 
+        std::vector<AnimationInstance> vAnimationInstances;
         std::vector<DrawCommand> vDrawCommands;
 
         TextureView twLastRenderTarget;

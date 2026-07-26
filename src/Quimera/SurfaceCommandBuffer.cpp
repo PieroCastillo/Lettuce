@@ -7,14 +7,32 @@
 #include <span>
 #include <vector>
 
+// experimental headers
+
 // project headers
 #include "Lettuce/helper.hpp"
+#include "Lettuce/Core/common.hpp"
 #include "Lettuce/Core/api.hpp"
 #include "Lettuce/Quimera/SurfaceImpl.hpp"
 #include "Lettuce/Quimera/api.hpp"
 
 using namespace Lettuce::Quimera;
 using namespace Lettuce::Core;
+
+void SurfaceCommandBuffer::SetChange(Layout obj, LayoutProperties prop, float4 target, std::optional<Animation> animation)
+{
+    throw NotImplemented("SetChange is not implemented yet.");
+}
+
+void SurfaceCommandBuffer::SetChange(Geometry obj, ImplicitGeometryProperties prop, float4 target, std::optional<Animation> animation)
+{
+    throw NotImplemented("SetChange is not implemented yet.");
+}
+
+void SurfaceCommandBuffer::SetChange(Brush obj, SolidColorBrushProperties prop, float4 target, std::optional<Animation> animation)
+{
+    throw NotImplemented("SetChange is not implemented yet.");
+}
 
 void SurfaceCommandBuffer::Draw(uint32_t zOrder, Geometry geometry, Brush brush, Layout layout)
 {
@@ -31,7 +49,59 @@ void SurfaceCommandBuffer::Draw(uint32_t zOrder, Geometry geometry, Brush brush,
 
 void SurfaceCommandBuffer::DrawSurface(const DrawSurfaceDesc& desc)
 {
+    constexpr auto epsilon = 1e-6f;
+
     auto surfImpl = surfPtr->impl;
+    auto currentTime = std::chrono::steady_clock::now();
+
+    // apply animations
+    for (int i = 0; i < surfImpl->vAnimationInstances.size();)
+    {
+        auto& animInst = surfImpl->vAnimationInstances[i];
+        const auto& anim = surfImpl->animations.get(animInst.srcAnim);
+        auto dt = std::chrono::duration<float>(currentTime - animInst.lastUpdate).count();
+        auto target = animInst.dstValue;
+
+        if (anim.isNaturalMotion)
+        {
+            auto m = anim.mass;
+            auto k = anim.stiffness;
+            auto c = anim.dumping;
+            auto energy = 0.0f;
+
+            // integration :  implicit Euler - A stable
+            // this assumes that buffers are fixed-capacity
+            // for each component: ...
+            for (auto j = 0; j < animInst.floatCount; ++j)
+            {
+                auto x = ((float*)animInst.heapAddr)[j];
+                auto v = animInst.velocity[j];
+
+                auto d = x - target[j];
+                auto inv = 1.0f / (m + (c * dt) + (k * dt * dt));
+                v = inv * ((m * v) - (k * dt * d));
+                x += v * dt;
+
+                ((float*)animInst.heapAddr)[j] = x;
+                animInst.velocity[j] = v;
+
+                energy += 0.5f * ((m * v * v) + (k * d * d));
+            }
+
+            // animation is finished if energy is so low
+            // order does not matter, so we can do this
+            if (energy <= epsilon)
+            {
+                std::swap(animInst, surfImpl->vAnimationInstances.back());
+                surfImpl->vAnimationInstances.pop_back();
+                continue;
+            }
+
+            animInst.lastUpdate = currentTime;
+        }
+
+        ++i;
+    }
 
     // sort commands by depth
     auto& drawCmds = surfImpl->vDrawCommands;

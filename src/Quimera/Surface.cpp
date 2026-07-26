@@ -6,6 +6,7 @@
 
 // project headers
 #include "Lettuce/helper.hpp"
+#include "Lettuce/Core/common.hpp"
 #include "Lettuce/Core/api.hpp"
 #include "Lettuce/Quimera/SurfaceImpl.hpp"
 #include "Lettuce/Quimera/api.hpp"
@@ -59,12 +60,17 @@ void Surface::Create(const SurfaceDesc& desc)
 
 void Surface::Destroy() noexcept
 {
-    if(!impl)
+    if (!impl)
         return;
 
     impl->Destroy();
     delete impl;
     impl = nullptr;
+}
+
+auto Surface::CreateAnimation(const NaturalMotionAnimationDesc&) -> Animation
+{
+    throw NotImplemented("CreateAnimation is not implemented yet.");
 }
 
 auto Surface::CreateGeometry(const ImplicitGeometryDesc& desc) -> Geometry

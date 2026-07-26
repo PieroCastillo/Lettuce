@@ -53,9 +53,6 @@ void create2dResources()
     LayoutDesc layoutDesc = {
         .position = float2(500, 420),
         .scale = float2(1),
-        .skew = float2(0),
-        .anchorPoint = float2(0),
-        .rotation = 0,
     };
     squareLayout = surface->CreateLayout(layoutDesc);
     layoutDesc.position = { 760, 310 };
@@ -65,10 +62,6 @@ void create2dResources()
 
     ImplicitGeometryDesc squareData = {
         .size = { 360, 360 },
-        .leftTopCornerRadious = 0,
-        .leftBottomCornerRadious = 0,
-        .rightTopCornerRadious = 0,
-        .rightBottomCornerRadious = 0,
     };
     square = surface->CreateGeometry(squareData);
 
@@ -84,20 +77,9 @@ void create2dResources()
     };
     roundRect = surface->CreateGeometry(yellowRoundRectData);
 
-    SolidColorBrushDesc redData = {
-        .color = { 1, 0, 0, 1 },
-    };
-    redBrush = surface->CreateBrush(redData);
-
-    SolidColorBrushDesc blueData = {
-        .color = { 0, 0, 1, 1 },
-    };
-    blueBrush = surface->CreateBrush(blueData);
-
-    SolidColorBrushDesc yellowData = {
-        .color = { 1, 1, 0, 1 },
-    };
-    yellowBrush = surface->CreateBrush(yellowData);
+    redBrush = surface->CreateBrush({ .color = Colors::Red });
+    blueBrush = surface->CreateBrush({ .color = Colors::Blue });
+    yellowBrush = surface->CreateBrush({ .color = Colors::Yellow });
 }
 
 void cleanup2dResources()
