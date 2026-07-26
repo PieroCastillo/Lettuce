@@ -1,4 +1,4 @@
-set_languages("c++26")
+set_languages("c++latest")
 
 includes("rules/*.lua")
 add_rules("mode.debug", "mode.release")
@@ -72,6 +72,7 @@ local samples = {
     "loadModel",
     "movingSquares",
     "sceneTreeDemo",
+    "simpleUIOverlay",
     "textureLoad",
     "uniform",
 }
