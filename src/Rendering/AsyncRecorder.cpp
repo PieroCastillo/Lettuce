@@ -6,8 +6,8 @@
 
 // project headers
 #include "Lettuce/helper.hpp"
-#include "Lettuce/Rendering/api.hpp"
 #include "Lettuce/Core/api.hpp"
+#include "Lettuce/Rendering/api.hpp"
 
 using namespace Lettuce::Rendering;
 using namespace Lettuce::Core;

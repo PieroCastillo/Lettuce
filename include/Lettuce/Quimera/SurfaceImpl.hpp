@@ -7,10 +7,10 @@ Created by @PieroCastillo on 2026-05-29
 // project headers
 #include "../Core/api.hpp"
 #include "../Core/ResourcePool.hpp"
+#include "../Foundations/api.hpp"
 #include "../Quimera/api.hpp"
-#include "../Utils/api.hpp"
 
-using namespace Lettuce::Utils;
+using namespace Lettuce::Foundations;
 
 namespace Lettuce::Quimera
 {
