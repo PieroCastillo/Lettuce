@@ -31,7 +31,7 @@ namespace Lettuce::Rendering
         GpuUploadVector<float2> texCoord0Table;
 
         // data over vertices
-        GpuUploadVector<uint32_t> indexTable;
+        GpuUploadVector<uint8_t> indexTable;
         GpuUploadVector<ClusterStorage> clusterTable;
         GpuUploadVector<MeshStorage> meshTable;
         GpuMappedVector<InstanceStorage> instanceTable;

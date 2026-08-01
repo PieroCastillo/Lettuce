@@ -336,6 +336,8 @@ void loadModel()
     memcpy(mviPrimitives.cpuAddress, primitives.data(), sizeof(PrimitiveInfo) * primitives.size());
     memcpy(mviVertexB.cpuAddress, vertexVec.data(), sizeof(Vertex) * vertexVec.size());
     memcpy(mviIndexB.cpuAddress, indexVec.data(), sizeof(uint32_t) * indexVec.size());
+
+    auto source = Lettuce::Utils::AssetLoader::LoadGtlfAsGeometry(&device, modelPath.string());
 }
 
 uint32_t instanceCount = 0;
@@ -472,6 +474,7 @@ void mainLoop()
             .height = fbSize.height,
             .colorAttachments = std::span(colorAttachment),
             .depthStencilAttachment = depthAttachment,
+            .presentAttachmentIdx = 0,
         };
 
         auto allocs = std::array{

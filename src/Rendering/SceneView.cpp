@@ -23,7 +23,7 @@ void SceneView::Create(const SceneViewDesc& desc)
     std::vector<float3> normals;
     std::vector<float4> tangents;
     std::vector<float2> texCoords0;
-    std::vector<uint32_t> indices;
+    std::vector<uint8_t> indices;
     std::vector<ClusterStorage> clusters;
     std::vector<MeshStorage>  meshes;
     std::vector<InstanceStorage> instances;
@@ -80,7 +80,7 @@ void SceneView::Create(const SceneViewDesc& desc)
     normalTable = GpuUploadVector<float3>(desc.device, normals.size());
     tangentTable = GpuUploadVector<float4>(desc.device, tangents.size());
     texCoord0Table = GpuUploadVector<float2>(desc.device, texCoords0.size());
-    indexTable = GpuUploadVector<uint32_t>(desc.device, indices.size());
+    indexTable = GpuUploadVector<uint8_t>(desc.device, indices.size());
     clusterTable = GpuUploadVector<ClusterStorage>(desc.device, clusters.size());
     meshTable = GpuUploadVector<MeshStorage>(desc.device, meshes.size());
     instanceTable = GpuMappedVector<InstanceStorage>(desc.device, instances.size());

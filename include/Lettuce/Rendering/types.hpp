@@ -65,7 +65,7 @@ namespace Lettuce::Rendering
         std::vector<float3> normals;
         std::vector<float4> tangents;
         std::vector<float2> texCoords0;
-        std::vector<uint32_t> indices;
+        std::vector<uint8_t> indices;
         std::vector<ClusterStorage> clusters;
         std::vector<MeshStorage>  meshes;
         std::vector<InstanceStorage> instances;

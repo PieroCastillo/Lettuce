@@ -46,6 +46,7 @@ namespace Lettuce::Utils
         static auto LoadSpirv(Device* pDevice, std::string_view path) -> ShaderBinary;
         static auto LoadKtx2Texture(Device* pDevice, CommandAllocator commandAllocator, std::string_view path, uint32_t levels = 1, bool highQuality = false) -> TextureView;
         static auto LoadGltfModel(Device* pDevice, std::string_view path) -> ModelGeometry;
+        static auto LoadGtlfAsGeometry(Device* pDevice, std::string_view path) -> GeometrySource;
     };
 };
 #endif // LETTUCE_UTILS_ASSET_LOADER_HPP
