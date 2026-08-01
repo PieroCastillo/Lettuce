@@ -13,8 +13,10 @@ Created by @PieroCastillo on 2025-01-5
 
 // project headers
 #include "../Core/api.hpp"
+#include "../Foundations/api.hpp"
 
 #include "./asyncRecorder.hpp"
 #include "./SceneTree.hpp"
+#include "./SceneView.hpp"
 
 #endif // LETTUCE_RENDERING_API_HPP
