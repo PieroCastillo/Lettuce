@@ -32,6 +32,9 @@ namespace Lettuce::Foundations
 
         GpuMappedVector() noexcept = default;
 
+        /// @brief Constructor
+        /// @param device Referred Device
+        /// @param capacity Capacity, must be greater than 0
         explicit GpuMappedVector(Device& device, uint32_t capacity)
             : m_device(&device), m_capacity(capacity)
         {
@@ -41,8 +44,10 @@ namespace Lettuce::Foundations
             m_info = device.GetMemoryViewInfo(m_memView);
         }
 
+        /// @brief Copy Constructor. Deleted.
         GpuMappedVector(const GpuMappedVector&) = delete;
 
+        /// @brief Move Constructor.
         GpuMappedVector(GpuMappedVector&& other) noexcept :
             m_device(other.m_device),
             m_memView(std::exchange(other.m_memView, {})),
@@ -52,9 +57,27 @@ namespace Lettuce::Foundations
         {
         }
 
+        /// @brief Copy assignment operator. Deleted.
         auto operator=(const GpuMappedVector&) -> GpuMappedVector & = delete;
-        auto operator=(GpuMappedVector&&) -> GpuMappedVector & = delete;
 
+        /// @brief Move assignment operator
+        auto operator=(GpuMappedVector&& other) noexcept -> GpuMappedVector&
+        {
+            DebugAssert(m_memView.generation == 0, "GpuMappedVector cannot be reassigned");
+
+            if (this == &other)
+                return *this;
+
+            m_device = std::exchange(other.m_device, nullptr);
+            m_memView = std::exchange(other.m_memView, {});
+            m_info = std::exchange(other.m_info, {});
+            m_capacity = std::exchange(other.m_capacity, 0);
+            m_size = std::exchange(other.m_size, 0);
+
+            return *this;
+        }
+
+        /// @brief Destructor.
         ~GpuMappedVector()
         {
             if (m_memView.generation == 0)
@@ -101,7 +124,7 @@ namespace Lettuce::Foundations
 
         auto append(std::span<const T> values) -> std::pair<uint32_t, uint32_t>
         {
-            pre(m_size + values.size() <= m_capacity);
+            DebugAssert(m_size + values.size() <= m_capacity, "total size MUST be less or equal than capacity.");
 
             const uint32_t firstIndex = m_size;
             const uint32_t count = static_cast<uint32_t>(values.size());

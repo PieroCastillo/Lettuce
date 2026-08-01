@@ -50,6 +50,9 @@ namespace Lettuce::Foundations
 
         GpuUploadVector() noexcept = default;
 
+        /// @brief Constructor
+        /// @param device Referred Device
+        /// @param capacity Capacity, must be greater than 0
         explicit GpuUploadVector(Device& device, uint32_t capacity)
             : m_device(&device), m_capacity(capacity), m_size(0)
         {
@@ -62,8 +65,10 @@ namespace Lettuce::Foundations
             m_tempInfo = device.GetMemoryViewInfo(m_tempView);
         }
 
+        /// @brief Copy Constructor. Deleted.
         GpuUploadVector(const GpuUploadVector&) = delete;
 
+        /// @brief Move Constructor.
         GpuUploadVector(GpuUploadVector&& other) noexcept :
             m_device(std::exchange(other.m_device, nullptr)),
             m_memView(std::exchange(other.m_memView, {})),
@@ -78,9 +83,34 @@ namespace Lettuce::Foundations
             other.m_state.store(UploadState::Writable, std::memory_order_release);
         }
 
+        /// @brief Copy assignment operator. Deleted.
         auto operator=(const GpuUploadVector&) -> GpuUploadVector & = delete;
-        auto operator=(GpuUploadVector&&) -> GpuUploadVector & = delete;
 
+        /// @brief Move assignment operator
+        auto operator=(GpuUploadVector&& other) noexcept -> GpuUploadVector&
+        {
+            DebugAssert(m_memView.generation == 0 && m_tempView.generation == 0, "GpuUploadVector cannot be reassigned");
+
+            if (this == &other)
+                return *this;
+
+            DebugAssert(other.m_state.load(std::memory_order_acquire) != UploadState::Submitted, "Cannot move GpuUploadVector while upload is submitted.");
+
+            m_device = std::exchange(other.m_device, nullptr);
+            m_memView = std::exchange(other.m_memView, {});
+            m_info = std::exchange(other.m_info, {});
+            m_tempView = std::exchange(other.m_tempView, {});
+            m_tempInfo = std::exchange(other.m_tempInfo, {});
+            m_size = std::exchange(other.m_size, 0);
+            m_capacity = std::exchange(other.m_capacity, 0);
+
+            m_state.store(other.m_state.load(std::memory_order_acquire), std::memory_order_release);
+            other.m_state.store(UploadState::Writable, std::memory_order_release);
+
+            return *this;
+        }
+
+        /// @brief Destructor.
         ~GpuUploadVector()
         {
             if (m_device && m_memView.generation > 0)

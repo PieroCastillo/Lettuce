@@ -27,7 +27,7 @@ namespace Lettuce::Foundations
         GpuStorageVector() noexcept = default;
 
         /// @brief Constructor
-        /// @param device Refrenced Device
+        /// @param device Referred Device
         /// @param capacity Capacity, must be greater than 0
         explicit GpuStorageVector(Device& device, uint32_t capacity)
             : m_device(&device), m_capacity(capacity)
@@ -51,7 +51,7 @@ namespace Lettuce::Foundations
         }
 
         /// @brief Copy assignment operator. Deleted.
-        auto operator=(const GpuStorageVector&) -> GpuStorageVector & = delete;
+        auto operator=(const GpuStorageVector&) -> GpuStorageVector& = delete;
 
         /// @brief Move assignment operator
         auto operator=(GpuStorageVector&& other) -> GpuStorageVector&
