@@ -15,7 +15,7 @@ namespace Lettuce::Rendering
     struct SceneViewDesc
     {
         Device& device;
-        std::vector<GeometrySource> sources;
+        std::span<GeometrySource> sources;
     };
 
     class SceneView

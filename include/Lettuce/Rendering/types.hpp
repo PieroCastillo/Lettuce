@@ -61,14 +61,14 @@ namespace Lettuce::Rendering
     struct GeometrySource
     {
         SceneViewData scene;
-        std::span<float3> positions;
-        std::span<float3> normals;
-        std::span<float4> tangents;
-        std::span<float2> texCoords0;
-        std::span<uint32_t> indices;
-        std::span<ClusterStorage> clusters;
-        std::span<MeshStorage>  meshes;
-        std::span<InstanceStorage> instances;
+        std::vector<float3> positions;
+        std::vector<float3> normals;
+        std::vector<float4> tangents;
+        std::vector<float2> texCoords0;
+        std::vector<uint32_t> indices;
+        std::vector<ClusterStorage> clusters;
+        std::vector<MeshStorage>  meshes;
+        std::vector<InstanceStorage> instances;
     };
 };
 #endif // LETTUCE_RENDERING_TYPES_HPP
