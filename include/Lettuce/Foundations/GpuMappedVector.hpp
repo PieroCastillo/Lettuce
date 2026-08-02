@@ -36,7 +36,7 @@ namespace Lettuce::Foundations
         /// @param device Referred Device
         /// @param capacity Capacity, must be greater than 0
         explicit GpuMappedVector(Device& device, uint32_t capacity)
-            : m_device(&device), m_capacity(capacity)
+            : m_device(&device), m_capacity(capacity), m_size(0)
         {
             DebugAssert(capacity > 0, "Capacity MUST be greater than 0");
 

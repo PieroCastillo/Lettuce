@@ -74,7 +74,7 @@ auto Device::AllocateCommandBuffer(CommandAllocator cmdAlloc) -> CommandBuffer
 
 void Device::Submit(const CommandBufferSubmitDesc& desc)
 {
-    auto token = SubmitAsync(desc);
+    WaitFor(SubmitAsync(desc));
 }
 
 auto Device::SubmitAsync(const CommandBufferSubmitDesc& desc) -> WaitToken

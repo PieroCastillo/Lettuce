@@ -16,12 +16,13 @@ namespace Lettuce::Rendering
     {
         Device& device;
         std::span<GeometrySource> sources;
+        uint32_t maxInstanceCount;
     };
 
     class SceneView
     {
     private:
-        Device* m_device;
+        Device* m_device = nullptr;
         CommandAllocator m_cmdAlloc;
 
         // vertex streams
@@ -36,6 +37,17 @@ namespace Lettuce::Rendering
         GpuUploadVector<MeshStorage> meshTable;
         GpuMappedVector<InstanceStorage> instanceTable;
     public:
+        SceneView() noexcept = default;
+        explicit SceneView(const SceneViewDesc& desc);
+
+        ~SceneView();
+
+        SceneView(const SceneView&) = delete;
+        SceneView& operator=(const SceneView&) = delete;
+
+        SceneView(SceneView&&) noexcept;
+        SceneView& operator=(SceneView&&) noexcept;
+
         void Create(const SceneViewDesc&);
         void Destroy();
 

@@ -70,12 +70,14 @@ GLFWwindow* window;
 uint32_t width = 1366;
 uint32_t height = 768;
 
-Device device;
+std::unique_ptr<Device> device;
 Swapchain swapchain;
 DescriptorTable descriptorTable;
 Pipeline cullPipeline;
 Pipeline rgbPipeline;
 CommandAllocator cmdAlloc;
+
+std::unique_ptr<SceneView> scene;
 
 MemoryView mvSceneData;
 MemoryView mvIndexB, mvVertexB, mvInstances, mvMeshes, mvPrimitives, mvInstancedPrimitives;
@@ -147,25 +149,25 @@ void initLettuce()
     DeviceDesc deviceCI = {
         .preferDedicated = true,
     };
-    device.Create(deviceCI);
+    device = std::make_unique<Device>(deviceCI);
 
     SwapchainDesc swapchainDesc = {
         .clipped = true,
         .windowPtr = &hwnd,
         .applicationPtr = &hmodule,
     };
-    swapchain = device.CreateSwapchain(swapchainDesc);
+    swapchain = device->CreateSwapchain(swapchainDesc);
 
     CommandAllocatorDesc cmdAllocDesc = {
         .queueType = QueueType::Graphics,
     };
-    cmdAlloc = device.CreateCommandAllocator(cmdAllocDesc);
+    cmdAlloc = device->CreateCommandAllocator(cmdAllocDesc);
 
-    mvSceneData = device.CreateMemoryView({ sizeof(SceneData), true });
-    mviSceneData = device.GetMemoryViewInfo(mvSceneData);
+    mvSceneData = device->CreateMemoryView({ sizeof(SceneData), true });
+    mviSceneData = device->GetMemoryViewInfo(mvSceneData);
 
-    mvPickInstanceData = device.CreateMemoryView({ sizeof(uint32_t), true });
-    mviPickInstanceData = device.GetMemoryViewInfo(mvPickInstanceData);
+    mvPickInstanceData = device->CreateMemoryView({ sizeof(uint32_t), true });
+    mviPickInstanceData = device->GetMemoryViewInfo(mvPickInstanceData);
 
     TextureViewDesc pickDesc = {
         .width = width,
@@ -176,7 +178,7 @@ void initLettuce()
         .layerCount = 1,
         .cpuVisible = false,
     };
-    tPickTexture = device.CreateTextureView(pickDesc);
+    tPickTexture = device->CreateTextureView(pickDesc);
 
     IndirectSetDesc isDesc =
     {
@@ -184,13 +186,13 @@ void initLettuce()
         .maxCount = 1024,
         .userDataSize = 0,
     };
-    isIndirect = device.CreateIndirectSet(isDesc);
-    mvIndirectB = device.GetIndirectSetView(isIndirect);
-    mviIndirectB = device.GetMemoryViewInfo(mvIndirectB);
+    isIndirect = device->CreateIndirectSet(isDesc);
+    mvIndirectB = device->GetIndirectSetView(isIndirect);
+    mviIndirectB = device->GetMemoryViewInfo(mvIndirectB);
 
     // DEBUG BUFFER, CPU READEABLE
-    mvDebugBuffer = device.CreateMemoryView({ debugBufferCount * debugBufferItemSize, true });
-    mviDebugBuffer = device.GetMemoryViewInfo(mvDebugBuffer);
+    mvDebugBuffer = device->CreateMemoryView({ debugBufferCount * debugBufferItemSize, true });
+    mviDebugBuffer = device->GetMemoryViewInfo(mvDebugBuffer);
 
     RenderTargetDesc depthDesc = {
         .width = width,
@@ -198,15 +200,15 @@ void initLettuce()
         .type = RenderTargetType::Depth_D32,
         .defaultClearValue = DepthStencilClear {1.0f, 0},
     };
-    tDepthTarget = device.CreateTextureView(depthDesc);
+    tDepthTarget = device->CreateTextureView(depthDesc);
 }
 
 void createRenderingObjects()
 {
-    auto shaders = Lettuce::Utils::AssetLoader::LoadSpirv(&device, "samples/loadModel/loadModel.spv");
+    auto shaders = Lettuce::Utils::AssetLoader::LoadSpirv(device.get(), "samples/loadModel/loadModel.spv");
 
     DescriptorTableDesc descriptorTableDesc = { 4,4,4 };
-    descriptorTable = device.CreateDescriptorTable(descriptorTableDesc);
+    descriptorTable = device->CreateDescriptorTable(descriptorTableDesc);
 
     std::array<std::pair<uint32_t, TextureView>, 1> texDescs;
     texDescs[0] = { 0, tPickTexture };
@@ -215,9 +217,9 @@ void createRenderingObjects()
         .storageTextures = std::span(texDescs),
         .descriptorTable = descriptorTable,
     };
-    device.PushResourceDescriptors(pushDtDesc);
+    device->PushResourceDescriptors(pushDtDesc);
 
-    std::array<Format, 1> formatArr = { device.GetRenderTargetFormat(swapchain) };
+    std::array<Format, 1> formatArr = { device->GetRenderTargetFormat(swapchain) };
     PrimitiveShadingPipelineDesc pipelineDesc = {
         .fragmentShadingRate = false,
         .vertEntryPoint = "vertexMain",
@@ -228,16 +230,16 @@ void createRenderingObjects()
         .depthStencilAttachmentFormat = Format::Universal_Depth_D32_SFloat,
         .descriptorTable = descriptorTable,
     };
-    rgbPipeline = device.CreatePipeline(pipelineDesc);
+    rgbPipeline = device->CreatePipeline(pipelineDesc);
 
     ComputePipelineDesc compPipelineDesc = {
         .compEntryPoint = "cullMain",
         .compShaderBinary = shaders,
         .descriptorTable = descriptorTable,
     };
-    cullPipeline = device.CreatePipeline(compPipelineDesc);
+    cullPipeline = device->CreatePipeline(compPipelineDesc);
 
-    device.Destroy(shaders);
+    device->Destroy(shaders);
 }
 
 void loadModel()
@@ -322,22 +324,31 @@ void loadModel()
         ++meshCount;
     }
 
-    mvMeshes = device.CreateMemoryView({ sizeof(MeshInfo) * meshes.size(), true });
-    mvPrimitives = device.CreateMemoryView({ sizeof(PrimitiveInfo) * primitives.size(), true });
-    mvVertexB = device.CreateMemoryView({ sizeof(Vertex) * vertexVec.size(), true });
-    mvIndexB = device.CreateMemoryView({ sizeof(uint32_t) * indexVec.size(), true });
+    mvMeshes = device->CreateMemoryView({ sizeof(MeshInfo) * meshes.size(), true });
+    mvPrimitives = device->CreateMemoryView({ sizeof(PrimitiveInfo) * primitives.size(), true });
+    mvVertexB = device->CreateMemoryView({ sizeof(Vertex) * vertexVec.size(), true });
+    mvIndexB = device->CreateMemoryView({ sizeof(uint32_t) * indexVec.size(), true });
 
-    mviMeshes = device.GetMemoryViewInfo(mvMeshes);
-    mviPrimitives = device.GetMemoryViewInfo(mvPrimitives);
-    mviVertexB = device.GetMemoryViewInfo(mvVertexB);
-    mviIndexB = device.GetMemoryViewInfo(mvIndexB);
+    mviMeshes = device->GetMemoryViewInfo(mvMeshes);
+    mviPrimitives = device->GetMemoryViewInfo(mvPrimitives);
+    mviVertexB = device->GetMemoryViewInfo(mvVertexB);
+    mviIndexB = device->GetMemoryViewInfo(mvIndexB);
 
     memcpy(mviMeshes.cpuAddress, meshes.data(), sizeof(MeshInfo) * meshes.size());
     memcpy(mviPrimitives.cpuAddress, primitives.data(), sizeof(PrimitiveInfo) * primitives.size());
     memcpy(mviVertexB.cpuAddress, vertexVec.data(), sizeof(Vertex) * vertexVec.size());
     memcpy(mviIndexB.cpuAddress, indexVec.data(), sizeof(uint32_t) * indexVec.size());
 
-    auto source = Lettuce::Utils::AssetLoader::LoadGtlfAsGeometry(&device, modelPath.string());
+    auto srcs = std::vector<GeometrySource>();
+    srcs.push_back(Lettuce::Utils::AssetLoader::LoadGtlfAsGeometry(device.get(), modelPath.string()));
+
+    SceneViewDesc sceneDesc = {
+        .device = *device,
+        .sources = srcs,
+        .maxInstanceCount = 20,
+    };
+    scene = std::make_unique<SceneView>();
+    scene->Create(sceneDesc);
 }
 
 uint32_t instanceCount = 0;
@@ -381,11 +392,11 @@ void loadInstances()
         }
     }
 
-    mvInstances = device.CreateMemoryView({ sizeof(uint32_t) + (sizeof(Instance) * instances.size()), true });
-    mvInstancedPrimitives = device.CreateMemoryView({ sizeof(InstancedPrimitive) * instancedPrimitivesCount, true });
+    mvInstances = device->CreateMemoryView({ sizeof(uint32_t) + (sizeof(Instance) * instances.size()), true });
+    mvInstancedPrimitives = device->CreateMemoryView({ sizeof(InstancedPrimitive) * instancedPrimitivesCount, true });
 
-    mviInstances = device.GetMemoryViewInfo(mvInstances);
-    mviInstancedPrimitives = device.GetMemoryViewInfo(mvInstancedPrimitives);
+    mviInstances = device->GetMemoryViewInfo(mvInstances);
+    mviInstancedPrimitives = device->GetMemoryViewInfo(mvInstancedPrimitives);
 
     // instances Buffer layout: [ count | instances ]
     instanceCount = instances.size();
@@ -423,13 +434,13 @@ void mainLoop()
             continue;
         }
 
-        auto fbSize = device.NextFrame(swapchain);
+        auto fbSize = device->NextFrame(swapchain);
 
         if (fbSize.width != oldFbWidth || fbSize.height != oldFbHeight) [[unlikely]]
         {
-            device.WaitFor(QueueType::Graphics);
-            device.Destroy(tDepthTarget);
-            device.Destroy(tPickTexture);
+            device->WaitFor(QueueType::Graphics);
+            device->Destroy(tDepthTarget);
+            device->Destroy(tPickTexture);
 
             TextureViewDesc pickDesc = {
                 .width = width,
@@ -440,7 +451,7 @@ void mainLoop()
                 .layerCount = 1,
                 .cpuVisible = false,
             };
-            tPickTexture = device.CreateTextureView(pickDesc);
+            tPickTexture = device->CreateTextureView(pickDesc);
 
             RenderTargetDesc depthDesc = {
                 .width = width,
@@ -448,15 +459,15 @@ void mainLoop()
                 .type = RenderTargetType::Depth_D32,
                 .defaultClearValue = DepthStencilClear {1.0f, 0},
             };
-            tDepthTarget = device.CreateTextureView(depthDesc);
+            tDepthTarget = device->CreateTextureView(depthDesc);
 
             oldFbWidth = fbSize.width;
             oldFbHeight = fbSize.height;
         }
 
-        device.Reset(cmdAlloc);
-        auto frame = device.GetCurrentRenderTarget(swapchain);
-        auto cmd = device.AllocateCommandBuffer(cmdAlloc);
+        device->Reset(cmdAlloc);
+        auto frame = device->GetCurrentRenderTarget(swapchain);
+        auto cmd = device->AllocateCommandBuffer(cmdAlloc);
 
         AttachmentDesc colorAttachment[1] = {
             {
@@ -577,10 +588,10 @@ void mainLoop()
             .presentSwapchain = swapchain,
         };
 
-        device.Submit(submitDesc);
+        device->Submit(submitDesc);
 
-        device.DisplayFrame(swapchain);
-        device.WaitFor(QueueType::Graphics);
+        device->DisplayFrame(swapchain);
+        device->WaitFor(QueueType::Graphics);
         if (isPressed)
             std::println("picked instance: {}", *((uint32_t*)mviPickInstanceData.cpuAddress) - 1);
         // auto baseGenDrawCallPtr = (VkDrawIndirectCommand*)mviDebugBuffer.cpuAddress;
@@ -596,26 +607,27 @@ void mainLoop()
 
 void cleanupLettuce()
 {
-    device.WaitFor(QueueType::Graphics);
-    device.Destroy(rgbPipeline);
-    device.Destroy(cullPipeline);
-    device.Destroy(descriptorTable);
+    device->WaitFor(QueueType::Graphics);
+    device->Destroy(rgbPipeline);
+    device->Destroy(cullPipeline);
+    device->Destroy(descriptorTable);
 
+    scene.reset();
     std::vector<MemoryView> destroyableMemoryViews = {
         mvSceneData,
         mvIndexB, mvVertexB, mvInstances, mvMeshes, mvPrimitives, mvInstancedPrimitives,
         mvDebugBuffer, mvPickInstanceData,
     };
     for (auto mv : destroyableMemoryViews)
-        device.Destroy(mv);
+        device->Destroy(mv);
 
-    device.Destroy(tDepthTarget);
-    device.Destroy(tPickTexture);
+    device->Destroy(tDepthTarget);
+    device->Destroy(tPickTexture);
 
-    device.Destroy(isIndirect);
-    device.Destroy(cmdAlloc);
-    device.Destroy(swapchain);
-    device.Destroy();
+    device->Destroy(isIndirect);
+    device->Destroy(cmdAlloc);
+    device->Destroy(swapchain);
+    device.reset();
 }
 
 void initWindow()
