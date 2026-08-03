@@ -125,7 +125,7 @@ void mainLoop()
         cmd.BindDescriptorTable(descriptorTable, PipelineBindPoint::Graphics);
         
         PushAllocationsDesc pushDesc = {
-           .allocations = std::array{ uniformData }, 
+           .allocations = std::array<PushAllocationBinding, 1>{ uniformData }, 
            .descriptorTable = descriptorTable,  
         };
         cmd.PushAllocations(pushDesc);

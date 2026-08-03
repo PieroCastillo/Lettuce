@@ -136,7 +136,7 @@ void SurfaceCommandBuffer::DrawSurface(const DrawSurfaceDesc& desc)
     // set width & height
     *(surfImpl->mvSurfaceDataPtr) = { static_cast<uint32_t>(desc.renderArea.w), static_cast<uint32_t>(desc.renderArea.h), drawCmdCount, (uint32_t)(surfImpl->bLayouts.maxCount / sizeof(LayoutStorage)) };
 
-    auto allocs = std::array{
+    auto allocs = std::array<PushAllocationBinding, 6>{
         surfImpl->mvSurfaceData,
         surfImpl->vScratchTransforms.getView(),
         surfImpl->bDrawCommands.mv,

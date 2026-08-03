@@ -27,6 +27,7 @@ namespace Lettuce::Foundations
         uint32_t m_capacity;
         uint32_t m_size;
     public:
+        using value_type = T;
         using iterator = T*;
         using const_iterator = const T*;
 

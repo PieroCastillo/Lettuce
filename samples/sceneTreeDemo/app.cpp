@@ -245,7 +245,7 @@ void createRenderingObjects()
 
 void drawScene(CommandBuffer& cmd)
 {
-    auto allocs = std::array{
+    auto allocs = std::array<PushAllocationBinding, 5>{
         mvSceneData,
         mvDrawParams,
         mvClusterBuildCmds,

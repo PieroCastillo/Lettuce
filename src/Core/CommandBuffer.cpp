@@ -174,9 +174,9 @@ void CommandBuffer::PushAllocations(const PushAllocationsDesc& desc)
     auto data = (uint64_t*)alloca(payloadSize);
 
     int idx = 0;
-    for (const auto& memView : desc.allocations)
+    for (const auto& binding : desc.allocations)
     {
-        data[idx] = impl.device->memories.get(memView).gpuAddress;
+        data[idx] = impl.device->memories.get(binding.memory).gpuAddress + binding.byteOffset;
         ++idx;
     }
 

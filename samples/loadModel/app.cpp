@@ -488,7 +488,7 @@ void mainLoop()
             .presentAttachmentIdx = 0,
         };
 
-        auto allocs = std::array{
+        auto allocs = std::array<PushAllocationBinding, 10>{
             mvSceneData,
             mvInstances,
             mvMeshes,

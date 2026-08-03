@@ -45,6 +45,7 @@ namespace Lettuce::Foundations
             DebugAssert(m_state.load(std::memory_order_acquire) == UploadState::Ready, "GpuUploadVector: deviceData() is only valid after upload finished.");
         }
     public:
+        using value_type = T;
         using iterator = T*;
         using const_iterator = const T*;
 

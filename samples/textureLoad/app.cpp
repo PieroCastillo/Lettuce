@@ -33,10 +33,10 @@ Sampler sampler;
 
 AssetLoader loader;
 
-Texture texRgba8;
-Texture texRgba32;
-Texture texBC7;
-Texture texB10G11R11;
+TextureView texRgba8;
+TextureView texRgba32;
+TextureView texBC7;
+TextureView texB10G11R11;
 
 void initLettuce()
 {
@@ -59,19 +59,13 @@ void initLettuce()
         .queueType = QueueType::Graphics,
     };
     cmdAlloc = device.CreateCommandAllocator(cmdAllocDesc);
-
-    AssetLoaderDesc loaderDesc = {
-        .maxTempMemory = 2 * 1024 * 1024, // 2 MB
-        .maxResourceMemory = 2 * 1024 * 1024, // 32 MB
-    };
-    loader.Create(device, loaderDesc);
 }
 
 void createRenderingObjects()
 {
     // load shaders
-    auto vertShader = loader.LoadSpirv("textureLoad.vert.spv");
-    auto fragShader = loader.LoadSpirv("textureLoad.frag.spv");
+    auto vertShader = AssetLoader::LoadSpirv(&device, "textureLoad.vert.spv");
+    auto fragShader = AssetLoader::LoadSpirv(&device, "textureLoad.frag.spv");
 
     DescriptorTableDesc descriptorTableDesc = { 4,4,4 };
     descriptorTable = device.CreateDescriptorTable(descriptorTableDesc);
@@ -104,12 +98,12 @@ void createRenderingObjects()
     sampler = device.CreateSampler(samplerDesc);
 
     // load textures
-    texRgba8 = loader.LoadKtx2Texture("../../../../external/KTX2-Samples/ktx2/2d_rgba8_linear.ktx2");
-    texRgba32 = loader.LoadKtx2Texture("../../../../external/KTX2-Samples/ktx2/2d_rgba32_linear.ktx2");
-    texBC7 = loader.LoadKtx2Texture("../../../../external/KTX2-Samples/ktx2/2d_bc7.ktx2");
-    texB10G11R11 = loader.LoadKtx2Texture("../../../../external/KTX2-Samples/ktx2/2d_r11g11b10_linear.ktx2");
+    texRgba8 = AssetLoader::LoadKtx2Texture("../../../../external/KTX2-Samples/ktx2/2d_rgba8_linear.ktx2");
+    texRgba32 = AssetLoader::LoadKtx2Texture("../../../../external/KTX2-Samples/ktx2/2d_rgba32_linear.ktx2");
+    texBC7 =AssetLoader::LoadKtx2Texture("../../../../external/KTX2-Samples/ktx2/2d_bc7.ktx2");
+    texB10G11R11 = AssetLoader::LoadKtx2Texture("../../../../external/KTX2-Samples/ktx2/2d_r11g11b10_linear.ktx2");
 
-    std::array<std::pair<uint32_t, Texture>, 4> texDescs;
+    std::array<std::pair<uint32_t, TextureView>, 4> texDescs;
     texDescs[0] = { 0, texRgba8 };
     texDescs[1] = { 1, texRgba32 };
     texDescs[2] = { 2, texBC7 };
@@ -187,8 +181,6 @@ void cleanupLettuce()
     device.Destroy(texB10G11R11);
 
     device.Destroy(sampler);
-
-    loader.Destroy();
 
     device.Destroy(rgbPipeline);
     device.Destroy(descriptorTable);

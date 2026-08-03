@@ -97,7 +97,7 @@ namespace Lettuce::Core
     };
 
     using ClearValue = std::variant<ColorClear, DepthStencilClear>;
-    
+
     struct Size
     {
         uint32_t width;
@@ -303,9 +303,18 @@ namespace Lettuce::Core
         uint32_t width, height;
     };
 
+    struct PushAllocationBinding
+    {
+        MemoryView memory;
+        uint64_t byteOffset = 0;
+
+        PushAllocationBinding(MemoryView m) : memory(m) {}
+        PushAllocationBinding(MemoryView m, uint64_t offset) : memory(m), byteOffset(offset) {}
+    };
+
     struct PushAllocationsDesc
     {
-        std::span<const MemoryView> allocations;
+        std::span<const PushAllocationBinding> allocations;
         DescriptorTable descriptorTable;
     };
 

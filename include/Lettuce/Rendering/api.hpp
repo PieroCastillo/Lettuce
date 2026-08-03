@@ -19,4 +19,6 @@ Created by @PieroCastillo on 2025-01-5
 #include "./SceneTree.hpp"
 #include "./SceneView.hpp"
 
+#include "./Debug/DebugPass.hpp"
+
 #endif // LETTUCE_RENDERING_API_HPP

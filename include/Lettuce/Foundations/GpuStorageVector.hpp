@@ -24,6 +24,8 @@ namespace Lettuce::Foundations
         MemoryViewInfo m_info = {};
         uint32_t m_capacity = 0;
     public:
+        using value_type = T;
+
         GpuStorageVector() noexcept = default;
 
         /// @brief Constructor
