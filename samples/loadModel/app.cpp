@@ -78,6 +78,7 @@ Pipeline rgbPipeline;
 CommandAllocator cmdAlloc;
 
 std::unique_ptr<SceneView> scene;
+std::unique_ptr<Debug::DebugPass> debugPass;
 
 MemoryView mvSceneData;
 MemoryView mvIndexB, mvVertexB, mvInstances, mvMeshes, mvPrimitives, mvInstancedPrimitives;
@@ -240,6 +241,13 @@ void createRenderingObjects()
     cullPipeline = device->CreatePipeline(compPipelineDesc);
 
     device->Destroy(shaders);
+
+    Debug::DebugPassDesc debugPassDesc = {
+        .device = *device,
+        .descriptorTable = descriptorTable,
+        .maxCulledInstances = 10,
+    };
+    debugPass = std::make_unique<Debug::DebugPass>(debugPassDesc);
 }
 
 void loadModel()
@@ -490,15 +498,15 @@ void mainLoop()
 
         auto allocs = std::array<PushAllocationBinding, 10>{
             mvSceneData,
-            mvInstances,
-            mvMeshes,
-            mvPrimitives,
-            mvVertexB,
-            mvIndexB,
-            mvIndirectB,
-            mvInstancedPrimitives,
-            mvPickInstanceData,
-            mvDebugBuffer,
+                mvInstances,
+                mvMeshes,
+                mvPrimitives,
+                mvVertexB,
+                mvIndexB,
+                mvIndirectB,
+                mvInstancedPrimitives,
+                mvPickInstanceData,
+                mvDebugBuffer,
         };
 
         PushAllocationsDesc pushDesc = {
@@ -570,6 +578,7 @@ void mainLoop()
         cmd.PushAllocations(pushDesc);
         cmd.ExecuteIndirect(execDesc);
         cmd.EndRendering();
+
         if (isPressed)
         {
             cmd.Barrier(bFragCopy);
@@ -613,6 +622,8 @@ void cleanupLettuce()
     device->Destroy(descriptorTable);
 
     scene.reset();
+    debugPass.reset();
+
     std::vector<MemoryView> destroyableMemoryViews = {
         mvSceneData,
         mvIndexB, mvVertexB, mvInstances, mvMeshes, mvPrimitives, mvInstancedPrimitives,

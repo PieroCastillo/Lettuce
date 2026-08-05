@@ -91,17 +91,18 @@ void createRenderingObjects()
         .minFilter = Filter::Linear,
         .mipmap = Filter::Nearest,
         .addressModeU = SamplerAddressMode::ClampToBorder,
-        .addressModeV =  SamplerAddressMode::ClampToBorder,
-        .addressModeW =  SamplerAddressMode::ClampToBorder,
+        .addressModeV = SamplerAddressMode::ClampToBorder,
+        .addressModeW = SamplerAddressMode::ClampToBorder,
         .anisotropy = 2.0f
     };
     sampler = device.CreateSampler(samplerDesc);
 
     // load textures
-    texRgba8 = AssetLoader::LoadKtx2Texture("../../../../external/KTX2-Samples/ktx2/2d_rgba8_linear.ktx2");
-    texRgba32 = AssetLoader::LoadKtx2Texture("../../../../external/KTX2-Samples/ktx2/2d_rgba32_linear.ktx2");
-    texBC7 =AssetLoader::LoadKtx2Texture("../../../../external/KTX2-Samples/ktx2/2d_bc7.ktx2");
-    texB10G11R11 = AssetLoader::LoadKtx2Texture("../../../../external/KTX2-Samples/ktx2/2d_r11g11b10_linear.ktx2");
+    auto copyCmd = device.CreateCommandAllocator({QueueType::Copy});
+    texRgba8 = AssetLoader::LoadKtx2Texture(&device, copyCmd, "../../../../external/KTX2-Samples/ktx2/2d_rgba8_linear.ktx2");
+    texRgba32 = AssetLoader::LoadKtx2Texture(&device, copyCmd, "../../../../external/KTX2-Samples/ktx2/2d_rgba32_linear.ktx2");
+    texBC7 = AssetLoader::LoadKtx2Texture(&device, copyCmd, "../../../../external/KTX2-Samples/ktx2/2d_bc7.ktx2");
+    texB10G11R11 = AssetLoader::LoadKtx2Texture(&device, copyCmd, "../../../../external/KTX2-Samples/ktx2/2d_r11g11b10_linear.ktx2");
 
     std::array<std::pair<uint32_t, TextureView>, 4> texDescs;
     texDescs[0] = { 0, texRgba8 };
@@ -125,7 +126,7 @@ void mainLoop()
 {
     while (!glfwWindowShouldClose(window))
     {
-          glfwGetFramebufferSize(window, (int*)&width, (int*)&height);
+        glfwGetFramebufferSize(window, (int*)&width, (int*)&height);
 
         if (width == 0 || height == 0)
         {

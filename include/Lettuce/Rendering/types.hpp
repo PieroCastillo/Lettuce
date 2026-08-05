@@ -18,6 +18,7 @@ namespace Lettuce::Rendering
     struct SceneViewData
     {
         float4x4 viewProj;
+        uint32_t instanceCount;
     };
 
     struct ClusterStorage
