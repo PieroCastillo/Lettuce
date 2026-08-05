@@ -71,7 +71,6 @@ local samples = {
     "indirectDrawing",
     "loadModel",
     "movingSquares",
-    "sceneTreeDemo",
     "simpleUIOverlay",
     "textureLoad",
     "uniform",

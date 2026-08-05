@@ -16,7 +16,6 @@ Created by @PieroCastillo on 2025-01-5
 #include "../Foundations/api.hpp"
 
 #include "./asyncRecorder.hpp"
-#include "./SceneTree.hpp"
 #include "./SceneView.hpp"
 
 #include "./Debug/DebugPass.hpp"
