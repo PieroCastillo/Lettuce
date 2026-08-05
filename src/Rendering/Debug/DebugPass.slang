@@ -21,19 +21,39 @@ struct PushConstants
 {
     uint64_t sceneViewDataAddr;
     uint64_t indirectCommandsAddr;
+    uint64_t positionsBufferAddr;
+    uint64_t indexBufferAddr;
     uint64_t clusterStorageAddr;
     uint64_t meshStorageAddr;
     uint64_t instanceStorageAddr;
-    uint64_t positionsBufferAddr;
-    uint64_t normalsBufferAddr;
-    uint64_t tangentsBufferAddr;
-    uint64_t texCoordsBufferAddr;
-    uint64_t indexBufferAddr;
 };
 
 Ptr<T> loadAddr<T>(uint64_t addr, uint32_t offset = 0)
 {
     return reinterpret<Ptr<T>>(addr + (offset * sizeof(T)));
+}
+
+uint hash_u32(uint x)
+{
+    x ^= x >> 16;
+    x *= 0x7feb352d;
+    x ^= x >> 15;
+    x *= 0x846ca68b;
+    x ^= x >> 16;
+    return x;
+}
+
+float hash_to_float01(uint x)
+{
+    return (hash_u32(x) & 0x00FFFFFF) / 16777216.0;
+}
+
+float3 make_random_color(uint id)
+{
+    float r0 = hash_to_float01(id * 3u + 0u);
+    float r1 = hash_to_float01(id * 3u + 1u);
+    float r2 = hash_to_float01(id * 3u + 2u);
+    return float3(r0, r1, r2);
 }
 
 [[vk::push_constant]]
@@ -42,14 +62,14 @@ PushConstants pc;
 [require(compute, spirv_1_6)]
 [numthreads(computeNumThreadsX, 1, 1)]
 void buildCommandsMain(uint3 gid: SV_DispatchThreadID,
-              uint3 lid: SV_GroupThreadID,
-              uint3 groupId: SV_GroupID)
+                       uint3 lid: SV_GroupThreadID,
+                       uint3 groupId: SV_GroupID)
 {
     var idx = gid.x;
 
     // thread check
     var sceneViewData = loadAddr<SceneViewData>(pc.sceneViewDataAddr)[0];
-    if(idx >= sceneViewData.instanceCount)
+    if (idx >= sceneViewData.instanceCount)
     {
         return;
     }
@@ -74,12 +94,13 @@ void buildCommandsMain(uint3 gid: SV_DispatchThreadID,
     drawCmd.firstInstance = mesh.clusterOffset;
 
     // write output
-    InterlockedAdd(drawCmdStorage.count, 1);
-    drawCmdStorage.commands[idx] = drawCmd;
+    uint cmdIdx;
+    InterlockedAdd(drawCmdStorage.count, 1, cmdIdx);
+    drawCmdStorage.commands[cmdIdx] = drawCmd;
 }
 
 [shader("vertex")]
-VSOutput vertMain(uint vertexID: SV_VulkanVertexID, uint instanceID: SV_DrawIndex, uint gClusterIdx : SV_InstanceID)
+VSOutput vertMain(uint vertexID: SV_VulkanVertexID, uint instanceID: SV_DrawIndex, uint gClusterIdx: SV_VulkanInstanceID)
 {
     // in
     var sceneViewData = loadAddr<SceneViewData>(pc.sceneViewDataAddr)[0];
@@ -98,9 +119,11 @@ VSOutput vertMain(uint vertexID: SV_VulkanVertexID, uint instanceID: SV_DrawInde
 
     var index = loadAddr<uint8_t>(pc.indexBufferAddr, cluster.trianglesBaseOffset)[vertexID];
     var position = loadAddr<float3>(pc.positionsBufferAddr, cluster.positionsBaseOffset)[index];
-    
-    output.position = mul(sceneViewData.viewProj, float4(position, 1.0));
-    output.color = float3(1.0);
+
+    var worldPos = mul(instance.localTransform, float4(position, 1.0));
+    output.position = mul(sceneViewData.viewProj, float4(worldPos.xyz, 1.0));
+    output.color = 
+    make_random_color(cluster.clusterID);
 
     return output;
 }

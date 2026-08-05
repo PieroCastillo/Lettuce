@@ -6,6 +6,7 @@ Created by @PieroCastillo on 2026-07-30
 
 #include "Common.hpp"
 #include "GpuSpan.hpp"
+#include "GpuUniquePtr.hpp"
 
 #include "GpuMappedVector.hpp"
 #include "GpuStorageVector.hpp"

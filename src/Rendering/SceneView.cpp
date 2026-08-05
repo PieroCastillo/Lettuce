@@ -158,6 +158,7 @@ void SceneView::Create(const SceneViewDesc& desc)
         indexTable.Upload(m_cmdAlloc);
         clusterTable.Upload(m_cmdAlloc);
         meshTable.Upload(m_cmdAlloc);
+        instanceTable.append(instances);
         // instanceTable is already on device memory
     }
     catch (...)

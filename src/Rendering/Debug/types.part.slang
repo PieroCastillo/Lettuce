@@ -22,13 +22,13 @@ struct SceneViewData
 
 struct ClusterStorage
 {
+    float4 cone;
+    float4 aabbMin;
+    float4 aabbMax;
+    float4 centroid;
+
     uint32_t materialHeap;
     uint32_t materialID;
-
-    float4 cone;
-    float3 aabbMin;
-    float3 aabbMax;
-    float3 centroid;
 
     uint32_t positionsBaseOffset;
     uint32_t positionsCount;

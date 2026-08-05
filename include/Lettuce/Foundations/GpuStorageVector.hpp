@@ -1,8 +1,8 @@
 /*
 Created by @PieroCastillo on 2026-06-01
 */
-#ifndef LETTUCE_UTILS_GPU_STORAGE_VECTOR
-#define LETTUCE_UTILS_GPU_STORAGE_VECTOR
+#ifndef LETTUCE_FOUNDATIONS_GPU_STORAGE_VECTOR
+#define LETTUCE_FOUNDATIONS_GPU_STORAGE_VECTOR
 
 // standard headers
 #include <utility>
@@ -92,4 +92,4 @@ namespace Lettuce::Foundations
         auto getView() const noexcept -> MemoryView { return m_memView; }
     };
 };
-#endif // LETTUCE_UTILS_GPU_STORAGE_VECTOR
+#endif // LETTUCE_FOUNDATIONS_GPU_STORAGE_VECTOR

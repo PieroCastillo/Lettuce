@@ -51,14 +51,14 @@ namespace Lettuce::Rendering
         void Create(const SceneViewDesc&);
         void Destroy();
 
-        auto GetPositionsView() { return positionTable.getView(); }
-        auto GetNormalsView() { return normalTable.getView(); }
-        auto GetTangentsView() { return tangentTable.getView(); }
-        auto GetTexCoords0View() { return texCoord0Table.getView(); }
+        auto GetPositionsView() { return GpuSpan(positionTable); }
+        auto GetNormalsView() { return GpuSpan(normalTable); }
+        auto GetTangentsView() { return GpuSpan(tangentTable); }
+        auto GetTexCoords0View() { return GpuSpan(texCoord0Table); }
 
-        auto GetIndicesView() { return indexTable.getView(); }
-        auto GetMeshesView() { return meshTable.getView(); }
-        auto GetClustersView() { return clusterTable.getView(); }
+        auto GetIndicesView() { return GpuSpan(indexTable); }
+        auto GetMeshesView() { return GpuSpan(meshTable); }
+        auto GetClustersView() { return GpuSpan(clusterTable); }
         auto& GetInstanceTable() { return instanceTable; }
     };
 };

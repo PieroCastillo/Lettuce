@@ -137,6 +137,11 @@ namespace Lettuce::Foundations
             return reinterpret_cast<const T*>(m_tempInfo.cpuAddress);
         }
 
+        auto byteSize() const noexcept -> uint32_t { return m_capacity * sizeof(T); }
+        auto size() const noexcept -> uint32_t { return m_capacity; }
+        auto capacity() const noexcept -> uint32_t { return m_capacity; }
+        auto empty() const noexcept -> bool { return m_capacity == 0; }
+
         auto begin() noexcept -> iterator {
             assertWritable();
             return data();

@@ -1,8 +1,8 @@
 /*
 Created by @PieroCastillo on 2026-06-01
 */
-#ifndef LETTUCE_UTILS_GPU_MAPPED_VECTOR
-#define LETTUCE_UTILS_GPU_MAPPED_VECTOR
+#ifndef LETTUCE_FOUNDATIONS_GPU_MAPPED_VECTOR
+#define LETTUCE_FOUNDATIONS_GPU_MAPPED_VECTOR
 
 // standard headers
 #include <utility>
@@ -59,7 +59,7 @@ namespace Lettuce::Foundations
         }
 
         /// @brief Copy assignment operator. Deleted.
-        auto operator=(const GpuMappedVector&) -> GpuMappedVector & = delete;
+        auto operator=(const GpuMappedVector&) -> GpuMappedVector& = delete;
 
         /// @brief Move assignment operator
         auto operator=(GpuMappedVector&& other) noexcept -> GpuMappedVector&
@@ -143,4 +143,4 @@ namespace Lettuce::Foundations
         auto getView() const noexcept -> MemoryView { return m_memView; }
     };
 };
-#endif // LETTUCE_UTILS_GPU_MAPPED_VECTOR
+#endif // LETTUCE_FOUNDATIONS_GPU_MAPPED_VECTOR

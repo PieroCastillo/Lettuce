@@ -17,6 +17,7 @@ namespace Lettuce::Rendering::Debug
         Device& device;
         DescriptorTable descriptorTable;
         uint32_t maxCulledInstances;
+        Format colorOutputFormat;
     };
 
     struct DebugPassRecordDesc
@@ -26,7 +27,7 @@ namespace Lettuce::Rendering::Debug
         // input
         GpuSpan<SceneViewData> sceneViewData;
         GpuSpan<float3> positions;
-        GpuSpan<uint32_t> indices;
+        GpuSpan<uint8_t> indices;
         GpuSpan<ClusterStorage> clusters;
         GpuSpan<MeshStorage> meshes;
         GpuSpan<InstanceStorage> culledInstances;
@@ -43,7 +44,7 @@ namespace Lettuce::Rendering::Debug
         Pipeline pPass;
         Pipeline pBuildCommands;
         IndirectSet isPass;
-        MemoryView mvCulledInstances;
+        MemoryView mvIndirectDrawCommands;
     public:
         DebugPass() noexcept = default;
         explicit DebugPass(const DebugPassDesc&);

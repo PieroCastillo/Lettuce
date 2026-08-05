@@ -1,8 +1,8 @@
 /*
 Created by @PieroCastillo on 2026-08-01
 */
-#ifndef LETTUCE_UTILS_GPU_SPAN
-#define LETTUCE_UTILS_GPU_SPAN
+#ifndef LETTUCE_FOUNDATIONS_GPU_SPAN
+#define LETTUCE_FOUNDATIONS_GPU_SPAN
 
 // standard headers
 #include <utility>
@@ -49,4 +49,4 @@ namespace Lettuce::Foundations
     requires GpuSpanCompatible<V, typename V::value_type>
     GpuSpan(const V&) -> GpuSpan<typename V::value_type>;
 };
-#endif // LETTUCE_UTILS_GPU_SPAN
+#endif // LETTUCE_FOUNDATIONS_GPU_SPAN

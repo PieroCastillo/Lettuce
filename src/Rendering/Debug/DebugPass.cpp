@@ -30,7 +30,7 @@ DebugPass::DebugPass(DebugPass&& other) noexcept
     pPass(std::move(other.pPass)),
     pBuildCommands(std::move(other.pBuildCommands)),
     isPass(std::move(other.isPass)),
-    mvCulledInstances(std::move(other.mvCulledInstances))
+    mvIndirectDrawCommands(std::move(other.mvIndirectDrawCommands))
 {
 }
 
@@ -46,7 +46,7 @@ DebugPass& DebugPass::operator=(DebugPass&& other) noexcept
         pPass = std::move(other.pPass);
         pBuildCommands = std::move(other.pBuildCommands);
         isPass = std::move(other.isPass);
-        mvCulledInstances = std::move(other.mvCulledInstances);
+        mvIndirectDrawCommands = std::move(other.mvIndirectDrawCommands);
     }
 
     return *this;
@@ -58,6 +58,7 @@ void DebugPass::Create(const DebugPassDesc& desc)
         throw std::logic_error("SceneView::Create cannot be called from initizalized Device.");
 
     m_device = &desc.device;
+    dtPass = desc.descriptorTable;
 
     try
     {
@@ -72,7 +73,7 @@ void DebugPass::Create(const DebugPassDesc& desc)
         shaderFile.read((char*)shaderBuffer.data(), fileSize);
         auto shader = m_device->CreateShader({ shaderBuffer });
 
-        auto formats = std::array{ Format::Raw_RGBA32_SFloat };
+        auto formats = std::array{ desc.colorOutputFormat };
 
         ComputePipelineDesc compDesc = {
             .compEntryPoint = "buildCommandsMain",
@@ -93,7 +94,7 @@ void DebugPass::Create(const DebugPassDesc& desc)
         };
         pPass = m_device->CreatePipeline(pipelineDesc);
         isPass = m_device->CreateIndirectSet({ IndirectType::Draw, desc.maxCulledInstances, 0 });
-        mvCulledInstances = m_device->GetIndirectSetView(isPass);
+        mvIndirectDrawCommands = m_device->GetIndirectSetView(isPass);
 
         m_device->Destroy(shader);
     }
@@ -117,11 +118,18 @@ void DebugPass::Destroy()
     pBuildCommands = {};
     pPass = {};
     isPass = {};
-    mvCulledInstances = {};
+    mvIndirectDrawCommands = {};
 }
 
 void DebugPass::Record(CommandBuffer& cmd, const DebugPassRecordDesc& desc)
 {
+    BarrierDesc bCompInd[] = { {
+        .srcAccess = PipelineAccess::Write,
+        .srcStage = PipelineStage::ComputeShader,
+        .dstAccess = PipelineAccess::Read,
+        .dstStage = PipelineStage::DrawIndirect,
+    }, };
+
     AttachmentDesc colorAttachment[1] = {
     {
         .renderTarget = desc.rtColorOutput,
@@ -143,7 +151,7 @@ void DebugPass::Record(CommandBuffer& cmd, const DebugPassRecordDesc& desc)
 
     auto allocs = std::array<PushAllocationBinding, 7> {
         desc.sceneViewData.getView(),
-            mvCulledInstances,
+            mvIndirectDrawCommands,
             desc.positions.getView(),
             desc.indices.getView(),
             desc.clusters.getView(),
@@ -156,12 +164,22 @@ void DebugPass::Record(CommandBuffer& cmd, const DebugPassRecordDesc& desc)
         .descriptorTable = dtPass,
     };
 
+    constexpr uint32_t computeNumThreadsX = 32;
+    uint32_t groupCountX = (desc.culledInstances.size() + (computeNumThreadsX - 1)) / computeNumThreadsX;
+
+    cmd.BindPipeline(pBuildCommands);
+    cmd.BindDescriptorTable(dtPass, PipelineBindPoint::Compute);
+    cmd.PushAllocations(pushAllocs);
+    cmd.Dispatch(groupCountX, 1, 1);
+
+    cmd.Barrier(bCompInd);
+
     cmd.BeginRendering(renderPassDesc);
 
     cmd.BindPipeline(pPass);
     cmd.BindDescriptorTable(dtPass, PipelineBindPoint::Graphics);
     cmd.PushAllocations(pushAllocs);
-    cmd.ExecuteIndirect({ isPass, desc.culledInstances.size() });
+    cmd.ExecuteIndirect({ isPass, 0, desc.culledInstances.size() });
 
     cmd.EndRendering();
 }

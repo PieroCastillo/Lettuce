@@ -389,6 +389,7 @@ auto AssetLoader::LoadGtlfAsGeometry(Device* pDevice, std::string_view pathStr) 
     {
         const auto clustersOldSize = source.clusters.size();
 
+        uint32_t localClusterIdx = 0;
         for (auto& prim : mesh.primitives)
         {
             // get attributes and accesors
@@ -418,7 +419,7 @@ auto AssetLoader::LoadGtlfAsGeometry(Device* pDevice, std::string_view pathStr) 
 
             fastgltf::copyFromAccessor<float3>(asset.get(), posAcc, tempPosStream.data());
             if (norCount > 0) fastgltf::copyFromAccessor<float3>(asset.get(), norAcc, tempNorStream.data());
-            if (tanCount > 0) fastgltf::copyFromAccessor<float3>(asset.get(), tanAcc, tempTanStream.data());
+            if (tanCount > 0) fastgltf::copyFromAccessor<float4>(asset.get(), tanAcc, tempTanStream.data());
             if (uvsCount > 0) fastgltf::copyFromAccessor<float2>(asset.get(), uvsAcc, tempUvsStream.data());
             fastgltf::copyFromAccessor<uint32_t>(asset.get(), idxAcc, tempIdxStream.data());
 
@@ -475,12 +476,12 @@ auto AssetLoader::LoadGtlfAsGeometry(Device* pDevice, std::string_view pathStr) 
                     source.indices.push_back(meshletTris[idx]);
 
                 auto cluster = ClusterStorage{
-                    .materialHeap = 0,
-                    .materialID = 0,
                     .cone = {},
                     .aabbMin = {},
                     .aabbMax = {},
                     .centroid = {},
+                    .materialHeap = 0,
+                    .materialID = 0,
                     .positionsBaseOffset = (uint32_t)(posOldSize),
                     .positionsCount = (uint32_t)(source.positions.size() - posOldSize),
                     .normalsBaseOffset = (uint32_t)(norOldSize),
@@ -491,10 +492,13 @@ auto AssetLoader::LoadGtlfAsGeometry(Device* pDevice, std::string_view pathStr) 
                     .texCoords0Count = (uint32_t)(source.texCoords0.size() - uvsOldSize),
                     .trianglesBaseOffset = (uint32_t)(idxOldSize),
                     .triangleCount = (uint32_t)(source.indices.size() - idxOldSize),
-                    .clusterID = 0,
+                    .clusterID = localClusterIdx,
                 };
                 source.clusters.push_back(cluster);
+                ++localClusterIdx;
             }
+
+            DebugPrint("[ASSET LOADER REPORT]", "mesh {} meshlets {} vertices {} indices {}", mesh.name, meshlets.size(), posAcc.count, idxAcc.count);
         }
 
         auto mesh = MeshStorage{
@@ -504,6 +508,8 @@ auto AssetLoader::LoadGtlfAsGeometry(Device* pDevice, std::string_view pathStr) 
             .clusterCount = (uint32_t)(source.clusters.size() - clustersOldSize),
         };
         source.meshes.push_back(mesh);
+
+        DebugPrint("                     ", "clusterOffset={} clusterCount={}\n", mesh.clusterOffset, mesh.clusterCount);
     }
 
     const auto& nodesIdxs = asset->scenes.at(asset->defaultScene.value()).nodeIndices;
