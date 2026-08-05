@@ -64,8 +64,7 @@ void initLettuce()
 void createRenderingObjects()
 {
     // load shaders
-    auto vertShader = AssetLoader::LoadSpirv(&device, "textureLoad.vert.spv");
-    auto fragShader = AssetLoader::LoadSpirv(&device, "textureLoad.frag.spv");
+    auto shader = AssetLoader::LoadSpirv(&device, "./samples/textureLoad/textureLoad.spv");
 
     DescriptorTableDesc descriptorTableDesc = { 4,4,4 };
     descriptorTable = device.CreateDescriptorTable(descriptorTableDesc);
@@ -73,17 +72,16 @@ void createRenderingObjects()
     std::array<Format, 1> formatArr = { device.GetRenderTargetFormat(swapchain) };
     PrimitiveShadingPipelineDesc pipelineDesc = {
         .fragmentShadingRate = false,
-        .vertEntryPoint = "main",
-        .fragEntryPoint = "main",
-        .vertShaderBinary = vertShader,
-        .fragShaderBinary = fragShader,
+        .vertEntryPoint = "vertMain",
+        .fragEntryPoint = "fragMain",
+        .vertShaderBinary = shader,
+        .fragShaderBinary = shader,
         .colorAttachmentFormats = std::span(formatArr),
         .descriptorTable = descriptorTable,
     };
     rgbPipeline = device.CreatePipeline(pipelineDesc);
 
-    device.Destroy(vertShader);
-    device.Destroy(fragShader);
+    device.Destroy(shader);
 
     // create sampler
     SamplerDesc samplerDesc = {
@@ -103,6 +101,7 @@ void createRenderingObjects()
     texRgba32 = AssetLoader::LoadKtx2Texture(&device, copyCmd, "../../../../external/KTX2-Samples/ktx2/2d_rgba32_linear.ktx2");
     texBC7 = AssetLoader::LoadKtx2Texture(&device, copyCmd, "../../../../external/KTX2-Samples/ktx2/2d_bc7.ktx2");
     texB10G11R11 = AssetLoader::LoadKtx2Texture(&device, copyCmd, "../../../../external/KTX2-Samples/ktx2/2d_r11g11b10_linear.ktx2");
+    device.Destroy(copyCmd);
 
     std::array<std::pair<uint32_t, TextureView>, 4> texDescs;
     texDescs[0] = { 0, texRgba8 };
@@ -151,6 +150,7 @@ void mainLoop()
             .width = fbSize.width,
             .height = fbSize.height,
             .colorAttachments = std::span(colorAttachment),
+            .presentAttachmentIdx = 0,
         };
         cmd.BeginRendering(renderPassDesc);
         cmd.BindDescriptorTable(descriptorTable, PipelineBindPoint::Graphics);

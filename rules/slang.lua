@@ -36,6 +36,8 @@ rule("slang")
             "-capability",
             "SPV_EXT_descriptor_indexing",
             "-capability",
+            "SPV_KHR_non_semantic_info",
+            "-capability",
             "SPV_KHR_vulkan_memory_model",
 
             "-depfile",

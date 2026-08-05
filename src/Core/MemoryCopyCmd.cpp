@@ -35,17 +35,19 @@ void CommandBuffer::MemoryCopy(const MemoryToTextureCopy& copy)
     auto& srcMemory = dev->memories.get(copy.srcMemory);
     auto& dstImg = dev->textures.get(copy.dstTexture);
 
+    uint32_t mipWidth = std::max(1u, dstImg.width >> copy.mipmapLevel);
+    uint32_t mipHeight = std::max(1u, dstImg.height >> copy.mipmapLevel);
+
     VkBufferImageCopy imageCopy = {
         .bufferOffset = copy.srcOffset,
         .bufferRowLength = 0,
         .bufferImageHeight = 0,
         .imageSubresource = { VK_IMAGE_ASPECT_COLOR_BIT, copy.mipmapLevel, copy.layerBaseLevel, copy.layerCount },
-        .imageOffset = { 0,0,0 },
-        .imageExtent = { dstImg.width, dstImg.height, 1 },
+        .imageOffset = { 0, 0, 0 },
+        .imageExtent = { mipWidth, mipHeight, 1 },
     };
 
-    vkCmdCopyBufferToImage((VkCommandBuffer)impl.handle, srcMemory.buffer, dstImg.image,
-        VK_IMAGE_LAYOUT_GENERAL, 1, &imageCopy);
+    vkCmdCopyBufferToImage((VkCommandBuffer)impl.handle, srcMemory.buffer, dstImg.image, VK_IMAGE_LAYOUT_GENERAL, 1, &imageCopy);
 }
 
 void CommandBuffer::MemoryCopy(const TextureToMemoryCopy& copy)
@@ -64,8 +66,6 @@ void CommandBuffer::MemoryCopy(const TextureToMemoryCopy& copy)
 
     auto safeW = std::clamp<uint32_t>(copy.width, 1u, maxW);
     auto safeH = std::clamp<uint32_t>(copy.height, 1u, maxH);
-
-    // std::println("w: {} h: {} x: {} y: {}", safeW, safeH, safeX, safeY);
 
     VkBufferImageCopy imageCopy = {
         .bufferOffset = copy.dstOffset,

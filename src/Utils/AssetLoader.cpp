@@ -111,27 +111,31 @@ auto AssetLoader::LoadKtx2Texture(Device* pDevice, CommandAllocator commandAlloc
     // may cause UB if it's not correct
     Format format = Core::FromVkFormat((VkFormat)(kTexture->vkFormat));
 
-    uint64_t mainMipOffset;
-    ktxTexture2_GetImageOffset(kTexture, 0, 0, 0, &mainMipOffset);
-
     // create long resource
     // TODO: impl kTexture->numLevels / mipLevels
     TextureViewDesc texDesc = {
-        texWidth, texHeight, kTexture->baseDepth, format, 1, kTexture->numLayers, kTexture->isCubemap,
+        texWidth, texHeight, kTexture->baseDepth, format, texMipLevels, kTexture->numLayers, kTexture->isCubemap,
     };
     auto tex = pDevice->CreateTextureView(texDesc);
 
     auto cmd = pDevice->AllocateCommandBuffer(commandAllocator);
 
     // create copies for the first mipmap, next blit levels
-    MemoryToTextureCopy copy = {
-        .srcMemory = stagingBuff,
-        .dstTexture = tex,
-        .mipmapLevel = 0,
-        .layerBaseLevel = 0,
-        .layerCount = kTexture->numLayers,
-    };
-    cmd.MemoryCopy(copy);
+    for (uint32_t level = 0; level < kTexture->numLevels; ++level)
+    {
+        uint64_t mipOffset;
+        ktxTexture2_GetImageOffset(kTexture, level, 0, 0, &mipOffset);
+
+        MemoryToTextureCopy copy = {
+            .srcMemory = stagingBuff,
+            .dstTexture = tex,
+            .srcOffset = (uint32_t)mipOffset,
+            .mipmapLevel = level,
+            .layerBaseLevel = 0,
+            .layerCount = kTexture->numLayers,
+        };
+        cmd.MemoryCopy(copy);
+    }
 
     std::array<std::span<CommandBuffer>, 1> cmdArr = { std::span(&cmd, 1) };
     CommandBufferSubmitDesc cmdDesc = {

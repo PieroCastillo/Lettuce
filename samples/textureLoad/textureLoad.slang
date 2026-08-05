@@ -1,11 +1,17 @@
+Texture2D<float4> sampledTextures[];
+SamplerState samplers[];
+RWTexture2D<float4> storageTextures[];
+
 struct VSOutput
 {
     float4 position : SV_Position;
-    float2 uv : TEXCOORD0;
-    uint instanceID : TEXCOORD1;
+    float2 uv;
+    uint instanceID;
 };
 
-VSOutput main(uint vertexID: SV_VertexID, uint instanceID: SV_InstanceID)
+[require(vertex, spirv)]
+[shader("vertex")]
+VSOutput vertMain(uint vertexID: SV_VulkanVertexID, uint instanceID: SV_VulkanInstanceID)
 {
     VSOutput output;
     float2 positions[6] = {
@@ -35,4 +41,11 @@ VSOutput main(uint vertexID: SV_VertexID, uint instanceID: SV_InstanceID)
     output.instanceID = instanceID;
 
     return output;
+}
+
+[require(fragment, spirv_1_6)]
+[shader("fragment")]
+float4 fragMain(VSOutput input) : SV_Target
+{
+    return sampledTextures[input.instanceID].Sample(samplers[0], saturate(input.uv));
 }
