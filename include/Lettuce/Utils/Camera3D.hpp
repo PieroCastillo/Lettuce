@@ -51,7 +51,9 @@ namespace Lettuce::Utils
         float m_NearPlane;
         float m_FarPlane;
     public:
-        explicit Camera3D(const Camera3DDesc& desc)
+        Camera3D() noexcept = default;
+
+        explicit Camera3D(const Camera3DDesc& desc) noexcept
             : m_Position(desc.position), m_Orientation(desc.orientation), m_FovY(desc.fovY)
             , m_Aspect(desc.aspect), m_NearPlane(desc.nearPlane), m_FarPlane(desc.farPlane)
         {
@@ -60,7 +62,7 @@ namespace Lettuce::Utils
         void Rotate(const RotateDesc& desc);
         auto Update(const CameraUpdateDesc& desc) -> glm::mat4;
 
-        void SetAspect(float aspect);
+        void SetAspect(float aspect) noexcept;
     };
 };
 #endif // LETTUCE_UTILS_CAMERA_3D_HPP

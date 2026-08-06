@@ -84,11 +84,25 @@ for _, name in ipairs(samples) do
         add_files("samples/" .. name .. "/app.cpp")
         add_packages("volk", "glfw", "glm", "imgui", "fastgltf", "slang", "meshoptimizer")
         local slangFiles = os.files("samples/" .. name .. "/**.slang")
-        local hlslFiles = os.files("samples/" .. name .. "/**.hlsl")
         if #slangFiles > 0 then
             add_files(slangFiles, {rule = "slang"})
         end
-        if #hlslFiles > 0 then
-            add_files(hlslFiles, {rule = "hlsl"})
+end
+
+local apps = {
+    "Editor",
+}
+
+for _, name in ipairs(apps) do 
+    target(name)
+        set_kind("binary")
+        add_deps("Lettuce")
+        add_includedirs("include")
+        add_includedirs("apps/" .. name .. "/include")
+        add_files("apps/" .. name .. "/src/**.cpp")
+        add_packages("volk", "glfw", "glm", "fastgltf", "slang", "meshoptimizer")
+        local slangFiles = os.files("samples/" .. name .. "/**.slang")
+        if #slangFiles > 0 then
+            add_files(slangFiles, {rule = "slang"})
         end
 end

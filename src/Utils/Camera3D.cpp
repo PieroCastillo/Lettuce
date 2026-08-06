@@ -33,7 +33,7 @@ auto Camera3D::Update(const CameraUpdateDesc& desc) -> glm::mat4
     return projection * view;
 }
 
-void Camera3D::SetAspect(float aspect)
+void Camera3D::SetAspect(float aspect) noexcept
 {
     m_Aspect = aspect;
 }

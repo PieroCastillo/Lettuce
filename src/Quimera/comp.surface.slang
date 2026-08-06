@@ -57,7 +57,7 @@ void pDrawCommandsMain(uint3 gid: SV_DispatchThreadID,
 
     GroupMemoryBarrierWithGroupSync();
 
-    var color = float4(0);
+    var color = inBounds ? storageTextures[0][uint2(gid.xy)] : float4(0.0f);
 
     // tile sort by depth and intersection
     for (uint k = 0; k < surfaceData.drawCommandCount; k += tileSize * tileSize)
