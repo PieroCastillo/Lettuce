@@ -86,6 +86,7 @@ namespace Lettuce::Quimera
     struct DrawSurfaceDesc
     {
         TextureView dstTexture;
+        TextureView dstDepthTexture;
         Extend renderArea;
     };
 
@@ -97,6 +98,7 @@ namespace Lettuce::Quimera
         uint32_t maxImplicitGeometries;
         uint32_t maxBrushes;
         uint32_t maxDrawCommands;
+        Format colorOutputFormat;
     };
 
     struct SurfaceImpl;

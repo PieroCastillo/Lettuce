@@ -36,7 +36,7 @@ void pDrawCommandsMain(uint3 gid: SV_DispatchThreadID,
     var layouts = reinterpret<Ptr<LayoutStorage>>(pc.layoutsAddr);
     var implicitGeometries = reinterpret<Ptr<ImplicitGeometryStorage>>(pc.implicitGeometriesAddr);
     var solidColorBrushes = reinterpret<Ptr<SolidColorBrushStorage>>(pc.solidColorBrushesAddr);
-    
+
     const uint globalIdx = gid.x + (gid.y * surfaceData.width);
     const uint localIdx = lid.x + (lid.y * tileSize);
     const uint tileXCount = (surfaceData.width + 15) / 16;
@@ -191,4 +191,101 @@ void pDrawCommandsMain(uint3 gid: SV_DispatchThreadID,
         if (fullOpaque(brush))
             break;
     */
+}
+
+struct VSOutput
+{
+    float4 position : SV_Position;
+    int drawCommandIdx;
+};
+
+[require(compute, spirv_1_6)]
+[numthreads(computeNumThreadsX, 1, 1)]
+void preprocessMain(uint3 gid: SV_DispatchThreadID,
+                    uint3 lid: SV_GroupThreadID,
+                    uint3 groupId: SV_GroupID)
+{
+    var surfaceData = reinterpret<Ptr<SurfaceData>>(pc.surfaceDataAddr)[0];
+    var layouts = reinterpret<Ptr<LayoutStorage>>(pc.layoutsAddr);
+    var transforms = reinterpret<Ptr<float3x3>>(pc.scratchTransformsAddr);
+
+    const uint globalIdx = gid.x;
+    const uint localIdx = lid.x;
+
+    for (uint layoutIdx = globalIdx; layoutIdx < surfaceData.layoutCount; layoutIdx += computeNumThreadsX)
+    {
+        var layoutT = layouts[layoutIdx];
+        transforms[layoutIdx] = InverseTransform2D(layoutT.position, layoutT.scale, layoutT.skew, layoutT.anchorPoint, layoutT.rotation);
+    }
+}
+
+[require(vertex, spirv_1_6)]
+[shader("vertex")]
+VSOutput vertMain(uint vertexID: SV_VulkanVertexID, uint instanceID: SV_VulkanInstanceID)
+{
+    var surfaceData = reinterpret<Ptr<SurfaceData>>(pc.surfaceDataAddr)[0];
+    var drawCmds = reinterpret<Ptr<DrawCommand>>(pc.drawCommandsAddr);
+    var layouts = reinterpret<Ptr<LayoutStorage>>(pc.layoutsAddr);
+
+    var drawCmd = drawCmds[instanceID];
+    var layout = layouts[drawCmd.layoutIdx];
+
+    float2 corners[4] = {
+        float2(-0.5, -0.5),
+        float2(0.5, -0.5),
+        float2(-0.5, 0.5),
+        float2(0.5, 0.5),
+    };
+
+    var p = corners[vertexID & 3];
+    p -= layout.anchorPoint * float2(rcp(surfaceData.width), rcp(surfaceData.height));
+    p *= layout.scale;
+    p = float2(p.x + layout.skew.x * p.y, p.y + layout.skew.y * p.x);
+
+    float s, c;
+    sincos(layout.rotation, s, c);
+
+    p = float2(c * p.x - s * p.y, s * p.x + c * p.y);
+    p += layout.position;
+
+    float2 ndc;
+    ndc.x = 2.0 * p.x * rcp(surfaceData.width) - 1.0;
+    ndc.y = 1.0 - 2.0 * p.y * rcp(surfaceData.height);
+
+    VSOutput output;
+    output.position = float4(ndc, 0.0, 1.0);
+    output.drawCommandIdx = instanceID;
+
+    return output;
+}
+
+[require(fragment, spirv_1_6)]
+[shader("fragment")]
+float4 fragMain(VSOutput input, float4 pixelPos: SV_Position) : SV_Target
+{
+    var drawCmds = reinterpret<Ptr<DrawCommand>>(pc.drawCommandsAddr);
+    var transforms = reinterpret<Ptr<float3x3>>(pc.scratchTransformsAddr);
+
+    var layouts = reinterpret<Ptr<LayoutStorage>>(pc.layoutsAddr);
+    var implicitGeometries = reinterpret<Ptr<ImplicitGeometryStorage>>(pc.implicitGeometriesAddr);
+    var solidColorBrushes = reinterpret<Ptr<SolidColorBrushStorage>>(pc.solidColorBrushesAddr);
+
+    var drawCmd = drawCmds[input.drawCommandIdx];
+    uint brushHeap, geometryHeap, effectHeap;
+    bool ignoreTransform, clipped;
+    UnpackDrawCommandFlags(drawCmd.flags, geometryHeap, brushHeap, effectHeap, ignoreTransform, clipped);
+
+    if (brushHeap == 0 && geometryHeap == 0)
+    {
+        var brush = solidColorBrushes[drawCmd.brushIdx];
+        var geometry = implicitGeometries[drawCmd.geometryIdx];
+        var transform = transforms[drawCmd.layoutIdx]; // inverses
+
+        // if (!ignoreTransform)
+
+        if (IntersectImplicit(uint2(pixelPos.xy), geometry, transform))
+            return brush.color;
+    }
+
+    return float4(0.0f);
 }

@@ -162,6 +162,8 @@ namespace Lettuce::Quimera
 
         DescriptorTable dtSurface;
         Pipeline pDrawCommands;
+        Pipeline pPreprocess;
+        Pipeline pRasterCommands;
 
         ResourcePool<Geometry, GeometryAccessData> geometries;
         ResourcePool<Brush, BrushAccessData> brushes;

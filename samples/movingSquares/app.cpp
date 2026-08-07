@@ -28,6 +28,7 @@ std::unique_ptr<Surface> surface;
 
 Swapchain swapchain;
 CommandAllocator cmdAlloc;
+TextureView tDepthTarget;
 
 Layout squareLayout;
 Layout circleLayout;
@@ -45,7 +46,7 @@ void draw2dScene(CommandBuffer& lcmd, TextureView frame)
     cmd.Draw(1, square, blueBrush, squareLayout);
     cmd.Draw(2, circle, redBrush, circleLayout);
     cmd.Draw(3, roundRect, yellowBrush, roundRectLayout);
-    cmd.DrawSurface({ frame, { 0, 0, width, height } });
+    cmd.DrawSurface({ frame, tDepthTarget, { 0, 0, width, height } });
 }
 
 void create2dResources()
@@ -86,6 +87,8 @@ void cleanup2dResources()
 {
 }
 
+uint32_t oldFbWidth = width;
+uint32_t oldFbHeight = height;
 void mainLoop()
 {
     while (!glfwWindowShouldClose(window))
@@ -100,42 +103,26 @@ void mainLoop()
 
         auto fbSize = device->NextFrame(swapchain);
 
+        if (fbSize.width != oldFbWidth || fbSize.height != oldFbHeight) [[unlikely]]
+        {
+            device->WaitFor(QueueType::Graphics);
+            device->Destroy(tDepthTarget);
+
+            RenderTargetDesc depthDesc = {
+                .width = width,
+                .height = height,
+                .type = RenderTargetType::Depth_D32,
+                .defaultClearValue = DepthStencilClear {1.0f, 0},
+            };
+            tDepthTarget = device->CreateTextureView(depthDesc);
+
+            oldFbWidth = fbSize.width;
+            oldFbHeight = fbSize.height;
+        }
+
         device->Reset(cmdAlloc);
         auto frame = device->GetCurrentRenderTarget(swapchain);
         auto cmd = device->AllocateCommandBuffer(cmdAlloc);
-
-        BarrierDesc bFragComp = {
-            PipelineAccess::Write,
-            PipelineStage::ColorAttachmentOutput,
-            PipelineAccess::Read,
-            PipelineStage::ComputeShader,
-        };
-
-        BarrierDesc bCompCopy = {
-            PipelineAccess::Write,
-            PipelineStage::ComputeShader,
-            PipelineAccess::Read,
-            PipelineStage::Copy,
-        };
-
-        AttachmentDesc colorAttachment[1] = {
-            {
-                .renderTarget = frame,
-                .loadOp = LoadOp::Clear,
-            }
-        };
-
-        RenderPassDesc renderPassDesc = {
-            .width = fbSize.width,
-            .height = fbSize.height,
-            .colorAttachments = std::span(colorAttachment),
-            .presentAttachmentIdx = 0,
-        };
-
-        cmd.BeginRendering(renderPassDesc);
-        cmd.EndRendering();
-
-        cmd.Barrier({ bFragComp });
 
         draw2dScene(cmd, frame);
 
@@ -191,6 +178,7 @@ void initLettuce()
         .maxImplicitGeometries = 10000,
         .maxBrushes = 10000,
         .maxDrawCommands = 10000,
+        .colorOutputFormat = device->GetRenderTargetFormat(swapchain),
     };
     surface = std::make_unique<Surface>(surfaceCI);
 
@@ -198,12 +186,21 @@ void initLettuce()
         .queueType = QueueType::Graphics,
     };
     cmdAlloc = device->CreateCommandAllocator(cmdAllocDesc);
+
+    RenderTargetDesc depthDesc = {
+        .width = width,
+        .height = height,
+        .type = RenderTargetType::Depth_D32,
+        .defaultClearValue = DepthStencilClear {1.0f, 0},
+    };
+    tDepthTarget = device->CreateTextureView(depthDesc);
 }
 
 void cleanupLettuce()
 {
     device->WaitFor(QueueType::Graphics);
     surface.reset();
+    device->Destroy(tDepthTarget);
     device->Destroy(cmdAlloc);
     device->Destroy(swapchain);
     device.reset();

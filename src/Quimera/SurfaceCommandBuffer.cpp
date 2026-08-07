@@ -138,19 +138,59 @@ void SurfaceCommandBuffer::DrawSurface(const DrawSurfaceDesc& desc)
 
     auto allocs = std::array<PushAllocationBinding, 6>{
         surfImpl->mvSurfaceData,
-        surfImpl->vScratchTransforms.getView(),
-        surfImpl->bDrawCommands.mv,
-        surfImpl->bLayouts.mv,
-        surfImpl->bImplicitGeometry.mv,
-        surfImpl->bSolidColorBrush.mv,
+            surfImpl->vScratchTransforms.getView(),
+            surfImpl->bDrawCommands.mv,
+            surfImpl->bLayouts.mv,
+            surfImpl->bImplicitGeometry.mv,
+            surfImpl->bSolidColorBrush.mv,
     };
 
-    uint32_t cmdCount = surfImpl->bDrawCommands.offset + 1;
-    uint32_t tileXCount = (desc.renderArea.w + 15) / 16;
-    uint32_t tileYCount = (desc.renderArea.h + 15) / 16;
+    // uint32_t cmdCount = surfImpl->bDrawCommands.offset + 1;
+    // uint32_t tileXCount = (desc.renderArea.w + 15) / 16;
+    // uint32_t tileYCount = (desc.renderArea.h + 15) / 16;
+
+    // cmd->BindDescriptorTable(surfImpl->dtSurface, PipelineBindPoint::Compute);
+    // cmd->BindPipeline(surfImpl->pDrawCommands);
+    // cmd->PushAllocations({ allocs, surfImpl->dtSurface });
+    // cmd->Dispatch(tileXCount, tileYCount, 1);
+
+    BarrierDesc bCompVert[] = { {
+        .srcAccess = PipelineAccess::Write,
+        .srcStage = PipelineStage::ComputeShader,
+        .dstAccess = PipelineAccess::Read,
+        .dstStage = PipelineStage::VertexShader,
+    }, };
+
+    AttachmentDesc colorAttachment[1] = {
+        {
+            .renderTarget = desc.dstTexture,
+            .loadOp = LoadOp::Clear,
+        }
+    };
+    AttachmentDesc depthAttachment = {
+        .renderTarget = desc.dstDepthTexture,
+        .loadOp = LoadOp::Clear,
+    };
+
+    RenderPassDesc renderPassDesc = {
+        .width = desc.renderArea.w,
+        .height = desc.renderArea.h,
+        .colorAttachments = std::span(colorAttachment),
+        .depthStencilAttachment = depthAttachment,
+        .presentAttachmentIdx = 0,
+    };
 
     cmd->BindDescriptorTable(surfImpl->dtSurface, PipelineBindPoint::Compute);
-    cmd->BindPipeline(surfImpl->pDrawCommands);
+    cmd->BindPipeline(surfImpl->pPreprocess);
     cmd->PushAllocations({ allocs, surfImpl->dtSurface });
-    cmd->Dispatch(tileXCount, tileYCount, 1);
+    cmd->Dispatch(1, 1, 1);
+
+    cmd->Barrier(bCompVert);
+
+    cmd->BeginRendering(renderPassDesc);
+    cmd->BindDescriptorTable(surfImpl->dtSurface, PipelineBindPoint::Graphics);
+    cmd->BindPipeline(surfImpl->pRasterCommands);
+    cmd->PushAllocations({ allocs, surfImpl->dtSurface });
+    cmd->Draw(6, drawCmdCount);
+    cmd->EndRendering();
 }
