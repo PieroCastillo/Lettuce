@@ -60,7 +60,6 @@ namespace Lettuce::Quimera
 
     struct ImplicitGeometryDesc
     {
-        Size size;
         float leftTopCornerRadious;
         float leftBottomCornerRadious;
         float rightTopCornerRadious;

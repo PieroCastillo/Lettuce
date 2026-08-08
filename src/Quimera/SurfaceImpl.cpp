@@ -34,6 +34,7 @@ void SurfaceImpl::Create(const SurfaceDesc& desc)
     mvSurfaceDataPtr = (SurfaceData*)pDevice->GetMemoryViewInfo(mvSurfaceData).cpuAddress;
     // same count as layouts
     vScratchTransforms = GpuStorageVector<float3x3>(desc.device, desc.maxDrawCommands);
+    vScratchInvTransforms = GpuStorageVector<float3x3>(desc.device, desc.maxDrawCommands);
 
     bDrawCommands = Buffer<DrawCommand>(pDevice, desc.maxDrawCommands);
     bLayouts = Buffer<LayoutStorage>(pDevice, desc.maxDrawCommands);
@@ -43,9 +44,8 @@ void SurfaceImpl::Create(const SurfaceDesc& desc)
     dtSurface = pDevice->CreateDescriptorTable({ 4,4,4 });
 
     auto shaderBin = pDevice->CreateShader({ shadersBuffer });
-    pDrawCommands = pDevice->CreatePipeline({ "pDrawCommandsMain", shaderBin, dtSurface });
 
-    pPreprocess = pDevice->CreatePipeline({ "preprocessMain", shaderBin, dtSurface });
+    // pPreprocess = pDevice->CreatePipeline({ "preprocessMain", shaderBin, dtSurface });
 
     auto formats = std::array{ desc.colorOutputFormat };
     PrimitiveShadingPipelineDesc graphicsDesc = {
@@ -65,9 +65,8 @@ void SurfaceImpl::Create(const SurfaceDesc& desc)
 void SurfaceImpl::Destroy()
 {
     pDevice->Destroy(pRasterCommands);
-    pDevice->Destroy(pPreprocess);
+    //pDevice->Destroy(pPreprocess);
 
-    pDevice->Destroy(pDrawCommands);
     pDevice->Destroy(dtSurface);
 
     pDevice->Destroy(bSolidColorBrush.mv);

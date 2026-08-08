@@ -51,7 +51,6 @@ namespace Lettuce::Quimera
 
     struct ImplicitGeometryStorage
     {
-        float w, h;
         float ctl, ctr, cbl, cbr; // corners
     };
 
@@ -161,7 +160,6 @@ namespace Lettuce::Quimera
         std::chrono::steady_clock::time_point m_startTime;
 
         DescriptorTable dtSurface;
-        Pipeline pDrawCommands;
         Pipeline pPreprocess;
         Pipeline pRasterCommands;
 
@@ -174,6 +172,7 @@ namespace Lettuce::Quimera
         SurfaceData* mvSurfaceDataPtr;
 
         GpuStorageVector<float3x3> vScratchTransforms;
+        GpuStorageVector<float3x3> vScratchInvTransforms;
 
         Buffer<DrawCommand> bDrawCommands;
         Buffer<LayoutStorage> bLayouts;

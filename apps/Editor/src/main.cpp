@@ -111,6 +111,7 @@ class App
             .maxImplicitGeometries = 10000,
             .maxBrushes = 10000,
             .maxDrawCommands = 10000,
+            .colorOutputFormat = device->GetRenderTargetFormat(swapchain),
         };
         surface = std::make_unique<Surface>(surfaceCI);
 
@@ -169,32 +170,26 @@ class App
 
     void create2dResources()
     {
-        LayoutDesc layoutDesc = {
-            .position = float2(500, 420),
-            .scale = float2(1),
-        };
+        LayoutDesc layoutDesc = {};
+
+        uint32_t anchor = 200;
+
+        layoutDesc.position = { 0, 0 };
+        layoutDesc.scale = { anchor, height };
         squareLayout = surface->CreateLayout(layoutDesc);
-        layoutDesc.position = { 760, 310 };
+
+        layoutDesc.position = { anchor, height - anchor };
+        layoutDesc.scale = { width - (2 * anchor), anchor };
         circleLayout = surface->CreateLayout(layoutDesc);
-        layoutDesc.position = { 830, 470 };
+
+        layoutDesc.position = { width - anchor, 0 };
+        layoutDesc.scale = { anchor, height };
         roundRectLayout = surface->CreateLayout(layoutDesc);
 
-        ImplicitGeometryDesc squareData = {
-            .size = { 360, 360 },
-        };
-        square = surface->CreateGeometry(squareData);
-
-        ImplicitGeometryDesc circleData = {
-            { 320, 320 },
-            160, 160, 160, 160,
-        };
-        circle = surface->CreateGeometry(circleData);
-
-        ImplicitGeometryDesc yellowRoundRectData = {
-            { 300, 180 },
-            45, 45, 45, 45,
-        };
-        roundRect = surface->CreateGeometry(yellowRoundRectData);
+        ImplicitGeometryDesc noCorners = {};
+        square = surface->CreateGeometry(noCorners);
+        circle = surface->CreateGeometry(noCorners);
+        roundRect = surface->CreateGeometry(noCorners);
 
         redBrush = surface->CreateBrush({ .color = Colors::Red });
         blueBrush = surface->CreateBrush({ .color = Colors::Blue });
@@ -324,15 +319,15 @@ class App
                 .dstStage = PipelineStage::Copy,
             }, };
 
-            BarrierDesc bColorOutputComp[] = { {
+            BarrierDesc bColorOutputVert[] = { {
                 .srcAccess = PipelineAccess::Write,
                 .srcStage = PipelineStage::ColorAttachmentOutput,
                 .dstAccess = PipelineAccess::Read,
-                .dstStage = PipelineStage::Copy,
+                .dstStage = PipelineStage::VertexShader,
             }, };
 
             // cmd.ClearTexture(clearDesc);
-            // cmd.Barrier(bCopyComp);
+            cmd.Barrier(bCopyComp);
 
             Debug::DebugPassRecordDesc record = {
                 .fbWidth = fbSize.width,
@@ -348,13 +343,13 @@ class App
             };
             debugPass->Record(cmd, record);
 
-            cmd.Barrier(bColorOutputComp);
+            cmd.Barrier(bColorOutputVert);
 
             auto scmd = SurfaceCommandBuffer(*surface, cmd);
-            scmd.Draw(1, square, blueBrush, squareLayout);
+            scmd.Draw(3, square, blueBrush, squareLayout);
             scmd.Draw(2, circle, redBrush, circleLayout);
-            scmd.Draw(3, roundRect, yellowBrush, roundRectLayout);
-            scmd.DrawSurface({ frame, { 0, 0, width, height } });
+            scmd.Draw(1, roundRect, yellowBrush, roundRectLayout);
+            scmd.DrawSurface({ frame, tDepthTarget, { 0, 0, fbSize.width, fbSize.height } });
 
             // if (isPressed)
             // {

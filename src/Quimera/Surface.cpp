@@ -76,7 +76,6 @@ auto Surface::CreateAnimation(const NaturalMotionAnimationDesc&) -> Animation
 auto Surface::CreateGeometry(const ImplicitGeometryDesc& desc) -> Geometry
 {
     auto geoIdx = impl->bImplicitGeometry.Push({
-        desc.size.w, desc.size.h,
         desc.leftTopCornerRadious, desc.rightTopCornerRadious,
         desc.leftBottomCornerRadious, desc.rightBottomCornerRadious,
         });

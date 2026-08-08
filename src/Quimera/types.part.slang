@@ -12,7 +12,6 @@ struct SurfaceData
 
 struct ImplicitGeometryStorage
 {
-    float w, h;
     float ctl, ctr, cbl, cbr; // corners
 };
 
@@ -53,6 +52,7 @@ struct PushConstants
 {
     uint64_t surfaceDataAddr;
     uint64_t scratchTransformsAddr;
+    uint64_t scratchInvTransformsAddr;
     uint64_t drawCommandsAddr;
     uint64_t layoutsAddr;
     uint64_t implicitGeometriesAddr;

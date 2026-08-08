@@ -40,41 +40,41 @@ Brush redBrush;
 Brush blueBrush;
 Brush yellowBrush;
 
-void draw2dScene(CommandBuffer& lcmd, TextureView frame)
+void draw2dScene(CommandBuffer& lcmd, TextureView frame, uint32_t fbWidth, uint32_t fbHeight)
 {
     auto cmd = SurfaceCommandBuffer(*surface, lcmd);
-    cmd.Draw(1, square, blueBrush, squareLayout);
+    cmd.Draw(3, square, blueBrush, squareLayout);
     cmd.Draw(2, circle, redBrush, circleLayout);
-    cmd.Draw(3, roundRect, yellowBrush, roundRectLayout);
-    cmd.DrawSurface({ frame, tDepthTarget, { 0, 0, width, height } });
+    cmd.Draw(1, roundRect, yellowBrush, roundRectLayout);
+    cmd.DrawSurface({ frame, tDepthTarget, { 0, 0, fbWidth, fbHeight } });
 }
 
 void create2dResources()
 {
-    LayoutDesc layoutDesc = {
-        .position = float2(500, 420),
-        .scale = float2(1),
-    };
+    LayoutDesc layoutDesc = {};
+
+    layoutDesc.position = { 300, 300 };
+    layoutDesc.scale = { 300, 300 };
     squareLayout = surface->CreateLayout(layoutDesc);
-    layoutDesc.position = { 760, 310 };
+
+    layoutDesc.position = { 520, 150 };
+    layoutDesc.scale = { 300, 300 };
     circleLayout = surface->CreateLayout(layoutDesc);
-    layoutDesc.position = { 830, 470 };
+
+    layoutDesc.position = { 600, 420 };
+    layoutDesc.scale = { 250, 150 };
     roundRectLayout = surface->CreateLayout(layoutDesc);
 
-    ImplicitGeometryDesc squareData = {
-        .size = { 360, 360 },
-    };
+    ImplicitGeometryDesc squareData = {};
     square = surface->CreateGeometry(squareData);
 
     ImplicitGeometryDesc circleData = {
-        { 320, 320 },
-        160, 160, 160, 160,
+        0.5, 0.5,0.5, 0.5,
     };
     circle = surface->CreateGeometry(circleData);
 
     ImplicitGeometryDesc yellowRoundRectData = {
-        { 300, 180 },
-        45, 45, 45, 45,
+        0.1, 0.1, 0.1, 0.1,
     };
     roundRect = surface->CreateGeometry(yellowRoundRectData);
 
@@ -124,7 +124,7 @@ void mainLoop()
         auto frame = device->GetCurrentRenderTarget(swapchain);
         auto cmd = device->AllocateCommandBuffer(cmdAlloc);
 
-        draw2dScene(cmd, frame);
+        draw2dScene(cmd, frame, fbSize.width, fbSize.height);
 
         std::array<std::span<CommandBuffer>, 1> cmds = { std::span(&cmd, 1) };
 
@@ -134,10 +134,9 @@ void mainLoop()
             .presentSwapchain = swapchain,
         };
 
-        auto token = device->SubmitAsync(submitDesc);
-        device->WaitFor(token);
-
+        device->Submit(submitDesc);
         device->DisplayFrame(swapchain);
+        device->WaitFor(QueueType::Graphics);
 
         glfwPollEvents();
     }
