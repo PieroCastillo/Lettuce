@@ -15,3 +15,8 @@ Build with xmake.
 ```cmd
 xmake
 ```
+
+For debug you can use:
+```cmd
+xmake f --mode=debug --san=asan
+```
