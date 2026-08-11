@@ -256,7 +256,7 @@ class App
                     .width = width,
                     .height = height,
                     .depth = 1,
-                    .format = Format::Raw_R32_UInt,
+                    .format = Format::Atomic_R32_UInt,
                     .mipCount = 1,
                     .layerCount = 1,
                     .cpuVisible = false,
@@ -322,6 +322,15 @@ class App
             };
             debugPass->Record(cmd, record);
 
+
+            cmd.Barrier(bColorOutputVert);
+
+            auto scmd = SurfaceCommandBuffer(*surface, cmd);
+            scmd.Draw(3, square, blueBrush, squareLayout);
+            scmd.Draw(2, circle, redBrush, circleLayout);
+            scmd.Draw(1, roundRect, yellowBrush, roundRectLayout);
+            scmd.DrawSurface({ frame, tDepthTarget, tPickTexture, { 0, 0, fbSize.width, fbSize.height } });
+
             if (isPressed)
             {
                 cmd.Barrier(bFragCopy);
@@ -331,14 +340,6 @@ class App
             {
                 *pickInstance = 0;
             }
-
-            cmd.Barrier(bColorOutputVert);
-
-            auto scmd = SurfaceCommandBuffer(*surface, cmd);
-            scmd.Draw(3, square, blueBrush, squareLayout);
-            scmd.Draw(2, circle, redBrush, circleLayout);
-            scmd.Draw(1, roundRect, yellowBrush, roundRectLayout);
-            scmd.DrawSurface({ frame, tDepthTarget, { 0, 0, fbSize.width, fbSize.height } });
 
             std::array<std::span<CommandBuffer>, 1> cmds = { std::span(&cmd, 1) };
 
@@ -353,7 +354,15 @@ class App
             device->DisplayFrame(swapchain);
             device->WaitFor(QueueType::Graphics);
             if (isPressed)
-                std::println("picked instance: {}", *pickInstance);
+            {
+                uint32_t value = *pickInstance;
+                if (value == 0)
+                    std::println("no instance selected");
+                else if ((value & (1 << 31)) != 0)
+                    std::println("instance 2D selected: {}", (value & ((1U << 31) - 1)) - 1);
+                else
+                    std::println("instance 3D selected: {}", value - 1);
+            }
 
             glfwPollEvents();
         }

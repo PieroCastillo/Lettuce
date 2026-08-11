@@ -46,7 +46,7 @@ void SurfaceImpl::Create(const SurfaceDesc& desc)
 
     // pPreprocess = pDevice->CreatePipeline({ "preprocessMain", shaderBin, dtSurface });
 
-    auto formats = std::array{ desc.colorOutputFormat };
+    auto formats = std::array{ desc.colorOutputFormat, Format::Atomic_R32_UInt };
     PrimitiveShadingPipelineDesc graphicsDesc = {
         .fragmentShadingRate = false,
         .vertEntryPoint = "vertMain",

@@ -136,7 +136,8 @@ void SurfaceCommandBuffer::DrawSurface(const DrawSurfaceDesc& desc)
     // set width & height
     *(surfImpl->surfaceData) = { static_cast<uint32_t>(desc.renderArea.w), static_cast<uint32_t>(desc.renderArea.h), drawCmdCount, (uint32_t)(surfImpl->bLayouts.maxCount / sizeof(LayoutStorage)) };
 
-    auto allocs = std::array<PushAllocationBinding, 7> {
+    auto allocs = std::array<PushAllocationBinding, 7>
+    {
         surfImpl->surfaceData.getView(),
         surfImpl->vScratchTransforms.getView(),
         surfImpl->vScratchInvTransforms.getView(),
@@ -153,12 +154,14 @@ void SurfaceCommandBuffer::DrawSurface(const DrawSurfaceDesc& desc)
         .dstStage = PipelineStage::VertexShader,
     }, };
 
-    AttachmentDesc colorAttachment[1] = {
-        {
-            .renderTarget = desc.dstTexture,
-            .loadOp = LoadOp::Load,
-        }
-    };
+    AttachmentDesc colorAttachment[2] = { {
+        .renderTarget = desc.dstTexture,
+        .loadOp = LoadOp::Load,
+    },
+    {
+        .renderTarget = desc.dstPickTexture,
+        .loadOp = LoadOp::Load,
+    }};
     AttachmentDesc depthAttachment = {
         .renderTarget = desc.dstDepthTexture,
         .loadOp = LoadOp::Clear,

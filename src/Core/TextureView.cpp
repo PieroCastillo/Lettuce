@@ -105,6 +105,14 @@ auto Device::CreateTextureView(const TextureViewDesc& desc) -> TextureView
 
     VkFormat format = ToVkFormat(desc.format);
 
+    VkFormatProperties2 formatProps2 = {
+        .sType = VK_STRUCTURE_TYPE_FORMAT_PROPERTIES_2,
+    };
+    vkGetPhysicalDeviceFormatProperties2(impl->m_physicalDevice, format, &formatProps2);
+
+    if((formatProps2.formatProperties.optimalTilingFeatures & VK_FORMAT_FEATURE_COLOR_ATTACHMENT_BIT ) != 0)
+        usageFlags |= VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+
     // TODO: impl tryCompression
     VkImageSubresourceRange subresourceRange = {
         VK_IMAGE_ASPECT_COLOR_BIT,

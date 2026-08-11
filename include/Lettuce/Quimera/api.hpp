@@ -86,6 +86,7 @@ namespace Lettuce::Quimera
     {
         TextureView dstTexture;
         TextureView dstDepthTexture;
+        TextureView dstPickTexture; // FORMAT: Atomic_R32_UInt
         Extend renderArea;
     };
 

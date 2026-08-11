@@ -140,7 +140,7 @@ PSOutput fragMain(VSOutput input, uint4 fragCoord: SV_Position)
 {
     PSOutput output;
     output.colorOutput = float4(input.color, 1);
-    output.pickOutput = input.instanceID;
+    output.pickOutput = input.instanceID + 1;
 
     return output;
 }

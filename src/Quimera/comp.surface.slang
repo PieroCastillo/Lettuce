@@ -21,6 +21,12 @@ struct VSOutput
     int drawCommandIdx;
 };
 
+struct PSOutput
+{
+    float4 color : SV_Target0;
+    uint32_t pick : SV_Target1;
+};
+
 [require(compute, spirv_1_6)]
 [numthreads(computeNumThreadsX, 1, 1)]
 void preprocessMain(uint3 gid: SV_DispatchThreadID)
@@ -98,7 +104,7 @@ VSOutput vertMain(uint vertexID: SV_VertexID, uint instanceID: SV_InstanceID)
 
 [require(fragment, spirv_1_6)]
 [shader("fragment")]
-float4 fragMain(VSOutput input) : SV_Target
+PSOutput fragMain(VSOutput input)
 {
     var drawCmds = reinterpret<Ptr<DrawCommand>>(pc.drawCommandsAddr);
     var implicitGeometries = reinterpret<Ptr<ImplicitGeometryStorage>>(pc.implicitGeometriesAddr);
@@ -120,5 +126,8 @@ float4 fragMain(VSOutput input) : SV_Target
     if (!IntersectImplicit(input.localPos, geometry))
         discard;
 
-    return brush.color;
+    PSOutput output;
+    output.color = brush.color;
+    output.pick = (input.drawCommandIdx + 1) | (1 << 31); // first zero
+    return output;
 }
