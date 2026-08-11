@@ -168,8 +168,7 @@ namespace Lettuce::Quimera
         ResourcePool<Layout, LayoutAccessData> layouts;
         ResourcePool<Animation, AnimationData> animations;
 
-        MemoryView mvSurfaceData;
-        SurfaceData* mvSurfaceDataPtr;
+        GpuUniquePtr<SurfaceData> surfaceData;
 
         GpuStorageVector<float3x3> vScratchTransforms;
         GpuStorageVector<float3x3> vScratchInvTransforms;

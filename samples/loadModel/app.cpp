@@ -229,49 +229,6 @@ void mainLoop()
         auto frame = device->GetCurrentRenderTarget(swapchain);
         auto cmd = device->AllocateCommandBuffer(cmdAlloc);
 
-        // TextureToMemoryCopy tmPixelCopy =
-        // {
-        //     .srcTexture = tPickTexture,
-        //     .dstMemory = mvPickInstanceData,
-        //     .mipmapLevel = 0,
-        //     .layerBaseLevel = 0,
-        //     .layerCount = 1,
-        //     .x = static_cast<uint32_t>(xCursorPos), .y = static_cast<uint32_t>(yCursorPos), .width = 1, .height = 1,
-        // };
-
-        ClearTextureDesc clearDesc = {
-            .texture = tPickTexture,
-            .color = {1.0f},
-            .baseLevel = 0,
-            .levelCount = 1,
-            .baseLayer = 0,
-            .layerCount = 1,
-        };
-
-        BarrierDesc bCopyComp[] = { {
-            .srcAccess = PipelineAccess::Write,
-            .srcStage = PipelineStage::ComputeShader,
-            .dstAccess = PipelineAccess::Read,
-            .dstStage = PipelineStage::ComputeShader,
-        }, };
-
-        BarrierDesc bCompInd[] = { {
-            .srcAccess = PipelineAccess::Write,
-            .srcStage = PipelineStage::ComputeShader,
-            .dstAccess = PipelineAccess::Read,
-            .dstStage = PipelineStage::DrawIndirect,
-        }, };
-
-        BarrierDesc bFragCopy[] = { {
-            .srcAccess = PipelineAccess::Write,
-            .srcStage = PipelineStage::FragmentShader,
-            .dstAccess = PipelineAccess::Read,
-            .dstStage = PipelineStage::Copy,
-        }, };
-
-        // cmd.ClearTexture(clearDesc);
-        // cmd.Barrier(bCopyComp);
-
         Debug::DebugPassRecordDesc record = {
             .fbWidth = fbSize.width,
             .fbHeight = fbSize.height,
@@ -286,16 +243,6 @@ void mainLoop()
         };
         debugPass->Record(cmd, record);
 
-        // if (isPressed)
-        // {
-        //     cmd.Barrier(bFragCopy);
-        //     cmd.MemoryCopy(tmPixelCopy);
-        // }
-        // else
-        // {
-        //     *((uint32_t*)mviPickInstanceData.cpuAddress) = 0;
-        // }
-
         std::array<std::span<CommandBuffer>, 1> cmds = { std::span(&cmd, 1) };
 
         CommandBufferSubmitDesc submitDesc = {
@@ -308,14 +255,6 @@ void mainLoop()
 
         device->DisplayFrame(swapchain);
         device->WaitFor(QueueType::Graphics);
-        // if (isPressed)
-        //     std::println("picked instance: {}", *((uint32_t*)mviPickInstanceData.cpuAddress) - 1);
-        // auto baseGenDrawCallPtr = (VkDrawIndirectCommand*)mviDebugBuffer.cpuAddress;
-        // for (size_t i = 0; i < debugBufferCount; ++i) {
-        //     auto genDrawCallPtr = (baseGenDrawCallPtr + i);
-        //     std::print(" {},{},{},{} |", genDrawCallPtr->vertexCount, genDrawCallPtr->instanceCount, genDrawCallPtr->firstVertex, genDrawCallPtr->firstVertex);
-        // }
-        // std::println();
 
         glfwPollEvents();
     }
