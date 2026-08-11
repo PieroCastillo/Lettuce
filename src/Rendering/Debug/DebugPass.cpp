@@ -73,7 +73,7 @@ void DebugPass::Create(const DebugPassDesc& desc)
         shaderFile.read((char*)shaderBuffer.data(), fileSize);
         auto shader = m_device->CreateShader({ shaderBuffer });
 
-        auto formats = std::array{ desc.colorOutputFormat };
+        auto formats = std::array{ desc.colorOutputFormat, Format::Atomic_R32_UInt };
 
         ComputePipelineDesc compDesc = {
             .compEntryPoint = "buildCommandsMain",
@@ -130,9 +130,13 @@ void DebugPass::Record(CommandBuffer& cmd, const DebugPassRecordDesc& desc)
         .dstStage = PipelineStage::DrawIndirect,
     }, };
 
-    AttachmentDesc colorAttachment[1] = {
+    AttachmentDesc colorAttachments[2] = {
     {
         .renderTarget = desc.rtColorOutput,
+        .loadOp = LoadOp::Clear,
+    },
+    {
+        .renderTarget = desc.rtPick,
         .loadOp = LoadOp::Clear,
     }
     };
@@ -144,7 +148,7 @@ void DebugPass::Record(CommandBuffer& cmd, const DebugPassRecordDesc& desc)
     RenderPassDesc renderPassDesc = {
         .width = desc.fbWidth,
         .height = desc.fbHeight,
-        .colorAttachments = std::span(colorAttachment),
+        .colorAttachments = std::span(colorAttachments),
         .depthStencilAttachment = depthAttachment,
         .presentAttachmentIdx = 0,
     };

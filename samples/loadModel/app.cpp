@@ -240,6 +240,7 @@ void mainLoop()
             .culledInstances = scene->GetInstanceTable(),
             .rtColorOutput = frame,
             .rtDepth = tDepthTarget,
+            .rtPick = tPickTexture,
         };
         debugPass->Record(cmd, record);
 

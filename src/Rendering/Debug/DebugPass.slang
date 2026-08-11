@@ -17,6 +17,12 @@ struct VSOutput
     nointerpolation uint32_t instanceID;
 };
 
+struct PSOutput
+{
+    float4 colorOutput : SV_Target0;
+    uint32_t pickOutput : SV_Target1;
+};
+
 struct PushConstants
 {
     uint64_t sceneViewDataAddr;
@@ -122,15 +128,19 @@ VSOutput vertMain(uint vertexID: SV_VulkanVertexID, uint instanceID: SV_DrawInde
 
     var worldPos = mul(instance.localTransform, float4(position, 1.0));
     output.position = mul(sceneViewData.viewProj, float4(worldPos.xyz, 1.0));
-    output.color = 
-    make_random_color(cluster.clusterID);
+    output.color = make_random_color(cluster.clusterID);
+    output.instanceID = instanceID;
 
     return output;
 }
 
 [require(fragment, spirv_1_6)]
 [shader("fragment")]
-float4 fragMain(VSOutput input, uint4 fragCoord: SV_Position) : SV_Target
+PSOutput fragMain(VSOutput input, uint4 fragCoord: SV_Position)
 {
-    return float4(input.color, 1);
+    PSOutput output;
+    output.colorOutput = float4(input.color, 1);
+    output.pickOutput = input.instanceID;
+
+    return output;
 }

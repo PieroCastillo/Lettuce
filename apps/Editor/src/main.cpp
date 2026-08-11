@@ -40,7 +40,7 @@ class App
     std::unique_ptr<SceneView> scene;
     std::unique_ptr<Debug::DebugPass> debugPass;
     GpuUniquePtr<SceneViewData> sceneViewData;
-    GpuUniquePtr<uint32_t> pickInstanceData;
+    GpuUniquePtr<uint32_t> pickInstance;
 
     TextureView tDepthTarget;
     TextureView tPickTexture;
@@ -125,7 +125,7 @@ class App
     {
         // load buffers
         sceneViewData = GpuUniquePtr<SceneViewData>(*device);
-        pickInstanceData = GpuUniquePtr<uint32_t>(*device);
+        pickInstance = GpuUniquePtr<uint32_t>(*device);
 
         TextureViewDesc pickDesc = {
             .width = width,
@@ -279,25 +279,6 @@ class App
             auto frame = device->GetCurrentRenderTarget(swapchain);
             auto cmd = device->AllocateCommandBuffer(cmdAlloc);
 
-            // TextureToMemoryCopy tmPixelCopy =
-            // {
-            //     .srcTexture = tPickTexture,
-            //     .dstMemory = mvPickInstanceData,
-            //     .mipmapLevel = 0,
-            //     .layerBaseLevel = 0,
-            //     .layerCount = 1,
-            //     .x = static_cast<uint32_t>(xCursorPos), .y = static_cast<uint32_t>(yCursorPos), .width = 1, .height = 1,
-            // };
-
-            ClearTextureDesc clearDesc = {
-                .texture = tPickTexture,
-                .color = {1.0f},
-                .baseLevel = 0,
-                .levelCount = 1,
-                .baseLayer = 0,
-                .layerCount = 1,
-            };
-
             BarrierDesc bCopyComp[] = { {
                 .srcAccess = PipelineAccess::Write,
                 .srcStage = PipelineStage::ComputeShader,
@@ -314,7 +295,7 @@ class App
 
             BarrierDesc bFragCopy[] = { {
                 .srcAccess = PipelineAccess::Write,
-                .srcStage = PipelineStage::FragmentShader,
+                .srcStage = PipelineStage::ColorAttachmentOutput,
                 .dstAccess = PipelineAccess::Read,
                 .dstStage = PipelineStage::Copy,
             }, };
@@ -325,9 +306,6 @@ class App
                 .dstAccess = PipelineAccess::Read,
                 .dstStage = PipelineStage::VertexShader,
             }, };
-
-            // cmd.ClearTexture(clearDesc);
-            cmd.Barrier(bCopyComp);
 
             Debug::DebugPassRecordDesc record = {
                 .fbWidth = fbSize.width,
@@ -340,8 +318,19 @@ class App
                 .culledInstances = scene->GetInstanceTable(),
                 .rtColorOutput = frame,
                 .rtDepth = tDepthTarget,
+                .rtPick = tPickTexture,
             };
             debugPass->Record(cmd, record);
+
+            if (isPressed)
+            {
+                cmd.Barrier(bFragCopy);
+                Lettuce::Utils::Algorithm::LazyCopyPixel<uint32_t>(cmd, tPickTexture, xCursorPos, yCursorPos, pickInstance);
+            }
+            else
+            {
+                *pickInstance = 0;
+            }
 
             cmd.Barrier(bColorOutputVert);
 
@@ -350,16 +339,6 @@ class App
             scmd.Draw(2, circle, redBrush, circleLayout);
             scmd.Draw(1, roundRect, yellowBrush, roundRectLayout);
             scmd.DrawSurface({ frame, tDepthTarget, { 0, 0, fbSize.width, fbSize.height } });
-
-            // if (isPressed)
-            // {
-            //     cmd.Barrier(bFragCopy);
-            //     cmd.MemoryCopy(tmPixelCopy);
-            // }
-            // else
-            // {
-            //     *((uint32_t*)mviPickInstanceData.cpuAddress) = 0;
-            // }
 
             std::array<std::span<CommandBuffer>, 1> cmds = { std::span(&cmd, 1) };
 
@@ -373,14 +352,8 @@ class App
 
             device->DisplayFrame(swapchain);
             device->WaitFor(QueueType::Graphics);
-            // if (isPressed)
-            //     std::println("picked instance: {}", *((uint32_t*)mviPickInstanceData.cpuAddress) - 1);
-            // auto baseGenDrawCallPtr = (VkDrawIndirectCommand*)mviDebugBuffer.cpuAddress;
-            // for (size_t i = 0; i < debugBufferCount; ++i) {
-            //     auto genDrawCallPtr = (baseGenDrawCallPtr + i);
-            //     std::print(" {},{},{},{} |", genDrawCallPtr->vertexCount, genDrawCallPtr->instanceCount, genDrawCallPtr->firstVertex, genDrawCallPtr->firstVertex);
-            // }
-            // std::println();
+            if (isPressed)
+                std::println("picked instance: {}", *pickInstance);
 
             glfwPollEvents();
         }
@@ -394,7 +367,7 @@ class App
         debugPass.reset();
 
         sceneViewData.reset();
-        pickInstanceData.reset();
+        pickInstance.reset();
 
         device->Destroy(descriptorTable);
         device->Destroy(tDepthTarget);

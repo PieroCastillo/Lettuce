@@ -11,6 +11,7 @@ Created by @PieroCastillo on 2025-01-5
 
 #include "../Core/api.hpp"
 
+#include "Algorithm.hpp"
 #include "AssetLoader.hpp"
 #include "Camera3D.hpp"
 #include "FrameTimer.hpp"
