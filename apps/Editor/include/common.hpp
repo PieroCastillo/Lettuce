@@ -17,6 +17,17 @@ using namespace Lettuce::Rendering;
 
 namespace Editor
 {
+    enum PickedInstanceType : uint8_t
+    {
+        None, UI2D, Scene3D
+    };
+
+    struct PickResult
+    {
+        PickedInstanceType type;
+        uint32_t instanceID;
+    };
+
     struct RenderInfo
     {
         CommandBuffer& cmd;

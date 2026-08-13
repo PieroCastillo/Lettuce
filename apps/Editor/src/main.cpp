@@ -73,7 +73,7 @@ namespace Editor
             {
                 timer.Tick();
                 input.Update(window->GetHandle());
-                workspace->Update(timer, input);
+                workspace->Update(timer, input, viewport->GetPickResult());
 
                 auto& device = renderer->GetDevice();
                 auto swapchain = renderer->GetSwapchain();
@@ -92,7 +92,10 @@ namespace Editor
                 auto fbSize = device.NextFrame(swapchain);
 
                 if (fbSize.width != oldFbWidth || fbSize.height != oldFbHeight) [[unlikely]]
+                {
+                    viewport->Resize(fbSize.width, fbSize.height);
                     renderer->Resize(fbSize.width, fbSize.height);
+                }
 
                 device.Reset(cmdAlloc);
                 auto frame = device.GetCurrentRenderTarget(swapchain);

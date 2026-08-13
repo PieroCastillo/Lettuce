@@ -19,17 +19,6 @@ using namespace Lettuce::Foundations;
 
 namespace Editor
 {
-    enum PickedInstanceType : uint8_t
-    {
-        None, UI2D, Scene3D
-    };
-
-    struct PickResult
-    {
-        PickedInstanceType type;
-        uint32_t instanceID;
-    };
-
     class EditorViewport
     {
         Device& device;

@@ -28,6 +28,8 @@ SceneWorkspace::SceneWorkspace(Device& device)
 
     Lettuce::Utils::Camera3DDesc camDesc;
     camera = Lettuce::Utils::Camera3D(camDesc);
+
+    sceneViewData->viewProj = camera.Update({ false, false, false, false, 0.5f });
 }
 
 SceneWorkspace::~SceneWorkspace()
@@ -36,7 +38,7 @@ SceneWorkspace::~SceneWorkspace()
     scene.reset();
 }
 
-void SceneWorkspace::Update(const Lettuce::Utils::FrameTimer& timer, const InputSystem& input)
+void SceneWorkspace::Update(const Lettuce::Utils::FrameTimer& timer, const InputSystem& input, const PickResult& pick)
 {
     double dt = timer.GetDeltaTime();
 
@@ -47,5 +49,43 @@ void SceneWorkspace::Update(const Lettuce::Utils::FrameTimer& timer, const Input
         camera.Rotate({ delta.x , delta.y });
     }
 
-    sceneViewData->viewProj = camera.Update({ state.wKeyPressed,state.aKeyPressed, state.sKeyPressed, state.dKeyPressed, static_cast<float>(dt) });
+    if (state.activeKeys[InputKey::Ctrl])
+    {
+        sceneViewData->viewProj = camera.Update({
+            state.activeKeys[InputKey::W],  state.activeKeys[InputKey::A],
+            state.activeKeys[InputKey::S],  state.activeKeys[InputKey::D],
+            static_cast<float>(dt)});
+        return;
+    }
+
+    if (pick.type != PickedInstanceType::Scene3D)
+        return;
+
+    // if (input.GetState().mouseLeftPressed)
+    // {
+    //     // scene->GetInstanceTable()[instanceIdx].localTransform = 
+    // }
+
+    auto instanceIdx = pick.instanceID;
+    auto direction = glm::vec<3, double>{};
+
+    /*
+    W     this seems like this: |
+    S D                         . __
+    */
+    if (input.GetState().activeKeys[InputKey::W])
+        direction.y = 1;
+    if (input.GetState().activeKeys[InputKey::S])
+        direction.z = 1;
+    if (input.GetState().activeKeys[InputKey::D])
+        direction.x = 1;
+
+    if (input.GetState().activeKeys[InputKey::X])
+        direction *= -1;
+
+    auto speed = 0.5 * direction;
+    auto dr = (float3)(speed * dt);
+
+    auto transform = scene->GetInstanceTable()[instanceIdx].localTransform;
+    scene->GetInstanceTable()[instanceIdx].localTransform = glm::translate(float4x4(1.0f), float3(dr)) * transform;
 }

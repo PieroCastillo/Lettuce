@@ -11,6 +11,7 @@ Created by @PieroCastillo on 2026-08-11
 #include <type_traits>
 
 #include "Lettuce/Lettuce.hpp"
+#include "common.hpp"
 #include "Input.hpp"
 
 using namespace Lettuce::Core;
@@ -27,7 +28,7 @@ namespace Editor
         SceneWorkspace(Device& device);
         ~SceneWorkspace();
 
-        void Update(const Lettuce::Utils::FrameTimer&, const InputSystem&);
+        void Update(const Lettuce::Utils::FrameTimer&, const InputSystem&, const PickResult&);
 
         SceneView& GetView() { return *scene; }
         GpuSpan<SceneViewData> GetViewData() { return GpuSpan(sceneViewData); }
