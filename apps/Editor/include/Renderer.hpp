@@ -26,7 +26,6 @@ namespace Editor
         CommandAllocator cmdAlloc;
 
         TextureView depthTarget;
-        TextureView pickTarget;
     public:
         Renderer(Window& window);
         ~Renderer();
@@ -42,18 +41,7 @@ namespace Editor
         auto GetSwapchain() const { return swapchain; };
 
         auto GetDepthTarget() const { return depthTarget; }
-        auto GetPickTarget() const { return pickTarget; }
         auto GetCommandAllocator() const { return cmdAlloc; }
-    };
-
-    struct RenderInfo
-    {
-        CommandBuffer& cmd;
-        TextureView frame;
-        TextureView depthTarget;
-        TextureView pickTarget;
-        uint32_t fbWidth;
-        uint32_t fbHeight; 
     };
 };
 #endif // EDITOR_RENDERER_HPP

@@ -38,7 +38,6 @@ Renderer::~Renderer()
     device->WaitFor(QueueType::Graphics);
 
     device->Destroy(depthTarget);
-    device->Destroy(pickTarget);
 
     device->Destroy(cmdAlloc);
     device->Destroy(swapchain);
@@ -60,20 +59,6 @@ void Renderer::Resize(uint32_t width, uint32_t height)
     device->WaitFor(QueueType::Graphics);
     if (depthTarget.generation != 0)
         device->Destroy(depthTarget);
-
-    if (pickTarget.generation != 0)
-        device->Destroy(pickTarget);
-
-    TextureViewDesc pickDesc = {
-        .width = width,
-        .height = height,
-        .depth = 1,
-        .format = Format::Atomic_R32_UInt,
-        .mipCount = 1,
-        .layerCount = 1,
-        .cpuVisible = false,
-    };
-    pickTarget = device->CreateTextureView(pickDesc);
 
     RenderTargetDesc depthDesc = {
         .width = width,

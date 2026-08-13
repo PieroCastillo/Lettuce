@@ -10,6 +10,7 @@ Created by @PieroCastillo on 2026-08-12
 #include <string>
 
 #include "Lettuce/Lettuce.hpp"
+#include "common.hpp"
 #include "Renderer.hpp"
 
 using namespace Lettuce::Core;

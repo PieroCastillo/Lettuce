@@ -2,13 +2,14 @@
 #include <memory>
 
 #include "Lettuce/Lettuce.hpp"
+#include "common.hpp"
 #include "Renderer.hpp"
 #include "Input.hpp"
-#include "SceneEditor.hpp"
+#include "SceneWorkspace.hpp"
 
 using namespace Editor;
 
-SceneEditor::SceneEditor(Device& device)
+SceneWorkspace::SceneWorkspace(Device& device)
 {
     std::filesystem::path modelPath = "../../../../external/models/DragonAttenuation.glb";
 
@@ -29,13 +30,13 @@ SceneEditor::SceneEditor(Device& device)
     camera = Lettuce::Utils::Camera3D(camDesc);
 }
 
-SceneEditor::~SceneEditor()
+SceneWorkspace::~SceneWorkspace()
 {
     sceneViewData.reset();
     scene.reset();
 }
 
-void SceneEditor::Update(const Lettuce::Utils::FrameTimer& timer, const InputSystem& input)
+void SceneWorkspace::Update(const Lettuce::Utils::FrameTimer& timer, const InputSystem& input)
 {
     double dt = timer.GetDeltaTime();
 
