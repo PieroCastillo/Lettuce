@@ -3,8 +3,11 @@
 #include "common.hpp"
 #include "UIOverlay.hpp"
 
+#include "Lettuce/UI/api.hpp"
+
 using namespace Lettuce::Core;
 using namespace Lettuce::Quimera;
+using namespace Lettuce::UI;
 using namespace Editor;
 
 void UIOverlay::createResources()
@@ -35,6 +38,14 @@ void UIOverlay::createResources()
     redBrush = surface->CreateBrush({ .color = Colors::Red });
     blueBrush = surface->CreateBrush({ .color = Colors::Blue });
     yellowBrush = surface->CreateBrush({ .color = Colors::Yellow });
+
+    // auto uiscene = UIScene::Build([&]() => {
+    //     return UIView {
+    //         .children = {
+    //             Button { .content = "Click me!" },
+    //         };
+    //     };
+    // });
 }
 
 UIOverlay::UIOverlay(Device& device, Swapchain swapchain)
@@ -54,6 +65,11 @@ UIOverlay::UIOverlay(Device& device, Swapchain swapchain)
 UIOverlay::~UIOverlay()
 {
     surface.reset();
+}
+
+void UIOverlay::Update(uint32_t fbWidth, uint32_t fbHeight, const Lettuce::Utils::FrameTimer& time, const InputState& input)
+{
+
 }
 
 void UIOverlay::Record(RenderInfo& renderInfo)

@@ -11,6 +11,7 @@ Created by @PieroCastillo on 2026-08-12
 
 #include "Lettuce/Lettuce.hpp"
 #include "common.hpp"
+#include "Input.hpp"
 #include "Renderer.hpp"
 
 using namespace Lettuce::Core;
@@ -37,6 +38,7 @@ namespace Editor
         UIOverlay(Device& device, Swapchain swapchain);
         ~UIOverlay();
 
+        void Update(uint32_t fbWidth, uint32_t fbHeight, const Lettuce::Utils::FrameTimer&, const InputState&);
         void Record(RenderInfo&);
     };
 };

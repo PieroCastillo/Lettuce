@@ -28,7 +28,7 @@ namespace Editor
         SceneWorkspace(Device& device);
         ~SceneWorkspace();
 
-        void Update(const Lettuce::Utils::FrameTimer&, const InputSystem&, const PickResult&);
+        void Update(const Lettuce::Utils::FrameTimer&, const InputState&, const PickResult&);
 
         SceneView& GetView() { return *scene; }
         GpuSpan<SceneViewData> GetViewData() { return GpuSpan(sceneViewData); }

@@ -33,8 +33,6 @@ namespace Editor
 
         uint32_t width = 1366;
         uint32_t height = 768;
-        uint32_t oldFbWidth = width;
-        uint32_t oldFbHeight = height;
 
         void render(RenderInfo& renderInfo)
         {
@@ -69,19 +67,15 @@ namespace Editor
         {
             timer.Start();
 
+            uint32_t oldFbWidth = width;
+            uint32_t oldFbHeight = height;
             while (!window->ShouldClose())
             {
                 timer.Tick();
                 input.Update(window->GetHandle());
-                workspace->Update(timer, input, viewport->GetPickResult());
-
-                auto& device = renderer->GetDevice();
-                auto swapchain = renderer->GetSwapchain();
-                auto cmdAlloc = renderer->GetCommandAllocator();
-
-                auto windowSize = window->GetSize();
-                width = windowSize.first;
-                height = windowSize.second;
+                auto [wwidth, wheight] = window->GetSize();
+                uiOverlay->Update(wwidth, wheight, timer, input.GetState());
+                workspace->Update(timer, input.GetState(), viewport->GetPickResult());
 
                 if (width == 0 || height == 0)
                 {
@@ -89,12 +83,19 @@ namespace Editor
                     continue;
                 }
 
+                auto& device = renderer->GetDevice();
+                auto swapchain = renderer->GetSwapchain();
+                auto cmdAlloc = renderer->GetCommandAllocator();
+
                 auto fbSize = device.NextFrame(swapchain);
 
                 if (fbSize.width != oldFbWidth || fbSize.height != oldFbHeight) [[unlikely]]
                 {
                     viewport->Resize(fbSize.width, fbSize.height);
                     renderer->Resize(fbSize.width, fbSize.height);
+
+                    oldFbWidth = fbSize.width;
+                    oldFbHeight = fbSize.height;
                 }
 
                 device.Reset(cmdAlloc);

@@ -38,11 +38,10 @@ SceneWorkspace::~SceneWorkspace()
     scene.reset();
 }
 
-void SceneWorkspace::Update(const Lettuce::Utils::FrameTimer& timer, const InputSystem& input, const PickResult& pick)
+void SceneWorkspace::Update(const Lettuce::Utils::FrameTimer& timer, const InputState& state, const PickResult& pick)
 {
     double dt = timer.GetDeltaTime();
 
-    auto state = input.GetState();
     if (state.mouseLeftPressed)
     {
         auto delta = state.mouseDelta;
@@ -60,12 +59,7 @@ void SceneWorkspace::Update(const Lettuce::Utils::FrameTimer& timer, const Input
 
     if (pick.type != PickedInstanceType::Scene3D)
         return;
-
-    // if (input.GetState().mouseLeftPressed)
-    // {
-    //     // scene->GetInstanceTable()[instanceIdx].localTransform = 
-    // }
-
+        
     auto instanceIdx = pick.instanceID;
     auto direction = glm::vec<3, double>{};
 
@@ -73,14 +67,14 @@ void SceneWorkspace::Update(const Lettuce::Utils::FrameTimer& timer, const Input
     W     this seems like this: |
     S D                         . __
     */
-    if (input.GetState().activeKeys[InputKey::W])
+    if (state.activeKeys[InputKey::W])
         direction.y = 1;
-    if (input.GetState().activeKeys[InputKey::S])
+    if (state.activeKeys[InputKey::S])
         direction.z = 1;
-    if (input.GetState().activeKeys[InputKey::D])
+    if (state.activeKeys[InputKey::D])
         direction.x = 1;
 
-    if (input.GetState().activeKeys[InputKey::X])
+    if (state.activeKeys[InputKey::X])
         direction *= -1;
 
     auto speed = 0.5 * direction;
