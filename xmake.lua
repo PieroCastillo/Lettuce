@@ -38,6 +38,8 @@ add_requires("fastgltf")
 add_requires("imgui")
 add_requires("ktx", { configs={ vulkan=true, ktx2=true, decoder=true}})
 add_requires("meshoptimizer")
+add_requires("freetype")
+add_requires("harfbuzz")
 
 local v = ("0.0.1.0"):split("%.")
 add_defines("VARIANT_VERSION=" .. (v[1] or 0),
@@ -57,7 +59,7 @@ target("Lettuce")
     add_includedirs("include/")
     add_headerfiles("include/Lettuce/**.hpp")
     add_files("src/**.cpp")
-    add_packages("volk", "glfw", "ktx", "glm", "fastgltf", "meshoptimizer", "vulkan-memory-allocator")
+    add_packages("volk", "glfw", "ktx", "glm", "fastgltf", "meshoptimizer", "vulkan-memory-allocator", "freetype", "harfbuzz")
     add_rules("utils.symbols.export_all", {export_classes = true})
     local slangFiles = os.files("src/**.slang")
     if #slangFiles > 0 then
