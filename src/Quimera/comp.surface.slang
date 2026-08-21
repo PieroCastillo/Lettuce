@@ -10,6 +10,8 @@ RWTexture2D<float4> storageTextures[];
 const static uint computeNumThreadsX = 32;
 const static uint tileSize = 16;
 const static uint tileMaxCommands = 32;
+const static uint samplerDefaultIndex = 0;
+const static uint samplerSdfIndex = 1;
 
 [[vk::push_constant]]
 PushConstants pc;
@@ -123,8 +125,15 @@ PSOutput fragMain(VSOutput input)
     var brush = solidColorBrushes[drawCmd.brushIdx];
     var geometry = implicitGeometries[drawCmd.geometryIdx];
 
-    if (!IntersectImplicit(input.localPos, geometry))
+    if (geometryHeap == 0 && !IntersectImplicit(input.localPos, geometry))
         discard;
+
+    if (geometryHeap == 1)
+    {
+        GlyphGeometryStorage sto;
+        if (!IntersectGlyph(input.localPos, sampledTextures[sto.textureIndex], samplers[samplerSdfIndex]))
+            discard;
+    }
 
     PSOutput output;
     output.color = brush.color;

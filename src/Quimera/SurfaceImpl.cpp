@@ -59,10 +59,38 @@ void SurfaceImpl::Create(const SurfaceDesc& desc)
     pRasterCommands = pDevice->CreatePipeline(graphicsDesc);
 
     pDevice->Destroy(shaderBin);
+
+    // sampler config
+    samplerDefault = pDevice->CreateSampler({
+        Filter::Linear, Filter::Linear, Filter::Linear,
+        SamplerAddressMode::Repeat,  SamplerAddressMode::Repeat,  SamplerAddressMode::Repeat,
+        1.0f, false });
+    samplerSdf = pDevice->CreateSampler({
+        Filter::Nearest, Filter::Nearest, Filter::Nearest,
+        SamplerAddressMode::ClampToEdge,  SamplerAddressMode::ClampToEdge,  SamplerAddressMode::ClampToEdge,
+        1.0f, false });
+
+    std::array<std::pair<uint32_t, Sampler>, 2> samplers;
+    samplers[0] = { 0, samplerDefault };
+    samplers[1] = { 1, samplerSdf };
+
+    // push texture descriptors
+    PushResourceDescriptorsDesc pushDesc = {
+        .samplers = std::span(samplers),
+        .descriptorTable = dtSurface,
+    };
+    pDevice->PushResourceDescriptors(pushDesc);
+
+    FT_Init_FreeType(&fontLib);
 }
 
 void SurfaceImpl::Destroy()
 {
+    FT_Done_FreeType(fontLib);
+
+    pDevice->Destroy(samplerSdf);
+    pDevice->Destroy(samplerDefault);
+
     pDevice->Destroy(pRasterCommands);
     //pDevice->Destroy(pPreprocess);
 

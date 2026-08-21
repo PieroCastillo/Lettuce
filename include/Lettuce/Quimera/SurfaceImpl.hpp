@@ -4,11 +4,19 @@ Created by @PieroCastillo on 2026-05-29
 #ifndef LETTUCE_QUIMERA_SURFACE_IMPL_HPP
 #define LETTUCE_QUIMERA_SURFACE_IMPL_HPP
 
+// standard headers
+#include <atomic>
+#include <unordered_map>
+
 // project headers
 #include "../Core/api.hpp"
 #include "../Core/ResourcePool.hpp"
 #include "../Foundations/api.hpp"
 #include "../Quimera/api.hpp"
+
+// external headers
+#include "freetype/freetype.h"
+#include "harfbuzz/hb.h"
 
 using namespace Lettuce::Foundations;
 
@@ -17,6 +25,7 @@ namespace Lettuce::Quimera
     enum class GeometryHeap : uint32_t
     {
         Implicit = 0,
+        Font = 1,
     };
 
     enum class BrushHeap : uint32_t
@@ -36,6 +45,14 @@ namespace Lettuce::Quimera
     {
         uint32_t geometryIdx;
         uint32_t geometryHeapIdx;
+    };
+
+    struct FontAccessData
+    {
+        std::unique_ptr<uint8_t[]> fontData;
+        FT_Face fontFace;
+        hb_font_t* hbFont;
+        std::unordered_map<uint32_t, std::pair<TextureView, uint32_t>> glyphIdxDataMap;
     };
 
     struct BrushAccessData
@@ -154,16 +171,51 @@ namespace Lettuce::Quimera
         }
     };
 
+    struct TextureRegistry
+    {
+        std::vector<TextureView> slots;
+        std::vector<uint32_t> freeIndices;
+
+        auto Push(TextureView texture) -> uint32_t
+        {
+            uint32_t index;
+
+            if (!freeIndices.empty())
+            {
+                index = freeIndices.back();
+                freeIndices.pop_back();
+
+                slots[index] = texture;
+            }
+            else
+            {
+                index = slots.size();
+                slots.push_back(texture);
+            }
+
+            return index;
+        }
+
+        void Remove(uint32_t index)
+        {
+            slots[index] = {};
+            freeIndices.push_back(index);
+        }
+    };
+
     struct SurfaceImpl
     {
         Device* pDevice = nullptr;
         std::chrono::steady_clock::time_point m_startTime;
 
         DescriptorTable dtSurface;
+        TextureRegistry sampledImgRegistry;
+
         Pipeline pPreprocess;
         Pipeline pRasterCommands;
 
         ResourcePool<Geometry, GeometryAccessData> geometries;
+        ResourcePool<Font, FontAccessData> fonts;
         ResourcePool<Brush, BrushAccessData> brushes;
         ResourcePool<Layout, LayoutAccessData> layouts;
         ResourcePool<Animation, AnimationData> animations;
@@ -181,7 +233,12 @@ namespace Lettuce::Quimera
         std::vector<AnimationInstance> vAnimationInstances;
         std::vector<DrawCommand> vDrawCommands;
 
+        Sampler samplerDefault;
+        Sampler samplerSdf;
         TextureView twLastRenderTarget;
+
+        // font manager
+        FT_Library fontLib;
 
         void Create(const SurfaceDesc&);
         void Destroy();

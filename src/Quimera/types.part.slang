@@ -15,6 +15,11 @@ struct ImplicitGeometryStorage
     float ctl, ctr, cbl, cbr; // corners
 };
 
+struct GlyphGeometryStorage
+{
+    uint32_t textureIndex;
+};
+
 struct SolidColorBrushStorage
 {
     float4 color;

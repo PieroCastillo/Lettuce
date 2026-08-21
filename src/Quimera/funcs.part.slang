@@ -27,3 +27,11 @@ bool IntersectImplicit(float2 localPos, ImplicitGeometryStorage geom)
 
     return sd <= 0.0;
 }
+
+bool IntersectGlyph(float2 localPos, Texture2D<float4> sdf, SamplerState sampler)
+{
+    var uv = float2(localPos.x + 0.5, 0.5 - localPos.y);
+    var sd = sdf.Sample(sampler, uv).x;
+
+    return sd <= 0.0;
+}

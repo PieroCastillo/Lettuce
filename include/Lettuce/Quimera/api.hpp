@@ -17,12 +17,14 @@ using namespace Lettuce::Core;
 namespace Lettuce::Quimera
 {
     struct GeometryTag {};
+    struct FontTag {};
     struct BrushTag {};
     struct LightTag {};
     struct LayoutTag {};
     struct AnimationTag {};
 
     using Geometry = Handle<GeometryTag>;
+    using Font = Handle<FontTag>;
     using Brush = Handle<BrushTag>;
     using Light = Handle<LightTag>;
     using Layout = Handle<LayoutTag>;
@@ -66,6 +68,11 @@ namespace Lettuce::Quimera
         float rightBottomCornerRadious;
     };
 
+    struct FontDesc
+    {
+        std::span<const uint8_t> fontData;
+    };
+
     struct LayoutDesc
     {
         float2 position;
@@ -80,6 +87,14 @@ namespace Lettuce::Quimera
         float mass;
         float stiffness;
         float dumping;
+    };
+    
+    struct Glyph
+    {
+        Font font;
+        uint32_t offsetX;
+        uint32_t offsetY;
+        uint32_t glyphID;
     };
 
     struct DrawSurfaceDesc
@@ -126,8 +141,15 @@ namespace Lettuce::Quimera
 
         auto CreateAnimation(const NaturalMotionAnimationDesc&) -> Animation;
         auto CreateGeometry(const ImplicitGeometryDesc&) -> Geometry;
+        auto CreateFont(const FontDesc&) -> Font;
         auto CreateBrush(const SolidColorBrushDesc&) -> Brush;
         auto CreateLayout(const LayoutDesc&) -> Layout;
+
+        void Destroy(Font);
+   
+        void LoadGlyphs(CommandAllocator copyCmdAlloc, Font font, std::span<const uint32_t> glyphIDs);
+
+        [[nodiscard]] auto GetImplementation() noexcept -> SurfaceImpl* { return impl; }
     };
 
     struct SurfaceCommandBuffer
@@ -143,6 +165,7 @@ namespace Lettuce::Quimera
         void SetChange(Brush obj, SolidColorBrushProperties prop, float4 target, std::optional<Animation> animation);
 
         void Draw(uint32_t zOrder, Geometry geometry, Brush brush, Layout layout);
+        void Draw(uint32_t zOrder, std::span<const Glyph> text, Brush brush, Layout baseLayout);
         void DrawSurface(const DrawSurfaceDesc&);
     };
 };
