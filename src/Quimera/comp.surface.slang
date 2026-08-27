@@ -173,10 +173,8 @@ PSOutput fragMain(VSOutput input)
         var smoothing = fwidth(sd);
         var alpha = smoothstep(0.5 - smoothing, 0.5 + smoothing, sd);
 
-        // if (alpha <= 0.35)
-        //     discard;
-
-        output.color = alpha * brush.color;
+        // needs hardware color blending enable
+        output.color = float4(brush.color.xyz, alpha);
     }
     break;
     default:

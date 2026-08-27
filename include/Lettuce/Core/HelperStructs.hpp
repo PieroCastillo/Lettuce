@@ -159,7 +159,7 @@ namespace Lettuce::Core
 
     constexpr Format FromVkFormat(VkFormat vkFormat)
     {
-        if(!is_valid_format_value(vkFormat))
+        if (!is_valid_format_value(vkFormat))
             return Format::Undefined;
 
         return static_cast<Format>(vkFormat);
@@ -270,5 +270,18 @@ namespace Lettuce::Core
         }
         return VK_SAMPLER_ADDRESS_MODE_REPEAT;
     }
+
+    constexpr VkColorBlendEquationEXT ToVkPipelineColorBlendEquation(BlendMode m) {
+        switch (m) {
+        case BlendMode::None: return {};
+        case BlendMode::StandardAlphaBlending: return {
+            VK_BLEND_FACTOR_SRC_ALPHA, VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA, // color srcs
+            VK_BLEND_OP_ADD, // color op
+            VK_BLEND_FACTOR_ONE, VK_BLEND_FACTOR_ZERO, // alpha srcs 
+            VK_BLEND_OP_ADD, // alpha op
+        };
+        }
+        return {};
+    };
 }
 #endif // LETTUCE_CORE_HELPER_STRUCTS_HPP

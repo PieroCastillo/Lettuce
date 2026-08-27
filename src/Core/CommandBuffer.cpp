@@ -77,14 +77,14 @@ void CommandBuffer::BeginRendering(const RenderPassDesc& desc)
     }
 
     impl.currentPresentTarget = std::nullopt;
-    if(desc.presentAttachmentIdx && desc.presentAttachmentIdx.value() < desc.colorAttachments.size())
+    if (desc.presentAttachmentIdx && desc.presentAttachmentIdx.value() < desc.colorAttachments.size())
     {
         impl.currentPresentTarget = desc.colorAttachments[desc.presentAttachmentIdx.value()].renderTarget;
 
         VkImageMemoryBarrier2 imgBar = {
             .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2,
             .srcStageMask = VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT,
-            .srcAccessMask =  0,
+            .srcAccessMask = 0,
             .dstStageMask = VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT,
             .dstAccessMask = VK_ACCESS_2_MEMORY_READ_BIT | VK_ACCESS_2_MEMORY_WRITE_BIT,
             .oldLayout = VK_IMAGE_LAYOUT_UNDEFINED,
@@ -103,6 +103,19 @@ void CommandBuffer::BeginRendering(const RenderPassDesc& desc)
 
     auto cmd = (VkCommandBuffer)impl.handle;
     vkCmdBeginRendering(cmd, &renderingInfo);
+
+    for (auto i = 0; i < desc.colorAttachments.size(); ++i)
+    {
+        const auto& attachment = desc.colorAttachments[i];
+        VkBool32 enable = attachment.blendMode == BlendMode::None ? VK_FALSE : VK_TRUE;
+        vkCmdSetColorBlendEnableEXT(cmd, i, 1, &enable);
+
+        if (enable)
+        {
+            auto blendEq = ToVkPipelineColorBlendEquation(attachment.blendMode);
+            vkCmdSetColorBlendEquationEXT(cmd, i, 1, &blendEq);
+        }
+    }
 
     VkViewport vw = { 0, 0, static_cast<uint32_t>(desc.width), static_cast<uint32_t>(desc.height), 0, 1 };
     VkRect2D scissor = { { 0,0 }, { desc.width, desc.height } };

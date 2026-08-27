@@ -93,7 +93,7 @@ namespace Lettuce::Core
         ResourcePool<Swapchain, SwapchainVK> swapchains;
         ResourcePool<CommandAllocator, CommandAllocatorVK> commandAllocators;
         ResourcePool<WaitToken, WaitTokenVK> waitTokens;
-        
+
         // physical device features structs
         // required features/extensions
         VkPhysicalDeviceVulkan11Features gpuFeatures11 = {
@@ -101,22 +101,21 @@ namespace Lettuce::Core
         };
         VkPhysicalDeviceVulkan12Features gpuFeatures12 = {
             .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES,
-            .pNext = &gpuFeatures11,
         };
         VkPhysicalDeviceVulkan13Features gpuFeatures13 = {
             .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_3_FEATURES,
-            .pNext = &gpuFeatures12,
         };
         VkPhysicalDeviceDescriptorBufferFeaturesEXT descriptorBufferFeature = {
             .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_BUFFER_FEATURES_EXT,
-            .pNext = &gpuFeatures13,
         };
         VkPhysicalDeviceDynamicRenderingUnusedAttachmentsFeaturesEXT dynamicRenderingUnusedAttachmentsFeature = {
             .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DYNAMIC_RENDERING_UNUSED_ATTACHMENTS_FEATURES_EXT,
-            .pNext = &descriptorBufferFeature,
         };
         VkPhysicalDeviceFragmentShaderBarycentricFeaturesKHR fragmentShaderBarycentricsFeature = {
             .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADER_BARYCENTRIC_FEATURES_KHR,
+        };
+        VkPhysicalDeviceExtendedDynamicState3FeaturesEXT extendedDynamicState3Feature = {
+            .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_3_FEATURES_EXT,
         };
         // recommended features/extensions
         VkPhysicalDeviceDeviceGeneratedCommandsFeaturesEXT deviceGeneratedCommandsFeature = {

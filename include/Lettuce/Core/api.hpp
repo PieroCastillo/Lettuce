@@ -61,6 +61,7 @@ namespace Lettuce::Core
         CommandPreprocess,
         Count,
     };
+    enum class BlendMode : uint16_t { None, StandardAlphaBlending, Count };
     enum class LoadOp : uint8_t { Load, Clear, None, Count };
 
     enum class QueueType : uint8_t { Graphics, Compute, Copy };
@@ -216,6 +217,7 @@ namespace Lettuce::Core
     {
         TextureView renderTarget;
         LoadOp loadOp;
+        BlendMode blendMode;
     };
 
     struct RenderPassDesc

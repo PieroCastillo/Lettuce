@@ -221,6 +221,10 @@ void DeviceImpl::setupFeaturesExtensions()
     fragmentShaderBarycentricsFeature.fragmentShaderBarycentric = VK_TRUE;
     fragmentShaderBarycentricsFeature.pNext = &dynamicRenderingUnusedAttachmentsFeature;
 
+    extendedDynamicState3Feature.extendedDynamicState3ColorBlendEnable = VK_TRUE;
+    extendedDynamicState3Feature.extendedDynamicState3ColorBlendEquation = VK_TRUE;
+    extendedDynamicState3Feature.pNext = &fragmentShaderBarycentricsFeature;
+
     next = &fragmentShaderBarycentricsFeature;
 
     requestedExtensionsNames.push_back(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
@@ -232,6 +236,7 @@ void DeviceImpl::setupFeaturesExtensions()
     requestedExtensionsNames.push_back(VK_KHR_FRAGMENT_SHADER_BARYCENTRIC_EXTENSION_NAME);
     requestedExtensionsNames.push_back(VK_EXT_DESCRIPTOR_BUFFER_EXTENSION_NAME);
     requestedExtensionsNames.push_back(VK_EXT_DYNAMIC_RENDERING_UNUSED_ATTACHMENTS_EXTENSION_NAME);
+    requestedExtensionsNames.push_back(VK_EXT_EXTENDED_DYNAMIC_STATE_3_EXTENSION_NAME);
     requestedExtensionsNames.push_back(VK_EXT_LOAD_STORE_OP_NONE_EXTENSION_NAME);
     requestedExtensionsNames.push_back(VK_EXT_MEMORY_BUDGET_EXTENSION_NAME);
 

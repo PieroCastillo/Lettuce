@@ -190,10 +190,12 @@ void SurfaceCommandBuffer::DrawSurface(const DrawSurfaceDesc& desc)
     AttachmentDesc colorAttachment[2] = { {
         .renderTarget = desc.dstTexture,
         .loadOp = LoadOp::Load,
+        .blendMode = BlendMode::StandardAlphaBlending,
     },
     {
         .renderTarget = desc.dstPickTexture,
         .loadOp = LoadOp::Load,
+        .blendMode = BlendMode::None, // why you want to blend??? it makes no sense
     } };
     AttachmentDesc depthAttachment = {
         .renderTarget = desc.dstDepthTexture,
