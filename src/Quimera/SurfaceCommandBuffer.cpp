@@ -47,6 +47,38 @@ void SurfaceCommandBuffer::Draw(uint32_t zOrder, Geometry geometry, Brush brush,
     surfImpl->vDrawCommands.push_back(DrawCommand{ layoutInfo.layoutIdx, geoInfo.geometryIdx, brushInfo.brushIdx, zOrder, false });
 }
 
+void SurfaceCommandBuffer::Draw(uint32_t zOrder, std::span<const Glyph> text, Brush brush, Layout baseLayout)
+{
+    auto surfImpl = surfPtr->impl;
+
+    const auto& brushInfo = surfImpl->brushes.get(brush);
+    const auto& layoutInfo = surfImpl->layouts.get(baseLayout);
+
+    for (const auto& glyph : text)
+    {
+        auto& fontInfo = surfImpl->fonts.get(glyph.font);
+
+        /* ignore white spaces */
+        auto it = fontInfo.glyphIdxDataMap.find(glyph.glyphID);
+        if (it == fontInfo.glyphIdxDataMap.end())
+            continue;
+
+        auto flags = DrawCommandPackFlags((uint32_t)GeometryHeap::Font, brushInfo.brushHeapIdx, 0, false, false);
+
+        auto drawCmd = DrawCommand{
+            .layoutIdx = layoutInfo.layoutIdx,
+            .geometryIdx = fontInfo.glyphIdxDataMap[glyph.glyphID].storageIdx,
+            .brushIdx = brushInfo.brushIdx,
+            .zOrder = zOrder,
+            .flags = flags,
+            .reserved1 = glyph.offsetX,
+            .reserved2 = glyph.offsetY,
+            .reserved3 = 0,
+        };
+        surfImpl->vDrawCommands.push_back(drawCmd);
+    }
+}
+
 void SurfaceCommandBuffer::DrawSurface(const DrawSurfaceDesc& desc)
 {
     constexpr auto epsilon = 1e-6f;
@@ -136,7 +168,7 @@ void SurfaceCommandBuffer::DrawSurface(const DrawSurfaceDesc& desc)
     // set width & height
     *(surfImpl->surfaceData) = { static_cast<uint32_t>(desc.renderArea.w), static_cast<uint32_t>(desc.renderArea.h), drawCmdCount, (uint32_t)(surfImpl->bLayouts.maxCount / sizeof(LayoutStorage)) };
 
-    auto allocs = std::array<PushAllocationBinding, 7>
+    auto allocs = std::array<PushAllocationBinding, 8>
     {
         surfImpl->surfaceData.getView(),
         surfImpl->vScratchTransforms.getView(),
@@ -144,6 +176,7 @@ void SurfaceCommandBuffer::DrawSurface(const DrawSurfaceDesc& desc)
         surfImpl->bDrawCommands.mv,
         surfImpl->bLayouts.mv,
         surfImpl->bImplicitGeometry.mv,
+        surfImpl->bGlyphGeometry.mv,
         surfImpl->bSolidColorBrush.mv,
     };
 
@@ -161,7 +194,7 @@ void SurfaceCommandBuffer::DrawSurface(const DrawSurfaceDesc& desc)
     {
         .renderTarget = desc.dstPickTexture,
         .loadOp = LoadOp::Load,
-    }};
+    } };
     AttachmentDesc depthAttachment = {
         .renderTarget = desc.dstDepthTexture,
         .loadOp = LoadOp::Clear,

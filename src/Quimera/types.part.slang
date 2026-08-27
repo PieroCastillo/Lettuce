@@ -17,7 +17,9 @@ struct ImplicitGeometryStorage
 
 struct GlyphGeometryStorage
 {
-    uint32_t textureIndex;
+    uint32_t descriptorIdx;
+    float bitmapTop;
+    float bitmapLeft;
 };
 
 struct SolidColorBrushStorage
@@ -61,5 +63,6 @@ struct PushConstants
     uint64_t drawCommandsAddr;
     uint64_t layoutsAddr;
     uint64_t implicitGeometriesAddr;
+    uint64_t glyphGeometriesAddr;
     uint64_t solidColorBrushesAddr;
 };

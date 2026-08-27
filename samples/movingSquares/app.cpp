@@ -6,13 +6,19 @@
 #include <glm/gtc/matrix_transform.hpp>
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/quaternion.hpp>
+#define WIN32_LEAN_AND_MEAN
 #include <windows.h>
+#undef CreateFont
 
 #include <algorithm>
 #include <atomic>
+#include <bit>
+#include <filesystem>
+#include <fstream>
 #include <memory>
 #include <print>
 #include <string>
+#include <system_error>
 #include <vector>
 
 using namespace Lettuce::Core;
@@ -29,6 +35,7 @@ std::unique_ptr<Surface> surface;
 Swapchain swapchain;
 CommandAllocator cmdAlloc;
 TextureView tDepthTarget;
+TextureView tPickTarget;
 
 Layout squareLayout;
 Layout circleLayout;
@@ -40,13 +47,19 @@ Brush redBrush;
 Brush blueBrush;
 Brush yellowBrush;
 
+Font fontFiraCode;
+Layout textBaseLayout;
+Brush whiteBrush;
+std::vector<Glyph> textGlyphs;
+
 void draw2dScene(CommandBuffer& lcmd, TextureView frame, uint32_t fbWidth, uint32_t fbHeight)
 {
     auto cmd = SurfaceCommandBuffer(*surface, lcmd);
-    cmd.Draw(3, square, blueBrush, squareLayout);
-    cmd.Draw(2, circle, redBrush, circleLayout);
-    cmd.Draw(1, roundRect, yellowBrush, roundRectLayout);
-    cmd.DrawSurface({ frame, tDepthTarget, { 0, 0, fbWidth, fbHeight } });
+    cmd.Draw(4, square, blueBrush, squareLayout);
+    cmd.Draw(3, circle, redBrush, circleLayout);
+    cmd.Draw(2, roundRect, yellowBrush, roundRectLayout);
+    cmd.Draw(1, textGlyphs, whiteBrush, textBaseLayout);
+    cmd.DrawSurface({ frame, tDepthTarget, tPickTarget, { 0, 0, fbWidth, fbHeight } });
 }
 
 void create2dResources()
@@ -81,10 +94,48 @@ void create2dResources()
     redBrush = surface->CreateBrush({ .color = Colors::Red });
     blueBrush = surface->CreateBrush({ .color = Colors::Blue });
     yellowBrush = surface->CreateBrush({ .color = Colors::Yellow });
+    // prepare for copy ops
+    auto copyCmdAlloc = device->CreateCommandAllocator({ QueueType::Copy });
+
+    // read font
+    std::filesystem::path fontPath = "../../../../samples/assets/FiraCode-Regular.ttf";
+
+    std::ifstream fontFile(fontPath, std::ios::binary | std::ios::ate);
+    if (!fontFile) throw std::runtime_error(fontPath.string() + " does not exist");
+
+    auto size = fontFile.tellg();
+    auto fontData = std::vector<uint8_t>(size);
+
+    fontFile.seekg(0);
+    fontFile.read((char*)fontData.data(), size);
+
+    fontFiraCode = surface->CreateFont({ fontData });
+    textGlyphs = Lettuce::Utils::GlyphLoader::ShapeText(surface.get(), fontFiraCode, "hello world!  abd xyz qwerty =>");
+
+    // load utf8 symbols
+    auto alphabetGlyphsIDs = std::vector<uint32_t>();
+    for (const auto& g : textGlyphs)
+        alphabetGlyphsIDs.push_back(g.glyphID);
+
+    surface->LoadGlyphs(copyCmdAlloc, fontFiraCode, alphabetGlyphsIDs);
+
+    layoutDesc.position = { 300, 300 };
+    layoutDesc.scale = { 15, 30 };
+    textBaseLayout = surface->CreateLayout(layoutDesc);
+    whiteBrush = surface->CreateBrush({ .color = Colors::White });
+
+    device->Destroy(copyCmdAlloc);
+
+    std::println("glyph count: {}", textGlyphs.size());
+    for (const auto& g : textGlyphs)
+    {
+        std::println("glyphID: {}, relOffX: {}, relOffY: {}", g.glyphID, std::bit_cast<float>(g.offsetX), std::bit_cast<float>(g.offsetY));
+    }
 }
 
 void cleanup2dResources()
 {
+    surface->Destroy(fontFiraCode);
 }
 
 uint32_t oldFbWidth = width;
@@ -115,6 +166,20 @@ void mainLoop()
                 .defaultClearValue = DepthStencilClear {1.0f, 0},
             };
             tDepthTarget = device->CreateTextureView(depthDesc);
+
+            if (tPickTarget.generation != 0)
+                device->Destroy(tPickTarget);
+
+            TextureViewDesc pickDesc = {
+                .width = width,
+                .height = height,
+                .depth = 1,
+                .format = Format::Atomic_R32_UInt,
+                .mipCount = 1,
+                .layerCount = 1,
+                .cpuVisible = false,
+            };
+            tPickTarget = device->CreateTextureView(pickDesc);
 
             oldFbWidth = fbSize.width;
             oldFbHeight = fbSize.height;
@@ -193,13 +258,24 @@ void initLettuce()
         .defaultClearValue = DepthStencilClear {1.0f, 0},
     };
     tDepthTarget = device->CreateTextureView(depthDesc);
+
+    TextureViewDesc pickDesc = {
+        .width = width,
+        .height = height,
+        .depth = 1,
+        .format = Format::Atomic_R32_UInt,
+        .mipCount = 1,
+        .layerCount = 1,
+        .cpuVisible = false,
+    };
+    tPickTarget = device->CreateTextureView(pickDesc);
 }
 
 void cleanupLettuce()
 {
-    device->WaitFor(QueueType::Graphics);
     surface.reset();
     device->Destroy(tDepthTarget);
+    device->Destroy(tPickTarget);
     device->Destroy(cmdAlloc);
     device->Destroy(swapchain);
     device.reset();
@@ -212,6 +288,7 @@ int main()
     initLettuce();
     create2dResources();
     mainLoop();
+    device->WaitFor(QueueType::Graphics);
     cleanup2dResources();
     cleanupLettuce();
     cleanupWindow();

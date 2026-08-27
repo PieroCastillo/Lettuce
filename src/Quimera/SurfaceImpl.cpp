@@ -38,9 +38,10 @@ void SurfaceImpl::Create(const SurfaceDesc& desc)
     bDrawCommands = Buffer<DrawCommand>(pDevice, desc.maxDrawCommands);
     bLayouts = Buffer<LayoutStorage>(pDevice, desc.maxDrawCommands);
     bImplicitGeometry = Buffer<ImplicitGeometryStorage>(pDevice, desc.maxImplicitGeometries);
+    bGlyphGeometry = Buffer<GlyphGeometryStorage>(pDevice, desc.maxImplicitGeometries);
     bSolidColorBrush = Buffer<SolidColorBrushStorage>(pDevice, desc.maxBrushes);
 
-    dtSurface = pDevice->CreateDescriptorTable({ 4,4,4 });
+    dtSurface = pDevice->CreateDescriptorTable({ 10000, 10, 10000 });
 
     auto shaderBin = pDevice->CreateShader({ shadersBuffer });
 
@@ -81,7 +82,8 @@ void SurfaceImpl::Create(const SurfaceDesc& desc)
     };
     pDevice->PushResourceDescriptors(pushDesc);
 
-    FT_Init_FreeType(&fontLib);
+    auto error = FT_Init_FreeType(&fontLib);
+    DebugAssert(error == FT_Err_Ok, "FreeType Error");
 }
 
 void SurfaceImpl::Destroy()
@@ -97,6 +99,7 @@ void SurfaceImpl::Destroy()
     pDevice->Destroy(dtSurface);
 
     pDevice->Destroy(bSolidColorBrush.mv);
+    pDevice->Destroy(bGlyphGeometry.mv);
     pDevice->Destroy(bImplicitGeometry.mv);
     pDevice->Destroy(bLayouts.mv);
     pDevice->Destroy(bDrawCommands.mv);

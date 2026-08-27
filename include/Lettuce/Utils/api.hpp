@@ -15,5 +15,6 @@ Created by @PieroCastillo on 2025-01-5
 #include "AssetLoader.hpp"
 #include "Camera3D.hpp"
 #include "FrameTimer.hpp"
+#include "GlyphLoader.hpp"
 
 #endif // LETTUCE_UTILS_API_HPP

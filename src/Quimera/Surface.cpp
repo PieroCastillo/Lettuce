@@ -1,4 +1,5 @@
 // standard headers
+#include <algorithm>
 #include <array>
 #include <memory>
 #include <memory_resource>
@@ -15,6 +16,8 @@
 #include "Lettuce/Utils/api.hpp"
 
 // external headers
+#include "freetype/ftoutln.h"
+#include "freetype/ftstroke.h"
 #include "harfbuzz/hb-ft.h"
 
 using namespace Lettuce::Quimera;
@@ -92,12 +95,24 @@ auto Surface::CreateFont(const FontDesc& desc) -> Font
 {
     // ensures font data address
     auto fontData = std::make_unique<uint8_t[]>(desc.fontData.size());
-    std::ranges::copy(desc.fontData, fontData.get());
+    memcpy(fontData.get(), desc.fontData.data(), desc.fontData.size());
 
     FT_Face fontFace;
     auto error = FT_New_Memory_Face(impl->fontLib, (FT_Byte*)fontData.get(), desc.fontData.size(), 0, &fontFace);
-    error = FT_Set_Pixel_Sizes(fontFace, 32, 32);
     DebugAssert(error == FT_Err_Ok, "FreeType Error");
+
+    error = FT_Select_Charmap(fontFace, FT_ENCODING_UNICODE);
+    DebugAssert(error == FT_Err_Ok, "FreeType Error");
+
+    std::println("units_per_EM = {}", fontFace->units_per_EM);
+
+    std::println(
+        "x_ppem={}, y_ppem={}, x_scale={}, y_scale={}",
+        fontFace->size->metrics.x_ppem,
+        fontFace->size->metrics.y_ppem,
+        fontFace->size->metrics.x_scale,
+        fontFace->size->metrics.y_scale
+    );
 
     auto hbFont = hb_ft_font_create_referenced(fontFace);
 
@@ -122,6 +137,9 @@ void Surface::Destroy(Font fontHandle)
     hb_font_destroy(font.hbFont);
     FT_Done_Face(font.fontFace);
     font.fontData.reset();
+
+    for (auto [_, data] : font.glyphIdxDataMap)
+        impl->pDevice->Destroy(data.texture);
 }
 
 void Surface::LoadGlyphs(CommandAllocator copyCmdAlloc, Font fontHandle, std::span<const uint32_t> glyphIDs)
@@ -129,10 +147,9 @@ void Surface::LoadGlyphs(CommandAllocator copyCmdAlloc, Font fontHandle, std::sp
     auto cmd = impl->pDevice->AllocateCommandBuffer(copyCmdAlloc);
     auto& font = impl->fonts.get(fontHandle);
 
-    // auto texs = std::vector<TextureView>();
     auto stagingMems = std::vector<MemoryView>();
     auto texDescriptors = std::vector<std::pair<uint32_t, TextureView>>();
-    // texs.reserve(glyphIDs.size());
+
     stagingMems.reserve(glyphIDs.size());
     texDescriptors.reserve(glyphIDs.size());
 
@@ -142,27 +159,57 @@ void Surface::LoadGlyphs(CommandAllocator copyCmdAlloc, Font fontHandle, std::sp
         if (font.glyphIdxDataMap.contains(glyphId))
             continue;
 
-        FT_Load_Glyph(font.fontFace, glyphId, FT_LOAD_DEFAULT);
-        FT_Render_Glyph(font.fontFace->glyph, FT_RENDER_MODE_SDF);
+        constexpr auto fontTextureSize = 32u;
+        constexpr float invFontSize = 1.0f / fontTextureSize;
+        auto error = FT_Set_Pixel_Sizes(font.fontFace, 0, fontTextureSize);
+        DebugAssert(error == FT_Err_Ok, "FreeType Error");
 
-        auto mem = impl->pDevice->CreateMemoryView({ 32 * 32, true });
+        error = FT_Load_Glyph(font.fontFace, glyphId, FT_LOAD_NO_HINTING | FT_LOAD_NO_AUTOHINT | FT_LOAD_IGNORE_TRANSFORM | FT_LOAD_NO_BITMAP | FT_LOAD_COMPUTE_METRICS);
+        DebugAssert(error == FT_Err_Ok, "FreeType Error");
+
+        auto& glyph = font.fontFace->glyph;
+
+        error = FT_Render_Glyph(glyph, FT_RENDER_MODE_SDF);
+        DebugAssert(error == FT_Err_Ok, "FreeType Error");
+
+        auto& dstBitmap = glyph->bitmap;
+
+        if (dstBitmap.rows == 0 || dstBitmap.width == 0)
+            continue;
+
+        auto mem = impl->pDevice->CreateMemoryView({ dstBitmap.width * dstBitmap.rows, true });
         auto memAddr = impl->pDevice->GetMemoryViewInfo(mem).cpuAddress;
-        memcpy(memAddr, font.fontFace->glyph->bitmap.buffer, 32 * 32);
+        memset(memAddr, 0, dstBitmap.width * dstBitmap.rows); // clear memory
 
-        auto tex = impl->pDevice->CreateTextureView(TextureViewDesc{ 32, 32, 1, Format::Raw_R8_UNorm, 1, 1 });
+        // perform copy from freetype
+        for (auto y = 0u; y < dstBitmap.rows; ++y) {
+            for (auto x = 0u; x < dstBitmap.width; ++x) {
+                uint8_t value = dstBitmap.buffer[y * dstBitmap.pitch + x];
+                memAddr[y * dstBitmap.width + x] = value;
+            }
+        }
+
+        auto tex = impl->pDevice->CreateTextureView(TextureViewDesc{ dstBitmap.width, dstBitmap.rows, 1, Format::Raw_R8_UNorm, 1, 1 });
 
         // register
-        auto idx = impl->sampledImgRegistry.Push(tex);
-        font.glyphIdxDataMap[glyphId] = std::make_pair(tex, idx);
-        texDescriptors.push_back({ idx, tex });
+        auto descriptorIdx = impl->sampledImgRegistry.Push(tex);
+        auto glyphStorageIdx = impl->bGlyphGeometry.Push({ descriptorIdx, glyph->bitmap_top * invFontSize, glyph->bitmap_left * invFontSize });
+        font.glyphIdxDataMap[glyphId] = { tex, descriptorIdx, glyphStorageIdx };
 
-        auto copy = MemoryToTextureCopy{ mem, tex, 0, 0, 0, 1, 0, 0, 32, 32 };
+        texDescriptors.push_back({ descriptorIdx, tex });
+
+        auto copy = MemoryToTextureCopy{ mem, tex, 0, 0, 0, 1, 0, 0, dstBitmap.width, dstBitmap.rows };
 
         cmd.MemoryCopy(copy);
 
-        // texs.push_back(tex);
         stagingMems.push_back(mem);
     }
+
+    auto pushDescriptors = PushResourceDescriptorsDesc{
+        .sampledTextures = std::span(texDescriptors),
+        .descriptorTable = impl->dtSurface,
+    };
+    impl->pDevice->PushResourceDescriptors(pushDescriptors);
 
     std::array<std::span<CommandBuffer>, 1> cmds = { std::span(&cmd, 1) };
 
@@ -171,15 +218,9 @@ void Surface::LoadGlyphs(CommandAllocator copyCmdAlloc, Font fontHandle, std::sp
         .queueType = QueueType::Copy,
         .commandBuffers = std::span(cmds),
     };
-    auto wait = impl->pDevice->SubmitAsync(submit);
+    impl->pDevice->Submit(submit);
 
-    auto pushDescriptors = PushResourceDescriptorsDesc{
-        .sampledTextures = std::span(texDescriptors),
-        .descriptorTable = impl->dtSurface,
-    };
-    impl->pDevice->PushResourceDescriptors(pushDescriptors);
-
-    impl->pDevice->WaitFor(wait);
+    // destroy staging mems
     for (auto mem : stagingMems)
         impl->pDevice->Destroy(mem);
 }

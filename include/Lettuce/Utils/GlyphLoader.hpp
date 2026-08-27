@@ -1,8 +1,8 @@
 /*
 Created by @PieroCastillo on 2026-08-20
 */
-#ifndef LETTUCE_UTILS_ASSET_LOADER_HPP
-#define LETTUCE_UTILS_ASSET_LOADER_HPP
+#ifndef LETTUCE_UTILS_GLYPH_LOADER_HPP
+#define LETTUCE_UTILS_GLYPH_LOADER_HPP
 
 // standard headers
 #include <cstdint>
@@ -23,4 +23,4 @@ namespace Lettuce::Utils
         static auto ShapeText(Surface* surface, Font font, std::string_view text) -> std::vector<Glyph>;
     };
 };
-#endif // LETTUCE_UTILS_ASSET_LOADER_HPP
+#endif // LETTUCE_UTILS_GLYPH_LOADER_HPP

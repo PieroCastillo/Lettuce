@@ -47,12 +47,20 @@ namespace Lettuce::Quimera
         uint32_t geometryHeapIdx;
     };
 
+    struct GlyphAccessData
+    {
+        TextureView texture;
+        uint32_t descriptorIdx;
+        uint32_t storageIdx;
+    };
+
     struct FontAccessData
     {
         std::unique_ptr<uint8_t[]> fontData;
         FT_Face fontFace;
         hb_font_t* hbFont;
-        std::unordered_map<uint32_t, std::pair<TextureView, uint32_t>> glyphIdxDataMap;
+        // key: glyphID, data: TextureView | DescriptorIdx
+        std::unordered_map<uint32_t, GlyphAccessData> glyphIdxDataMap;
     };
 
     struct BrushAccessData
@@ -69,6 +77,13 @@ namespace Lettuce::Quimera
     struct ImplicitGeometryStorage
     {
         float ctl, ctr, cbl, cbr; // corners
+    };
+
+    struct GlyphGeometryStorage
+    {
+        uint32_t descriptorIdx;
+        float bitmapTop;
+        float bitmapLeft;
     };
 
     struct SolidColorBrushStorage
@@ -228,6 +243,7 @@ namespace Lettuce::Quimera
         Buffer<DrawCommand> bDrawCommands;
         Buffer<LayoutStorage> bLayouts;
         Buffer<ImplicitGeometryStorage> bImplicitGeometry;
+        Buffer<GlyphGeometryStorage> bGlyphGeometry;
         Buffer<SolidColorBrushStorage> bSolidColorBrush;
 
         std::vector<AnimationInstance> vAnimationInstances;
