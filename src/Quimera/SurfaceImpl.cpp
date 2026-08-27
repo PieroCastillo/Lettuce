@@ -67,7 +67,7 @@ void SurfaceImpl::Create(const SurfaceDesc& desc)
         SamplerAddressMode::Repeat,  SamplerAddressMode::Repeat,  SamplerAddressMode::Repeat,
         1.0f, false });
     samplerSdf = pDevice->CreateSampler({
-        Filter::Nearest, Filter::Nearest, Filter::Nearest,
+        Filter::Linear, Filter::Linear, Filter::Linear,
         SamplerAddressMode::ClampToEdge,  SamplerAddressMode::ClampToEdge,  SamplerAddressMode::ClampToEdge,
         1.0f, false });
 

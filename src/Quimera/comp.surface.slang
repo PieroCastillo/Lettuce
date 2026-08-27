@@ -94,6 +94,7 @@ VSOutput vertMain(uint vertexID: SV_VertexID, uint instanceID: SV_InstanceID)
         float2(0.0, 0.0), // Top-Left     (-0.5, -0.5)
     };
     var localPos = corners[vertexID % 6];
+    var uv = uvs[vertexID % 6];
 
     float s, c;
     sincos(layout.rotation, s, c);
@@ -101,13 +102,14 @@ VSOutput vertMain(uint vertexID: SV_VertexID, uint instanceID: SV_InstanceID)
     var rot = float2x2(c, -s, s, c);
     var skew = float2x2(1, layout.skew.y, layout.skew.x, 1);
 
-    var local = localPos - layout.anchorPoint;
-    local = mul(skew, local);
-    local = mul(rot, local);
-    local *= layout.scale;
+    // var local = localPos - layout.anchorPoint;
+    // local = mul(skew, local);
+    // local = mul(rot, local);
+    // local *= layout.scale;
 
-    // normalized local coords to surface coords
-    var surfPos = local + (0.5 * layout.scale) + layout.position;
+    // // normalized local coords to surface coords
+    // var surfPos = local + (0.5 * layout.scale) + layout.position;
+    float2 surfPos;
 
     if (geometryHeap == 1)
     {
@@ -115,10 +117,26 @@ VSOutput vertMain(uint vertexID: SV_VertexID, uint instanceID: SV_InstanceID)
         var offsetX = asfloat(drawCmd.reserved1);
         var offsetY = asfloat(drawCmd.reserved2);
 
-        // var glyphOffset = float2(offsetX, offsetY);
-        var glyphOffset = float2(offsetX + glyph.bitmapLeft, offsetY + glyph.bitmapTop);
+        var glyphSize = float2(glyph.bitmapWidth, glyph.bitmapHeight);
+        var glyphOffset = float2(offsetX + glyph.bitmapLeft, offsetY - glyph.bitmapTop);
 
-        surfPos += (layout.scale * glyphOffset);
+        var localTextPos = (uv * glyphSize) + glyphOffset;
+
+        var local = localTextPos - layout.anchorPoint;
+        local = mul(skew, local);
+        local = mul(rot, local);
+
+        surfPos = (local * layout.scale) + layout.position;
+    }
+    else
+    {
+        var local = localPos - layout.anchorPoint;
+        local = mul(skew, local);
+        local = mul(rot, local);
+        local *= layout.scale;
+
+        // normalized local coords to surface coords
+        surfPos = local + (0.5 * layout.scale) + layout.position;
     }
 
     // surface coords to vulkan NDC
@@ -170,11 +188,12 @@ PSOutput fragMain(VSOutput input)
         var glyph = glyphs[drawCmd.geometryIdx];
         var sd = sampledTextures[glyph.descriptorIdx].Sample(samplers[samplerSdfIndex], input.uv).x;
 
-        var smoothing = fwidth(sd);
+        var smoothing = fwidth(sd) * 0.5;
         var alpha = smoothstep(0.5 - smoothing, 0.5 + smoothing, sd);
 
         // needs hardware color blending enable
         output.color = float4(brush.color.xyz, alpha);
+        // output.color = float4(alpha, alpha, alpha, alpha);
     }
     break;
     default:

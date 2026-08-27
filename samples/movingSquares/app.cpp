@@ -48,7 +48,7 @@ Brush blueBrush;
 Brush yellowBrush;
 
 Font fontFiraCode;
-Layout textBaseLayout;
+std::vector<Layout> textBaseLayouts;
 Brush whiteBrush;
 std::vector<Glyph> textGlyphs;
 
@@ -58,7 +58,8 @@ void draw2dScene(CommandBuffer& lcmd, TextureView frame, uint32_t fbWidth, uint3
     cmd.Draw(4, square, blueBrush, squareLayout);
     cmd.Draw(3, circle, redBrush, circleLayout);
     cmd.Draw(2, roundRect, yellowBrush, roundRectLayout);
-    cmd.Draw(1, textGlyphs, whiteBrush, textBaseLayout);
+    for(auto baseLayout : textBaseLayouts)
+        cmd.Draw(1, textGlyphs, whiteBrush, baseLayout);
     cmd.DrawSurface({ frame, tDepthTarget, tPickTarget, { 0, 0, fbWidth, fbHeight } });
 }
 
@@ -110,7 +111,7 @@ void create2dResources()
     fontFile.read((char*)fontData.data(), size);
 
     fontFiraCode = surface->CreateFont({ fontData });
-    textGlyphs = Lettuce::Utils::GlyphLoader::ShapeText(surface.get(), fontFiraCode, "hello world!  abd xyz qwerty =>");
+    textGlyphs = Lettuce::Utils::GlyphLoader::ShapeText(surface.get(), fontFiraCode, "hello world!  abd xyz qwerty ===>");
 
     // load utf8 symbols
     auto alphabetGlyphsIDs = std::vector<uint32_t>();
@@ -119,9 +120,20 @@ void create2dResources()
 
     surface->LoadGlyphs(copyCmdAlloc, fontFiraCode, alphabetGlyphsIDs);
 
-    layoutDesc.position = { 300, 300 };
-    layoutDesc.scale = { 15, 30 };
-    textBaseLayout = surface->CreateLayout(layoutDesc);
+    textBaseLayouts.resize(3);
+
+    layoutDesc.position = { 200, 300 };
+    layoutDesc.scale = { 14, 14 };
+    textBaseLayouts[0] = surface->CreateLayout(layoutDesc); // little
+
+    layoutDesc.position = { 200, 400 };
+    layoutDesc.scale = { 28, 28 };
+    textBaseLayouts[1] = surface->CreateLayout(layoutDesc); // medium
+
+    layoutDesc.position = { 200, 500 };
+    layoutDesc.scale = { 40, 40 };
+    textBaseLayouts[2] = surface->CreateLayout(layoutDesc); // big
+
     whiteBrush = surface->CreateBrush({ .color = Colors::White });
 
     device->Destroy(copyCmdAlloc);
@@ -188,6 +200,18 @@ void mainLoop()
         device->Reset(cmdAlloc);
         auto frame = device->GetCurrentRenderTarget(swapchain);
         auto cmd = device->AllocateCommandBuffer(cmdAlloc);
+
+        BarrierDesc bCopyColor = {
+            PipelineAccess::Write,
+            PipelineStage::Copy,
+            PipelineAccess::Read,
+            PipelineStage::ColorAttachmentOutput,
+        };
+
+        auto color = ColorClear{ 0.498, 0.498, 0.498, 1.0 };
+        cmd.ClearTexture({ frame, color,0, 1, 0, 1 });
+
+        cmd.Barrier({ bCopyColor });
 
         draw2dScene(cmd, frame, fbSize.width, fbSize.height);
 

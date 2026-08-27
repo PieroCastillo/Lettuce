@@ -279,6 +279,12 @@ namespace Lettuce::Core
             VK_BLEND_OP_ADD, // color op
             VK_BLEND_FACTOR_ONE, VK_BLEND_FACTOR_ZERO, // alpha srcs 
             VK_BLEND_OP_ADD, // alpha op
+        }; 
+        case BlendMode::MaxBlending: return {
+            VK_BLEND_FACTOR_SRC_ALPHA, VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA, // color srcs
+            VK_BLEND_OP_MAX, // color op
+            VK_BLEND_FACTOR_ONE, VK_BLEND_FACTOR_ZERO, // alpha srcs 
+            VK_BLEND_OP_MAX, // alpha op
         };
         }
         return {};

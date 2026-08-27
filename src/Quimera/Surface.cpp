@@ -189,11 +189,24 @@ void Surface::LoadGlyphs(CommandAllocator copyCmdAlloc, Font fontHandle, std::sp
             }
         }
 
+        // for (auto y = 0u; y < dstBitmap.rows; ++y) {
+        //     for (auto x = 0u; x < dstBitmap.width; ++x) {
+        //         uint8_t pixel =memAddr[y * dstBitmap.width + x];
+        //         std::print("{:3}", pixel);
+        //     }
+        //     std::println();
+        // }
+
         auto tex = impl->pDevice->CreateTextureView(TextureViewDesc{ dstBitmap.width, dstBitmap.rows, 1, Format::Raw_R8_UNorm, 1, 1 });
 
         // register
         auto descriptorIdx = impl->sampledImgRegistry.Push(tex);
-        auto glyphStorageIdx = impl->bGlyphGeometry.Push({ descriptorIdx, glyph->bitmap_top * invFontSize, glyph->bitmap_left * invFontSize });
+        auto glyphStorageIdx = impl->bGlyphGeometry.Push({
+            descriptorIdx,
+            glyph->bitmap_top * invFontSize,
+            glyph->bitmap_left * invFontSize,
+            dstBitmap.width * invFontSize,
+            dstBitmap.rows * invFontSize });
         font.glyphIdxDataMap[glyphId] = { tex, descriptorIdx, glyphStorageIdx };
 
         texDescriptors.push_back({ descriptorIdx, tex });

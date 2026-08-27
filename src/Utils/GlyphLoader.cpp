@@ -21,10 +21,19 @@ auto GlyphLoader::ShapeText(Surface* surface, Font fontHandle, std::string_view 
     hb_buffer_add_utf8(hbBuff, text.data(), text.size(), 0, -1);
     hb_buffer_guess_segment_properties(hbBuff);
 
-    constexpr float units = 32.0f;
-    constexpr float invUnit = 1.0f / units;
-    hb_font_set_scale(font.hbFont, units, units);
-    hb_shape(font.hbFont, hbBuff, 0, 0);
+    // force max precision
+    constexpr auto fontSize = 48.0f;
+    constexpr auto fontScale = fontSize * 64.0f;
+    constexpr auto invFontScale = 1.0f / fontScale;
+
+    hb_font_set_scale(font.hbFont, fontScale, fontScale);
+
+    auto features = std::vector<hb_feature_t>{
+        { hb_tag_from_string("liga", -1), 1, 0, 0xFFFFFFFF },
+        { hb_tag_from_string("calt", -1), 1, 0, 0xFFFFFFFF },
+    };
+
+    hb_shape(font.hbFont, hbBuff, features.data(), features.size());
 
     uint32_t glyphCount;
     auto* glyphInfo = hb_buffer_get_glyph_infos(hbBuff, &glyphCount);
@@ -39,12 +48,12 @@ auto GlyphLoader::ShapeText(Surface* surface, Font fontHandle, std::string_view 
         // save values as raw bits
         res[i] = Glyph{
             .font = fontHandle,
-            .offsetX = std::bit_cast<uint32_t>(cursorX + (pos.x_offset * invUnit)),
-            .offsetY = std::bit_cast<uint32_t>(cursorY + (pos.y_offset * invUnit)),
+            .offsetX = std::bit_cast<uint32_t>(cursorX + (pos.x_offset * invFontScale)),
+            .offsetY = std::bit_cast<uint32_t>(cursorY + (pos.y_offset * invFontScale)),
             .glyphID = glyphInfo[i].codepoint,
         };
-        cursorX += pos.x_advance*invUnit;
-        cursorY -= pos.y_advance*invUnit;
+        cursorX += pos.x_advance * invFontScale;
+        cursorY -= pos.y_advance * invFontScale;
     }
 
     hb_buffer_destroy(hbBuff);

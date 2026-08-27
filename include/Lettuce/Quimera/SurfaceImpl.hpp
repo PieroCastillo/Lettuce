@@ -82,8 +82,11 @@ namespace Lettuce::Quimera
     struct GlyphGeometryStorage
     {
         uint32_t descriptorIdx;
+        // normalized values
         float bitmapTop;
         float bitmapLeft;
+        float bitmapWidth;
+        float bitmapHeight;
     };
 
     struct SolidColorBrushStorage
