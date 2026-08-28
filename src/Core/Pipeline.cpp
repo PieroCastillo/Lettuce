@@ -216,11 +216,13 @@ auto Device::CreatePipeline(const MeshShadingPipelineDesc& desc) -> Pipeline
         .pAttachments = colorBlendAttachments.data(),
     };
 
-    std::array<VkDynamicState, 3> dynamicStates =
+    std::array<VkDynamicState, 5> dynamicStates =
     {
         VK_DYNAMIC_STATE_VIEWPORT,
         VK_DYNAMIC_STATE_SCISSOR,
         VK_DYNAMIC_STATE_LINE_WIDTH,
+        VK_DYNAMIC_STATE_COLOR_BLEND_ENABLE_EXT,
+        VK_DYNAMIC_STATE_COLOR_BLEND_EQUATION_EXT,
     };
 
     VkPipelineDynamicStateCreateInfo dynamicState =
