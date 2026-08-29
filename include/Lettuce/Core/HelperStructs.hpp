@@ -100,6 +100,7 @@ namespace Lettuce::Core
     struct CommandAllocatorVK
     {
         VkCommandPool pool;
+        std::vector<VkCommandBuffer> cmds;
     };
 
     struct IndirectSetVK

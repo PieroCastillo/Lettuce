@@ -49,7 +49,13 @@ void Device::Destroy(CommandAllocator cmdAlloc)
 
 void Device::Reset(CommandAllocator cmdAlloc)
 {
-    handleResult(vkResetCommandPool(impl->m_device, impl->commandAllocators.get(cmdAlloc).pool, 1));
+    auto& cmdPool = impl->commandAllocators.get(cmdAlloc);
+    if (cmdPool.cmds.size() > 0) [[likely]]
+    {
+        vkFreeCommandBuffers(impl->m_device, cmdPool.pool, cmdPool.cmds.size(), cmdPool.cmds.data());
+        cmdPool.cmds.clear();
+    }
+    handleResult(vkResetCommandPool(impl->m_device, impl->commandAllocators.get(cmdAlloc).pool, 0));
 }
 
 auto Device::AllocateCommandBuffer(CommandAllocator cmdAlloc) -> CommandBuffer
@@ -62,6 +68,8 @@ auto Device::AllocateCommandBuffer(CommandAllocator cmdAlloc) -> CommandBuffer
     };
     VkCommandBuffer cmd;
     handleResult(vkAllocateCommandBuffers(impl->m_device, &cmdAI, &cmd));
+    // add to cmd list
+    impl->commandAllocators.get(cmdAlloc).cmds.push_back(cmd);
 
     VkCommandBufferBeginInfo beginInfo = {
         .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
@@ -196,5 +204,5 @@ auto Device::SubmitAsync(const CommandBufferSubmitDesc& desc) -> WaitToken
     case QueueType::Copy: impl->transferCurrentValue = signalValue - 1; break;
     }
 
-    return impl->waitTokens.allocate({signalValue - 1, desc.queueType});
+    return impl->waitTokens.allocate({ signalValue - 1, desc.queueType });
 }

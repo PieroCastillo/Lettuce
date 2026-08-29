@@ -225,7 +225,7 @@ void DeviceImpl::setupFeaturesExtensions()
     extendedDynamicState3Feature.extendedDynamicState3ColorBlendEquation = VK_TRUE;
     extendedDynamicState3Feature.pNext = &fragmentShaderBarycentricsFeature;
 
-    next = &fragmentShaderBarycentricsFeature;
+    next = &extendedDynamicState3Feature;
 
     requestedExtensionsNames.push_back(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
     requestedExtensionsNames.push_back(VK_GOOGLE_HLSL_FUNCTIONALITY1_EXTENSION_NAME);
