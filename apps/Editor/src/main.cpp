@@ -67,6 +67,12 @@ namespace Editor
         {
             timer.Start();
 
+            double frameTime = 0.0;
+            double fps = 0.0;
+
+            double fpsAccumulator = 0.0;
+            uint32_t frameCount = 0;
+
             uint32_t oldFbWidth = width;
             uint32_t oldFbHeight = height;
             while (!window->ShouldClose())
@@ -117,6 +123,21 @@ namespace Editor
 
                 device.DisplayFrame(swapchain);
                 device.WaitFor(QueueType::Graphics);
+
+                frameTime = timer.GetDeltaTime();
+                fpsAccumulator += frameTime;
+                ++frameCount;
+
+                if (fpsAccumulator >= 1.0)
+                {
+                    fps = (double)(frameCount) / fpsAccumulator;
+                    auto avg = 1000.0 * fpsAccumulator / (double)frameCount;
+
+                    std::println("FPS {:4.0f} | avg {:.2f} ms", fps, avg);
+
+                    fpsAccumulator = 0;
+                    frameCount = 0;
+                }
 
                 window->PollEvents();
             }

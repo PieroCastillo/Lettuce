@@ -18,49 +18,24 @@ Created by @PieroCastillo on 2026-08-13
 
 namespace Lettuce::UI
 {
-    struct MouseButtonPressedEventArgs
+
+
+
+    struct Label : Control
     {
-        uint32_t x, y;
+        std::string text;
     };
 
-    enum class VerticalAlignment
+    struct Button : Control
     {
-        Top = 1 << 0,
-        VCenter = 1 << 1,
-        Bottom = 1 << 2,
-    };
-
-    enum class HorizontalAlignment
-    {
-        Left = 1 << 3,
-        HCenter = 1 << 4,
-        Right = 1 << 5,
-    };
-
-    struct Style
-    {
-
-    };
-
-    struct Label
-    {
-        std::string name;
-        std::string content;
-        Style style;
-    };
-
-    struct Button
-    {
-        std::string name;
-        std::string content;
+        std::string Content;
         std::function<void(std::any, bool)> command;
         std::function<void(MouseButtonPressedEventArgs)> onMousePressed;
-        Style style;
     };
 
     struct UIView
     {
-
+        Control child;
     };
 
     struct UISceneImpl;

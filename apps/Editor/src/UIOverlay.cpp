@@ -39,13 +39,13 @@ void UIOverlay::createResources()
     blueBrush = surface->CreateBrush({ .color = Colors::Blue });
     yellowBrush = surface->CreateBrush({ .color = Colors::Yellow });
 
-    // auto uiscene = UIScene::Build([&]() => {
-    //     return UIView {
-    //         .children = {
-    //             Button { .content = "Click me!" },
-    //         };
-    //     };
-    // });
+    auto uiscene = UIScene([&](){
+        return UIView {
+            .child = {
+                Label { .content = "Hello Editor" }
+            }
+        };
+    });
 }
 
 UIOverlay::UIOverlay(Device& device, Swapchain swapchain)
