@@ -161,7 +161,6 @@ PSOutput fragMain(VSOutput input)
         discard;
 
     var brush = solidColorBrushes[drawCmd.brushIdx];
-    var geometry = implicitGeometries[drawCmd.geometryIdx];
 
     PSOutput output;
     output.color = brush.color;
