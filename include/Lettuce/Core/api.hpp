@@ -65,7 +65,7 @@ namespace Lettuce::Core
     enum class LoadOp : uint8_t { Load, Clear, None, Count };
 
     enum class QueueType : uint8_t { Graphics, Compute, Copy };
-    enum class RenderTargetType : uint8_t { ColorRGB_sRGB, ColorRGBA_sRGB, Depth_D32 };
+    enum class RenderTargetType : uint16_t { ColorRGB_R32UInt, ColorRGB_sRGB, ColorRGBA_sRGB, Depth_D32 };
     enum class IndirectType : uint8_t { Draw, DrawIndexed, DrawMesh, Dispatch }; // TraceRays, DeviceGenerated
 
     // Resources

@@ -15,12 +15,11 @@ Created by @PieroCastillo on 2026-08-13
 #include "../Core/api.hpp"
 #include "../Foundations/api.hpp"
 #include "../Quimera/api.hpp"
+#include "types.hpp"
+#include "primitives.hpp"
 
 namespace Lettuce::UI
 {
-
-
-
     struct Label : Control
     {
         std::string text;
@@ -53,9 +52,5 @@ namespace Lettuce::UI
 
         void Record(CommandBuffer&);
     };
-
-    struct ControlTag {};
-    using Control = Handle<ControlTag>;
-    constexpr auto InvalidControl = Control{ std::numeric_limits<uint32_t>::max(), 0 };
 };
 #endif // LETTUCE_UI_API_HPP

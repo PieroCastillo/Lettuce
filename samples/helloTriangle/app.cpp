@@ -120,8 +120,9 @@ void mainLoop()
             .presentSwapchain = swapchain,
         };
         device.Submit(submitDesc);
-
         device.DisplayFrame(swapchain);
+        device.WaitFor(QueueType::Graphics);
+
         glfwPollEvents();
     }
 }

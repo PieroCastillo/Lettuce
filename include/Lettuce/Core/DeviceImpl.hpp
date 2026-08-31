@@ -67,6 +67,8 @@ namespace Lettuce::Core
         VkQueue m_computeQueue;
         VkQueue m_transferQueue;
         VmaAllocator m_allocator;
+        std::mutex m_copyCmdMtx;
+        VkCommandPool m_copyCmdAlloc;
 
         VkSemaphore graphicsSemaphore, computeSemaphore, transferSemaphore;
         uint64_t graphicsCurrentValue, computeCurrentValue, transferCurrentValue;
@@ -198,6 +200,8 @@ namespace Lettuce::Core
         void setupFeaturesExtensions();
         void setupDevice();
         void setupAllocators();
+        void layoutTransition(VkImage image, VkImageAspectFlags aspect, uint32_t levelCount, uint32_t layerCount);
+        void layoutTransitionCmd(VkCommandBuffer cmd, VkImage image, VkImageAspectFlags aspect, uint32_t levelCount, uint32_t layerCount);
 
         void Create(const DeviceDesc& createInfo);
         void Release();

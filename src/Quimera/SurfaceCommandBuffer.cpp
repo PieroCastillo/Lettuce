@@ -151,19 +151,19 @@ void SurfaceCommandBuffer::DrawSurface(const DrawSurfaceDesc& desc)
     surfImpl->vDrawCommands.clear();
 
     // set render target
-    if (surfImpl->twLastRenderTarget != desc.dstTexture) [[likely]]
-    {
-        auto stgTextures = std::array{
-            std::make_pair(0u, desc.dstTexture),
-        };
-        PushResourceDescriptorsDesc pushResDesc = {
-            .storageTextures = std::span(stgTextures),
-            .descriptorTable = surfImpl->dtSurface,
-        };
-        surfImpl->pDevice->PushResourceDescriptors(pushResDesc);
+    // if (surfImpl->twLastRenderTarget != desc.dstTexture) [[likely]]
+    // {
+    //     auto stgTextures = std::array{
+    //         std::make_pair(0u, desc.dstTexture),
+    //     };
+    //     PushResourceDescriptorsDesc pushResDesc = {
+    //         .storageTextures = std::span(stgTextures),
+    //         .descriptorTable = surfImpl->dtSurface,
+    //     };
+    //     surfImpl->pDevice->PushResourceDescriptors(pushResDesc);
 
-        surfImpl->twLastRenderTarget = desc.dstTexture;
-    }
+    //     surfImpl->twLastRenderTarget = desc.dstTexture;
+    // }
 
     // set width & height
     *(surfImpl->surfaceData) = { static_cast<uint32_t>(desc.renderArea.w), static_cast<uint32_t>(desc.renderArea.h), drawCmdCount, (uint32_t)(surfImpl->bLayouts.maxCount / sizeof(LayoutStorage)) };

@@ -62,6 +62,7 @@ void DeviceImpl::Create(const DeviceDesc& createInfo)
 void DeviceImpl::Release()
 {
     handleResult(vkDeviceWaitIdle(m_device));
+    vkDestroyCommandPool(m_device, m_copyCmdAlloc, nullptr);
     vmaDestroyAllocator(m_allocator);
     vkDestroySemaphore(m_device, graphicsSemaphore, nullptr);
     vkDestroySemaphore(m_device, computeSemaphore, nullptr);
@@ -485,6 +486,7 @@ void DeviceImpl::setupDevice()
 
     VkPhysicalDeviceFeatures features = {
         .multiDrawIndirect = VK_TRUE,
+        .drawIndirectFirstInstance = VK_TRUE,
         .samplerAnisotropy = VK_TRUE,
         .textureCompressionBC = VK_TRUE,
         .fragmentStoresAndAtomics = VK_TRUE,
@@ -579,6 +581,13 @@ void DeviceImpl::setupAllocators()
     allocatorCI.pVulkanFunctions = &vkFuncs;
 
     handleResult(vmaCreateAllocator(&allocatorCI, &m_allocator));
+
+    VkCommandPoolCreateInfo cmdPoolCI = {
+        .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
+        .flags = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT,
+        .queueFamilyIndex = props.transferQueueFamilyIdx,
+    };
+    handleResult(vkCreateCommandPool(m_device, &cmdPoolCI, nullptr, &m_copyCmdAlloc));
 }
 
 void DeviceImpl::setDebugName(VkObjectType type, uint64_t handle, const std::string& name)
@@ -593,4 +602,66 @@ void DeviceImpl::setDebugName(VkObjectType type, uint64_t handle, const std::str
         };
         handleResult(vkSetDebugUtilsObjectNameEXT(m_device, &nameInfo));
     }
+}
+
+
+void DeviceImpl::layoutTransition(VkImage image, VkImageAspectFlags aspect, uint32_t levelCount, uint32_t layerCount)
+{
+    auto lock = std::lock_guard(m_copyCmdMtx);
+
+    VkCommandBufferAllocateInfo cmdAllocI = {
+        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
+        .commandPool = m_copyCmdAlloc,
+        .level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
+        .commandBufferCount = 1,
+    };
+    VkCommandBuffer cmd;
+    handleResult(vkAllocateCommandBuffers(m_device, &cmdAllocI, &cmd));
+    VkCommandBufferBeginInfo beginInfo = {
+     .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
+     .flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT,
+    };
+    handleResult(vkBeginCommandBuffer(cmd, &beginInfo));
+
+    layoutTransitionCmd(cmd, image, aspect, levelCount, layerCount);
+    handleResult(vkEndCommandBuffer(cmd));
+
+    VkCommandBufferSubmitInfo cmdSubmit = {
+        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_SUBMIT_INFO,
+        .commandBuffer = cmd,
+        .deviceMask = 0,
+    };
+    VkSubmitInfo2 submit = {
+        .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO_2,
+        .waitSemaphoreInfoCount = 0,
+        .commandBufferInfoCount = 1,
+        .pCommandBufferInfos = &cmdSubmit,
+        .signalSemaphoreInfoCount = 0,
+    };
+    handleResult(vkQueueSubmit2(m_transferQueue, 1, &submit, VK_NULL_HANDLE));
+    handleResult(vkQueueWaitIdle(m_transferQueue));
+
+    vkFreeCommandBuffers(m_device, m_copyCmdAlloc, 1, &cmd);
+}
+
+void DeviceImpl::layoutTransitionCmd(VkCommandBuffer cmd, VkImage image, VkImageAspectFlags aspect, uint32_t levelCount, uint32_t layerCount)
+{
+    VkImageMemoryBarrier2 imgBar = {
+                .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2,
+                .srcStageMask = VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT,
+                .srcAccessMask = 0,
+                .dstStageMask = VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT,
+                .dstAccessMask = VK_ACCESS_2_MEMORY_READ_BIT | VK_ACCESS_2_MEMORY_WRITE_BIT,
+                .oldLayout = VK_IMAGE_LAYOUT_PREINITIALIZED,
+                .newLayout = VK_IMAGE_LAYOUT_GENERAL,
+                .image = image,
+                .subresourceRange = {aspect, 0, levelCount, 0, layerCount},
+    };
+
+    VkDependencyInfo depInfo = {
+        .sType = VK_STRUCTURE_TYPE_DEPENDENCY_INFO,
+        .imageMemoryBarrierCount = 1,
+        .pImageMemoryBarriers = &imgBar,
+    };
+    vkCmdPipelineBarrier2(cmd, &depInfo);
 }

@@ -62,11 +62,9 @@ VSOutput vertMain(uint vertexID: SV_VertexID, uint instanceID: SV_InstanceID)
     var surfaceData = reinterpret<Ptr<SurfaceData>>(pc.surfaceDataAddr)[0];
     var drawCmds = reinterpret<Ptr<DrawCommand>>(pc.drawCommandsAddr);
     var layouts = reinterpret<Ptr<LayoutStorage>>(pc.layoutsAddr);
-    var transforms = reinterpret<Ptr<float3x3>>(pc.scratchTransformsAddr);
     var glyphs = reinterpret<Ptr<GlyphGeometryStorage>>(pc.glyphGeometriesAddr);
 
     var drawCmd = drawCmds[instanceID];
-    var transform = transforms[drawCmd.layoutIdx];
     var layout = layouts[drawCmd.layoutIdx];
 
     uint brushHeap, geometryHeap, effectHeap;
@@ -102,15 +100,7 @@ VSOutput vertMain(uint vertexID: SV_VertexID, uint instanceID: SV_InstanceID)
     var rot = float2x2(c, -s, s, c);
     var skew = float2x2(1, layout.skew.y, layout.skew.x, 1);
 
-    // var local = localPos - layout.anchorPoint;
-    // local = mul(skew, local);
-    // local = mul(rot, local);
-    // local *= layout.scale;
-
-    // // normalized local coords to surface coords
-    // var surfPos = local + (0.5 * layout.scale) + layout.position;
     float2 surfPos;
-
     if (geometryHeap == 1)
     {
         var glyph = glyphs[drawCmd.geometryIdx];

@@ -58,7 +58,7 @@ void draw2dScene(CommandBuffer& lcmd, TextureView frame, uint32_t fbWidth, uint3
     cmd.Draw(4, square, blueBrush, squareLayout);
     cmd.Draw(3, circle, redBrush, circleLayout);
     cmd.Draw(2, roundRect, yellowBrush, roundRectLayout);
-    for(auto baseLayout : textBaseLayouts)
+    for (auto baseLayout : textBaseLayouts)
         cmd.Draw(1, textGlyphs, whiteBrush, baseLayout);
     cmd.DrawSurface({ frame, tDepthTarget, tPickTarget, { 0, 0, fbWidth, fbHeight } });
 }
@@ -182,14 +182,11 @@ void mainLoop()
             if (tPickTarget.generation != 0)
                 device->Destroy(tPickTarget);
 
-            TextureViewDesc pickDesc = {
+            RenderTargetDesc pickDesc = {
                 .width = width,
                 .height = height,
-                .depth = 1,
-                .format = Format::Atomic_R32_UInt,
-                .mipCount = 1,
-                .layerCount = 1,
-                .cpuVisible = false,
+                .type = RenderTargetType::Depth_D32,
+                .defaultClearValue = ColorClear{},
             };
             tPickTarget = device->CreateTextureView(pickDesc);
 
@@ -201,17 +198,17 @@ void mainLoop()
         auto frame = device->GetCurrentRenderTarget(swapchain);
         auto cmd = device->AllocateCommandBuffer(cmdAlloc);
 
-        BarrierDesc bCopyColor = {
+        BarrierDesc bClearColor = {
             PipelineAccess::Write,
-            PipelineStage::Copy,
-            PipelineAccess::Read,
+            PipelineStage::Clear,
+            PipelineAccess::Write,
             PipelineStage::ColorAttachmentOutput,
         };
 
         auto color = ColorClear{ 0.498, 0.498, 0.498, 1.0 };
-        cmd.ClearTexture({ frame, color,0, 1, 0, 1 });
+        // cmd.ClearTexture({ frame, color,0, 1, 0, 1 });
 
-        cmd.Barrier({ bCopyColor });
+        // cmd.Barrier({ bClearColor });
 
         draw2dScene(cmd, frame, fbSize.width, fbSize.height);
 
@@ -283,14 +280,11 @@ void initLettuce()
     };
     tDepthTarget = device->CreateTextureView(depthDesc);
 
-    TextureViewDesc pickDesc = {
+    RenderTargetDesc pickDesc = {
         .width = width,
         .height = height,
-        .depth = 1,
-        .format = Format::Atomic_R32_UInt,
-        .mipCount = 1,
-        .layerCount = 1,
-        .cpuVisible = false,
+        .type = RenderTargetType::ColorRGB_R32UInt,
+        .defaultClearValue = ColorClear{},
     };
     tPickTarget = device->CreateTextureView(pickDesc);
 }

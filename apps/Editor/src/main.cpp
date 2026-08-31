@@ -36,29 +36,29 @@ namespace Editor
 
         void render(RenderInfo& renderInfo)
         {
-            BarrierDesc bFragCopy[] = { {
+            BarrierDesc bColorColor = {
+                .srcAccess = PipelineAccess::Write,
+                .srcStage = PipelineStage::ColorAttachmentOutput,
+                .dstAccess = PipelineAccess::Write,
+                .dstStage = PipelineStage::ColorAttachmentOutput,
+            };
+
+            BarrierDesc bColorCopy = {
                 .srcAccess = PipelineAccess::Write,
                 .srcStage = PipelineStage::ColorAttachmentOutput,
                 .dstAccess = PipelineAccess::Read,
                 .dstStage = PipelineStage::Copy,
-            }, };
-
-            BarrierDesc bColorOutputVert[] = { {
-                .srcAccess = PipelineAccess::Write,
-                .srcStage = PipelineStage::ColorAttachmentOutput,
-                .dstAccess = PipelineAccess::Read,
-                .dstStage = PipelineStage::VertexShader,
-            }, };
+            };
 
             viewport->Record(renderInfo, *workspace);
 
-            renderInfo.cmd.Barrier(bColorOutputVert);
+            renderInfo.cmd.Barrier({ bColorColor });
 
             uiOverlay->Record(renderInfo);
 
             if (input.GetState().mouseLeftPressed)
             {
-                renderInfo.cmd.Barrier(bFragCopy);
+                renderInfo.cmd.Barrier({ bColorCopy });
                 viewport->RequestPick(renderInfo.cmd, input.GetState().mousePosition.x, input.GetState().mousePosition.y);
             }
         }

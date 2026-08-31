@@ -4,7 +4,7 @@
 using namespace Lettuce::UI;
 using namespace Lettuce::Quimera;
 
-auto ControlTable::AddControl(Control parent) -> Control
+auto ControlTable::AddControl(ControlInstance parent) -> ControlInstance
 {
     uint32_t idx;
     if (!freeList.empty())
@@ -38,7 +38,7 @@ auto ControlTable::AddControl(Control parent) -> Control
         isFocused.emplace_back();
     }
 
-    auto self = Control {idx, generations[idx]};
+    auto self = ControlInstance {idx, generations[idx]};
 
     zIndex[idx] = 1;
     parents[idx] = parent;
@@ -65,10 +65,10 @@ auto ControlTable::AddControl(Control parent) -> Control
         firstChild[parent.index] = self;
     }
 
-    return Control {idx, generations[idx]};
+    return ControlInstance {idx, generations[idx]};
 }
 
-void ControlTable::RemoveControl(Control control)
+void ControlTable::RemoveControl(ControlInstance control)
 {
     generations[control.index]++;
     freeList.push_back(control.index);

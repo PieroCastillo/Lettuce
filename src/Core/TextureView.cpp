@@ -110,8 +110,9 @@ auto Device::CreateTextureView(const TextureViewDesc& desc) -> TextureView
     };
     vkGetPhysicalDeviceFormatProperties2(impl->m_physicalDevice, format, &formatProps2);
 
-    if((formatProps2.formatProperties.optimalTilingFeatures & VK_FORMAT_FEATURE_COLOR_ATTACHMENT_BIT ) != 0)
-        usageFlags |= VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+    /* commented due to AMD "recommendations"*/
+    // if ((formatProps2.formatProperties.optimalTilingFeatures & VK_FORMAT_FEATURE_COLOR_ATTACHMENT_BIT) != 0)
+    //     usageFlags |= VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 
     // TODO: impl tryCompression
     VkImageSubresourceRange subresourceRange = {
@@ -160,6 +161,8 @@ auto Device::CreateTextureView(const TextureViewDesc& desc) -> TextureView
         if (desc.cpuVisible)
             vmaMapMemory(impl->m_allocator, alloc, &buffCPUAddr);
 
+        impl->layoutTransition(image, VK_IMAGE_ASPECT_COLOR_BIT, desc.mipCount, desc.layerCount);
+
         return impl->textures.allocate({ desc.width, desc.height, desc.mipCount, desc.layerCount,
                                         format, image, imageView, allocI.deviceMemory,
                                         allocI.size, allocI.offset, alloc, buffCPUAddr,
@@ -180,7 +183,7 @@ auto Device::CreateTextureView(const TextureViewDesc& desc) -> TextureView
         auto reqs = (VkSparseImageMemoryRequirements2*)alloca(reqCount * sizeof(VkSparseImageMemoryRequirements2));
         vkGetDeviceImageSparseMemoryRequirements(impl->m_device, &devImgReqs, &reqCount, reqs);
 
-        for(uint32_t i = 0; i < reqCount; ++i)
+        for (uint32_t i = 0; i < reqCount; ++i)
         {
             auto req = reqs[i].memoryRequirements;
         }
@@ -197,15 +200,21 @@ auto Device::CreateTextureView(const RenderTargetDesc& desc) -> TextureView
 
     switch (desc.type)
     {
+    case RenderTargetType::ColorRGB_R32UInt:
+    {
+        usageFlags = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT;// | VK_IMAGE_USAGE_STORAGE_BIT;
+        format = VK_FORMAT_R32_UINT;
+        break;
+    }
     case RenderTargetType::ColorRGB_sRGB:
     {
-        usageFlags = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
+        usageFlags = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT;// | VK_IMAGE_USAGE_STORAGE_BIT;
         format = VK_FORMAT_R32G32B32_SFLOAT;
         break;
     }
     case RenderTargetType::ColorRGBA_sRGB:
     {
-        usageFlags = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
+        usageFlags = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT;// | VK_IMAGE_USAGE_STORAGE_BIT;
         format = VK_FORMAT_R32G32B32A32_SFLOAT;
         break;
     }
@@ -217,7 +226,6 @@ auto Device::CreateTextureView(const RenderTargetDesc& desc) -> TextureView
         break;
     }
     }
-
 
     VkImage image;
     VmaAllocation alloc;
@@ -257,6 +265,8 @@ auto Device::CreateTextureView(const RenderTargetDesc& desc) -> TextureView
     void* buffCPUAddr = nullptr;
     if (desc.cpuVisible)
         vmaMapMemory(impl->m_allocator, alloc, &buffCPUAddr);
+    
+    impl->layoutTransition(image, desc.type== RenderTargetType::Depth_D32 ? VK_IMAGE_ASPECT_DEPTH_BIT : VK_IMAGE_ASPECT_COLOR_BIT, 1, 1);
 
     return impl->textures.allocate({ desc.width, desc.height,1, 1,
                                     format, image, imageView, allocI.deviceMemory,

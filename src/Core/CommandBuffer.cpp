@@ -134,7 +134,7 @@ void CommandBuffer::EndRendering()
             .srcStageMask = VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT,
             .srcAccessMask = VK_ACCESS_2_MEMORY_WRITE_BIT,
             .dstStageMask = VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT,
-            .dstAccessMask = VK_ACCESS_2_MEMORY_READ_BIT,
+            .dstAccessMask = VK_ACCESS_2_NONE,
             .oldLayout = VK_IMAGE_LAYOUT_GENERAL,
             .newLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
             .image = impl.device->textures.get(impl.currentPresentTarget.value()).image,
@@ -182,7 +182,7 @@ void CommandBuffer::BindDescriptorTable(DescriptorTable descriptorTable, Pipelin
 void CommandBuffer::PushAllocations(const PushAllocationsDesc& desc)
 {
     auto& dt = impl.device->descriptorTables.get(desc.descriptorTable);
-    auto payloadSize = std::min<uint32_t>(impl.device->props.maxPushAllocationsCount, desc.allocations.size()) * sizeof(uint64_t);
+    auto payloadSize = impl.device->props.maxPushAllocationsCount * sizeof(uint64_t);//std::min<uint32_t>(impl.device->props.maxPushAllocationsCount, desc.allocations.size()) * sizeof(uint64_t);
     auto count = payloadSize / sizeof(uint64_t);
     auto data = (uint64_t*)alloca(payloadSize);
 
@@ -192,6 +192,9 @@ void CommandBuffer::PushAllocations(const PushAllocationsDesc& desc)
         data[idx] = impl.device->memories.get(binding.memory).gpuAddress + binding.byteOffset;
         ++idx;
     }
+
+    // for(auto i = idx; i < count; ++i)
+    //     data[i] = 0xFFFFFFFFFFFFFFFF;
 
     vkCmdPushConstants((VkCommandBuffer)impl.handle, dt.pipelineLayout, VK_SHADER_STAGE_ALL, 0, payloadSize, data);
 }

@@ -19,6 +19,10 @@ Created by @PieroCastillo on 2026-08-13
 
 namespace Lettuce::UI
 {
+    struct ControlTag {};
+    using ControlInstance = Handle<ControlTag>;
+    constexpr auto InvalidControl = ControlInstance{ std::numeric_limits<uint32_t>::max(), 0 };
+
     struct ControlTable
     {
         std::vector<uint32_t> generations;
@@ -26,9 +30,9 @@ namespace Lettuce::UI
 
         // control
         std::vector<uint32_t> zIndex;
-        std::vector<Control> parents;
-        std::vector<Control> firstChild;
-        std::vector<Control> nextSibling;
+        std::vector<ControlInstance> parents;
+        std::vector<ControlInstance> firstChild;
+        std::vector<ControlInstance> nextSibling;
 
         // layout
         std::vector<float2> size;
@@ -48,8 +52,8 @@ namespace Lettuce::UI
         std::vector<bool> isEnabled;
         std::vector<bool> isFocused; // readonly
 
-        auto AddControl(Control parent) -> Control;
-        void RemoveControl(Control);
+        auto AddControl(ControlInstance parent) -> ControlInstance;
+        void RemoveControl(ControlInstance);
     };
 
     struct UISceneImpl

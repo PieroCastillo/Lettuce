@@ -52,9 +52,9 @@ namespace Lettuce::UI
 
     struct Style
     {
-        auto GetBackground(State) -> Brush;
-        auto GetForeground(State) -> Brush;
-        auto GetThickness(State) -> Brush;
+        auto GetBackground(State) -> Lettuce::Quimera::Brush;
+        auto GetForeground(State) -> Lettuce::Quimera::Brush;
+        auto GetThickness(State) -> Lettuce::Quimera::Brush;
     };
 };
 #endif // LETTUCE_UI_TYPES_HPP

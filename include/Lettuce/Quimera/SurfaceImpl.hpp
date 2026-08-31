@@ -101,6 +101,7 @@ namespace Lettuce::Quimera
         float2 skew;
         float2 anchorPoint;
         float rotation;
+        float reserved1;
     };
 
     struct DrawCommand
