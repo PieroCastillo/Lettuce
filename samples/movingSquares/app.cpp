@@ -185,7 +185,7 @@ void mainLoop()
             RenderTargetDesc pickDesc = {
                 .width = width,
                 .height = height,
-                .type = RenderTargetType::Depth_D32,
+                .type = RenderTargetType::ColorRGB_R32UInt,
                 .defaultClearValue = ColorClear{},
             };
             tPickTarget = device->CreateTextureView(pickDesc);

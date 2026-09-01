@@ -106,14 +106,11 @@ void createRenderingObjects()
     sceneViewData = GpuUniquePtr<SceneViewData>(*device);
     pickInstanceData = GpuUniquePtr<uint32_t>(*device);
 
-    TextureViewDesc pickDesc = {
+    RenderTargetDesc pickDesc = {
         .width = width,
         .height = height,
-        .depth = 1,
-        .format = Format::Raw_R32_UInt,
-        .mipCount = 1,
-        .layerCount = 1,
-        .cpuVisible = false,
+        .type = RenderTargetType::ColorRGB_R32UInt,
+        .defaultClearValue = ColorClear{},
     };
     tPickTexture = device->CreateTextureView(pickDesc);
 
@@ -128,15 +125,6 @@ void createRenderingObjects()
     // load pipelines
     DescriptorTableDesc descriptorTableDesc = { 4,4,4 };
     descriptorTable = device->CreateDescriptorTable(descriptorTableDesc);
-
-    std::array<std::pair<uint32_t, TextureView>, 1> texDescs;
-    texDescs[0] = { 0, tPickTexture };
-
-    PushResourceDescriptorsDesc pushDtDesc = {
-        .storageTextures = std::span(texDescs),
-        .descriptorTable = descriptorTable,
-    };
-    device->PushResourceDescriptors(pushDtDesc);
 
     Debug::DebugPassDesc debugPassDesc = {
         .device = *device,
@@ -202,14 +190,11 @@ void mainLoop()
             device->Destroy(tDepthTarget);
             device->Destroy(tPickTexture);
 
-            TextureViewDesc pickDesc = {
+            RenderTargetDesc pickDesc = {
                 .width = width,
                 .height = height,
-                .depth = 1,
-                .format = Format::Raw_R32_UInt,
-                .mipCount = 1,
-                .layerCount = 1,
-                .cpuVisible = false,
+                .type = RenderTargetType::ColorRGB_R32UInt,
+                .defaultClearValue = ColorClear{},
             };
             tPickTexture = device->CreateTextureView(pickDesc);
 
