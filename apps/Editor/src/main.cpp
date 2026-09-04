@@ -93,7 +93,7 @@ namespace Editor
                 auto swapchain = renderer->GetSwapchain();
                 auto cmdAlloc = renderer->GetCommandAllocator();
 
-                auto fbSize = device.NextFrame(swapchain);
+                auto fbSize = device.NextFrame(swapchain, wwidth, wheight);
 
                 if (fbSize.width != oldFbWidth || fbSize.height != oldFbHeight) [[unlikely]]
                 {

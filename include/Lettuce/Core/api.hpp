@@ -419,7 +419,7 @@ namespace Lettuce::Core
         auto CreateSwapchain(const SwapchainDesc&) -> Swapchain;
         void Destroy(Swapchain);
 
-        auto NextFrame(Swapchain) -> Size;
+        auto NextFrame(Swapchain, uint32_t desiredWidth, uint32_t desiredHeight) -> Size;
         void DisplayFrame(Swapchain);
         auto GetRenderTargetFormat(Swapchain) -> Format;
         auto GetCurrentRenderTarget(Swapchain) const -> TextureView;

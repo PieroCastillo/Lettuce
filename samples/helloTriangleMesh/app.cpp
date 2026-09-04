@@ -76,7 +76,7 @@ void mainLoop()
             continue;
         }
 
-        auto fbSize = device->NextFrame(swapchain);
+        auto fbSize = device->NextFrame(swapchain, width, height);
 
         device->Reset(cmdAlloc);
         auto frame = device->GetCurrentRenderTarget(swapchain);

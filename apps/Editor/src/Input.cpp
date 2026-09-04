@@ -1,7 +1,4 @@
-#define GLFW_EXPOSE_NATIVE_WIN32
-#include "glfw/glfw3.h"
-#include "glfw/glfw3native.h"
-#include <windows.h>
+#include "GLFW/glfw3.h"
 
 #include "Input.hpp"
 

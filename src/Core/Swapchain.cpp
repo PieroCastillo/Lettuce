@@ -41,7 +41,8 @@ void setupVkSurface(SwapchainVK& swapchainVK, VkInstance instance, const Swapcha
     swapchainVK.surface = surface;
 }
 
-void setupVkSwapchain(SwapchainVK& swapchainVK, DeviceImpl* impl, VkPhysicalDevice gpu, const SwapchainDesc& createInfo)
+void setupVkSwapchain(SwapchainVK& swapchainVK, DeviceImpl* impl, VkPhysicalDevice gpu, const SwapchainDesc& createInfo,
+    uint32_t desiredWidth = 0, uint32_t desiredHeight = 0)
 {
     VkDevice device = impl->m_device;
     VkSurfaceKHR surface = swapchainVK.surface;
@@ -67,9 +68,20 @@ void setupVkSwapchain(SwapchainVK& swapchainVK, DeviceImpl* impl, VkPhysicalDevi
 
     surfaceFormat = formats[0];
 
+    /*
+    windows: currentExtent is contains the actual framebuffer size
+    linux/wayland: currentExtend is "dynamic" (gives you a uint32Max) and swapchain can decide framebuffer size by "itself"
+    btw due to this i need to impl AGAIN width/height to Device::NextFrame(...)
+    */
+    if (sc.currentExtent.width == UINT32_MAX & sc.currentExtent.height == UINT32_MAX) {
+        surfaceExtent.width = std::clamp(desiredWidth, sc.minImageExtent.width, sc.maxImageExtent.width);
+        surfaceExtent.height = std::clamp(desiredHeight, sc.minImageExtent.height, sc.maxImageExtent.height);
+    }
+    else {
         surfaceExtent.width = std::clamp(sc.currentExtent.width, sc.minImageExtent.width, sc.maxImageExtent.width);
         surfaceExtent.height = std::clamp(sc.currentExtent.height, sc.minImageExtent.height, sc.maxImageExtent.height);
-    
+    }
+
     swapchainVK.ltFormat = FromVkFormat(surfaceFormat.format);
     swapchainVK.format = surfaceFormat.format;
     swapchainVK.width = surfaceExtent.width;
@@ -189,7 +201,7 @@ auto Device::CreateSwapchain(const SwapchainDesc& desc) -> Swapchain
     SwapchainVK swapchainVK = {};
     swapchainVK.currentImageIndex = 0;
     setupVkSurface(swapchainVK, instance, desc);
-    setupVkSwapchain(swapchainVK, impl, gpu, desc);
+    setupVkSwapchain(swapchainVK, impl, gpu, desc, 1000, 1000);
     setupImagesAndView(swapchainVK, impl->textures, device, gpu, desc);
     VkFenceCreateInfo fenceCI = {
         .sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO,
@@ -228,23 +240,31 @@ void Device::Destroy(Swapchain swapchain)
     vkDestroySurfaceKHR(impl->m_instance, info.surface, nullptr);
 }
 
-auto Device::NextFrame(Swapchain swapchain) -> Size
+auto Device::NextFrame(Swapchain swapchain, uint32_t desiredWidth, uint32_t desiredHeight) -> Size
 {
     auto& info = impl->swapchains.get(swapchain);
     auto device = impl->m_device;
     vkResetFences(device, 1, &info.waitForAcquireFence);
     constexpr auto timeout = (std::numeric_limits<uint32_t>::max)();
     auto res = vkAcquireNextImageKHR(device, info.swapchain, timeout, VK_NULL_HANDLE, info.waitForAcquireFence, &info.currentImageIndex);
-    if (res == VK_ERROR_OUT_OF_DATE_KHR)
+
+    VkSurfaceCapabilitiesKHR sc;
+    vkGetPhysicalDeviceSurfaceCapabilitiesKHR(impl->m_physicalDevice, info.surface, &sc);
+
+    if (res == VK_ERROR_OUT_OF_DATE_KHR ||
+        (sc.currentExtent.width == UINT32_MAX && (info.width != desiredWidth || info.height != desiredHeight)))
     {
         handleResult(vkQueueWaitIdle(impl->m_graphicsQueue));
         SwapchainDesc desc = { .clipped = info.clipped };
 
-        setupVkSwapchain(info, impl, impl->m_physicalDevice, desc);
+        vkWaitForFences(device, 1, &info.waitForAcquireFence, VK_TRUE, timeout);
+        setupVkSwapchain(info, impl, impl->m_physicalDevice, desc, desiredWidth, desiredHeight);
         setupImagesAndView(info, impl->textures, device, impl->m_physicalDevice, desc);
 
+        vkResetFences(device, 1, &info.waitForAcquireFence);
         handleResult(vkAcquireNextImageKHR(device, info.swapchain, timeout, VK_NULL_HANDLE, info.waitForAcquireFence, &info.currentImageIndex));
     }
+
     handleResult(vkWaitForFences(device, 1, &info.waitForAcquireFence, VK_TRUE, timeout));
 
     return { info.width, info.height };

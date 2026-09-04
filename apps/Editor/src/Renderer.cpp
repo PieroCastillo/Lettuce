@@ -1,7 +1,15 @@
+#include "GLFW/glfw3.h"
+
+#if defined(WIN32_) || defined(_WIN32) || defined(WIN32)
 #define GLFW_EXPOSE_NATIVE_WIN32
-#include "glfw/glfw3.h"
-#include "glfw/glfw3native.h"
+#define WIN32_LEAN_AND_MEAN
 #include <windows.h>
+#undef CreateFont
+#elifdef __linux__
+#define GLFW_EXPOSE_NATIVE_WAYLAND
+#include <wayland-client.h>
+#endif
+#include "GLFW/glfw3native.h"
 
 #include "Renderer.hpp"
 

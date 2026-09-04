@@ -9,7 +9,7 @@ Created by @PieroCastillo on 2026-08-11
 #include <span>
 #include <string>
 
-#include "glfw/glfw3.h"
+#include "GLFW/glfw3.h"
 
 namespace Editor
 {
