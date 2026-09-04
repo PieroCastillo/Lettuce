@@ -1,8 +1,14 @@
 #include "Lettuce/Lettuce.hpp"
-#include "glfw/glfw3.h"
+#include "GLFW/glfw3.h"
+
+#if defined(WIN32_) || defined(_WIN32) || defined(WIN32)
 #define GLFW_EXPOSE_NATIVE_WIN32
-#include "glfw/glfw3native.h"
 #include <windows.h>
+#elifdef __linux__
+#define GLFW_EXPOSE_NATIVE_WAYLAND
+#include <wayland-client.h>
+#endif
+#include "GLFW/glfw3native.h"
 
 #include <memory>
 #include <vector>
@@ -32,9 +38,6 @@ CommandAllocator cmdAlloc;
 
 void initLettuce()
 {
-    auto hwnd = glfwGetWin32Window(window);
-    auto hmodule = GetModuleHandle(NULL);
-
     DeviceDesc deviceCI = {
         .preferDedicated = true,
     };
@@ -42,9 +45,18 @@ void initLettuce()
 
     SwapchainDesc swapchainDesc = {
         .clipped = true,
-        .windowPtr = &hwnd,
-        .applicationPtr = &hmodule,
     };
+
+#if defined(WIN32_) || defined(_WIN32) || defined(WIN32)
+    auto appWindow = glfwGetWin32Window(window);
+    auto app = GetModuleHandle(NULL);
+    swapchainDesc.windowPtr = &appWindow;
+    swapchainDesc.applicationPtr = &app;
+#elifdef __linux__
+    swapchainDesc.windowPtr = glfwGetWaylandWindow(window);
+    swapchainDesc.applicationPtr = glfwGetWaylandDisplay();
+#endif
+
     swapchain = device.CreateSwapchain(swapchainDesc);
 
     CommandAllocatorDesc cmdAllocDesc = {
@@ -57,7 +69,7 @@ void createRenderingObjects()
 {
     auto shaders = Lettuce::Utils::AssetLoader::LoadSpirv(&device, "samples/helloTriangle/helloTriangle.spv");
 
-    DescriptorTableDesc descriptorTableDesc = { 4,4,4 };
+    DescriptorTableDesc descriptorTableDesc = { 4, 4, 4 };
     descriptorTable = device.CreateDescriptorTable(descriptorTableDesc);
 
     std::array<Format, 1> formatArr = { device.GetRenderTargetFormat(swapchain) };
@@ -97,8 +109,7 @@ void mainLoop()
             {
                 .renderTarget = frame,
                 .loadOp = LoadOp::Clear,
-            }
-        };
+            } };
 
         RenderPassDesc renderPassDesc = {
             .width = fbSize.width,
@@ -140,7 +151,12 @@ void cleanupLettuce()
 
 void initWindow()
 {
+#ifdef __linux__
+    glfwInitHint(GLFW_PLATFORM, GLFW_PLATFORM_WAYLAND);
+    glfwInitHint(GLFW_WAYLAND_LIBDECOR, GLFW_WAYLAND_DISABLE_LIBDECOR);
+#endif
     glfwInit();
+    glfwWindowHint(GLFW_DECORATED, GLFW_TRUE);
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
     glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
     window = glfwCreateWindow(width, height, "My Lettuce Window", NULL, NULL);

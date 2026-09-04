@@ -27,8 +27,8 @@ auto exists(const std::vector<std::string>& list, const char* key) -> bool
 
 // Debug Callback :D (smile face because I don't like this syntax :p)
 static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
-    VkDebugUtilsMessageSeverityFlagBitsEXT           messageSeverity,
-    VkDebugUtilsMessageTypeFlagsEXT                  messageTypes,
+    VkDebugUtilsMessageSeverityFlagBitsEXT      messageSeverity,
+    VkDebugUtilsMessageTypeFlagsEXT             messageTypes,
     const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
     void* pUserData)
 {
@@ -100,6 +100,8 @@ void DeviceImpl::setupInstance()
         VK_KHR_SURFACE_EXTENSION_NAME,
 #if defined(WIN32_) || defined(_WIN32) || defined(WIN32)
         VK_KHR_WIN32_SURFACE_EXTENSION_NAME,
+#elifdef __linux__
+        VK_KHR_WAYLAND_SURFACE_EXTENSION_NAME,
 #endif
         VK_EXT_DEBUG_UTILS_EXTENSION_NAME,
     };
@@ -111,9 +113,9 @@ void DeviceImpl::setupInstance()
     VkDebugUtilsMessengerCreateInfoEXT messengerCI = {
         .sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT,
         // give messages about behaviours that may cause bugs or crashes
-        .messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT ,
+        .messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT,
         // performance and validation messages are priority
-        .messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT ,
+        .messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT,
         .pfnUserCallback = &debugCallback,
     };
 
@@ -234,7 +236,7 @@ void DeviceImpl::setupFeaturesExtensions()
 
     requestedExtensionsNames.push_back(VK_KHR_PIPELINE_LIBRARY_EXTENSION_NAME);
     requestedExtensionsNames.push_back(VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME);
-    requestedExtensionsNames.push_back(VK_KHR_FRAGMENT_SHADER_BARYCENTRIC_EXTENSION_NAME);
+    // requestedExtensionsNames.push_back(VK_KHR_FRAGMENT_SHADER_BARYCENTRIC_EXTENSION_NAME);
     requestedExtensionsNames.push_back(VK_EXT_DESCRIPTOR_BUFFER_EXTENSION_NAME);
     requestedExtensionsNames.push_back(VK_EXT_DYNAMIC_RENDERING_UNUSED_ATTACHMENTS_EXTENSION_NAME);
     requestedExtensionsNames.push_back(VK_EXT_EXTENDED_DYNAMIC_STATE_3_EXTENSION_NAME);
@@ -371,7 +373,7 @@ void DeviceImpl::setupFeaturesExtensions()
         requestedExtensionsNames.push_back(VK_KHR_RAY_TRACING_POSITION_FETCH_EXTENSION_NAME);
     }
 
-    // raytracing NV extensions    
+    // raytracing NV extensions
     if (exists(availableExtensionsNames, VK_NV_RAY_TRACING_INVOCATION_REORDER_EXTENSION_NAME) &&
         exists(availableExtensionsNames, VK_NV_RAY_TRACING_LINEAR_SWEPT_SPHERES_EXTENSION_NAME) &&
         exists(availableExtensionsNames, VK_NV_CLUSTER_ACCELERATION_STRUCTURE_EXTENSION_NAME) &&
@@ -480,9 +482,11 @@ void DeviceImpl::setupDevice()
     queueCI.queueFamilyIndex = graphicsQueueFamilyIndex;
     queueCIs.push_back(queueCI);
     queueCI.queueFamilyIndex = computeQueueFamilyIndex;
-    queueCIs.push_back(queueCI);
+    if (graphicsQueueFamilyIndex != computeQueueFamilyIndex)
+        queueCIs.push_back(queueCI);
     queueCI.queueFamilyIndex = transferQueueFamilyIndex;
-    queueCIs.push_back(queueCI);
+    if (graphicsQueueFamilyIndex != transferQueueFamilyIndex)
+        queueCIs.push_back(queueCI);
 
     VkPhysicalDeviceFeatures features = {
         .multiDrawIndirect = VK_TRUE,
@@ -604,7 +608,6 @@ void DeviceImpl::setDebugName(VkObjectType type, uint64_t handle, const std::str
     }
 }
 
-
 void DeviceImpl::layoutTransition(VkImage image, VkImageAspectFlags aspect, uint32_t levelCount, uint32_t layerCount)
 {
     auto lock = std::lock_guard(m_copyCmdMtx);
@@ -618,8 +621,8 @@ void DeviceImpl::layoutTransition(VkImage image, VkImageAspectFlags aspect, uint
     VkCommandBuffer cmd;
     handleResult(vkAllocateCommandBuffers(m_device, &cmdAllocI, &cmd));
     VkCommandBufferBeginInfo beginInfo = {
-     .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
-     .flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT,
+        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
+        .flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT,
     };
     handleResult(vkBeginCommandBuffer(cmd, &beginInfo));
 
@@ -647,15 +650,15 @@ void DeviceImpl::layoutTransition(VkImage image, VkImageAspectFlags aspect, uint
 void DeviceImpl::layoutTransitionCmd(VkCommandBuffer cmd, VkImage image, VkImageAspectFlags aspect, uint32_t levelCount, uint32_t layerCount)
 {
     VkImageMemoryBarrier2 imgBar = {
-                .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2,
-                .srcStageMask = VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT,
-                .srcAccessMask = 0,
-                .dstStageMask = VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT,
-                .dstAccessMask = VK_ACCESS_2_MEMORY_READ_BIT | VK_ACCESS_2_MEMORY_WRITE_BIT,
-                .oldLayout = VK_IMAGE_LAYOUT_PREINITIALIZED,
-                .newLayout = VK_IMAGE_LAYOUT_GENERAL,
-                .image = image,
-                .subresourceRange = {aspect, 0, levelCount, 0, layerCount},
+        .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2,
+        .srcStageMask = VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT,
+        .srcAccessMask = 0,
+        .dstStageMask = VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT,
+        .dstAccessMask = VK_ACCESS_2_MEMORY_READ_BIT | VK_ACCESS_2_MEMORY_WRITE_BIT,
+        .oldLayout = VK_IMAGE_LAYOUT_PREINITIALIZED,
+        .newLayout = VK_IMAGE_LAYOUT_GENERAL,
+        .image = image,
+        .subresourceRange = {aspect, 0, levelCount, 0, layerCount},
     };
 
     VkDependencyInfo depInfo = {

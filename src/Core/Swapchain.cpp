@@ -6,8 +6,9 @@
 
 // external headers
 #if defined(WIN32_) || defined(_WIN32) || defined(WIN32)
-#define VK_USE_PLATFORM_WIN32_KHR
 #include <windows.h>
+#elifdef __linux__
+#include <wayland-client.h>
 #endif
 
 // project headers
@@ -28,8 +29,7 @@ void setupVkSurface(SwapchainVK& swapchainVK, VkInstance instance, const Swapcha
     };
 
     handleResult(vkCreateWin32SurfaceKHR(instance, &win32surfaceCI, nullptr, &surface));
-#endif
-#if defined(__linux__)
+#elifdef __linux__
     VkWaylandSurfaceCreateInfoKHR waylandsurfaceCI = {
         .sType = VK_STRUCTURE_TYPE_WAYLAND_SURFACE_CREATE_INFO_KHR,
         .display = (wl_display*)createInfo.applicationPtr,

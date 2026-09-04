@@ -6,6 +6,7 @@ Created by @PieroCastillo on 2026-06-01
 
 // standard headers
 #include <atomic>
+#include <cstring>
 
 // project headers
 #include "../Core/api.hpp"

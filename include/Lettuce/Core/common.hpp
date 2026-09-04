@@ -4,6 +4,9 @@
 // standard headers
 #include <array>
 #include <cstdint>
+#include <iostream>
+#include <print>
+#include <stacktrace>
 #include <stdexcept>
 #include <string>
 #include <tuple>
@@ -164,15 +167,21 @@ namespace Lettuce::Core
     class LettuceException : public std::runtime_error {
     public:
         explicit LettuceException(LettuceResult r)
-            : std::runtime_error(resultToString(r)), result(r) {}
+            : std::runtime_error(resultToString(r)), result(r) { printStacktrace(); }
 
         explicit LettuceException(VkResult r)
-            : std::runtime_error(resultToString(r)), vkResult(r) {}
+            : std::runtime_error(resultToString(r)), vkResult(r) { printStacktrace(); }
 
         LettuceResult result;
         VkResult vkResult;
 
     private:
+        void printStacktrace() const
+        {
+            std::println("[Lettuce Exception]");
+            std::println(std::cerr, "Error: {}", what());
+            std::println(std::cerr, "Stack trace:\n{}", std::stacktrace::current());
+        }
         static std::string resultToString(LettuceResult r) {
             switch (r) {
             case LettuceResult::Success: return "Success";

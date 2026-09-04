@@ -136,7 +136,7 @@ VSOutput vertMain(uint vertexID: SV_VulkanVertexID, uint instanceID: SV_DrawInde
 
 [require(fragment, spirv_1_6)]
 [shader("fragment")]
-PSOutput fragMain(VSOutput input, uint4 fragCoord: SV_Position)
+PSOutput fragMain(VSOutput input)
 {
     PSOutput output;
     output.colorOutput = float4(input.color, 1);

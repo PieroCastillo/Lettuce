@@ -32,14 +32,18 @@ end
 add_requires("vulkansdk")
 add_requires("vulkan-memory-allocator")
 add_requires("volk")
-add_requires("glfw")
+add_requires("glfw", { system = false })
 add_requires("glm")
 add_requires("fastgltf")
 add_requires("imgui")
 add_requires("ktx", { configs={ vulkan=true, ktx2=true, decoder=true}})
 add_requires("meshoptimizer")
-add_requires("freetype")
-add_requires("harfbuzz")
+add_requires("freetype", { system = false })
+add_requires("harfbuzz", { system = false })
+
+if is_plat("linux") then
+    add_requires("glfw", { system = false, configs = {wayland = true, x11 = false}})
+end
 
 local v = ("0.0.1.0"):split("%.")
 add_defines("VARIANT_VERSION=" .. (v[1] or 0),
@@ -51,6 +55,7 @@ if is_os("windows") then
     add_links("user32", "gdi32", "kernel32")
     add_defines("VK_USE_PLATFORM_WIN32_KHR", "_WIN32")
 else
+    add_syslinks("stdc++exp")
     add_defines("VK_USE_PLATFORM_WAYLAND_KHR")
 end
 
@@ -59,7 +64,7 @@ target("Lettuce")
     add_includedirs("include/")
     add_headerfiles("include/Lettuce/**.hpp")
     add_files("src/**.cpp")
-    add_packages("volk", "glfw", "ktx", "glm", "fastgltf", "meshoptimizer", "vulkan-memory-allocator", "freetype", "harfbuzz")
+    add_packages("volk", "ktx", "glm", "fastgltf", "meshoptimizer", "vulkan-memory-allocator", "freetype", "harfbuzz")
     add_rules("utils.symbols.export_all", {export_classes = true})
     local slangFiles = os.files("src/**.slang")
     if #slangFiles > 0 then
@@ -84,7 +89,7 @@ for _, name in ipairs(samples) do
         add_deps("Lettuce")
         add_includedirs("include")
         add_files("samples/" .. name .. "/app.cpp")
-        add_packages("volk", "glfw", "glm", "imgui", "fastgltf", "slang", "meshoptimizer")
+        add_packages("volk", "glfw", "glm", "imgui", "fastgltf", "slang", "meshoptimizer", "freetype", "harfbuzz")
         local slangFiles = os.files("samples/" .. name .. "/**.slang")
         if #slangFiles > 0 then
             add_files(slangFiles, {rule = "slang"})

@@ -6,10 +6,11 @@ Created by @PieroCastillo on 2026-06-01
 
 // standard headers
 #include <utility>
+#include <cstring>
 
 // project headers
 #include "../Core/api.hpp"
-#include "../Core/Common.hpp"
+#include "../Core/common.hpp"
 #include "../helper.hpp"
 #include "Common.hpp"
 

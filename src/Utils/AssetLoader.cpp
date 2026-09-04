@@ -9,7 +9,6 @@
 #include <vector>
 
 // external headers
-#include "glfw/glfw3.h"
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -298,15 +297,15 @@ auto AssetLoader::LoadGtlfAsGeometry(Device* pDevice, std::string_view pathStr) 
             DebugPrint("[ASSET LOADER REPORT]", "mesh {} meshlets {} vertices {} indices {}", mesh.name, meshlets.size(), posAcc.count, idxAcc.count);
         }
 
-        auto mesh = MeshStorage{
+        auto meshData = MeshStorage{
             .aabbMin = {},
             .aabbMax = {},
             .clusterOffset = (uint32_t)(clustersOldSize),
             .clusterCount = (uint32_t)(source.clusters.size() - clustersOldSize),
         };
-        source.meshes.push_back(mesh);
+        source.meshes.push_back(meshData);
 
-        DebugPrint("                     ", "clusterOffset={} clusterCount={}\n", mesh.clusterOffset, mesh.clusterCount);
+        DebugPrint("                     ", "clusterOffset={} clusterCount={}\n", meshData.clusterOffset, meshData.clusterCount);
     }
 
     const auto& nodesIdxs = asset->scenes.at(asset->defaultScene.value()).nodeIndices;
