@@ -41,14 +41,10 @@ void EditorViewport::Resize(uint32_t width, uint32_t height)
     if (pickTarget.generation != 0)
         device.Destroy(pickTarget);
 
-    TextureViewDesc pickDesc = {
+    RenderTargetDesc pickDesc = {
         .width = width,
         .height = height,
-        .depth = 1,
-        .format = Format::Atomic_R32_UInt,
-        .mipCount = 1,
-        .layerCount = 1,
-        .cpuVisible = false,
+        .type = RenderTargetType::ColorRGB_R32UInt,
     };
     pickTarget = device.CreateTextureView(pickDesc);
 }
