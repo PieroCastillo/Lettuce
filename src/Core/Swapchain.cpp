@@ -67,9 +67,9 @@ void setupVkSwapchain(SwapchainVK& swapchainVK, DeviceImpl* impl, VkPhysicalDevi
 
     surfaceFormat = formats[0];
 
-    surfaceExtent.width = std::clamp(sc.currentExtent.width, sc.minImageExtent.width, sc.maxImageExtent.width);
-    surfaceExtent.height = std::clamp(sc.currentExtent.width, sc.minImageExtent.height, sc.maxImageExtent.height);
-
+        surfaceExtent.width = std::clamp(sc.currentExtent.width, sc.minImageExtent.width, sc.maxImageExtent.width);
+        surfaceExtent.height = std::clamp(sc.currentExtent.height, sc.minImageExtent.height, sc.maxImageExtent.height);
+    
     swapchainVK.ltFormat = FromVkFormat(surfaceFormat.format);
     swapchainVK.format = surfaceFormat.format;
     swapchainVK.width = surfaceExtent.width;

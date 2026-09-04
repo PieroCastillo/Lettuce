@@ -26,9 +26,6 @@ GpuUniquePtr<uint32_t> pickInstanceData;
 TextureView tDepthTarget;
 TextureView tPickTexture;
 
-constexpr uint32_t debugBufferCount = 32;
-constexpr uint32_t debugBufferItemSize = 4 * sizeof(uint32_t);
-
 Lettuce::Utils::FrameTimer timer;
 Lettuce::Utils::Camera3DDesc camera2Desc;
 Lettuce::Utils::Camera3D camera2(camera2Desc); // explicit constructor
@@ -76,6 +73,8 @@ void initLettuce()
     };
     device = std::make_unique<Device>(deviceCI);
 
+        glfwGetFramebufferSize(window, (int*)&width, (int*)&height);
+        std::println("glfw fb size: {},{}", width, height);
     swapchain = device->CreateSwapchain(GetSwapchainDesc(window));
 
     CommandAllocatorDesc cmdAllocDesc = {
@@ -175,16 +174,16 @@ void mainLoop()
             device->Destroy(tPickTexture);
 
             RenderTargetDesc pickDesc = {
-                .width = width,
-                .height = height,
+                .width = fbSize.width,
+                .height = fbSize.height,
                 .type = RenderTargetType::ColorRGB_R32UInt,
                 .defaultClearValue = ColorClear{},
             };
             tPickTexture = device->CreateTextureView(pickDesc);
 
             RenderTargetDesc depthDesc = {
-                .width = width,
-                .height = height,
+                .width = fbSize.width,
+                .height = fbSize.height,
                 .type = RenderTargetType::Depth_D32,
                 .defaultClearValue = DepthStencilClear {1.0f, 0},
             };
@@ -253,6 +252,7 @@ void initWindow()
 {
     InitGlfw();
     window = glfwCreateWindow(width, height, "My Lettuce Window", NULL, NULL);
+    glfwPollEvents();
 }
 
 void cleanupWindow()
