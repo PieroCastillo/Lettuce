@@ -20,7 +20,12 @@ namespace Editor
     public:
         Window(uint32_t width, uint32_t height, std::string title)
         {
+#ifdef __linux__
+            glfwInitHint(GLFW_PLATFORM, GLFW_PLATFORM_WAYLAND);
+            glfwInitHint(GLFW_WAYLAND_LIBDECOR, GLFW_WAYLAND_DISABLE_LIBDECOR);
+#endif
             glfwInit();
+            glfwWindowHint(GLFW_DECORATED, GLFW_TRUE);
             glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
             glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
             window = glfwCreateWindow(width, height, title.c_str(), NULL, NULL);

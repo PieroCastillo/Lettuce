@@ -9,9 +9,6 @@ using namespace Editor;
 
 Renderer::Renderer(Window& window)
 {
-    auto hwnd = glfwGetWin32Window(window.GetHandle());
-    auto hmodule = GetModuleHandle(NULL);
-
     DeviceDesc deviceCI = {
         .preferDedicated = true,
     };
@@ -19,9 +16,14 @@ Renderer::Renderer(Window& window)
 
     SwapchainDesc swapchainDesc = {
         .clipped = true,
-        .windowPtr = &hwnd,
-        .applicationPtr = &hmodule,
     };
+#if defined(WIN32_) || defined(_WIN32) || defined(WIN32)
+    swapchainDesc.windowPtr = glfwGetWin32Window(window.GetHandle());
+    swapchainDesc.applicationPtr = GetModuleHandle(NULL);
+#elifdef __linux__
+    swapchainDesc.windowPtr = glfwGetWaylandWindow(window.GetHandle());
+    swapchainDesc.applicationPtr = glfwGetWaylandDisplay();
+#endif
     swapchain = device->CreateSwapchain(swapchainDesc);
 
     CommandAllocatorDesc cmdAllocDesc = {

@@ -87,7 +87,7 @@ for _, name in ipairs(samples) do
     target(name)
         set_kind("binary")
         add_deps("Lettuce")
-        add_includedirs("include")
+        add_includedirs("include", "samples/include")
         add_files("samples/" .. name .. "/app.cpp")
         add_packages("volk", "glfw", "glm", "imgui", "fastgltf", "slang", "meshoptimizer", "freetype", "harfbuzz")
         local slangFiles = os.files("samples/" .. name .. "/**.slang")

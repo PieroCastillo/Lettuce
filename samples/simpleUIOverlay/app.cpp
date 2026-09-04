@@ -176,9 +176,7 @@ void mainLoop()
 
 void initWindow()
 {
-    glfwInit();
-    glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-    glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
+    InitGlfw();
     window = glfwCreateWindow(width, height, "UI Overlay", NULL, NULL);
 }
 void cleanupWindow()
@@ -197,12 +195,7 @@ void initLettuce()
     };
     device = std::make_unique<Device>(deviceCI);
 
-    SwapchainDesc swapchainDesc = {
-        .clipped = true,
-        .windowPtr = &hwnd,
-        .applicationPtr = &hmodule,
-    };
-    swapchain = device->CreateSwapchain(swapchainDesc);
+    swapchain = device->CreateSwapchain(GetSwapchainDesc(window));
 
     SurfaceDesc surfaceCI = {
         .device = *device,

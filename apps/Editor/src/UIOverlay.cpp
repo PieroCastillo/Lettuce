@@ -42,7 +42,7 @@ void UIOverlay::createResources()
     auto uiscene = UIScene([&](){
         return UIView {
             .child = {
-                Label { .content = "Hello Editor" }
+                Label { .text = "Hello Editor" }
             }
         };
     });

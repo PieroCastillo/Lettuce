@@ -1,14 +1,9 @@
-#include "Lettuce/Lettuce.hpp"
-#include "glfw/glfw3.h"
-#define GLFW_EXPOSE_NATIVE_WIN32
-#include "glfw/glfw3native.h"
+#include "AppCommon.hpp"
+
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/quaternion.hpp>
-#define WIN32_LEAN_AND_MEAN
-#include <windows.h>
-#undef CreateFont
 
 #include <algorithm>
 #include <atomic>
@@ -206,9 +201,9 @@ void mainLoop()
         };
 
         auto color = ColorClear{ 0.498, 0.498, 0.498, 1.0 };
-        // cmd.ClearTexture({ frame, color,0, 1, 0, 1 });
+        cmd.ClearTexture({ frame, color,0, 1, 0, 1 });
 
-        // cmd.Barrier({ bClearColor });
+        cmd.Barrier({ bClearColor });
 
         draw2dScene(cmd, frame, fbSize.width, fbSize.height);
 
@@ -230,9 +225,7 @@ void mainLoop()
 
 void initWindow()
 {
-    glfwInit();
-    glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-    glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
+    InitGlfw();
     window = glfwCreateWindow(width, height, "Lettuce Quimera 2D Test", NULL, NULL);
 }
 void cleanupWindow()
@@ -251,12 +244,7 @@ void initLettuce()
     };
     device = std::make_unique<Device>(deviceCI);
 
-    SwapchainDesc swapchainDesc = {
-        .clipped = true,
-        .windowPtr = &hwnd,
-        .applicationPtr = &hmodule,
-    };
-    swapchain = device->CreateSwapchain(swapchainDesc);
+    swapchain = device->CreateSwapchain(GetSwapchainDesc(window));
 
     SurfaceDesc surfaceCI = {
         .device = *device,

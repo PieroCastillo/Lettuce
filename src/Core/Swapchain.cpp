@@ -24,8 +24,8 @@ void setupVkSurface(SwapchainVK& swapchainVK, VkInstance instance, const Swapcha
 #if defined(WIN32_) || defined(_WIN32) || defined(WIN32)
     VkWin32SurfaceCreateInfoKHR win32surfaceCI = {
         .sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR,
-        .hinstance = *(HINSTANCE*)(createInfo.applicationPtr),
-        .hwnd = *(HWND*)(createInfo.windowPtr),
+        .hinstance = (HINSTANCE)(createInfo.applicationPtr),
+        .hwnd = (HWND)(createInfo.windowPtr),
     };
 
     handleResult(vkCreateWin32SurfaceKHR(instance, &win32surfaceCI, nullptr, &surface));

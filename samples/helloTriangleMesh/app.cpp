@@ -1,8 +1,4 @@
-#include "Lettuce/Lettuce.hpp"
-#include "glfw/glfw3.h"
-#define GLFW_EXPOSE_NATIVE_WIN32
-#include "glfw/glfw3native.h"
-#include <windows.h>
+#include "AppCommon.hpp"
 
 #include <memory>
 #include <vector>
@@ -39,12 +35,7 @@ void initLettuce()
     };
     device = std::make_unique<Device>(deviceCI);
 
-    SwapchainDesc swapchainDesc = {
-        .clipped = true,
-        .windowPtr = &hwnd,
-        .applicationPtr = &hmodule,
-    };
-    swapchain = device->CreateSwapchain(swapchainDesc);
+    swapchain = device->CreateSwapchain(GetSwapchainDesc(window));
 
     CommandAllocatorDesc cmdAllocDesc = {
         .queueType = QueueType::Graphics,
@@ -141,9 +132,7 @@ void cleanupLettuce()
 
 void initWindow()
 {
-    glfwInit();
-    glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-    glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
+    InitGlfw();
     window = glfwCreateWindow(width, height, "My Lettuce Window", NULL, NULL);
 }
 

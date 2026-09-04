@@ -1,14 +1,4 @@
-#include "Lettuce/Lettuce.hpp"
-#include "GLFW/glfw3.h"
-
-#if defined(WIN32_) || defined(_WIN32) || defined(WIN32)
-#define GLFW_EXPOSE_NATIVE_WIN32
-#include <windows.h>
-#elifdef __linux__
-#define GLFW_EXPOSE_NATIVE_WAYLAND
-#include <wayland-client.h>
-#endif
-#include "GLFW/glfw3native.h"
+#include "AppCommon.hpp"
 
 #include <memory>
 #include <vector>
@@ -43,21 +33,7 @@ void initLettuce()
     };
     device.Create(deviceCI);
 
-    SwapchainDesc swapchainDesc = {
-        .clipped = true,
-    };
-
-#if defined(WIN32_) || defined(_WIN32) || defined(WIN32)
-    auto appWindow = glfwGetWin32Window(window);
-    auto app = GetModuleHandle(NULL);
-    swapchainDesc.windowPtr = &appWindow;
-    swapchainDesc.applicationPtr = &app;
-#elifdef __linux__
-    swapchainDesc.windowPtr = glfwGetWaylandWindow(window);
-    swapchainDesc.applicationPtr = glfwGetWaylandDisplay();
-#endif
-
-    swapchain = device.CreateSwapchain(swapchainDesc);
+    swapchain = device.CreateSwapchain(GetSwapchainDesc(window));
 
     CommandAllocatorDesc cmdAllocDesc = {
         .queueType = QueueType::Graphics,
@@ -151,14 +127,7 @@ void cleanupLettuce()
 
 void initWindow()
 {
-#ifdef __linux__
-    glfwInitHint(GLFW_PLATFORM, GLFW_PLATFORM_WAYLAND);
-    glfwInitHint(GLFW_WAYLAND_LIBDECOR, GLFW_WAYLAND_DISABLE_LIBDECOR);
-#endif
-    glfwInit();
-    glfwWindowHint(GLFW_DECORATED, GLFW_TRUE);
-    glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-    glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
+    InitGlfw();
     window = glfwCreateWindow(width, height, "My Lettuce Window", NULL, NULL);
 }
 
