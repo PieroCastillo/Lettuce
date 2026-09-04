@@ -52,8 +52,8 @@ auto device = std::make_unique<Device>(deviceCI);
 ```cpp
 SwapchainDesc swapchainDesc = {
     .clipped = true,
-    .windowPtr = &hwnd,
-    .applicationPtr = &hmodule,
+    .windowPtr = hwnd,
+    .applicationPtr = hmodule,
 };
 auto swapchain = device->CreateSwapchain(swapchainDesc);
 ```

@@ -71,9 +71,6 @@ void UpdateCamera2()
 
 void initLettuce()
 {
-    auto hwnd = glfwGetWin32Window(window);
-    auto hmodule = GetModuleHandle(NULL);
-
     DeviceDesc deviceCI = {
         .preferDedicated = true,
     };
