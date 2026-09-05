@@ -256,12 +256,12 @@ auto Device::NextFrame(Swapchain swapchain, uint32_t desiredWidth, uint32_t desi
     {
         handleResult(vkQueueWaitIdle(impl->m_graphicsQueue));
         SwapchainDesc desc = { .clipped = info.clipped };
-
-        vkWaitForFences(device, 1, &info.waitForAcquireFence, VK_TRUE, timeout);
+        if (res != VK_ERROR_OUT_OF_DATE_KHR)
+            vkWaitForFences(device, 1, &info.waitForAcquireFence, VK_TRUE, timeout);
         setupVkSwapchain(info, impl, impl->m_physicalDevice, desc, desiredWidth, desiredHeight);
         setupImagesAndView(info, impl->textures, device, impl->m_physicalDevice, desc);
-
-        vkResetFences(device, 1, &info.waitForAcquireFence);
+        if (res != VK_ERROR_OUT_OF_DATE_KHR)
+            vkResetFences(device, 1, &info.waitForAcquireFence);
         handleResult(vkAcquireNextImageKHR(device, info.swapchain, timeout, VK_NULL_HANDLE, info.waitForAcquireFence, &info.currentImageIndex));
     }
 

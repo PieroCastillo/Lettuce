@@ -50,7 +50,7 @@ namespace Lettuce::UI
 
     struct UISceneImpl
     {
-
+        
     };
 };
 #endif // LETTUCE_UI_UI_SCENE_IMPL_HPP

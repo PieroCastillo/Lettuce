@@ -18,6 +18,20 @@ UIScene::~UIScene()
 void UIScene::Build(std::move_only_function<UIView(void)> builder)
 {
     auto uiViewDesc = builder();
+    auto controls = std::vector<ControlInstance>();
+
+    // if(control is ContentControl)
+    // {
+
+    // }
+    // else if (control is ItemsControl)
+    // {
+
+    // }
+    // else if (control is View)
+    // {
+
+    // }
 }
 
 void UIScene::Update()

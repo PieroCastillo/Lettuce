@@ -15,6 +15,7 @@ Created by @PieroCastillo on 2026-08-13
 #include "../Core/api.hpp"
 #include "../Foundations/api.hpp"
 #include "../Quimera/api.hpp"
+#include "mvvm.hpp"
 #include "types.hpp"
 #include "primitives.hpp"
 

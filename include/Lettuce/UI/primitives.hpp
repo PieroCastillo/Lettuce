@@ -15,6 +15,7 @@ Created by @PieroCastillo on 2026-08-29
 #include "../Core/api.hpp"
 #include "../Foundations/api.hpp"
 #include "../Quimera/api.hpp"
+#include "mvvm.hpp"
 
 namespace Lettuce::UI
 {
@@ -28,7 +29,13 @@ namespace Lettuce::UI
 
     struct ItemControl : Control
     {
-        Control Children;
+        ObservableVector<std::any> Items;
+        std::move_only_function<Control(std::any)> ItemTemplate;
+    };
+
+    struct ViewControl : Control
+    {
+        std::vector<Control> Children;
     };
 };
 #endif // LETTUCE_UI_PRIMITIVES_HPP
