@@ -19,41 +19,33 @@ Created by @PieroCastillo on 2026-08-13
 
 namespace Lettuce::UI
 {
-    struct ControlTag {};
-    using ControlInstance = Handle<ControlTag>;
-    constexpr auto InvalidControl = ControlInstance{ std::numeric_limits<uint32_t>::max(), 0 };
-
-    struct ControlTable
+    struct ControlInstance
     {
-        std::vector<uint32_t> generations;
-        std::vector<uint32_t> freeList;
-
         // control
-        std::vector<uint32_t> zIndex;
-        std::vector<ControlInstance> parents;
-        std::vector<ControlInstance> firstChild;
-        std::vector<ControlInstance> nextSibling;
+        uint32_t zIndex;
+        uint32_t parent;
+        uint32_t firstChild;
+        uint32_t prevSibling;
+        uint32_t nextSibling;
 
         // layout
-        std::vector<float2> size;
-        std::vector<VerticalAlignment> vertAligment;
-        std::vector<HorizontalAlignment> horAlignment;
-        std::vector<float4> margin;
-        std::vector<float4> padding;
-        std::vector<float4> bounds; // readonly
+        float2 size;
+        VerticalAlignment vertAligment;
+        HorizontalAlignment horAlignment;
+        float4 margin;
+        float4 padding;
+        float4 bounds; // readonly
 
         // visualization
-        std::vector<Lettuce::Quimera::Brush> background;
-        std::vector<Lettuce::Quimera::Brush> foreground;
-        std::vector<Lettuce::Quimera::Layout> layout;
-        std::vector<Lettuce::Quimera::Geometry> geometry;
+        Lettuce::Quimera::Brush background;
+        Lettuce::Quimera::Brush foreground;
 
         // interaction
-        std::vector<bool> isEnabled;
-        std::vector<bool> isFocused; // readonly
+        bool isEnabled;
+        bool isFocused; // readonly
 
-        auto AddControl(ControlInstance parent) -> ControlInstance;
-        void RemoveControl(ControlInstance);
+        /* used for: render data, custom control data, etc*/
+        std::any controlData;
     };
 
     struct UISceneImpl

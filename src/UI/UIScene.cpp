@@ -17,7 +17,7 @@ UIScene::~UIScene()
 
 void UIScene::Build(std::move_only_function<UIView(void)> builder)
 {
-
+    auto uiViewDesc = builder();
 }
 
 void UIScene::Update()
