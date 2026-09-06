@@ -55,7 +55,7 @@ DebugPass& DebugPass::operator=(DebugPass&& other) noexcept
 void DebugPass::Create(const DebugPassDesc& desc)
 {
     if (m_device)
-        throw std::logic_error("SceneView::Create cannot be called from initizalized Device.");
+        throw std::logic_error("DebugPass::Create cannot be called from initizalized Device.");
 
     m_device = &desc.device;
     dtPass = desc.descriptorTable;

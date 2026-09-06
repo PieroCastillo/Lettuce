@@ -10,7 +10,7 @@ Created by @PieroCastillo on 2026-05-17
 
 using namespace Lettuce::Foundations;
 
-namespace Lettuce::Rendering::Debug
+namespace Lettuce::Rendering::DeferredPlus
 {
     struct GeometryPassDesc
     {
@@ -33,7 +33,7 @@ namespace Lettuce::Rendering::Debug
         // output
         TextureView rtColorOutput; // FORMAT: RGBA32
         TextureView rtDepth; // FORMAT: Depth32
-        TextureView rtMaterial; // FORMAT: R16
+        TextureView rtMaterial; // FORMAT: Depth16
         TextureView rtPick; // FORMAT: Atomic_R32_UInt
     };
 
@@ -43,7 +43,6 @@ namespace Lettuce::Rendering::Debug
         Device* m_device = nullptr;
         DescriptorTable dtPass;
         Pipeline pPass;
-        Pipeline pBuildCommands;
         IndirectSet isPass;
         MemoryView mvIndirectDrawCommands;
     public:

@@ -225,6 +225,13 @@ auto Device::CreateTextureView(const RenderTargetDesc& desc) -> TextureView
         subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
         break;
     }
+    case RenderTargetType::Depth_D16:
+    {
+        usageFlags = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
+        format = VK_FORMAT_D16_UNORM;
+        subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
+        break;
+    }
     }
 
     VkImage image;
