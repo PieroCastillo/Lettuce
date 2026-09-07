@@ -1,8 +1,8 @@
 module LettuceRendering;
 
-__include "types.part.slang";
+__include "../shaderShared/types.part.slang";
+__include "../shaderShared/materials.part.slang";
 
-const static uint computeNumThreadsX = 32;
 const static uint maxTriangles = 126;
 const static uint maxIndices = maxTriangles * 3;
 
@@ -28,6 +28,7 @@ struct PushConstants
     uint64_t sceneViewDataAddr;
     uint64_t indirectCommandsAddr;
     uint64_t positionsBufferAddr;
+    uint64_t uvsBufferAddr;
     uint64_t indexBufferAddr;
     uint64_t clusterStorageAddr;
     uint64_t meshStorageAddr;

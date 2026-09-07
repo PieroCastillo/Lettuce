@@ -22,7 +22,6 @@ namespace Lettuce::UI
     struct ControlInstance
     {
         // control
-        uint32_t zIndex;
         uint32_t parent;
         uint32_t firstChild;
         uint32_t prevSibling;
@@ -42,7 +41,6 @@ namespace Lettuce::UI
 
         // interaction
         bool isEnabled;
-        bool isFocused; // readonly
 
         /* used for: render data, custom control data, etc*/
         std::any controlData;

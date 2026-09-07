@@ -20,17 +20,23 @@ void UIScene::Build(std::move_only_function<UIView(void)> builder)
     auto uiViewDesc = builder();
     auto controls = std::vector<ControlInstance>();
 
-    // if(control is ContentControl)
+    // Control currentControl;
+    // while (currentControl != null)
     // {
+    //     auto instance = appendControl(currentControl);
+    //     if (control is ContentControl)
+    //     {
 
-    // }
-    // else if (control is ItemsControl)
-    // {
+    //     }
+    //     else if (control is ItemsControl)
+    //     {
 
-    // }
-    // else if (control is View)
-    // {
+    //     }
+    //     else if (control is View)
+    //     {
 
+    //     }
+    //     nextControl();
     // }
 }
 
