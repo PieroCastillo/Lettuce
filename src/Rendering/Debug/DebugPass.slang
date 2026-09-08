@@ -1,6 +1,6 @@
 module LettuceRendering;
 
-__include "../shadersShared/types.part.slang";
+__include "../shaderShared/types.part.slang";
 
 const static uint computeNumThreadsX = 32;
 const static uint maxTriangles = 126;
