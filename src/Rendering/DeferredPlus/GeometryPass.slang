@@ -15,6 +15,7 @@ struct VSOutput
     float4 position : SV_Position;
     float3 color : COLOR0;
     nointerpolation uint32_t instanceID;
+    float3 baryCoord;
 };
 
 struct PSOutput
@@ -69,6 +70,8 @@ VSOutput vertMain(uint vertexID: SV_VulkanVertexID, uint instanceID: SV_DrawInde
     output.position = mul(sceneViewData.viewProj, float4(worldPos.xyz, 1.0));
     output.color = float3(1);
     output.instanceID = instanceID;
+    var vertexIdxMod = vertexID % 3;
+    output.baryCoord = float3(vertexIdxMod == 0 ? 1 : 0, vertexIdxMod == 1 ? 1 : 0, vertexIdxMod == 2 ? 1 : 0);
 
     return output;
 }
