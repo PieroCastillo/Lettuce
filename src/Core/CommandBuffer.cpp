@@ -117,7 +117,7 @@ void CommandBuffer::BeginRendering(const RenderPassDesc& desc)
         }
     }
 
-    VkViewport vw = { 0, 0, static_cast<uint32_t>(desc.width), static_cast<uint32_t>(desc.height), 0, 1 };
+    VkViewport vw = { 0, 0, static_cast<float>(desc.width), static_cast<float>(desc.height), 0, 1 };
     VkRect2D scissor = { { 0,0 }, { desc.width, desc.height } };
     vkCmdSetViewport(cmd, 0, 1, &vw);
     vkCmdSetScissor(cmd, 0, 1, &scissor);

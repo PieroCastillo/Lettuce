@@ -200,10 +200,10 @@ void mainLoop()
             PipelineStage::ColorAttachmentOutput,
         };
 
-        auto color = ColorClear{ 0.498, 0.498, 0.498, 1.0 };
-        cmd.ClearTexture({ frame, color,0, 1, 0, 1 });
+        // auto color = ColorClear{ 0.498, 0.498, 0.498, 1.0 };
+        // cmd.ClearTexture({ frame, color,0, 1, 0, 1 });
 
-        cmd.Barrier({ bClearColor });
+        // cmd.Barrier({ bClearColor });
 
         draw2dScene(cmd, frame, fbSize.width, fbSize.height);
 

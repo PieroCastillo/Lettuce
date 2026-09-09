@@ -203,6 +203,7 @@ namespace Lettuce::Core
         bool clipped;
         void* windowPtr;
         void* applicationPtr;
+        ColorClear targetColor;
     };
 
     struct BarrierDesc

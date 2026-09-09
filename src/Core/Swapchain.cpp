@@ -185,7 +185,7 @@ void setupImagesAndView(SwapchainVK& swapchainVK, ResourcePool<TextureView, Text
         auto texView = textures.allocate({ swapchainVK.width, swapchainVK.height, 1, 1,
                                             swapchainVK.format, img, view,VK_NULL_HANDLE,
                                             0, 0, VK_NULL_HANDLE, nullptr,
-                                            true });
+                                            true, ToVkClearValue(createInfo.targetColor) });
 
         swapchainVK.swapchainViews[i] = view;
         swapchainVK.renderTargets[i] = texView;

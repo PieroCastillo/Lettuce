@@ -29,6 +29,7 @@ auto GetSwapchainDesc(GLFWwindow* window) -> Lettuce::Core::SwapchainDesc
     desc.windowPtr = glfwGetWaylandWindow(window);
     desc.applicationPtr = glfwGetWaylandDisplay();
 #endif
+    desc.targetColor = ColorClear{{ 0.5, 0.5, 0.5, 1} };
     return desc;
 }
 
