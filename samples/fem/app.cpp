@@ -5,6 +5,11 @@
 #include <print>
 #include <vector>
 
+#include <igl/copyleft/tetgen/tetrahedralize.h>
+#include <igl/readOFF.h>
+#include <igl/barycenter.h>
+#include <stl_reader.hpp>
+
 using namespace Lettuce::Core;
 using namespace Lettuce::Rendering;
 
@@ -29,6 +34,40 @@ TextureView tPickTexture;
 Lettuce::Utils::FrameTimer timer;
 Lettuce::Utils::Camera3DDesc camera2Desc;
 Lettuce::Utils::Camera3D camera2(camera2Desc); // explicit constructor
+
+struct Material
+{
+    float young;   // E
+    float poisson; // nu
+    float density; // uniform
+};
+
+struct SimulationInfo
+{
+    uint32_t elementCount;
+    uint32_t nodeCount;
+    uint32_t iterationCount;
+    Material material;
+};
+
+struct Node
+{
+    float3 position;
+    float3 displacement;
+    float3 force;
+    uint32_t constraints; // bits: [highest, ... | X | Y | Z , lowest]
+};
+
+struct Element
+{
+    uint32_t nodeIdxs[4];
+
+    float volume;
+    float B[6][12];
+};
+
+GpuUploadVector<Node> nodes;
+GpuUploadVector<Element> elemments;
 
 double xprev = width / 2;
 double yprev = height / 2;
@@ -73,8 +112,8 @@ void initLettuce()
     };
     device = std::make_unique<Device>(deviceCI);
 
-        glfwGetFramebufferSize(window, (int*)&width, (int*)&height);
-        std::println("glfw fb size: {},{}", width, height);
+    glfwGetFramebufferSize(window, (int*)&width, (int*)&height);
+    std::println("glfw fb size: {},{}", width, height);
     swapchain = device->CreateSwapchain(GetSwapchainDesc(window));
 
     CommandAllocatorDesc cmdAllocDesc = {
@@ -120,19 +159,74 @@ void createRenderingObjects()
 
 void loadModel()
 {
-    std::filesystem::path modelPath = "../../../../external/models/DragonAttenuation.glb";
+    std::filesystem::path modelPath = "../../../../external/models/connectingRod.stl";
+    std::vector<float3> positions;
+    std::vector<uint32_t> indices;
 
-    auto srcs = std::vector<GeometrySource>();
-    srcs.push_back(Lettuce::Utils::AssetLoader::LoadGtlfAsGeometry(device.get(), modelPath.string()));
+    try {
+        stl_reader::StlMesh<float, uint32_t> mesh(modelPath.string());
+        positions.resize(mesh.num_vrts());
+        memcpy((void*)positions.data(), (void*)mesh.raw_coords(), mesh.num_vrts() * sizeof(float3));
 
-    SceneViewDesc sceneDesc = {
-        .device = *device,
-        .sources = srcs,
-        .maxInstanceCount = 20,
-    };
-    scene = std::make_unique<SceneView>(sceneDesc);
+        indices.resize(mesh.num_tris() * 3);
+        memcpy((void*)indices.data(), (void*)mesh.raw_tris(), mesh.num_tris() * 3 * sizeof(uint32_t));
+    }
+    catch (std::exception& e) {
+        std::cout << "bad copy | " << e.what() << std::endl;
+        std::abort();
+    }
 
-    sceneViewData->instanceCount = scene->GetInstanceTable().size();
+    // create tetrahedralized representation
+    Eigen::MatrixXd V;
+    Eigen::MatrixXi F;
+    Eigen::MatrixXd B;
+
+    Eigen::MatrixXd TV;
+    Eigen::MatrixXi TT;
+    Eigen::MatrixXi TF;
+
+    V.resize(positions.size(), 3);
+    for (size_t i = 0; i < positions.size(); ++i)
+    {
+        V(i, 0) = positions[i].x;
+        V(i, 1) = positions[i].y;
+        V(i, 2) = positions[i].z;
+    }
+
+    F.resize(indices.size() / 3, 3);
+    for (size_t i = 0; i < indices.size(); i += 3)
+    {
+        F(i / 3, 0) = indices[i];
+        F(i / 3, 1) = indices[i + 1];
+        F(i / 3, 2) = indices[i + 2];
+    }
+
+    // Tetrahedralize the interior
+    igl::copyleft::tetgen::tetrahedralize(V, F, "pq1.414Y", TV, TT, TF);
+    // Compute barycenters
+    igl::barycenter(TV, TT, B);
+
+    std::println("expected abort");
+    std::abort();
+
+    /* todo:
+    - setup pipelines
+    - setup nodes and elements
+    - initialize nodes and elements
+    */
+
+    // // load model into gpu memory
+    // auto srcs = std::vector<GeometrySource>();
+    // srcs.push_back(std::move(geometrySrc));
+
+    // SceneViewDesc sceneDesc = {
+    //     .device = *device,
+    //     .sources = srcs,
+    //     .maxInstanceCount = 20,
+    // };
+    // scene = std::make_unique<SceneView>(sceneDesc);
+
+    // sceneViewData->instanceCount = scene->GetInstanceTable().size();
 }
 
 uint32_t oldFbWidth = width;

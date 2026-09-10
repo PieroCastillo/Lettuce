@@ -40,6 +40,8 @@ add_requires("ktx", { configs={ vulkan=true, ktx2=true, decoder=true}})
 add_requires("meshoptimizer")
 add_requires("freetype", { system = false })
 add_requires("harfbuzz", { system = false })
+add_requires("tetgen")
+add_requires("libigl")
 
 if is_plat("linux") then
     add_requires("glfw", { system = false, configs = {wayland = true, x11 = false}})
@@ -61,7 +63,7 @@ end
 
 target("Lettuce")
     set_kind("shared")
-    add_includedirs("include/")
+    add_includedirs("include/", "external/include")
     add_headerfiles("include/Lettuce/**.hpp")
     add_files("src/**.cpp")
     add_packages("volk", "ktx", "glm", "fastgltf", "meshoptimizer", "vulkan-memory-allocator", "freetype", "harfbuzz")
@@ -88,9 +90,9 @@ for _, name in ipairs(samples) do
     target(name)
         set_kind("binary")
         add_deps("Lettuce")
-        add_includedirs("include", "samples/include")
+        add_includedirs("include", "samples/include", "external/include")
         add_files("samples/" .. name .. "/app.cpp")
-        add_packages("volk", "glfw", "glm", "imgui", "fastgltf", "slang", "meshoptimizer", "freetype", "harfbuzz")
+        add_packages("volk", "glfw", "glm", "imgui", "fastgltf", "slang", "meshoptimizer", "freetype", "harfbuzz", "tetgen", "libigl")
         local slangFiles = os.files("samples/" .. name .. "/**.slang")
         if #slangFiles > 0 then
             add_files(slangFiles, {rule = "slang"})
