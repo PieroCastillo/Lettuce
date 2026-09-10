@@ -73,6 +73,7 @@ target("Lettuce")
 
 local samples = {
     "asyncRecord",
+    "fem",
     "helloTriangle",
     "helloTriangleMesh",
     "indirectDrawing",

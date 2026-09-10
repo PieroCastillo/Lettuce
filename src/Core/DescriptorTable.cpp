@@ -113,7 +113,7 @@ auto Device::CreateDescriptorTable(const DescriptorTableDesc& desc) -> Descripto
     VkPushConstantRange pushConstant = {
         .stageFlags = VK_SHADER_STAGE_ALL,
         .offset = 0,
-        .size = impl->props.maxPushAllocationsCount * sizeof(uint64_t),
+        .size = static_cast<uint32_t>(impl->props.maxPushAllocationsCount * sizeof(uint64_t)),
     };
 
     VkPipelineLayoutCreateInfo pipelineLayoutCI = {
