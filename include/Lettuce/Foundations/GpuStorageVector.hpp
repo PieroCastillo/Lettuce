@@ -74,6 +74,14 @@ namespace Lettuce::Foundations
         /// @brief Destructor.
         ~GpuStorageVector()
         {
+            reset();
+        }
+
+        void reset()
+        {
+            if(!m_device)
+                return;
+
             if (m_memView.generation == 0)
                 return;
 
@@ -81,6 +89,7 @@ namespace Lettuce::Foundations
             m_memView = {};
             m_info = {};
             m_capacity = 0;
+            m_device = nullptr;
         }
 
         auto byteSize() const noexcept -> uint32_t { return m_info.size; }

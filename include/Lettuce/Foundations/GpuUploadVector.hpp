@@ -115,6 +115,14 @@ namespace Lettuce::Foundations
         /// @brief Destructor.
         ~GpuUploadVector()
         {
+            reset();
+        }
+
+        void reset()
+        {
+            if(!m_device)
+                return;
+
             if (m_device && m_memView.generation > 0)
                 m_device->Destroy(m_memView);
 
@@ -125,6 +133,7 @@ namespace Lettuce::Foundations
             m_tempInfo = {};
             m_size = 0;
             m_capacity = 0;
+            m_device = nullptr;
         }
 
         auto data() noexcept -> T*
