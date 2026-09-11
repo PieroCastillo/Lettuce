@@ -41,7 +41,7 @@ namespace Lettuce::Foundations
 
         /// @brief Move Constructor.
         GpuUniquePtr(GpuUniquePtr&& other) noexcept :
-            m_device(other.m_device),
+            m_device(std::exchange(other.m_device, nullptr)),
             m_memView(std::exchange(other.m_memView, {})),
             m_info(std::exchange(other.m_info, {}))
         {
