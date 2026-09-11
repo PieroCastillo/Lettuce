@@ -13,28 +13,7 @@
 using namespace Lettuce::Core;
 using namespace Lettuce::Rendering;
 
-GLFWwindow* window;
-
-uint32_t width = 1366;
-uint32_t height = 768;
-
-std::unique_ptr<Device> device;
-Swapchain swapchain;
-DescriptorTable descriptorTable;
-CommandAllocator cmdAlloc;
-
-std::unique_ptr<SceneView> scene;
-std::unique_ptr<Debug::DebugPass> debugPass;
-GpuUniquePtr<SceneViewData> sceneViewData;
-GpuUniquePtr<uint32_t> pickInstanceData;
-
-TextureView tDepthTarget;
-TextureView tPickTexture;
-
-Lettuce::Utils::FrameTimer timer;
-Lettuce::Utils::Camera3DDesc camera2Desc;
-Lettuce::Utils::Camera3D camera2(camera2Desc); // explicit constructor
-
+// structs
 struct Material
 {
     float young;   // E
@@ -66,12 +45,117 @@ struct Element
     float B[6][12];
 };
 
+// fields
+GLFWwindow* window;
+
+uint32_t width = 1366;
+uint32_t height = 768;
+
+std::unique_ptr<Device> device;
+Swapchain swapchain;
+DescriptorTable descriptorTable;
+CommandAllocator cmdAlloc;
+
+GpuUniquePtr<SceneViewData> sceneViewData;
+GpuUniquePtr<uint32_t> pickInstanceData;
+
+TextureView tDepthTarget;
+
+Lettuce::Utils::FrameTimer timer;
+Lettuce::Utils::Camera3DDesc camera2Desc;
+Lettuce::Utils::Camera3D camera2(camera2Desc); // explicit constructor
+
+Pipeline pFiniteElements;
+Pipeline pRender;
+
+GpuUniquePtr<SimulationInfo> simulationInfo;
 GpuUploadVector<Node> nodes;
-GpuUploadVector<Element> elemments;
+GpuUploadVector<Element> elements;
 
 double xprev = width / 2;
 double yprev = height / 2;
 bool wasMousePressed = false;
+
+static Element makeElement(uint32_t i0, uint32_t i1, uint32_t i2, uint32_t i3, const std::vector<Node>& nodes)
+{
+    Element e{};
+
+    e.nodeIdxs[0] = i0;
+    e.nodeIdxs[1] = i1;
+    e.nodeIdxs[2] = i2;
+    e.nodeIdxs[3] = i3;
+
+    const auto& x0 = nodes[i0].position;
+    const auto& x1 = nodes[i1].position;
+    const auto& x2 = nodes[i2].position;
+    const auto& x3 = nodes[i3].position;
+
+    const auto a = x1 - x0;
+    const auto b = x2 - x0;
+    const auto c = x3 - x0;
+
+    const float detJ = dot(a, cross(b, c));
+
+    e.volume = std::abs(detJ) / 6.0f;
+
+    // Gradients
+    // N_i = a_i + b_i*x + c_i*y + d_i*z
+    //
+    // ∇Ni = (dNi/dx, dNi/dy, dNi/dz)
+
+    const float invDet = 1.0f / detJ;
+
+    float3 gradN[4];
+
+    gradN[0] = cross(x2 - x1, x3 - x1) * invDet;
+    gradN[1] = cross(x3 - x0, x2 - x0) * invDet;
+    gradN[2] = cross(x1 - x0, x3 - x0) * invDet;
+    gradN[3] = cross(x2 - x0, x1 - x0) * invDet;
+
+    // B = 6x12
+    //
+    // [ dN/dx   0      0   ]
+    // [ 0       dN/dy  0   ]
+    // [ 0       0      dN/dz]
+    // [ dN/dy   dN/dx  0   ]
+    // [ 0       dN/dz  dN/dy]
+    // [ dN/dz   0      dN/dx]
+
+    for (int i = 0; i < 4; ++i)
+    {
+        const int j = i * 3;
+
+        const float dx = gradN[i].x;
+        const float dy = gradN[i].y;
+        const float dz = gradN[i].z;
+
+        e.B[0][j + 0] = dx;
+        e.B[0][j + 1] = 0.0f;
+        e.B[0][j + 2] = 0.0f;
+
+        e.B[1][j + 0] = 0.0f;
+        e.B[1][j + 1] = dy;
+        e.B[1][j + 2] = 0.0f;
+
+        e.B[2][j + 0] = 0.0f;
+        e.B[2][j + 1] = 0.0f;
+        e.B[2][j + 2] = dz;
+
+        e.B[3][j + 0] = dy;
+        e.B[3][j + 1] = dx;
+        e.B[3][j + 2] = 0.0f;
+
+        e.B[4][j + 0] = 0.0f;
+        e.B[4][j + 1] = dz;
+        e.B[4][j + 2] = dy;
+
+        e.B[5][j + 0] = dz;
+        e.B[5][j + 1] = 0.0f;
+        e.B[5][j + 2] = dx;
+    }
+
+    return e;
+}
 
 void UpdateCamera2()
 {
@@ -126,15 +210,6 @@ void createRenderingObjects()
 {
     // load buffers
     sceneViewData = GpuUniquePtr<SceneViewData>(*device);
-    pickInstanceData = GpuUniquePtr<uint32_t>(*device);
-
-    RenderTargetDesc pickDesc = {
-        .width = width,
-        .height = height,
-        .type = RenderTargetType::ColorRGB_R32UInt,
-        .defaultClearValue = ColorClear{},
-    };
-    tPickTexture = device->CreateTextureView(pickDesc);
 
     RenderTargetDesc depthDesc = {
         .width = width,
@@ -148,17 +223,33 @@ void createRenderingObjects()
     DescriptorTableDesc descriptorTableDesc = { 4,4,4 };
     descriptorTable = device->CreateDescriptorTable(descriptorTableDesc);
 
-    Debug::DebugPassDesc debugPassDesc = {
-        .device = *device,
+    std::array<Format, 1> formatArr = { device->GetRenderTargetFormat(swapchain) };
+
+    auto shadersPath = "samples/fem/fem.spv";
+    auto shaders = Lettuce::Utils::AssetLoader::LoadSpirv(device.get(), shadersPath);
+
+    ComputePipelineDesc pFemDesc = {
+        .compEntryPoint = "compMain",
+        .compShaderBinary = shaders,
         .descriptorTable = descriptorTable,
-        .maxCulledInstances = 10,
-        .colorOutputFormat = device->GetRenderTargetFormat(swapchain),
     };
-    debugPass = std::make_unique<Debug::DebugPass>(debugPassDesc);
+    pFiniteElements = device->CreatePipeline(pFemDesc);
+
+    PrimitiveShadingPipelineDesc pRenderDesc = {
+        .vertEntryPoint = "vertMain",
+        .fragEntryPoint = "fragMain",
+        .vertShaderBinary = shaders,
+        .fragShaderBinary = shaders,
+        .colorAttachmentFormats = std::span(formatArr),
+        .descriptorTable = descriptorTable,
+    };
+    pRender = device->CreatePipeline(pRenderDesc);
 }
 
 void loadModel()
 {
+    simulationInfo = GpuUniquePtr<SimulationInfo>(*device);
+
     std::filesystem::path modelPath = "../../../../external/models/connectingRod.stl";
     std::vector<float3> positions;
     std::vector<uint32_t> indices;
@@ -206,27 +297,78 @@ void loadModel()
     // Compute barycenters
     igl::barycenter(TV, TT, B);
 
+    std::vector<Node> nodes(TV.rows());
+    std::vector<Element> elements(TT.rows());
+
+    for (Eigen::Index i = 0; i < TV.rows(); ++i)
+    {
+        nodes[i].position = {
+            static_cast<float>(TV(i, 0)),
+            static_cast<float>(TV(i, 1)),
+            static_cast<float>(TV(i, 2))
+        };
+
+        nodes[i].displacement = { 0.0f, 0.0f, 0.0f };
+        nodes[i].force = { 0.0f, 0.0f, 0.0f };
+    }
+
+    for (Eigen::Index i = 0; i < TT.rows(); ++i)
+    {
+        elements[i] = makeElement(
+            static_cast<uint32_t>(TT(i, 0)),
+            static_cast<uint32_t>(TT(i, 1)),
+            static_cast<uint32_t>(TT(i, 2)),
+            static_cast<uint32_t>(TT(i, 3)),
+            nodes
+        );
+    }
+
     std::println("expected abort");
     std::abort();
 
+    // steel ISO 42CrMo4
+    simulationInfo->material.density = 7850; // kg/m3
+    simulationInfo->material.young = 2.1e+11; // N/m2
+    simulationInfo->material.poisson = 0.3; // adimentional
+
     /* todo:
-    - setup pipelines
     - setup nodes and elements
     - initialize nodes and elements
     */
 
     // // load model into gpu memory
-    // auto srcs = std::vector<GeometrySource>();
-    // srcs.push_back(std::move(geometrySrc));
+}
 
-    // SceneViewDesc sceneDesc = {
-    //     .device = *device,
-    //     .sources = srcs,
-    //     .maxInstanceCount = 20,
-    // };
-    // scene = std::make_unique<SceneView>(sceneDesc);
+void execFem()
+{
+    auto cmd = device->AllocateCommandBuffer(cmdAlloc);
 
-    // sceneViewData->instanceCount = scene->GetInstanceTable().size();
+    auto allocs = std::vector<PushAllocationBinding>{
+          sceneViewData.getView(),
+          simulationInfo.getView(),
+          nodes.getView(),
+          elements.getView(),
+    };
+    PushAllocationsDesc pushDesc = {
+        .allocations = allocs,
+        .descriptorTable = descriptorTable,
+    };
+
+    cmd.BindDescriptorTable(descriptorTable, PipelineBindPoint::Compute);
+    cmd.BindPipeline(pFiniteElements);
+    cmd.PushAllocations(pushDesc);
+    cmd.Dispatch(elements.size() / 32, 1, 1);
+
+    std::array<std::span<CommandBuffer>, 1> cmds = { std::span(&cmd, 1) };
+
+    CommandBufferSubmitDesc submitDesc = {
+        .queueType = QueueType::Graphics,
+        .commandBuffers = std::span(cmds),
+        .presentSwapchain = swapchain,
+    };
+
+    device->Submit(submitDesc);
+    device->WaitFor(QueueType::Graphics);
 }
 
 uint32_t oldFbWidth = width;
@@ -265,15 +407,6 @@ void mainLoop()
         {
             device->WaitFor(QueueType::Graphics);
             device->Destroy(tDepthTarget);
-            device->Destroy(tPickTexture);
-
-            RenderTargetDesc pickDesc = {
-                .width = fbSize.width,
-                .height = fbSize.height,
-                .type = RenderTargetType::ColorRGB_R32UInt,
-                .defaultClearValue = ColorClear{},
-            };
-            tPickTexture = device->CreateTextureView(pickDesc);
 
             RenderTargetDesc depthDesc = {
                 .width = fbSize.width,
@@ -291,20 +424,35 @@ void mainLoop()
         auto frame = device->GetCurrentRenderTarget(swapchain);
         auto cmd = device->AllocateCommandBuffer(cmdAlloc);
 
-        Debug::DebugPassRecordDesc record = {
-            .fbWidth = fbSize.width,
-            .fbHeight = fbSize.height,
-            .sceneViewData = GpuSpan(sceneViewData),
-            .positions = scene->GetPositionsView(),
-            .indices = scene->GetIndicesView(),
-            .clusters = scene->GetClustersView(),
-            .meshes = scene->GetMeshesView(),
-            .culledInstances = scene->GetInstanceTable(),
-            .rtColorOutput = frame,
-            .rtDepth = tDepthTarget,
-            .rtPick = tPickTexture,
+        std::vector<AttachmentDesc> colorAttachments = { {
+            .renderTarget = frame,
+            .loadOp = LoadOp::Clear,
+        } };
+
+        RenderPassDesc renderPassDesc = {
+            .width = fbSize.width,
+            .height = fbSize.height,
+            .colorAttachments = std::span(colorAttachments),
+            .presentAttachmentIdx = 0,
         };
-        debugPass->Record(cmd, record);
+
+        auto allocs = std::vector<PushAllocationBinding>{
+            sceneViewData.getView(),
+            simulationInfo.getView(),
+            nodes.getView(),
+            elements.getView(),
+        };
+        PushAllocationsDesc pushDesc = {
+            .allocations = allocs,
+            .descriptorTable = descriptorTable,
+        };
+
+        cmd.BeginRendering(renderPassDesc);
+        cmd.BindDescriptorTable(descriptorTable, PipelineBindPoint::Graphics);
+        cmd.BindPipeline(pRender);
+        cmd.PushAllocations(pushDesc);
+        cmd.Draw(nodes.size(), 1);
+        cmd.EndRendering();
 
         std::array<std::span<CommandBuffer>, 1> cmds = { std::span(&cmd, 1) };
 
@@ -327,15 +475,13 @@ void cleanupLettuce()
 {
     device->WaitFor(QueueType::Graphics);
 
-    scene.reset();
-    debugPass.reset();
+    simulationInfo.reset();
 
-    sceneViewData.reset();
-    pickInstanceData.reset();
-
+    device->Destroy(pRender);
+    device->Destroy(pFiniteElements);
     device->Destroy(descriptorTable);
     device->Destroy(tDepthTarget);
-    device->Destroy(tPickTexture);
+    sceneViewData.reset();
 
     device->Destroy(cmdAlloc);
     device->Destroy(swapchain);
@@ -361,8 +507,9 @@ int main()
     std::setvbuf(stdout, nullptr, _IONBF, 0);
     initWindow();
     initLettuce();
-    createRenderingObjects();
     loadModel();
+    createRenderingObjects();
+    execFem();
     mainLoop();
     cleanupLettuce();
     cleanupWindow();

@@ -119,6 +119,9 @@ namespace Lettuce::Core
         VkPhysicalDeviceExtendedDynamicState3FeaturesEXT extendedDynamicState3Feature = {
             .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_3_FEATURES_EXT,
         };
+        VkPhysicalDeviceShaderAtomicFloatFeaturesEXT shaderAtomicFloatFeature = {
+            .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_ATOMIC_FLOAT_FEATURES_EXT,
+        };
         // recommended features/extensions
         VkPhysicalDeviceDeviceGeneratedCommandsFeaturesEXT deviceGeneratedCommandsFeature = {
             .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DEVICE_GENERATED_COMMANDS_FEATURES_EXT,
