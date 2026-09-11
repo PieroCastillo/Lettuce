@@ -54,7 +54,7 @@ struct Element
     float B[6][12];
 };
 
-struct PushContants
+struct PushContantsComp
 {
     uint64_t sceneViewDataAddr;
     uint64_t simulationInfoAddr;
@@ -62,15 +62,15 @@ struct PushContants
     uint64_t elementsAddr;
 };
 [[vk::push_constant]]
-PushContants pc;
+PushContantsComp pcc;
 
 [require(compute, spirv_1_6)]
 [numthreads(threadCount, 1, 1)]
 void compMain(uint gid: SV_DispatchThreadID)
 {
-    var simulationInfo = reinterpret<Ptr<SimulationInfo>>(pc.simulationInfoAddr)[0];
-    var nodes = reinterpret<Ptr<Node>>(pc.nodesAddr);
-    var elements = reinterpret<Ptr<Element>>(pc.elementsAddr);
+    var simulationInfo = reinterpret<Ptr<SimulationInfo>>(pcc.simulationInfoAddr)[0];
+    var nodes = reinterpret<Ptr<Node>>(pcc.nodesAddr);
+    var elements = reinterpret<Ptr<Element>>(pcc.elementsAddr);
 
     if (simulationInfo.elementCount <= gid.x)
         return;
@@ -146,14 +146,30 @@ void compMain(uint gid: SV_DispatchThreadID)
     }
 }
 
+struct PushContantsShade
+{
+    uint64_t sceneViewDataAddr;
+    uint64_t simulationInfoAddr;
+    uint64_t nodesAddr;
+    uint64_t elementsAddr;
+    uint64_t positionsAddr;
+    uint64_t indicesAddr;
+};
+[[vk::push_constant]]
+PushContantsShade pcs;
+
 [shader("vertex")]
 VSOutput vertMain(uint vertexID: SV_VulkanVertexID)
 {
-    var sceneViewData = reinterpret<Ptr<SceneViewData>>(pc.sceneViewDataAddr)[0];
-    var simulationInfo = reinterpret<Ptr<SimulationInfo>>(pc.simulationInfoAddr)[0];
-    var nodes = reinterpret<Ptr<Node>>(pc.nodesAddr);
+    var sceneViewData = reinterpret<Ptr<SceneViewData>>(pcs.sceneViewDataAddr)[0];
+    var simulationInfo = reinterpret<Ptr<SimulationInfo>>(pcs.simulationInfoAddr)[0];
+    var nodes = reinterpret<Ptr<Node>>(pcs.nodesAddr);
 
-    var pos = nodes[vertexID].position;
+    var positions = reinterpret<Ptr<float3>>(pcs.positionsAddr);
+    var indices = reinterpret<Ptr<uint32_t>>(pcs.indicesAddr);
+
+    // var pos = nodes[vertexID].position;
+    var pos = positions[indices[vertexID]];
 
     VSOutput output;
     output.position = mul(sceneViewData.viewProj, float4(pos, 1.0));

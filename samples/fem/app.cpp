@@ -55,9 +55,9 @@ std::unique_ptr<Device> device;
 Swapchain swapchain;
 DescriptorTable descriptorTable;
 CommandAllocator cmdAlloc;
+CommandAllocator copyCmdAlloc;
 
 GpuUniquePtr<SceneViewData> sceneViewData;
-GpuUniquePtr<uint32_t> pickInstanceData;
 
 TextureView tDepthTarget;
 
@@ -71,6 +71,9 @@ Pipeline pRender;
 GpuUniquePtr<SimulationInfo> simulationInfo;
 GpuUploadVector<Node> nodes;
 GpuUploadVector<Element> elements;
+
+GpuUploadVector<float3> positions;
+GpuUploadVector<uint32_t> indices;
 
 double xprev = width / 2;
 double yprev = height / 2;
@@ -204,6 +207,9 @@ void initLettuce()
         .queueType = QueueType::Graphics,
     };
     cmdAlloc = device->CreateCommandAllocator(cmdAllocDesc);
+
+    cmdAllocDesc.queueType = QueueType::Copy;
+    copyCmdAlloc = device->CreateCommandAllocator(cmdAllocDesc);
 }
 
 void createRenderingObjects()
@@ -244,6 +250,8 @@ void createRenderingObjects()
         .descriptorTable = descriptorTable,
     };
     pRender = device->CreatePipeline(pRenderDesc);
+
+    device->Destroy(shaders);
 }
 
 void loadModel()
@@ -251,16 +259,16 @@ void loadModel()
     simulationInfo = GpuUniquePtr<SimulationInfo>(*device);
 
     std::filesystem::path modelPath = "../../../../external/models/connectingRod.stl";
-    std::vector<float3> positions;
-    std::vector<uint32_t> indices;
+    std::vector<float3> tempPositions;
+    std::vector<uint32_t> tempIndices;
 
     try {
         stl_reader::StlMesh<float, uint32_t> mesh(modelPath.string());
-        positions.resize(mesh.num_vrts());
-        memcpy((void*)positions.data(), (void*)mesh.raw_coords(), mesh.num_vrts() * sizeof(float3));
+        tempPositions.resize(mesh.num_vrts());
+        memcpy((void*)tempPositions.data(), (void*)mesh.raw_coords(), mesh.num_vrts() * sizeof(float3));
 
-        indices.resize(mesh.num_tris() * 3);
-        memcpy((void*)indices.data(), (void*)mesh.raw_tris(), mesh.num_tris() * 3 * sizeof(uint32_t));
+        tempIndices.resize(mesh.num_tris() * 3);
+        memcpy((void*)tempIndices.data(), (void*)mesh.raw_tris(), mesh.num_tris() * 3 * sizeof(uint32_t));
     }
     catch (std::exception& e) {
         std::cout << "bad copy | " << e.what() << std::endl;
@@ -276,20 +284,20 @@ void loadModel()
     Eigen::MatrixXi TT;
     Eigen::MatrixXi TF;
 
-    V.resize(positions.size(), 3);
-    for (size_t i = 0; i < positions.size(); ++i)
+    V.resize(tempPositions.size(), 3);
+    for (size_t i = 0; i < tempPositions.size(); ++i)
     {
-        V(i, 0) = positions[i].x;
-        V(i, 1) = positions[i].y;
-        V(i, 2) = positions[i].z;
+        V(i, 0) = tempPositions[i].x;
+        V(i, 1) = tempPositions[i].y;
+        V(i, 2) = tempPositions[i].z;
     }
 
-    F.resize(indices.size() / 3, 3);
-    for (size_t i = 0; i < indices.size(); i += 3)
+    F.resize(tempIndices.size() / 3, 3);
+    for (size_t i = 0; i < tempIndices.size(); i += 3)
     {
-        F(i / 3, 0) = indices[i];
-        F(i / 3, 1) = indices[i + 1];
-        F(i / 3, 2) = indices[i + 2];
+        F(i / 3, 0) = tempIndices[i];
+        F(i / 3, 1) = tempIndices[i + 1];
+        F(i / 3, 2) = tempIndices[i + 2];
     }
 
     // Tetrahedralize the interior
@@ -297,39 +305,54 @@ void loadModel()
     // Compute barycenters
     igl::barycenter(TV, TT, B);
 
-    std::vector<Node> nodes(TV.rows());
-    std::vector<Element> elements(TT.rows());
+    std::vector<Node> tempNodes(TV.rows());
+    std::vector<Element> tempElements(TT.rows());
 
     for (Eigen::Index i = 0; i < TV.rows(); ++i)
     {
-        nodes[i].position = {
+        tempNodes[i].position = {
             static_cast<float>(TV(i, 0)),
             static_cast<float>(TV(i, 1)),
             static_cast<float>(TV(i, 2))
         };
 
-        nodes[i].displacement = { 0.0f, 0.0f, 0.0f };
-        nodes[i].force = { 0.0f, 0.0f, 0.0f };
+        tempNodes[i].displacement = { 0.0f, 0.0f, 0.0f };
+        tempNodes[i].force = { 0.0f, 0.0f, 0.0f };
     }
 
     for (Eigen::Index i = 0; i < TT.rows(); ++i)
     {
-        elements[i] = makeElement(
+        tempElements[i] = makeElement(
             static_cast<uint32_t>(TT(i, 0)),
             static_cast<uint32_t>(TT(i, 1)),
             static_cast<uint32_t>(TT(i, 2)),
             static_cast<uint32_t>(TT(i, 3)),
-            nodes
+            tempNodes
         );
     }
 
-    std::println("expected abort");
-    std::abort();
+    elements = GpuUploadVector<Element>(*device, tempElements.size());
+    nodes = GpuUploadVector<Node>(*device, tempNodes.size());
+    positions = GpuUploadVector<float3>(*device, tempPositions.size());
+    indices = GpuUploadVector<uint32_t>(*device, tempIndices.size());
+
+    elements.append(tempElements);
+    nodes.append(tempNodes);
+    positions.append(tempPositions);
+    indices.append(tempIndices);
+
+    elements.Upload(copyCmdAlloc);
+    nodes.Upload(copyCmdAlloc);
+    positions.Upload(copyCmdAlloc);
+    indices.Upload(copyCmdAlloc);
 
     // steel ISO 42CrMo4
+    simulationInfo->elementCount = elements.size();
+    simulationInfo->nodeCount = nodes.size();
+    simulationInfo->iterationCount = 15;
     simulationInfo->material.density = 7850; // kg/m3
     simulationInfo->material.young = 2.1e+11; // N/m2
-    simulationInfo->material.poisson = 0.3; // adimentional
+    simulationInfo->material.poisson = 0.3; // dimensionless
 
     /* todo:
     - setup nodes and elements
@@ -441,6 +464,8 @@ void mainLoop()
             simulationInfo.getView(),
             nodes.getView(),
             elements.getView(),
+            positions.getView(),
+            indices.getView(),
         };
         PushAllocationsDesc pushDesc = {
             .allocations = allocs,
@@ -451,7 +476,7 @@ void mainLoop()
         cmd.BindDescriptorTable(descriptorTable, PipelineBindPoint::Graphics);
         cmd.BindPipeline(pRender);
         cmd.PushAllocations(pushDesc);
-        cmd.Draw(nodes.size(), 1);
+        cmd.Draw(indices.size(), 1);
         cmd.EndRendering();
 
         std::array<std::span<CommandBuffer>, 1> cmds = { std::span(&cmd, 1) };
@@ -483,8 +508,13 @@ void cleanupLettuce()
     device->Destroy(tDepthTarget);
     sceneViewData.reset();
 
+    device->Destroy(copyCmdAlloc);
     device->Destroy(cmdAlloc);
     device->Destroy(swapchain);
+    elements.reset();
+    nodes.reset();
+    positions.reset();
+    indices.reset();
     device.reset();
 }
 
