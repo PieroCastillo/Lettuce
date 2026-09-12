@@ -8,6 +8,8 @@ const static uint threadCount = 32;
 struct VSOutput
 {
     float4 position : SV_Position;
+    float3 color;
+    float3 baryCoord;
 };
 
 struct PSOutput
@@ -43,6 +45,8 @@ struct Node
     float3 position;
     float3 displacement;
     float3 force;
+    float vonMisesStress;
+    float stressCount;
     uint constraints; // bits: [highest, ... | X | Y | Z , lowest]
 };
 
@@ -53,6 +57,36 @@ struct Element
     float volume;
     float B[6][12];
 };
+
+float3 StressToColor(float stress, float minStress, float maxStress)
+{
+    float t = saturate(
+        (stress - minStress) / max(maxStress - minStress, 1e-20f));
+
+    // azul -> cyan -> verde -> amarillo -> rojo
+    if (t < 0.25f)
+        return lerp(
+            float3(0, 0, 1),
+            float3(0, 1, 1),
+            t * 4.0f);
+
+    if (t < 0.50f)
+        return lerp(
+            float3(0, 1, 1),
+            float3(0, 1, 0),
+            (t - 0.25f) * 4.0f);
+
+    if (t < 0.75f)
+        return lerp(
+            float3(0, 1, 0),
+            float3(1, 1, 0),
+            (t - 0.50f) * 4.0f);
+
+    return lerp(
+        float3(1, 1, 0),
+        float3(1, 0, 0),
+        (t - 0.75f) * 4.0f);
+}
 
 struct PushContantsComp
 {
@@ -83,8 +117,9 @@ void compMain(uint gid: SV_DispatchThreadID)
     // element per thread
     var element = elements[gid.x];
     var mass = 0.25f * simulationInfo.material.density * element.volume;
-    float relaxationFactor = 0.01f;
+    var relaxationFactor = 1e-7f;
 
+    float stress[6];
     for (uint i = 0; i < simulationInfo.iterationCount; ++i)
     {
         // assembly
@@ -107,9 +142,9 @@ void compMain(uint gid: SV_DispatchThreadID)
             }
         }
 
-        // strain
+        // cauchy strain tensor
         float traceStrain = strain[0] + strain[1] + strain[2];
-        float stress[6];
+
         stress[0] = 2.0 * mu * strain[0] + lambda * traceStrain;
         stress[1] = 2.0 * mu * strain[1] + lambda * traceStrain;
         stress[2] = 2.0 * mu * strain[2] + lambda * traceStrain;
@@ -129,20 +164,39 @@ void compMain(uint gid: SV_DispatchThreadID)
         }
 
         // update
-        for (int n = 0; n < 4; ++n) {
+        for (int n = 0; n < 4; ++n)
+        {
             uint nodeIdx = element.nodeIdxs[n];
             uint constraints = nodes[nodeIdx].constraints;
 
-            float3 deltaU = float3(-f_int[n * 3 + 0], -f_int[n * 3 + 1], -f_int[n * 3 + 2]) * relaxationFactor * rcp(mass);
+            float3 f_internal = float3(f_int[n * 3 + 0], f_int[n * 3 + 1], f_int[n * 3 + 2]);
+            float3 f_external = nodes[nodeIdx].force / 6.0f;
 
-            if ((constraints & 1) != 0) deltaU.x = 0;
-            if ((constraints & 2) != 0) deltaU.y = 0;
-            if ((constraints & 4) != 0) deltaU.z = 0;
+            // delta = (Fext - Fint) * dt / mass 
+            float3 deltaU = (f_external - f_internal) * relaxationFactor * rcp(mass);
+            // float3 deltaU = float3(-f_int[n * 3 + 0], -f_int[n * 3 + 1], -f_int[n * 3 + 2]) * relaxationFactor * rcp(mass);
+
+            if ((constraints & 1) != 0)
+                deltaU.x = 0;
+            if ((constraints & 2) != 0)
+                deltaU.y = 0;
+            if ((constraints & 4) != 0)
+                deltaU.z = 0;
 
             InterlockedAdd(nodes[nodeIdx].displacement.x, deltaU.x);
             InterlockedAdd(nodes[nodeIdx].displacement.y, deltaU.y);
             InterlockedAdd(nodes[nodeIdx].displacement.z, deltaU.z);
         }
+    }
+    float vonMisesStress = sqrt(
+        0.5f * ((stress[0] - stress[1]) * (stress[0] - stress[1]) + (stress[1] - stress[2]) * (stress[1] - stress[2]) +
+                (stress[2] - stress[0]) * (stress[2] - stress[0])) +
+        3.0f * (stress[3] * stress[3] + stress[4] * stress[4] + stress[5] * stress[5]));
+
+    for (int idx = 0; idx < 4; ++idx)
+    {
+        InterlockedAdd(nodes[element.nodeIdxs[idx]].vonMisesStress, vonMisesStress);
+        InterlockedAdd(nodes[element.nodeIdxs[idx]].stressCount, 1);
     }
 }
 
@@ -168,11 +222,20 @@ VSOutput vertMain(uint vertexID: SV_VulkanVertexID)
     var positions = reinterpret<Ptr<float3>>(pcs.positionsAddr);
     var indices = reinterpret<Ptr<uint32_t>>(pcs.indicesAddr);
 
-    // var pos = nodes[vertexID].position;
-    var pos = positions[indices[vertexID]];
+    var node = nodes[indices[vertexID]];
+    var pos = node.position + node.displacement;
+
+    float3 barycentrics[3] =
+        {
+            float3(1, 0, 0),
+            float3(0, 1, 0),
+            float3(0, 0, 1)
+        };
 
     VSOutput output;
     output.position = mul(sceneViewData.viewProj, float4(pos, 1.0));
+    output.color = StressToColor(node.vonMisesStress * rcp(node.stressCount), 10, 500);
+    output.baryCoord = barycentrics[vertexID % 3];
 
     return output;
 }
@@ -182,7 +245,14 @@ VSOutput vertMain(uint vertexID: SV_VulkanVertexID)
 PSOutput fragMain(VSOutput input)
 {
     PSOutput output;
-    output.colorOutput = float4(0.1, 0.4, 0.6, 1);
+
+    var d = fwidth(input.baryCoord);
+    var edge = smoothstep(0.0, d * 1.5, input.baryCoord);
+    var edgeFactor = 1.0 - min(edge.x, min(edge.y, edge.z));
+    var edgeColor = float3(0); // black
+
+    var color = lerp(input.color, edgeColor, edgeFactor);
+    output.colorOutput = float4(color, 1);
 
     return output;
 }

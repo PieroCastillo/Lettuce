@@ -34,6 +34,8 @@ struct Node
     float3 position;
     float3 displacement;
     float3 force;
+    float vonMisesStress;
+    float stressCount;
     uint32_t constraints; // bits: [highest, ... | X | Y | Z , lowest]
 };
 
@@ -247,12 +249,31 @@ void createRenderingObjects()
         .vertShaderBinary = shaders,
         .fragShaderBinary = shaders,
         .colorAttachmentFormats = std::span(formatArr),
+        .depthStencilAttachmentFormat = Format::Universal_Depth_D32_SFloat,
         .descriptorTable = descriptorTable,
     };
     pRender = device->CreatePipeline(pRenderDesc);
 
     device->Destroy(shaders);
 }
+
+struct Triangle
+{
+    uint32_t v[3];
+
+    bool operator==(const Triangle&) const = default;
+};
+
+struct TriangleHash
+{
+    size_t operator()(const Triangle& t) const
+    {
+        size_t h = t.v[0];
+        h ^= size_t(t.v[1]) * 0x9e3779b9;
+        h ^= size_t(t.v[2]) * 0x85ebca6b;
+        return h;
+    }
+};
 
 void loadModel()
 {
@@ -331,35 +352,121 @@ void loadModel()
         );
     }
 
+    // get surface of volume
+    std::unordered_map<Triangle, uint32_t, TriangleHash> triangleCounter;
+    std::vector<uint32_t> boundaryIndices;
+
+    /* creates a map of triangle-counter */
+    for (const auto& e : tempElements)
+    {
+        Triangle tris[4] =
+        {
+            { e.nodeIdxs[0], e.nodeIdxs[1], e.nodeIdxs[2] },
+            { e.nodeIdxs[0], e.nodeIdxs[1], e.nodeIdxs[3] },
+            { e.nodeIdxs[0], e.nodeIdxs[2], e.nodeIdxs[3] },
+            { e.nodeIdxs[1], e.nodeIdxs[2], e.nodeIdxs[3] },
+        };
+
+        for (auto& tri : tris)
+        {
+            std::sort(std::begin(tri.v), std::end(tri.v));
+            triangleCounter[tri]++;
+        }
+    }
+
+    /* triangle is in the surface if counter equals 1 */
+    for (const auto& [tri, count] : triangleCounter)
+    {
+        if (count == 1)
+        {
+            boundaryIndices.push_back(tri.v[0]);
+            boundaryIndices.push_back(tri.v[1]);
+            boundaryIndices.push_back(tri.v[2]);
+        }
+    }
+
+    // calc AABB
+    float minX = 1e10f, minY = 1e10f, minZ = 1e10f;
+    float maxX = -1e10f, maxY = -1e10f, maxZ = -1e10f;
+
+    for (const auto& n : tempNodes) {
+        if (n.position.x < minX) minX = n.position.x;
+        if (n.position.y < minY) minY = n.position.y;
+        if (n.position.z < minZ) minZ = n.position.z;
+
+        if (n.position.x > maxX) maxX = n.position.x;
+        if (n.position.y > maxY) maxY = n.position.y;
+        if (n.position.z > maxZ) maxZ = n.position.z;
+    }
+
+    float sizeX = maxX - minX;
+    float sizeY = maxY - minY;
+    float sizeZ = maxZ - minZ;
+
+    float maxLength = std::max({ sizeX, sizeY, sizeZ }); // rod axis
+    float tolerance = maxLength * 0.05f;
+    float3 totalForce = { 0.0f, 0.0f, 0.0f };
+
+    constexpr auto force = 1000.0f;
+    if (maxLength == sizeX) totalForce.y = force; // x -> y
+    else if (maxLength == sizeY) totalForce.x = force; // y -> x
+    else totalForce.x = force; // z -> x
+
+    int nodesAtFreeEnd = 0;
+    for (const auto& n : tempNodes) {
+        bool isAtMaxEnd = (maxLength == sizeX && n.position.x >= maxX - tolerance) ||
+            (maxLength == sizeY && n.position.y >= maxY - tolerance) ||
+            (maxLength == sizeZ && n.position.z >= maxZ - tolerance);
+        if (isAtMaxEnd) nodesAtFreeEnd++;
+    }
+
+    float3 forcePerNode = {
+        totalForce.x / std::max(1, nodesAtFreeEnd),
+        totalForce.y / std::max(1, nodesAtFreeEnd),
+        totalForce.z / std::max(1, nodesAtFreeEnd)
+    };
+
+    for (auto& n : tempNodes) {
+        bool isAtMinEnd = (maxLength == sizeX && n.position.x <= minX + tolerance) ||
+            (maxLength == sizeY && n.position.y <= minY + tolerance) ||
+            (maxLength == sizeZ && n.position.z <= minZ + tolerance);
+
+        if (isAtMinEnd) {
+            n.constraints = 7; // 1 (X) | 2 (Y) | 4 (Z)
+        }
+
+        // Lado Máximo: Libre, pero con la fuerza externa aplicada
+        bool isAtMaxEnd = (maxLength == sizeX && n.position.x >= maxX - tolerance) ||
+            (maxLength == sizeY && n.position.y >= maxY - tolerance) ||
+            (maxLength == sizeZ && n.position.z >= maxZ - tolerance);
+
+        if (isAtMaxEnd) {
+            n.force = forcePerNode;
+        }
+    }
+
     elements = GpuUploadVector<Element>(*device, tempElements.size());
     nodes = GpuUploadVector<Node>(*device, tempNodes.size());
     positions = GpuUploadVector<float3>(*device, tempPositions.size());
-    indices = GpuUploadVector<uint32_t>(*device, tempIndices.size());
+    indices = GpuUploadVector<uint32_t>(*device, boundaryIndices.size());
 
     elements.append(tempElements);
     nodes.append(tempNodes);
     positions.append(tempPositions);
-    indices.append(tempIndices);
+    indices.append(boundaryIndices);
 
     elements.Upload(copyCmdAlloc);
     nodes.Upload(copyCmdAlloc);
     positions.Upload(copyCmdAlloc);
     indices.Upload(copyCmdAlloc);
 
-    // steel ISO 42CrMo4
+    // aluminium ISO 6061-T6 (not at all)
     simulationInfo->elementCount = elements.size();
     simulationInfo->nodeCount = nodes.size();
-    simulationInfo->iterationCount = 15;
+    simulationInfo->iterationCount = 5000;
     simulationInfo->material.density = 7850; // kg/m3
-    simulationInfo->material.young = 2.1e+11; // N/m2
+    simulationInfo->material.young = 2.1e+4; // N/m2
     simulationInfo->material.poisson = 0.3; // dimensionless
-
-    /* todo:
-    - setup nodes and elements
-    - initialize nodes and elements
-    */
-
-    // // load model into gpu memory
 }
 
 void execFem()
@@ -452,10 +559,16 @@ void mainLoop()
             .loadOp = LoadOp::Clear,
         } };
 
+        AttachmentDesc depthAttachment = {
+            .renderTarget = tDepthTarget,
+            .loadOp = LoadOp::Clear,
+        };
+
         RenderPassDesc renderPassDesc = {
             .width = fbSize.width,
             .height = fbSize.height,
             .colorAttachments = std::span(colorAttachments),
+            .depthStencilAttachment = depthAttachment,
             .presentAttachmentIdx = 0,
         };
 
