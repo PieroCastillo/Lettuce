@@ -407,7 +407,7 @@ void loadModel()
     float tolerance = maxLength * 0.05f;
     float3 totalForce = { 0.0f, 0.0f, 0.0f };
 
-    constexpr auto force = 1000.0f;
+    constexpr auto force = 5000.0f;
     if (maxLength == sizeX) totalForce.y = force; // x -> y
     else if (maxLength == sizeY) totalForce.x = force; // y -> x
     else totalForce.x = force; // z -> x
