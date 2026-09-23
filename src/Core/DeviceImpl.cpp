@@ -329,6 +329,8 @@ void DeviceImpl::setupFeaturesExtensions()
 
         meshShaderFeature.taskShader = VK_TRUE;
         meshShaderFeature.meshShader = VK_TRUE;
+        // TODO: amd does not support this feature :p
+        meshShaderFeature.meshShaderQueries = VK_TRUE;
         meshShaderFeature.pNext = next;
         next = &meshShaderFeature;
         requestedExtensionsNames.push_back(VK_EXT_MESH_SHADER_EXTENSION_NAME);
@@ -493,6 +495,7 @@ void DeviceImpl::setupDevice()
         .drawIndirectFirstInstance = VK_TRUE,
         .samplerAnisotropy = VK_TRUE,
         .textureCompressionBC = VK_TRUE,
+        .pipelineStatisticsQuery = VK_TRUE,
         .fragmentStoresAndAtomics = VK_TRUE,
         .shaderFloat64 = VK_TRUE,
         .shaderInt64 = VK_TRUE,
@@ -552,6 +555,7 @@ void DeviceImpl::setupDevice()
     props.maxSamplerAnisotropy = props2.properties.limits.maxSamplerAnisotropy;
     props.maxPushAllocationsCount = props2.properties.limits.maxPushConstantsSize / sizeof(uint64_t);
     props.preferredThreadCount = subgroupProps.subgroupSize;
+    props.timestampPeriod = props2.properties.limits.timestampPeriod;
 
     graphicsCurrentValue = 0;
     computeCurrentValue = 0;

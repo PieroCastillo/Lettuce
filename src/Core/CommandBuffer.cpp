@@ -53,7 +53,7 @@ void CommandBuffer::BeginRendering(const RenderPassDesc& desc)
 
     VkRenderingInfo renderingInfo = {
         .sType = VK_STRUCTURE_TYPE_RENDERING_INFO,
-        .renderArea = {{0,0},{ desc.width, desc.height }},
+        .renderArea = { { 0,0 },{ desc.width, desc.height } },
         .layerCount = 1,
         .viewMask = 0,
         .colorAttachmentCount = (uint32_t)colorCount,
@@ -90,7 +90,7 @@ void CommandBuffer::BeginRendering(const RenderPassDesc& desc)
             .oldLayout = VK_IMAGE_LAYOUT_UNDEFINED,
             .newLayout = VK_IMAGE_LAYOUT_GENERAL,
             .image = impl.device->textures.get(impl.currentPresentTarget.value()).image,
-            .subresourceRange = {VK_IMAGE_ASPECT_COLOR_BIT, 0,1,0,1},
+            .subresourceRange = { VK_IMAGE_ASPECT_COLOR_BIT, 0,1,0,1 },
         };
 
         VkDependencyInfo depInfo = {
@@ -118,7 +118,7 @@ void CommandBuffer::BeginRendering(const RenderPassDesc& desc)
     }
 
     VkViewport vw = { 0, 0, static_cast<float>(desc.width), static_cast<float>(desc.height), 0, 1 };
-    VkRect2D scissor = { { 0,0 }, { desc.width, desc.height } };
+    VkRect2D scissor = { { 0,0 },{ desc.width, desc.height } };
     vkCmdSetViewport(cmd, 0, 1, &vw);
     vkCmdSetScissor(cmd, 0, 1, &scissor);
 }
@@ -138,7 +138,7 @@ void CommandBuffer::EndRendering()
             .oldLayout = VK_IMAGE_LAYOUT_GENERAL,
             .newLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
             .image = impl.device->textures.get(impl.currentPresentTarget.value()).image,
-            .subresourceRange = {VK_IMAGE_ASPECT_COLOR_BIT, 0,1,0,1},
+            .subresourceRange = { VK_IMAGE_ASPECT_COLOR_BIT, 0,1,0,1 },
         };
 
         VkDependencyInfo depInfo = {
@@ -199,24 +199,50 @@ void CommandBuffer::PushAllocations(const PushAllocationsDesc& desc)
     vkCmdPushConstants((VkCommandBuffer)impl.handle, dt.pipelineLayout, VK_SHADER_STAGE_ALL, 0, payloadSize, data);
 }
 
-void CommandBuffer::Draw(uint32_t vertexCount, uint32_t instanceCount)
+void CommandBuffer::Draw(uint32_t vertexCount, uint32_t instanceCount, std::optional<QueryRecord> query)
 {
+    auto cmd = (VkCommandBuffer)impl.handle;
+
+    if (query.has_value())
+    {
+        auto& queryData = impl.device->queryHeaps.get(query.value().query);
+        vkCmdWriteTimestamp2(cmd, VK_PIPELINE_STAGE_2_VERTEX_SHADER_BIT, queryData.timeQuery, query.value().index * 2);
+        vkCmdBeginQuery(cmd, queryData.primitiveQuery, query.value().index * 2, 0);
+    }
+
     vkCmdDraw((VkCommandBuffer)impl.handle, vertexCount, instanceCount, 0, 0);
+
+    if (query.has_value())
+    {
+        auto& queryData = impl.device->queryHeaps.get(query.value().query);
+        vkCmdEndQuery(cmd, queryData.primitiveQuery, query.value().index * 2);
+        vkCmdWriteTimestamp2(cmd, VK_PIPELINE_STAGE_2_BOTTOM_OF_PIPE_BIT, queryData.timeQuery, (query.value().index * 2) + 1);
+    }
 }
 
-void CommandBuffer::DrawIndexed(uint32_t indexCount, uint32_t instanceCount)
+void CommandBuffer::DrawMesh(uint32_t x, uint32_t y, uint32_t z, std::optional<QueryRecord> query)
 {
-    vkCmdDrawIndexed((VkCommandBuffer)impl.handle, indexCount, instanceCount, 0, 0, 0);
-}
+    auto cmd = (VkCommandBuffer)impl.handle;
 
-void CommandBuffer::DrawMesh(uint32_t x, uint32_t y, uint32_t z)
-{
-    vkCmdDrawMeshTasksEXT((VkCommandBuffer)impl.handle, x, y, z);
+    if (query.has_value())
+    {
+        auto& queryData = impl.device->queryHeaps.get(query.value().query);
+        vkCmdWriteTimestamp2(cmd, VK_PIPELINE_STAGE_2_TASK_SHADER_BIT_EXT, queryData.timeQuery, query.value().index * 2);
+        vkCmdBeginQuery(cmd, queryData.meshQuery, query.value().index * 3, 0);
+    }
+
+    vkCmdDrawMeshTasksEXT(cmd, x, y, z);
+
+    if (query.has_value())
+    {
+        auto& queryData = impl.device->queryHeaps.get(query.value().query);
+        vkCmdEndQuery(cmd, queryData.meshQuery, query.value().index * 3);
+        vkCmdWriteTimestamp2(cmd, VK_PIPELINE_STAGE_2_BOTTOM_OF_PIPE_BIT, queryData.timeQuery, (query.value().index * 2) + 1);
+    }
 }
 
 void CommandBuffer::ExecuteIndirect(const ExecuteIndirectDesc& desc)
 {
-    // TODO: impl execute indirect
     auto& set = impl.device->indirectSets.get(desc.indirectSet);
     auto cmd = (VkCommandBuffer)impl.handle;
     auto buffer = set.indirectSetBuffer;
@@ -226,9 +252,6 @@ void CommandBuffer::ExecuteIndirect(const ExecuteIndirectDesc& desc)
     {
     case IndirectType::Draw:
         vkCmdDrawIndirectCount(cmd, buffer, 4 + offset, buffer, 0, desc.maxDrawCount, set.stride);
-        break;
-    case IndirectType::DrawIndexed:
-        vkCmdDrawIndexedIndirectCount(cmd, buffer, 4 + offset, buffer, 0, desc.maxDrawCount, set.stride);
         break;
     case IndirectType::DrawMesh:
         vkCmdDrawMeshTasksIndirectCountEXT(cmd, buffer, 4 + offset, buffer, 0, desc.maxDrawCount, set.stride);
@@ -241,9 +264,25 @@ void CommandBuffer::ExecuteIndirect(const ExecuteIndirectDesc& desc)
     }
 }
 
-void CommandBuffer::Dispatch(uint32_t x, uint32_t y, uint32_t z)
+void CommandBuffer::Dispatch(uint32_t x, uint32_t y, uint32_t z, std::optional<QueryRecord> query)
 {
-    vkCmdDispatch((VkCommandBuffer)impl.handle, x, y, z);
+    auto cmd = (VkCommandBuffer)impl.handle;
+
+    if (query.has_value())
+    {
+        auto& queryData = impl.device->queryHeaps.get(query.value().query);
+        vkCmdWriteTimestamp2(cmd, VK_PIPELINE_STAGE_2_COMPUTE_SHADER_BIT, queryData.timeQuery, query.value().index * 2);
+        vkCmdBeginQuery(cmd, queryData.compQuery, query.value().index, 0);
+    }
+
+    vkCmdDispatch(cmd, x, y, z);
+
+    if (query.has_value())
+    {
+        auto& queryData = impl.device->queryHeaps.get(query.value().query);
+        vkCmdEndQuery(cmd, queryData.compQuery, query.value().index);
+        vkCmdWriteTimestamp2(cmd, VK_PIPELINE_STAGE_2_BOTTOM_OF_PIPE_BIT, queryData.timeQuery, (query.value().index * 2) + 1);
+    }
 }
 
 void CommandBuffer::Barrier(std::span<const BarrierDesc> barriers)
@@ -277,4 +316,17 @@ void CommandBuffer::Barrier(std::span<const BarrierDesc> barriers)
 void CommandBuffer::ResetCount(IndirectSet indirectSet)
 {
     vkCmdFillBuffer((VkCommandBuffer)impl.handle, impl.device->indirectSets.get(indirectSet).indirectSetBuffer, 0, sizeof(uint32_t), 0);
+}
+
+void CommandBuffer::ResetQueryHeap(QueryHeap query)
+{
+    auto& queryData = impl.device->queryHeaps.get(query);
+    auto cmd = (VkCommandBuffer)impl.handle;
+
+    vkCmdResetQueryPool(cmd, queryData.timeQuery, 0, queryData.queryCount * 2);
+    vkCmdResetQueryPool(cmd, queryData.compQuery, 0, queryData.queryCount);
+    vkCmdResetQueryPool(cmd, queryData.primitiveQuery, 0, queryData.queryCount * 2);
+
+    if (impl.device->features.MeshShading)
+        vkCmdResetQueryPool(cmd, queryData.meshQuery, 0, queryData.queryCount * 3);
 }
