@@ -29,6 +29,7 @@ namespace Lettuce::Core
     struct IndirectSetTag {};
     struct SwapchainTag {};
     struct CommandAllocatorTag {};
+    struct QueryHeapTag{};
     struct WaitTokenTag {};
 
     using MemoryView = Handle<MemoryViewTag>;
@@ -40,6 +41,7 @@ namespace Lettuce::Core
     using IndirectSet = Handle<IndirectSetTag>;
     using Swapchain = Handle<SwapchainTag>;
     using CommandAllocator = Handle<CommandAllocatorTag>;
+    using QueryHeap = Handle<QueryHeapTag>;
     using WaitToken = Handle<WaitTokenTag>;
 
     // Enums
@@ -65,8 +67,8 @@ namespace Lettuce::Core
     enum class LoadOp : uint8_t { Load, Clear, None, Count };
 
     enum class QueueType : uint8_t { Graphics, Compute, Copy };
-    enum class RenderTargetType : uint16_t { ColorRGB_R32UInt, ColorRGB_sRGB, ColorRGBA_sRGB, Depth_D32 , Depth_D16 };
-    enum class IndirectType : uint8_t { Draw, DrawIndexed, DrawMesh, Dispatch }; // TraceRays, DeviceGenerated
+    enum class RenderTargetType : uint16_t { ColorRGB_R32UInt, ColorRGB_sRGB, ColorRGBA_sRGB, Depth_D32, Depth_D16 };
+    enum class IndirectType : uint8_t { Draw, DrawMesh, Dispatch }; // TraceRays, DeviceGenerated
 
     // Resources
     struct MemoryViewInfo
@@ -239,6 +241,12 @@ namespace Lettuce::Core
         QueueType queueType;
     };
 
+    struct QueryHeapDesc
+    {
+        PipelineBindPoint bindPoint;
+        uint32_t maxQueryCount;
+    };
+
     struct Device;
     struct CommandBuffer;
 
@@ -345,6 +353,22 @@ namespace Lettuce::Core
         uint32_t srcOffset;
     };
 
+    struct QueryRecord
+    {
+        QueryHeap query;
+        uint32_t index;
+    };
+
+    struct QueryResults
+    {
+        double ellapsedTime; // nanoseconds
+        uint64_t computeShaderInvocations;
+        uint64_t vertexShaderInvocations;
+        uint64_t taskShaderInvocations;
+        uint64_t meshShaderInvocations;
+        uint64_t fragmentShaderInvocations;
+    };
+
     struct DeviceImpl;
     struct CommandBufferImpl { DeviceImpl* device; uint64_t handle; std::optional<TextureView> currentPresentTarget; };
 
@@ -436,6 +460,12 @@ namespace Lettuce::Core
         void Submit(const CommandBufferSubmitDesc&);
         [[nodiscard]] auto SubmitAsync(const CommandBufferSubmitDesc&) -> WaitToken;
 
+        // Query Heap
+        auto CreateQueryHeap(const QueryHeapDesc&) -> QueryHeap;
+        void Destroy(QueryHeap);
+
+        auto GetResult(QueryHeap, PipelineBindPoint, uint32_t index) -> QueryResults;
+
         // sparse resources
         [[nodiscard]] auto SparseBindAsync(QueueType, MemoryView, std::span<const SparseMemoryBind>) -> WaitToken;
         [[nodiscard]] auto SparseBindAsync(QueueType, TextureView, std::span<const SparseTextureBind>) -> WaitToken;
@@ -469,18 +499,16 @@ namespace Lettuce::Core
         void BindDescriptorTable(DescriptorTable, PipelineBindPoint);
         void PushAllocations(const PushAllocationsDesc&);
 
-        void Draw(uint32_t vertexCount, uint32_t instanceCount);
-        void DrawIndexed(uint32_t indexCount, uint32_t instanceCount);
-        void DrawMesh(uint32_t x, uint32_t y, uint32_t z);
-
+        void Draw(uint32_t vertexCount, uint32_t instanceCount, std::optional<QueryRecord> = std::nullopt);
+        void DrawMesh(uint32_t x, uint32_t y, uint32_t z, std::optional<QueryRecord> = std::nullopt);
         void ExecuteIndirect(const ExecuteIndirectDesc&);
-
-        void Dispatch(uint32_t x, uint32_t y, uint32_t z);
+        void Dispatch(uint32_t x, uint32_t y, uint32_t z, std::optional<QueryRecord> = std::nullopt);
 
         void Barrier(std::span<const BarrierDesc> barriers);
         void Barrier(std::initializer_list<BarrierDesc> barriers) { Barrier(std::span(barriers.begin(), barriers.end())); }
 
         void ResetCount(IndirectSet);
+        void ResetQueryHeap(QueryHeap);
 
         [[nodiscard]] auto GetImplementation() noexcept -> CommandBufferImpl* { return &impl; }
     };

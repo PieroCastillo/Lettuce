@@ -48,6 +48,7 @@ namespace Lettuce::Core
         uint32_t maxPushAllocationsCount;
         float maxSamplerAnisotropy;
         uint32_t preferredThreadCount;
+        float timestampPeriod;
     };
 
     enum class DeviceQueueType
@@ -94,6 +95,7 @@ namespace Lettuce::Core
         ResourcePool<IndirectSet, IndirectSetVK> indirectSets;
         ResourcePool<Swapchain, SwapchainVK> swapchains;
         ResourcePool<CommandAllocator, CommandAllocatorVK> commandAllocators;
+        ResourcePool<QueryHeap, QueryHeapVK> queryHeaps;
         ResourcePool<WaitToken, WaitTokenVK> waitTokens;
 
         // physical device features structs

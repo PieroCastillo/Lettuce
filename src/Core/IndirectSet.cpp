@@ -34,13 +34,12 @@ auto Device::CreateIndirectSet(const IndirectSetDesc& desc) -> IndirectSet
     switch (desc.type)
     {
     case IndirectType::Draw:        vkStructSize = sizeof(VkDrawIndirectCommand); break;
-    case IndirectType::DrawIndexed: vkStructSize = sizeof(VkDrawIndexedIndirectCommand); break;
     case IndirectType::DrawMesh:    vkStructSize = sizeof(VkDrawMeshTasksIndirectCommandEXT); break;
         // VkCmdDispatchIndirect doesn't support stride
     case IndirectType::Dispatch:    vkStructSize = sizeof(VkDispatchIndirectCommand); userDataSize = 0;  break;
     }
 
-    // for CmdDraw/DrawIndexed/DrawMeshTasks/Dispatch Indirect, 4 is the alignment
+    // for CmdDraw/DrawMeshTasks/Dispatch Indirect, 4 is the alignment
     uint32_t stride = align_up(vkStructSize + userDataSize, 4);
     uint32_t bufferSize = sizeof(uint32_t) + (desc.maxCount * stride);
 

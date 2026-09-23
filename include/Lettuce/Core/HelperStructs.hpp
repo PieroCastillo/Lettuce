@@ -103,6 +103,15 @@ namespace Lettuce::Core
         std::vector<VkCommandBuffer> cmds;
     };
 
+    struct QueryHeapVK
+    {
+        VkQueryPool timeQuery;
+        VkQueryPool compQuery;
+        VkQueryPool primitiveQuery;
+        VkQueryPool meshQuery;
+        uint32_t queryCount;
+    };
+
     struct IndirectSetVK
     {
         VkDeviceMemory indirectSetMemory;

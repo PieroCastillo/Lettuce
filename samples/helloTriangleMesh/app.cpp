@@ -24,6 +24,8 @@ Swapchain swapchain;
 DescriptorTable descriptorTable;
 Pipeline rgbPipeline;
 CommandAllocator cmdAlloc;
+QueryHeap query;
+Lettuce::Utils::FrameTimer timer;
 
 void initLettuce()
 {
@@ -38,6 +40,12 @@ void initLettuce()
         .queueType = QueueType::Graphics,
     };
     cmdAlloc = device->CreateCommandAllocator(cmdAllocDesc);
+
+    QueryHeapDesc queryDesc = {
+        .bindPoint = PipelineBindPoint::Graphics,
+        .maxQueryCount = 1,
+    };
+    query = device->CreateQueryHeap(queryDesc);
 }
 
 void createRenderingObjects()
@@ -66,8 +74,11 @@ void createRenderingObjects()
 
 void mainLoop()
 {
+    timer.Start();
+    auto accTime = 0.0f;
     while (!glfwWindowShouldClose(window))
     {
+        timer.Tick();
         glfwGetFramebufferSize(window, (int*)&width, (int*)&height);
 
         if (width == 0 || height == 0)
@@ -95,10 +106,11 @@ void mainLoop()
             .colorAttachments = std::span(colorAttachment),
             .presentAttachmentIdx = 0,
         };
+        cmd.ResetQueryHeap(query);
         cmd.BeginRendering(renderPassDesc);
         cmd.BindDescriptorTable(descriptorTable, PipelineBindPoint::Graphics);
         cmd.BindPipeline(rgbPipeline);
-        cmd.DrawMesh(3, 1, 1),
+        cmd.DrawMesh(1, 1, 1, QueryRecord{ query, 0 });
         cmd.EndRendering();
 
         std::array<std::span<CommandBuffer>, 1> cmds = { std::span(&cmd, 1) };
@@ -112,6 +124,16 @@ void mainLoop()
 
         device->DisplayFrame(swapchain);
         device->WaitFor(QueueType::Graphics);
+
+        auto opStats = device->GetResult(query, PipelineBindPoint::Graphics, 0);
+        accTime += timer.GetDeltaTime();
+
+        if (accTime > 1.0f) {
+            std::println("mesh shader invocations: {}", opStats.meshShaderInvocations);
+            std::println("frag shader invocations: {}", opStats.fragmentShaderInvocations);
+            std::println("last mesh shader dispatch took {:05.3f} ms", opStats.ellapsedTime * 1e-6); // ns to ms
+            accTime = 0;
+        }
         glfwPollEvents();
     }
 }
@@ -122,6 +144,7 @@ void cleanupLettuce()
     device->Destroy(rgbPipeline);
     device->Destroy(descriptorTable);
 
+    device->Destroy(query);
     device->Destroy(cmdAlloc);
     device->Destroy(swapchain);
     device.reset();
