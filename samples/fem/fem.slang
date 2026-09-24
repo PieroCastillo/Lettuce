@@ -37,6 +37,7 @@ struct SimulationInfo
     uint32_t elementCount;
     uint32_t nodeCount;
     uint32_t iterationCount;
+    uint32_t elementsPerThread;
     Material material;
 };
 
@@ -113,90 +114,99 @@ void compMain(uint gid: SV_DispatchThreadID)
     var nu = simulationInfo.material.poisson;
     var mu = 0.5 * E * rcp(1 + nu);
     var lambda = 0.5 * E * nu * rcp(1 + nu) * rcp(1 - (2 * nu));
+    var elementsPerThread = max(simulationInfo.elementsPerThread, 1);
+    var firstElement = gid.x * elementsPerThread;
 
-    // element per thread
-    var element = elements[gid.x];
-    var mass = 0.25f * simulationInfo.material.density * element.volume;
-    var relaxationFactor = 1e-7f;
-
-    float stress[6];
-    for (uint i = 0; i < simulationInfo.iterationCount; ++i)
+    for (uint localElement = 0; localElement < elementsPerThread; ++localElement)
     {
-        // assembly
-        float u[12];
-        for (uint j = 0; j < 4; ++j)
-        {
-            var disp = nodes[element.nodeIdxs[j]].displacement;
-            u[j * 3 + 0] = disp.x;
-            u[j * 3 + 1] = disp.y;
-            u[j * 3 + 2] = disp.z;
-        }
+        var elementIdx = firstElement + localElement;
+        if (elementIdx >= simulationInfo.elementCount)
+            break;
 
-        // deformation
-        float strain[6] = { 0, 0, 0, 0, 0, 0 };
-        for (int row = 0; row < 6; ++row)
+        // element per iteration in thread
+        var element = elements[elementIdx];
+        var mass = 0.25f * simulationInfo.material.density * element.volume;
+        var relaxationFactor = 1e-7f;
+
+        float stress[6];
+        for (uint i = 0; i < simulationInfo.iterationCount; ++i)
         {
-            for (int col = 0; col < 12; ++col)
+            // assembly
+            float u[12];
+            for (uint j = 0; j < 4; ++j)
             {
-                strain[row] += element.B[row][col] * u[col];
+                var disp = nodes[element.nodeIdxs[j]].displacement;
+                u[j * 3 + 0] = disp.x;
+                u[j * 3 + 1] = disp.y;
+                u[j * 3 + 2] = disp.z;
             }
-        }
 
-        // cauchy strain tensor
-        float traceStrain = strain[0] + strain[1] + strain[2];
-
-        stress[0] = 2.0 * mu * strain[0] + lambda * traceStrain;
-        stress[1] = 2.0 * mu * strain[1] + lambda * traceStrain;
-        stress[2] = 2.0 * mu * strain[2] + lambda * traceStrain;
-        stress[3] = mu * strain[3];
-        stress[4] = mu * strain[4];
-        stress[5] = mu * strain[5];
-
-        // internal forces
-        float f_int[12] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
-        for (int col = 0; col < 12; ++col)
-        {
+            // deformation
+            float strain[6] = { 0, 0, 0, 0, 0, 0 };
             for (int row = 0; row < 6; ++row)
             {
-                f_int[col] += element.B[row][col] * stress[row];
+                for (int col = 0; col < 12; ++col)
+                {
+                    strain[row] += element.B[row][col] * u[col];
+                }
             }
-            f_int[col] *= element.volume;
-        }
 
-        // update
-        for (int n = 0; n < 4; ++n)
+            // cauchy strain tensor
+            float traceStrain = strain[0] + strain[1] + strain[2];
+
+            stress[0] = 2.0 * mu * strain[0] + lambda * traceStrain;
+            stress[1] = 2.0 * mu * strain[1] + lambda * traceStrain;
+            stress[2] = 2.0 * mu * strain[2] + lambda * traceStrain;
+            stress[3] = mu * strain[3];
+            stress[4] = mu * strain[4];
+            stress[5] = mu * strain[5];
+
+            // internal forces
+            float f_int[12] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+            for (int col = 0; col < 12; ++col)
+            {
+                for (int row = 0; row < 6; ++row)
+                {
+                    f_int[col] += element.B[row][col] * stress[row];
+                }
+                f_int[col] *= element.volume;
+            }
+
+            // update
+            for (int n = 0; n < 4; ++n)
+            {
+                uint nodeIdx = element.nodeIdxs[n];
+                uint constraints = nodes[nodeIdx].constraints;
+
+                float3 f_internal = float3(f_int[n * 3 + 0], f_int[n * 3 + 1], f_int[n * 3 + 2]);
+                float3 f_external = nodes[nodeIdx].force / 6.0f;
+
+                // delta = (Fext - Fint) * dt / mass
+                float3 deltaU = (f_external - f_internal) * relaxationFactor * rcp(mass);
+                // float3 deltaU = float3(-f_int[n * 3 + 0], -f_int[n * 3 + 1], -f_int[n * 3 + 2]) * relaxationFactor * rcp(mass);
+
+                if ((constraints & 1) != 0)
+                    deltaU.x = 0;
+                if ((constraints & 2) != 0)
+                    deltaU.y = 0;
+                if ((constraints & 4) != 0)
+                    deltaU.z = 0;
+
+                InterlockedAdd(nodes[nodeIdx].displacement.x, deltaU.x);
+                InterlockedAdd(nodes[nodeIdx].displacement.y, deltaU.y);
+                InterlockedAdd(nodes[nodeIdx].displacement.z, deltaU.z);
+            }
+        }
+        float vonMisesStress = sqrt(
+            0.5f * ((stress[0] - stress[1]) * (stress[0] - stress[1]) + (stress[1] - stress[2]) * (stress[1] - stress[2]) +
+                    (stress[2] - stress[0]) * (stress[2] - stress[0])) +
+            3.0f * (stress[3] * stress[3] + stress[4] * stress[4] + stress[5] * stress[5]));
+
+        for (int idx = 0; idx < 4; ++idx)
         {
-            uint nodeIdx = element.nodeIdxs[n];
-            uint constraints = nodes[nodeIdx].constraints;
-
-            float3 f_internal = float3(f_int[n * 3 + 0], f_int[n * 3 + 1], f_int[n * 3 + 2]);
-            float3 f_external = nodes[nodeIdx].force / 6.0f;
-
-            // delta = (Fext - Fint) * dt / mass 
-            float3 deltaU = (f_external - f_internal) * relaxationFactor * rcp(mass);
-            // float3 deltaU = float3(-f_int[n * 3 + 0], -f_int[n * 3 + 1], -f_int[n * 3 + 2]) * relaxationFactor * rcp(mass);
-
-            if ((constraints & 1) != 0)
-                deltaU.x = 0;
-            if ((constraints & 2) != 0)
-                deltaU.y = 0;
-            if ((constraints & 4) != 0)
-                deltaU.z = 0;
-
-            InterlockedAdd(nodes[nodeIdx].displacement.x, deltaU.x);
-            InterlockedAdd(nodes[nodeIdx].displacement.y, deltaU.y);
-            InterlockedAdd(nodes[nodeIdx].displacement.z, deltaU.z);
+            InterlockedAdd(nodes[element.nodeIdxs[idx]].vonMisesStress, vonMisesStress);
+            InterlockedAdd(nodes[element.nodeIdxs[idx]].stressCount, 1);
         }
-    }
-    float vonMisesStress = sqrt(
-        0.5f * ((stress[0] - stress[1]) * (stress[0] - stress[1]) + (stress[1] - stress[2]) * (stress[1] - stress[2]) +
-                (stress[2] - stress[0]) * (stress[2] - stress[0])) +
-        3.0f * (stress[3] * stress[3] + stress[4] * stress[4] + stress[5] * stress[5]));
-
-    for (int idx = 0; idx < 4; ++idx)
-    {
-        InterlockedAdd(nodes[element.nodeIdxs[idx]].vonMisesStress, vonMisesStress);
-        InterlockedAdd(nodes[element.nodeIdxs[idx]].stressCount, 1);
     }
 }
 

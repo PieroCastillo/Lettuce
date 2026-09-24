@@ -26,6 +26,7 @@ struct SimulationInfo
     uint32_t elementCount;
     uint32_t nodeCount;
     uint32_t iterationCount;
+    uint32_t elementsPerThread;
     Material material;
 };
 
@@ -223,7 +224,7 @@ void createRenderingObjects()
         .width = width,
         .height = height,
         .type = RenderTargetType::Depth_D32,
-        .defaultClearValue = DepthStencilClear {1.0f, 0},
+        .defaultClearValue = DepthStencilClear{ 1.0f, 0 },
     };
     tDepthTarget = device->CreateTextureView(depthDesc);
 
@@ -407,7 +408,7 @@ void loadModel()
     float tolerance = maxLength * 0.05f;
     float3 totalForce = { 0.0f, 0.0f, 0.0f };
 
-    constexpr auto force = 1000.0f;
+    constexpr auto force = 5000.0f;
     if (maxLength == sizeX) totalForce.y = force; // x -> y
     else if (maxLength == sizeY) totalForce.x = force; // y -> x
     else totalForce.x = force; // z -> x
@@ -471,7 +472,7 @@ void loadModel()
 
 void execFem()
 {
-    auto cmd = device->AllocateCommandBuffer(cmdAlloc);
+    auto query = device->CreateQueryHeap({ PipelineBindPoint::Compute, 1 });
 
     auto allocs = std::vector<PushAllocationBinding>{
           sceneViewData.getView(),
@@ -484,21 +485,34 @@ void execFem()
         .descriptorTable = descriptorTable,
     };
 
-    cmd.BindDescriptorTable(descriptorTable, PipelineBindPoint::Compute);
-    cmd.BindPipeline(pFiniteElements);
-    cmd.PushAllocations(pushDesc);
-    cmd.Dispatch(elements.size() / 32, 1, 1);
+    for (uint32_t elementsPerThread = 1; elementsPerThread < 2; ++elementsPerThread)
+    {
+        simulationInfo->elementsPerThread = elementsPerThread;
+        auto dispatchCount = (elements.size() + 32 * elementsPerThread - 1) / (32 * elementsPerThread);
 
-    std::array<std::span<CommandBuffer>, 1> cmds = { std::span(&cmd, 1) };
+        auto cmd = device->AllocateCommandBuffer(cmdAlloc);
+        cmd.ResetQueryHeap(query);
+        cmd.BindDescriptorTable(descriptorTable, PipelineBindPoint::Compute);
+        cmd.BindPipeline(pFiniteElements);
+        cmd.PushAllocations(pushDesc);
+        cmd.Dispatch(dispatchCount, 1, 1, QueryRecord{ query, 0 });
 
-    CommandBufferSubmitDesc submitDesc = {
-        .queueType = QueueType::Graphics,
-        .commandBuffers = std::span(cmds),
-        .presentSwapchain = swapchain,
-    };
+        std::array<std::span<CommandBuffer>, 1> cmds = { std::span(&cmd, 1) };
 
-    device->Submit(submitDesc);
-    device->WaitFor(QueueType::Graphics);
+        CommandBufferSubmitDesc submitDesc = {
+            .queueType = QueueType::Graphics,
+            .commandBuffers = std::span(cmds),
+            .presentSwapchain = swapchain,
+        };
+
+        device->Submit(submitDesc);
+        device->WaitFor(QueueType::Graphics);
+        auto stats = device->GetResult(query, PipelineBindPoint::Compute, 0);
+        std::println("mark| elements per thread       : {:<10}", elementsPerThread);
+        std::println("mark| simulation time on gpu    : {:<8.3f} ms", stats.ellapsedTime * 1e-6); // ns to ms
+        std::println("mark| compute shader invocations: {:<10}", stats.computeShaderInvocations);
+    }
+    device->Destroy(query);
 }
 
 uint32_t oldFbWidth = width;
@@ -542,7 +556,7 @@ void mainLoop()
                 .width = fbSize.width,
                 .height = fbSize.height,
                 .type = RenderTargetType::Depth_D32,
-                .defaultClearValue = DepthStencilClear {1.0f, 0},
+                .defaultClearValue = DepthStencilClear{ 1.0f, 0 },
             };
             tDepthTarget = device->CreateTextureView(depthDesc);
 
