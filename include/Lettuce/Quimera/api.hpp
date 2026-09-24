@@ -92,8 +92,8 @@ namespace Lettuce::Quimera
     struct Glyph
     {
         Font font;
-        uint32_t offsetX;
-        uint32_t offsetY;
+        uint32_t offsetX; // float bits stored as uint32
+        uint32_t offsetY; // float bits stored as uint32
         uint32_t glyphID;
     };
 
