@@ -21,21 +21,33 @@ namespace Lettuce::UI
 {
     struct Control
     {
+        virtual ~Control() = default;
         std::string name;
         Style style;
         VerticalAlignment verticalAlignment;
         HorizontalAlignment horizontalAlignment;
     };
 
+    struct ContentControl : Control
+    {
+        std::any Content;
+        std::function<std::unique_ptr<Control>(std::any)> GetControl;
+    };
+
     struct ItemControl : Control
     {
         ObservableVector<std::any> Items;
-        std::move_only_function<Control(std::any)> ItemTemplate;
+        std::move_only_function<std::unique_ptr<Control>(std::any)> ItemTemplate;
+    };
+
+    struct SelectingItemControl : Control
+    {
+        std::function<void(std::unique_ptr<Control>&)> onSelection;
     };
 
     struct ViewControl : Control
     {
-        std::vector<Control> Children;
+        std::vector<std::unique_ptr<Control>> Children;
     };
 };
 #endif // LETTUCE_UI_PRIMITIVES_HPP

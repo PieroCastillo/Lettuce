@@ -33,9 +33,13 @@ namespace Lettuce::UI
         std::function<void(MouseButtonPressedEventArgs)> onMousePressed;
     };
 
+    struct Menu : SelectingItemControl
+    {
+    };
+
     struct UIView
     {
-        Control child;
+        std::unique_ptr<Control> child;
     };
 
     struct UISceneImpl;

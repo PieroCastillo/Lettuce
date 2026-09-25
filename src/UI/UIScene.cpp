@@ -1,3 +1,5 @@
+#include <queue>
+
 #include "Lettuce/UI/api.hpp"
 #include "Lettuce/UI/UISceneImpl.hpp"
 
@@ -20,24 +22,37 @@ void UIScene::Build(std::move_only_function<UIView(void)> builder)
     auto uiViewDesc = builder();
     auto controls = std::vector<ControlInstance>();
 
-    // Control currentControl;
-    // while (currentControl != null)
-    // {
-    //     auto instance = appendControl(currentControl);
-    //     if (control is ContentControl)
-    //     {
+    std::queue<std::unique_ptr<Control>> pendingControls;
+    pendingControls.push(std::move(uiViewDesc.child));
 
-    //     }
-    //     else if (control is ItemsControl)
-    //     {
+    while (!pendingControls.empty())
+    {
+        if (auto* control = dynamic_cast<ContentControl*>(pendingControls.front().get()))
+        {
+            pendingControls.push(std::move(control->GetControl(control->Content)));
+            pendingControls.pop();
+        }
+        else if (auto* control = dynamic_cast<ItemControl*>(pendingControls.front().get()))
+        {
+            for(auto& item : control->Items.GetData())
+            {
+                pendingControls.emplace(control->ItemTemplate(item));
+            }
+            pendingControls.pop();
+        }
+        else if (auto* control = dynamic_cast<ViewControl*>(pendingControls.front().get()))
+        {
+            for(auto& child : control->Children)
+            {
+                pendingControls.push(std::move(child));
+            }
+            pendingControls.pop();
+        }
+        else
+        {
 
-    //     }
-    //     else if (control is View)
-    //     {
-
-    //     }
-    //     nextControl();
-    // }
+        }
+    }
 }
 
 void UIScene::Update()
