@@ -17,29 +17,14 @@ Created by @PieroCastillo on 2026-08-13
 #include "../Quimera/api.hpp"
 #include "mvvm.hpp"
 #include "types.hpp"
-#include "primitives.hpp"
+#include "Controls/primitives.hpp"
+#include "Controls/controls.hpp"
 
 namespace Lettuce::UI
 {
-    struct Label : Control
-    {
-        std::string text;
-    };
-
-    struct Button : Control
-    {
-        std::string Content;
-        std::function<void(std::any, bool)> command;
-        std::function<void(MouseButtonPressedEventArgs)> onMousePressed;
-    };
-
-    struct Menu : SelectingItemControl
-    {
-    };
-
     struct UIView
     {
-        std::unique_ptr<Control> child;
+        std::unique_ptr<Controls::Primitives::Control> child;
     };
 
     struct UISceneImpl;

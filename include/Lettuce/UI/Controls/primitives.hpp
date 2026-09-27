@@ -9,43 +9,53 @@ Created by @PieroCastillo on 2026-08-29
 #include <atomic>
 #include <cstdint>
 #include <functional>
+#include <memory>
 #include <vector>
 
 // project headers
-#include "../Core/api.hpp"
-#include "../Foundations/api.hpp"
-#include "../Quimera/api.hpp"
-#include "mvvm.hpp"
+#include "../../Core/api.hpp"
+#include "../../Foundations/api.hpp"
+#include "../../Quimera/api.hpp"
+#include "../input.hpp"
+#include "../mvvm.hpp"
 
-namespace Lettuce::UI
-{
+using namespace Lettuce::Quimera;
+
+namespace Lettuce::UI::Controls::Primitives
+{   
     struct Control
     {
-        virtual ~Control() = default;
         std::string name;
-        Style style;
+        std::shared_ptr<Style> style;
         VerticalAlignment verticalAlignment;
         HorizontalAlignment horizontalAlignment;
+/*
+        virtual auto Build() -> ControlInstance = 0;
+        virtual void Reset() = 0;
+        virtual auto Layout(float4) -> float4 = 0;
+        virtual void Update(ControlInstance&, const InputState&) = 0;
+        virtual void Render(ControlInstance&, SurfaceCommandBuffer&) = 0;
+*/
     };
 
-    struct ContentControl : Control
+    struct ContentControl : public Control
     {
         std::any Content;
         std::function<std::unique_ptr<Control>(std::any)> GetControl;
     };
 
-    struct ItemControl : Control
+    struct ItemControl : public Control
     {
         ObservableVector<std::any> Items;
         std::move_only_function<std::unique_ptr<Control>(std::any)> ItemTemplate;
     };
 
-    struct SelectingItemControl : Control
+    struct SelectingItemControl : public Control
     {
         std::function<void(std::unique_ptr<Control>&)> onSelection;
     };
 
-    struct ViewControl : Control
+    struct ViewControl : public Control
     {
         std::vector<std::unique_ptr<Control>> Children;
     };

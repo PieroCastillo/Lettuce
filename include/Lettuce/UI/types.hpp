@@ -9,6 +9,7 @@ Created by @PieroCastillo on 2026-08-29
 #include <atomic>
 #include <cstdint>
 #include <functional>
+#include <memory>
 #include <vector>
 
 // project headers
@@ -55,6 +56,34 @@ namespace Lettuce::UI
         auto GetBackground(State) -> Lettuce::Quimera::Brush;
         auto GetForeground(State) -> Lettuce::Quimera::Brush;
         auto GetThickness(State) -> Lettuce::Quimera::Brush;
+    };
+
+    struct ControlInstance
+    {
+        std::string name;
+
+        // control
+        uint32_t parent;
+        uint32_t firstChild;
+        uint32_t prevSibling;
+        uint32_t nextSibling;
+
+        // layout
+        float2 size;
+        VerticalAlignment vertAligment;
+        HorizontalAlignment horAlignment;
+        float4 margin;
+        float4 padding;
+        float4 bounds; // readonly
+
+        // style
+        std::shared_ptr<Style> style;
+
+        // interaction
+        bool isEnabled;
+
+        /* used for: render data, custom control data, etc*/
+        std::any controlData;
     };
 };
 #endif // LETTUCE_UI_TYPES_HPP
