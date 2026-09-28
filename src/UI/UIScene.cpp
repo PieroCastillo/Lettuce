@@ -1,61 +1,68 @@
-#include <queue>
-
+// project headers
 #include "Lettuce/UI/api.hpp"
 #include "Lettuce/UI/UISceneImpl.hpp"
 
 using namespace Lettuce::UI;
 using namespace Lettuce::Quimera;
 
-UIScene::UIScene(std::move_only_function<UIView(void)> builder)
+auto UIScene::alloc(size_t Tsize, size_t Talignment) -> void*
 {
-    impl = new UISceneImpl;
-    Build(std::move(builder));
+    return impl->m_allocator.allocate(Tsize, Talignment);
+}
+
+UIScene::UIScene()
+{
+    if (impl)
+        throw std::logic_error("UIScene::UIScene cannot be called from initialized UIScene.");
+
+    auto nimpl = new UISceneImpl;
+
+    try
+    {
+        impl->Create();
+    }
+    catch (...)
+    {
+        delete nimpl;
+        throw;
+    }
+    impl = nimpl;
 }
 
 UIScene::~UIScene()
 {
-    delete impl;
+    if (impl)
+    {
+        impl->Destroy();
+        delete impl;
+    }
+    impl = nullptr;
 }
 
-void UIScene::Build(std::move_only_function<UIView(void)> builder)
+UIScene::UIScene(UIScene&& other) noexcept : impl(std::exchange(other.impl, nullptr))
 {
-    auto uiViewDesc = builder();
-    auto controls = std::vector<ControlInstance>();
-
-    // std::queue<std::unique_ptr<Control>> pendingControls;
-    // pendingControls.push(std::move(uiViewDesc.child));
-
-    // while (!pendingControls.empty())
-    // {
-    //     if (auto* control = dynamic_cast<ContentControl*>(pendingControls.front().get()))
-    //     {
-    //         pendingControls.push(std::move(control->GetControl(control->Content)));
-    //         pendingControls.pop();
-    //     }
-    //     else if (auto* control = dynamic_cast<ItemControl*>(pendingControls.front().get()))
-    //     {
-    //         for(auto& item : control->Items.GetData())
-    //         {
-    //             pendingControls.emplace(control->ItemTemplate(item));
-    //         }
-    //         pendingControls.pop();
-    //     }
-    //     else if (auto* control = dynamic_cast<ViewControl*>(pendingControls.front().get()))
-    //     {
-    //         for(auto& child : control->Children)
-    //         {
-    //             pendingControls.push(std::move(child));
-    //         }
-    //         pendingControls.pop();
-    //     }
-    //     else
-    //     {
-
-    //     }
-    // }
 }
 
-void UIScene::Update()
+UIScene& UIScene::operator=(UIScene&& other) noexcept
+{
+    if (this != &other)
+    {
+        if (impl)
+        {
+            impl->Destroy();
+            delete impl;
+        }
+        impl = std::exchange(other.impl, nullptr);
+    }
+    return *this;
+}
+
+void UIScene::Build(std::weak_ptr<Controls::Primitives::Control> visualRoot)
+{
+
+}
+
+void UIScene::Update(const InputState& input)
 {
 
 }

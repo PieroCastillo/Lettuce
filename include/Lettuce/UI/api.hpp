@@ -22,24 +22,35 @@ Created by @PieroCastillo on 2026-08-13
 
 namespace Lettuce::UI
 {
-    struct UIView
-    {
-        std::unique_ptr<Controls::Primitives::Control> child;
-    };
-
     struct UISceneImpl;
     class UIScene
     {
     private:
         UISceneImpl* impl = nullptr;
+        auto alloc(size_t Tsize, size_t Talignment) -> void*;
     public:
-        UIScene() = default;
-        explicit UIScene(std::move_only_function<UIView(void)> builder);
+        UIScene();
         ~UIScene();
 
-        void Build(std::move_only_function<UIView(void)> builder);
-        void Update();
+        UIScene(const UIScene&) = delete;
+        UIScene& operator=(const UIScene&) = delete;
 
+        UIScene(UIScene&&) noexcept;
+        UIScene& operator=(UIScene&&) noexcept;
+
+        template<Controls::Primitives::ControlDerivate T>
+        auto Create() -> T&
+        {
+            auto* rawMem = alloc(sizeof(T), alignof(T));
+            auto* controlPtr = ::new (rawMem) T();
+            return *controlPtr;
+        }
+
+        template<Controls::Primitives::ControlDerivate T, typename... Args>
+        T* Create(Args&&... args);
+
+        void Build(std::weak_ptr<Controls::Primitives::Control> visualRoot);
+        void Update(const InputState&);
         void Record(CommandBuffer&);
     };
 };

@@ -3,3 +3,13 @@
 
 using namespace Lettuce::UI;
 using namespace Lettuce::Quimera;
+
+void UISceneImpl::Create()
+{
+
+}
+
+void UISceneImpl::Destroy()
+{
+
+}

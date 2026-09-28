@@ -6,9 +6,11 @@ Created by @PieroCastillo on 2026-08-13
 
 // standard headers
 #include <any>
+#include <array>
 #include <atomic>
 #include <cstdint>
 #include <functional>
+#include <memory_resource>
 #include <vector>
 
 // project headers
@@ -21,7 +23,15 @@ namespace Lettuce::UI
 {
     struct UISceneImpl
     {
-        
+        std::array<uint8_t, 65536> m_initBuffer;
+        std::pmr::monotonic_buffer_resource m_allocator;
+
+        explicit UISceneImpl() : m_allocator(m_initBuffer.data(), m_initBuffer.size(), std::pmr::new_delete_resource())
+        {
+        }
+
+        void Create();
+        void Destroy();
     };
 };
 #endif // LETTUCE_UI_UI_SCENE_IMPL_HPP

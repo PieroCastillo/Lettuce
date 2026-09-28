@@ -7,7 +7,9 @@ Created by @PieroCastillo on 2026-08-29
 // standard headers
 #include <any>
 #include <atomic>
+#include <concepts>
 #include <cstdint>
+#include <limits>
 #include <functional>
 #include <memory>
 #include <vector>
@@ -22,42 +24,50 @@ Created by @PieroCastillo on 2026-08-29
 using namespace Lettuce::Quimera;
 
 namespace Lettuce::UI::Controls::Primitives
-{   
+{
     struct Control
     {
         std::string name;
         std::shared_ptr<Style> style;
         VerticalAlignment verticalAlignment;
         HorizontalAlignment horizontalAlignment;
-/*
-        virtual auto Build() -> ControlInstance = 0;
-        virtual void Reset() = 0;
-        virtual auto Layout(float4) -> float4 = 0;
-        virtual void Update(ControlInstance&, const InputState&) = 0;
-        virtual void Render(ControlInstance&, SurfaceCommandBuffer&) = 0;
-*/
+
+        virtual ~Control() {};
+        virtual auto Build(Surface&) -> ControlInstance { return {}; };
+        virtual void Reset(Surface&, ControlInstance&) {};
+        virtual auto Layout(ControlInstance&, float4 available) -> float4 { return {}; };
+        virtual void Update(ControlInstance&, const InputState&) {};
+        virtual void Render(ControlInstance&, SurfaceCommandBuffer&) {};
     };
+
+    template<typename T>
+    concept ControlDerivate = std::derived_from<T, Control>;
+
+    using ControlRef = std::reference_wrapper<Control>;
+    using ControlPtr = std::unique_ptr<Control>;
 
     struct ContentControl : public Control
     {
         std::any Content;
-        std::function<std::unique_ptr<Control>(std::any)> GetControl;
+        std::move_only_function<ControlPtr(const std::any&)> GetControl;
     };
 
     struct ItemControl : public Control
     {
         ObservableVector<std::any> Items;
-        std::move_only_function<std::unique_ptr<Control>(std::any)> ItemTemplate;
+        std::move_only_function<ControlPtr(const std::any&)> ItemTemplate;
     };
 
     struct SelectingItemControl : public Control
     {
-        std::function<void(std::unique_ptr<Control>&)> onSelection;
+        uint32_t selectedIndex = std::numeric_limits<uint32_t>::max();
+        std::move_only_function<void(uint32_t)> OnSelection;
+        virtual void Select(uint32_t index);
     };
 
     struct ViewControl : public Control
     {
-        std::vector<std::unique_ptr<Control>> Children;
+        std::vector<ControlRef> Children;
     };
 };
 #endif // LETTUCE_UI_PRIMITIVES_HPP
