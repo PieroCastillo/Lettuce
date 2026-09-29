@@ -21,7 +21,7 @@ UIScene::UIScene(const UISceneDesc& desc)
 
     try
     {
-        impl->Create(desc);
+        nimpl->Create(desc);
     }
     catch (...)
     {
