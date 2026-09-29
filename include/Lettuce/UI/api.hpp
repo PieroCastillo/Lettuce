@@ -22,6 +22,11 @@ Created by @PieroCastillo on 2026-08-13
 
 namespace Lettuce::UI
 {
+    struct UISceneDesc
+    {
+        Surface& surface;
+    };
+
     struct UISceneImpl;
     class UIScene
     {
@@ -29,7 +34,8 @@ namespace Lettuce::UI
         UISceneImpl* impl = nullptr;
         auto alloc(size_t Tsize, size_t Talignment) -> void*;
     public:
-        UIScene();
+        UIScene() = default;
+        explicit UIScene(const UISceneDesc&);
         ~UIScene();
 
         UIScene(const UIScene&) = delete;

@@ -10,6 +10,7 @@ Created by @PieroCastillo on 2026-09-26
 #include <string>
 
 // project headers
+#include "../../Quimera/api.hpp"
 #include "primitives.hpp"
 
 namespace Lettuce::UI::Controls
@@ -18,7 +19,7 @@ namespace Lettuce::UI::Controls
     {
         std::string text;
 
-        auto Build(Surface&) -> ControlInstance override;
+        void Build(Surface&, ControlInstance&) override;
         void Reset(Surface&, ControlInstance&) override;
         auto Layout(ControlInstance&, float4 available) -> float4 override;
         void Update(ControlInstance&, const InputState&) override;
@@ -30,7 +31,16 @@ namespace Lettuce::UI::Controls
         std::string Content;
         std::function<void(std::any, bool)> Command;
         
-        auto Build(Surface&) -> ControlInstance override;
+        void Build(Surface&, ControlInstance&) override;
+        void Reset(Surface&, ControlInstance&) override;
+        auto Layout(ControlInstance&, float4 available) -> float4 override;
+        void Update(ControlInstance&, const InputState&) override;
+        void Render(ControlInstance&, SurfaceCommandBuffer&) override;
+    };
+
+    struct StackView : public Primitives::ViewControl
+    {
+        void Build(Surface&, ControlInstance&) override;
         void Reset(Surface&, ControlInstance&) override;
         auto Layout(ControlInstance&, float4 available) -> float4 override;
         void Update(ControlInstance&, const InputState&) override;

@@ -25,12 +25,15 @@ namespace Lettuce::UI
     {
         std::array<uint8_t, 65536> m_initBuffer;
         std::pmr::monotonic_buffer_resource m_allocator;
+        Surface* m_surface;
+        std::vector<Controls::Primitives::Control*> m_tempQueue;
+        std::vector<ControlInstance> m_instances;
 
         explicit UISceneImpl() : m_allocator(m_initBuffer.data(), m_initBuffer.size(), std::pmr::new_delete_resource())
         {
         }
 
-        void Create();
+        void Create(const UISceneDesc&);
         void Destroy();
     };
 };

@@ -7,11 +7,9 @@ using namespace Lettuce::Core;
 using namespace Lettuce::Quimera;
 using namespace Lettuce::UI;
 
-auto Controls::Label::Build(Surface&) -> ControlInstance
+void Controls::Label::Build(Surface&, ControlInstance&)
 {
-    ControlInstance control = {};
 
-    return control;
 }
 
 void Controls::Label::Reset(Surface&, ControlInstance&)

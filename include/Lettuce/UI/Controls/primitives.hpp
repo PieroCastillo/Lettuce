@@ -33,7 +33,8 @@ namespace Lettuce::UI::Controls::Primitives
         HorizontalAlignment horizontalAlignment;
 
         virtual ~Control() {};
-        virtual auto Build(Surface&) -> ControlInstance { return {}; };
+        virtual auto Children() const -> std::span<const std::reference_wrapper<Control>> { return {}; }
+        virtual void Build(Surface&, ControlInstance&) {};
         virtual void Reset(Surface&, ControlInstance&) {};
         virtual auto Layout(ControlInstance&, float4 available) -> float4 { return {}; };
         virtual void Update(ControlInstance&, const InputState&) {};
@@ -67,7 +68,7 @@ namespace Lettuce::UI::Controls::Primitives
 
     struct ViewControl : public Control
     {
-        std::vector<ControlRef> Children;
+        std::vector<ControlRef> children;
     };
 };
 #endif // LETTUCE_UI_PRIMITIVES_HPP

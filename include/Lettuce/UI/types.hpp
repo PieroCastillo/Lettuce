@@ -58,6 +58,8 @@ namespace Lettuce::UI
         auto GetThickness(State) -> Lettuce::Quimera::Brush;
     };
 
+    constexpr auto InvalidControlInstance = std::numeric_limits<uint32_t>::max();
+
     struct ControlInstance
     {
         std::string name;
@@ -65,8 +67,7 @@ namespace Lettuce::UI
         // control
         uint32_t parent;
         uint32_t firstChild;
-        uint32_t prevSibling;
-        uint32_t nextSibling;
+        uint32_t childrenCount;
 
         // layout
         float2 size;
