@@ -7,6 +7,7 @@ Created by @PieroCastillo on 2026-09-26
 // standard headers
 #include <any>
 #include <functional>
+#include <span>
 #include <string>
 
 // project headers
@@ -30,7 +31,7 @@ namespace Lettuce::UI::Controls
     {
         std::string Content;
         std::function<void(std::any, bool)> Command;
-        
+
         void Build(Surface&, ControlInstance&) override;
         void Reset(Surface&, ControlInstance&) override;
         auto Layout(ControlInstance&, float4 available) -> float4 override;
@@ -40,6 +41,7 @@ namespace Lettuce::UI::Controls
 
     struct StackView : public Primitives::ViewControl
     {
+        auto Children() const -> std::span<const Primitives::ControlRef> override;
         void Build(Surface&, ControlInstance&) override;
         void Reset(Surface&, ControlInstance&) override;
         auto Layout(ControlInstance&, float4 available) -> float4 override;
@@ -49,6 +51,12 @@ namespace Lettuce::UI::Controls
 
     struct Menu : public Primitives::SelectingItemControl
     {
+        void Build(Surface&, ControlInstance&) override;
+        void Reset(Surface&, ControlInstance&) override;
+        auto Layout(ControlInstance&, float4 available) -> float4 override;
+        void Update(ControlInstance&, const InputState&) override;
+        void Render(ControlInstance&, SurfaceCommandBuffer&) override;
+        void Select(uint32_t index) override;
     };
 };
 #endif // LETTUCE_UI_CONTROLS_HPP
