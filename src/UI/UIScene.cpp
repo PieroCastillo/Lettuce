@@ -90,10 +90,20 @@ void UIScene::Build(std::weak_ptr<Controls::Primitives::Control> root)
         {
             instances.push_back({});
             control.get().Build(*impl->m_surface, instances.back());
+            instances.back().build = [&control](Surface& surf, ControlInstance& inst) {control.get().Build(surf, inst);};
+            instances.back().reset = [&control](Surface& surf, ControlInstance& inst) {control.get().Reset(surf, inst);};
+            instances.back().layout = [&control](ControlInstance& inst, float4 constraints) { return control.get().Layout(inst, constraints);};
+            instances.back().update = [&control](ControlInstance& inst, const InputState& input) {control.get().Update(inst, input);};
+            instances.back().render = [&control](ControlInstance& inst, SurfaceCommandBuffer& scmd) {control.get().Render(inst, scmd);};
             instances.back().parent = parentIdx;
             queue.push_back(&control.get());
         }
     }
+}
+
+void UIScene::Arrange()
+{
+
 }
 
 void UIScene::Update(const InputState& input)

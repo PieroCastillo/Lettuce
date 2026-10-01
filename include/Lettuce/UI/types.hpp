@@ -16,6 +16,7 @@ Created by @PieroCastillo on 2026-08-29
 #include "../Core/api.hpp"
 #include "../Foundations/api.hpp"
 #include "../Quimera/api.hpp"
+#include "input.hpp"
 
 namespace Lettuce::UI
 {
@@ -82,6 +83,13 @@ namespace Lettuce::UI
 
         // interaction
         bool isEnabled;
+
+        // functions
+        std::move_only_function<void(Lettuce::Quimera::Surface&, ControlInstance&)> build;
+        std::move_only_function<void(Lettuce::Quimera::Surface&, ControlInstance&)> reset;
+        std::move_only_function<float4(ControlInstance&, float4 available)> layout;
+        std::move_only_function<void(ControlInstance&, const InputState&)> update;
+        std::move_only_function<void(ControlInstance&, Lettuce::Quimera::SurfaceCommandBuffer&)> render;
 
         /* used for: render data, custom control data, etc*/
         std::any controlData;

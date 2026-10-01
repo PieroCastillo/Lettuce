@@ -56,6 +56,7 @@ namespace Lettuce::UI
         T* Create(Args&&... args);
 
         void Build(std::weak_ptr<Controls::Primitives::Control> visualRoot);
+        void Arrange();
         void Update(const InputState&);
         void Record(CommandBuffer&);
     };
