@@ -31,6 +31,9 @@ namespace Lettuce::UI::Controls::Primitives
         std::shared_ptr<Style> style;
         VerticalAlignment verticalAlignment;
         HorizontalAlignment horizontalAlignment;
+        float2 size;
+        float4 margin;
+        float4 padding;
 
         virtual ~Control() {};
         virtual auto Children() const -> std::span<const std::reference_wrapper<Control>> { return {}; }
