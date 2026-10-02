@@ -19,7 +19,7 @@ void Menu::Reset(Surface&, ControlInstance&)
 
 }
 
-auto Menu::Layout(ControlInstance&, float4 available) -> float4
+auto Menu::Layout(LayoutContext& ctx) -> bool
 {
     return {};
 }

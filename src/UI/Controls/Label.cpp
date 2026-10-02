@@ -17,7 +17,7 @@ void Controls::Label::Reset(Surface&, ControlInstance&)
 
 }
 
-auto Controls::Label::Layout(ControlInstance&, float4 available)->float4
+auto Controls::Label::Layout(LayoutContext& ctx) -> bool
 {
     return {};
 }

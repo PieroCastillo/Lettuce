@@ -22,7 +22,7 @@ namespace Lettuce::UI::Controls
 
         void Build(Surface&, ControlInstance&) override;
         void Reset(Surface&, ControlInstance&) override;
-        auto Layout(ControlInstance&, float4 available) -> float4 override;
+        auto Layout(LayoutContext&) -> bool override;
         void Update(ControlInstance&, const InputState&) override;
         void Render(ControlInstance&, SurfaceCommandBuffer&) override;
     };
@@ -34,7 +34,7 @@ namespace Lettuce::UI::Controls
 
         void Build(Surface&, ControlInstance&) override;
         void Reset(Surface&, ControlInstance&) override;
-        auto Layout(ControlInstance&, float4 available) -> float4 override;
+        auto Layout(LayoutContext&) -> bool override;
         void Update(ControlInstance&, const InputState&) override;
         void Render(ControlInstance&, SurfaceCommandBuffer&) override;
     };
@@ -44,7 +44,7 @@ namespace Lettuce::UI::Controls
         auto Children() const -> std::span<const Primitives::ControlRef> override;
         void Build(Surface&, ControlInstance&) override;
         void Reset(Surface&, ControlInstance&) override;
-        auto Layout(ControlInstance&, float4 available) -> float4 override;
+        auto Layout(LayoutContext&) -> bool override;
         void Update(ControlInstance&, const InputState&) override;
         void Render(ControlInstance&, SurfaceCommandBuffer&) override;
     };
@@ -53,7 +53,7 @@ namespace Lettuce::UI::Controls
     {
         void Build(Surface&, ControlInstance&) override;
         void Reset(Surface&, ControlInstance&) override;
-        auto Layout(ControlInstance&, float4 available) -> float4 override;
+        auto Layout(LayoutContext&) -> bool override;
         void Update(ControlInstance&, const InputState&) override;
         void Render(ControlInstance&, SurfaceCommandBuffer&) override;
         void Select(uint32_t index) override;

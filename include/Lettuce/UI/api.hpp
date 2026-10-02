@@ -17,6 +17,7 @@ Created by @PieroCastillo on 2026-08-13
 #include "../Quimera/api.hpp"
 #include "mvvm.hpp"
 #include "types.hpp"
+#include "styles.hpp"
 #include "Controls/primitives.hpp"
 #include "Controls/controls.hpp"
 
@@ -25,6 +26,7 @@ namespace Lettuce::UI
     struct UISceneDesc
     {
         Surface& surface;
+        std::shared_ptr<Style> defaultStyle;
     };
 
     struct UISceneImpl;
@@ -33,6 +35,7 @@ namespace Lettuce::UI
     private:
         UISceneImpl* impl = nullptr;
         auto alloc(size_t Tsize, size_t Talignment) -> void*;
+        auto getDefStyle() -> std::shared_ptr<Style>;
     public:
         UIScene() = default;
         explicit UIScene(const UISceneDesc&);
@@ -45,18 +48,21 @@ namespace Lettuce::UI
         UIScene& operator=(UIScene&&) noexcept;
 
         template<Controls::Primitives::ControlDerivate T>
-        auto Create() -> T&
-        {
-            auto* rawMem = alloc(sizeof(T), alignof(T));
-            auto* controlPtr = ::new (rawMem) T();
-            return *controlPtr;
+        auto Create() -> T
+        {   
+            // auto* rawMem = alloc(sizeof(T), alignof(T));
+            // auto* controlPtr = std::construct_at((T*)rawMem);
+            // TODO: impl stable allocator for controls
+            T control = {};
+            control.style = getDefStyle();
+            return control;
         }
 
         template<Controls::Primitives::ControlDerivate T, typename... Args>
         T* Create(Args&&... args);
 
-        void Build(std::weak_ptr<Controls::Primitives::Control> visualRoot);
-        void Arrange();
+        void Build(Controls::Primitives::Control& visualRoot);
+        void Arrange(uint32_t width, uint32_t height);
         void Update(const InputState&);
         void Record(CommandBuffer&);
     };

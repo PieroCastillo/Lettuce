@@ -24,7 +24,7 @@ void StackView::Reset(Surface& surf, ControlInstance& instance)
 
 }
 
-auto StackView::Layout(ControlInstance& instance, float4 available) -> float4
+auto StackView::Layout(LayoutContext& ctx) -> bool
 {
     return {};
 }

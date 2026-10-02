@@ -12,6 +12,11 @@ auto UIScene::alloc(size_t Tsize, size_t Talignment) -> void*
     return impl->m_allocator.allocate(Tsize, Talignment);
 }
 
+auto UIScene::getDefStyle() -> std::shared_ptr<Style>
+{
+    return impl->m_defaultStyle;
+}
+
 UIScene::UIScene(const UISceneDesc& desc)
 {
     if (impl)
@@ -59,14 +64,15 @@ UIScene& UIScene::operator=(UIScene&& other) noexcept
     return *this;
 }
 
-void UIScene::Build(std::weak_ptr<Controls::Primitives::Control> root)
+void UIScene::Build(Controls::Primitives::Control& root)
 {
-    auto& visualRoot = *root.lock().get();
+    auto& visualRoot = root;
 
     // usually the Control Count per Build() is similar,
     // so reuse vectors is convenient
     auto& instances = impl->m_instances;
     auto& queue = impl->m_tempQueue;
+
     instances.clear();
     queue.clear();
 
@@ -88,22 +94,30 @@ void UIScene::Build(std::weak_ptr<Controls::Primitives::Control> root)
 
         for (auto& control : children)
         {
+            auto* controlPtr = &control.get();
             instances.push_back({});
             control.get().Build(*impl->m_surface, instances.back());
-            instances.back().build = [&control](Surface& surf, ControlInstance& inst) {control.get().Build(surf, inst);};
-            instances.back().reset = [&control](Surface& surf, ControlInstance& inst) {control.get().Reset(surf, inst);};
-            instances.back().layout = [&control](ControlInstance& inst, float4 constraints) { return control.get().Layout(inst, constraints);};
-            instances.back().update = [&control](ControlInstance& inst, const InputState& input) {control.get().Update(inst, input);};
-            instances.back().render = [&control](ControlInstance& inst, SurfaceCommandBuffer& scmd) {control.get().Render(inst, scmd);};
+            // instance functions are copied in Control::Build()
             instances.back().parent = parentIdx;
             queue.push_back(&control.get());
         }
     }
 }
 
-void UIScene::Arrange()
+void UIScene::Arrange(uint32_t width, uint32_t height)
 {
+    auto& layoutCtx = impl->m_layoutContext;
+    layoutCtx.stack.clear();
+    auto& root = impl->m_instances.front();
+    layoutCtx.Push(root, { 0.0f, 0.0f, width, height });
 
+    while (!layoutCtx.stack.empty())
+    {
+        auto& frame = layoutCtx.Current();
+
+        if (frame.instance.layout(layoutCtx))
+            layoutCtx.Pop();
+    }
 }
 
 void UIScene::Update(const InputState& input)

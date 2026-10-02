@@ -38,7 +38,7 @@ void Controls::Button::Reset(Surface&, ControlInstance&)
 
 }
 
-auto Controls::Button::Layout(ControlInstance&, float4 available)->float4
+auto Controls::Button::Layout(LayoutContext& ctx) -> bool
 {
     return {};
 }

@@ -52,15 +52,19 @@ namespace Lettuce::UI
         MousePressed,
     };
 
-    struct Style
+    class Style
     {
-        auto GetBackground(State) -> Lettuce::Quimera::Brush;
-        auto GetForeground(State) -> Lettuce::Quimera::Brush;
-        auto GetThickness(State) -> Lettuce::Quimera::Brush;
+    public:
+        virtual ~Style() = default;
+        virtual auto GetBackground(State) -> Lettuce::Quimera::Brush { return {}; }
+        virtual auto GetForeground(State) -> Lettuce::Quimera::Brush { return {}; }
+        virtual auto GetThickness(State) -> Lettuce::Quimera::Brush { return {}; }
     };
 
     constexpr auto InvalidControlInstance = std::numeric_limits<uint32_t>::max();
 
+    struct LayoutFrame;
+    struct LayoutContext;
     struct ControlInstance
     {
         std::string name;
@@ -85,14 +89,30 @@ namespace Lettuce::UI
         bool isEnabled;
 
         // functions
-        std::move_only_function<void(Lettuce::Quimera::Surface&, ControlInstance&)> build;
-        std::move_only_function<void(Lettuce::Quimera::Surface&, ControlInstance&)> reset;
-        std::move_only_function<float4(ControlInstance&, float4 available)> layout;
-        std::move_only_function<void(ControlInstance&, const InputState&)> update;
-        std::move_only_function<void(ControlInstance&, Lettuce::Quimera::SurfaceCommandBuffer&)> render;
-
+        std::move_only_function<void(Lettuce::Quimera::Surface&, ControlInstance&)> build = [](Lettuce::Quimera::Surface&, ControlInstance&) {};
+        std::move_only_function<void(Lettuce::Quimera::Surface&, ControlInstance&)> reset = [](Lettuce::Quimera::Surface&, ControlInstance&) {};
+        std::move_only_function<bool(LayoutContext&)> layout = [](LayoutContext&) { return true; };
+        std::move_only_function<void(ControlInstance&, const InputState&)> update = [](ControlInstance&, const InputState&) {};
+        std::move_only_function<void(ControlInstance&, Lettuce::Quimera::SurfaceCommandBuffer&)> render = [](ControlInstance&, Lettuce::Quimera::SurfaceCommandBuffer&) {};
         /* used for: render data, custom control data, etc*/
         std::any controlData;
+    };
+
+    struct LayoutFrame
+    {
+        ControlInstance& instance;
+        float4 minMax;
+        uint32_t currentChild;
+    };
+
+    struct LayoutContext
+    {
+        std::vector<LayoutFrame> stack;
+
+        auto Current() -> LayoutFrame& { return stack.back(); }
+        auto Self() -> ControlInstance& { return stack.back().instance; }
+        void Push(ControlInstance& child, float4 constraints) { stack.emplace_back(child, constraints, 0u); }
+        void Pop() { stack.pop_back(); }
     };
 };
 #endif // LETTUCE_UI_TYPES_HPP

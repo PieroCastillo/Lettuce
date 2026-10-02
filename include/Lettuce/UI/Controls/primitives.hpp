@@ -39,7 +39,7 @@ namespace Lettuce::UI::Controls::Primitives
         virtual auto Children() const -> std::span<const std::reference_wrapper<Control>> { return {}; }
         virtual void Build(Surface&, ControlInstance&) {};
         virtual void Reset(Surface&, ControlInstance&) {};
-        virtual auto Layout(ControlInstance&, float4 available) -> float4 { return {}; };
+        virtual auto Layout(LayoutContext&) -> bool { return true; };
         virtual void Update(ControlInstance&, const InputState&) {};
         virtual void Render(ControlInstance&, SurfaceCommandBuffer&) {};
     };
@@ -66,7 +66,7 @@ namespace Lettuce::UI::Controls::Primitives
     {
         uint32_t selectedIndex = std::numeric_limits<uint32_t>::max();
         std::move_only_function<void(uint32_t)> OnSelection;
-        virtual void Select(uint32_t index);
+        virtual void Select(uint32_t index) {}
     };
 
     struct ViewControl : public Control
