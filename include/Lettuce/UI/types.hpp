@@ -59,6 +59,7 @@ namespace Lettuce::UI
         virtual auto GetBackground(State) -> Lettuce::Quimera::Brush { return {}; }
         virtual auto GetForeground(State) -> Lettuce::Quimera::Brush { return {}; }
         virtual auto GetThickness(State) -> Lettuce::Quimera::Brush { return {}; }
+        virtual auto GetFontFamily() -> Lettuce::Quimera::Font { return {}; }
     };
 
     constexpr auto InvalidControlInstance = std::numeric_limits<uint32_t>::max();

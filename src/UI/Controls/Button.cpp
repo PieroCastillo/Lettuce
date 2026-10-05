@@ -2,6 +2,7 @@
 #include "Lettuce/Quimera/api.hpp"
 #include "Lettuce/UI/types.hpp"
 #include "Lettuce/UI/Controls/controls.hpp"
+#include "Lettuce/Utils/api.hpp"
 
 using namespace Lettuce::Core;
 using namespace Lettuce::Quimera;
@@ -11,8 +12,12 @@ namespace Lettuce::UI::Controls
 {
     struct ButtonData
     {
-        Layout rectLayout;
         std::string text;
+        Geometry geometry;
+        std::vector<Glyph> glyphs;
+        Layout layout;
+        Layout layoutTextBase;
+        Font font;
     };
 }
 
@@ -28,6 +33,11 @@ void Controls::Button::Build(Surface& surf, ControlInstance& instance)
 
     ButtonData data = {
         .text = std::move(Content),
+        // .geometry = surf.CreateGeometry(ImplicitGeometryDesc {}),
+        // .glyphs = Lettuce::Utils::GlyphLoader::ShapeText(&surf, , Content), 
+        // .layout
+        // .layoutTextBase
+        // .font
     };
 
     instance.controlData = std::make_any<ButtonData>(std::move(data));
