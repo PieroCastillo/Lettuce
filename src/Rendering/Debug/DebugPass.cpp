@@ -133,11 +133,11 @@ void DebugPass::Record(CommandBuffer& cmd, const DebugPassRecordDesc& desc)
     AttachmentDesc colorAttachments[2] = {
     {
         .renderTarget = desc.rtColorOutput,
-        .loadOp = LoadOp::Clear,
+        .loadOp = LoadOp::Load,
     },
     {
         .renderTarget = desc.rtPick,
-        .loadOp = LoadOp::Clear,
+        .loadOp = LoadOp::Load,
     }
     };
     AttachmentDesc depthAttachment = {
