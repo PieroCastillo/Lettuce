@@ -101,7 +101,6 @@ auto Device::CreatePipeline(const PrimitiveShadingPipelineDesc& desc) -> Pipelin
         tmp.push_back(ToVkFormat(e));
     }
 
-    // TODO: impl Depth Testing
     VkPipelineRenderingCreateInfo renderingCI = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO,
         .pNext = desc.fragmentShadingRate ? &fragmentShadingRate : nullptr,
@@ -112,9 +111,9 @@ auto Device::CreatePipeline(const PrimitiveShadingPipelineDesc& desc) -> Pipelin
 
     if (desc.depthStencilAttachmentFormat)
     {
+        // Lettuce does not implement Stencil by design
         auto format = ToVkFormat(*desc.depthStencilAttachmentFormat);
         renderingCI.depthAttachmentFormat = format;
-        // renderingCI.stencilAttachmentFormat = format;
     }
 
     auto& shaders = impl->shaders;

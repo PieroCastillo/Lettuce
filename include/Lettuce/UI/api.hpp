@@ -17,25 +17,16 @@ Created by @PieroCastillo on 2026-08-13
 #include "../Quimera/api.hpp"
 #include "mvvm.hpp"
 #include "types.hpp"
-#include "primitives.hpp"
+#include "styles.hpp"
+#include "Controls/primitives.hpp"
+#include "Controls/controls.hpp"
 
 namespace Lettuce::UI
 {
-    struct Label : Control
+    struct UISceneDesc
     {
-        std::string text;
-    };
-
-    struct Button : Control
-    {
-        std::string Content;
-        std::function<void(std::any, bool)> command;
-        std::function<void(MouseButtonPressedEventArgs)> onMousePressed;
-    };
-
-    struct UIView
-    {
-        Control child;
+        Surface& surface;
+        std::shared_ptr<Style> defaultStyle;
     };
 
     struct UISceneImpl;
@@ -43,14 +34,36 @@ namespace Lettuce::UI
     {
     private:
         UISceneImpl* impl = nullptr;
+        auto alloc(size_t Tsize, size_t Talignment) -> void*;
+        auto getDefStyle() -> std::shared_ptr<Style>;
     public:
         UIScene() = default;
-        explicit UIScene(std::move_only_function<UIView(void)> builder);
+        explicit UIScene(const UISceneDesc&);
         ~UIScene();
 
-        void Build(std::move_only_function<UIView(void)> builder);
-        void Update();
+        UIScene(const UIScene&) = delete;
+        UIScene& operator=(const UIScene&) = delete;
 
+        UIScene(UIScene&&) noexcept;
+        UIScene& operator=(UIScene&&) noexcept;
+
+        template<Controls::Primitives::ControlDerivate T>
+        auto Create() -> T
+        {   
+            // auto* rawMem = alloc(sizeof(T), alignof(T));
+            // auto* controlPtr = std::construct_at((T*)rawMem);
+            // TODO: impl stable allocator for controls
+            T control = {};
+            control.style = getDefStyle();
+            return control;
+        }
+
+        template<Controls::Primitives::ControlDerivate T, typename... Args>
+        T* Create(Args&&... args);
+
+        void Build(Controls::Primitives::Control& visualRoot);
+        void Arrange(uint32_t width, uint32_t height);
+        void Update(const InputState&);
         void Record(CommandBuffer&);
     };
 };
