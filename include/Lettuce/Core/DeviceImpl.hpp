@@ -147,6 +147,9 @@ namespace Lettuce::Core
         VkPhysicalDeviceComputeShaderDerivativesFeaturesKHR computeShaderDerivativesFeature = {
             .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COMPUTE_SHADER_DERIVATIVES_PROPERTIES_KHR,
         };
+        VkPhysicalDeviceUnifiedImageLayoutsFeaturesKHR unifiedLayoutsFeature = {
+            .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_UNIFIED_IMAGE_LAYOUTS_FEATURES_KHR,
+        };
 
         // optional features/extensions
         VkPhysicalDeviceFragmentShadingRateFeaturesKHR fragmentShadingRateFeature = {

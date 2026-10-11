@@ -100,7 +100,6 @@ for _, name in ipairs(samples) do
 end
 
 local apps = {
-    "Editor",
 }
 
 for _, name in ipairs(apps) do 

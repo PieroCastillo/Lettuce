@@ -313,6 +313,15 @@ void DeviceImpl::setupFeaturesExtensions()
         requestedExtensionsNames.push_back(VK_KHR_COMPUTE_SHADER_DERIVATIVES_EXTENSION_NAME);
     }
 
+    if (exists(availableExtensionsNames, VK_KHR_UNIFIED_IMAGE_LAYOUTS_EXTENSION_NAME))
+    {
+        unifiedLayoutsFeature.unifiedImageLayouts = VK_TRUE;
+        unifiedLayoutsFeature.pNext = next;
+        next = &unifiedLayoutsFeature;
+
+        requestedExtensionsNames.push_back(VK_KHR_UNIFIED_IMAGE_LAYOUTS_EXTENSION_NAME);
+    }
+
     if (exists(availableExtensionsNames, VK_KHR_DEFERRED_HOST_OPERATIONS_EXTENSION_NAME))
     {
         requestedExtensionsNames.push_back(VK_KHR_DEFERRED_HOST_OPERATIONS_EXTENSION_NAME);
@@ -668,7 +677,7 @@ void DeviceImpl::layoutTransitionCmd(VkCommandBuffer cmd, VkImage image, VkImage
         .oldLayout = VK_IMAGE_LAYOUT_PREINITIALIZED,
         .newLayout = VK_IMAGE_LAYOUT_GENERAL,
         .image = image,
-        .subresourceRange = {aspect, 0, levelCount, 0, layerCount},
+        .subresourceRange = { aspect, 0, levelCount, 0, layerCount },
     };
 
     VkDependencyInfo depInfo = {
