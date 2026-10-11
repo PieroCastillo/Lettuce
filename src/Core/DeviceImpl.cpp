@@ -228,7 +228,12 @@ void DeviceImpl::setupFeaturesExtensions()
     extendedDynamicState3Feature.extendedDynamicState3ColorBlendEquation = VK_TRUE;
     extendedDynamicState3Feature.pNext = &fragmentShaderBarycentricsFeature;
 
-    next = &extendedDynamicState3Feature;
+    shaderAtomicFloatFeature.shaderBufferFloat32Atomics = VK_TRUE;
+    shaderAtomicFloatFeature.shaderSharedFloat32AtomicAdd = VK_TRUE;
+    shaderAtomicFloatFeature.shaderSharedFloat32Atomics = VK_TRUE;
+    shaderAtomicFloatFeature.pNext = &extendedDynamicState3Feature;
+
+    next = &shaderAtomicFloatFeature;
 
     requestedExtensionsNames.push_back(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
     requestedExtensionsNames.push_back(VK_GOOGLE_HLSL_FUNCTIONALITY1_EXTENSION_NAME);
@@ -242,6 +247,7 @@ void DeviceImpl::setupFeaturesExtensions()
     requestedExtensionsNames.push_back(VK_EXT_EXTENDED_DYNAMIC_STATE_3_EXTENSION_NAME);
     requestedExtensionsNames.push_back(VK_EXT_LOAD_STORE_OP_NONE_EXTENSION_NAME);
     requestedExtensionsNames.push_back(VK_EXT_MEMORY_BUDGET_EXTENSION_NAME);
+    requestedExtensionsNames.push_back(VK_EXT_SHADER_ATOMIC_FLOAT_EXTENSION_NAME);
 
     // recommended features/extensions
     if (exists(availableExtensionsNames, VK_EXT_DEVICE_GENERATED_COMMANDS_EXTENSION_NAME))

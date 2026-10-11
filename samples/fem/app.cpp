@@ -5,9 +5,50 @@
 #include <print>
 #include <vector>
 
+#include <igl/copyleft/tetgen/tetrahedralize.h>
+#include <igl/readOFF.h>
+#include <igl/barycenter.h>
+#include <stl_reader.hpp>
+
 using namespace Lettuce::Core;
 using namespace Lettuce::Rendering;
 
+// structs
+struct Material
+{
+    float young;   // E
+    float poisson; // nu
+    float density; // uniform
+};
+
+struct SimulationInfo
+{
+    uint32_t elementCount;
+    uint32_t nodeCount;
+    uint32_t iterationCount;
+    uint32_t elementsPerThread;
+    Material material;
+};
+
+struct Node
+{
+    float3 position;
+    float3 displacement;
+    float3 force;
+    float vonMisesStress;
+    float stressCount;
+    uint32_t constraints; // bits: [highest, ... | X | Y | Z , lowest]
+};
+
+struct Element
+{
+    uint32_t nodeIdxs[4];
+
+    float volume;
+    float B[6][12];
+};
+
+// fields
 GLFWwindow* window;
 
 uint32_t width = 1366;
@@ -17,22 +58,110 @@ std::unique_ptr<Device> device;
 Swapchain swapchain;
 DescriptorTable descriptorTable;
 CommandAllocator cmdAlloc;
+CommandAllocator copyCmdAlloc;
 
-std::unique_ptr<SceneView> scene;
-std::unique_ptr<Debug::DebugPass> debugPass;
 GpuUniquePtr<SceneViewData> sceneViewData;
-GpuUniquePtr<uint32_t> pickInstanceData;
 
 TextureView tDepthTarget;
-TextureView tPickTexture;
 
 Lettuce::Utils::FrameTimer timer;
 Lettuce::Utils::Camera3DDesc camera2Desc;
 Lettuce::Utils::Camera3D camera2(camera2Desc); // explicit constructor
 
+Pipeline pFiniteElements;
+Pipeline pRender;
+
+GpuUniquePtr<SimulationInfo> simulationInfo;
+GpuUploadVector<Node> nodes;
+GpuUploadVector<Element> elements;
+
+GpuUploadVector<float3> positions;
+GpuUploadVector<uint32_t> indices;
+
 double xprev = width / 2;
 double yprev = height / 2;
 bool wasMousePressed = false;
+
+static Element makeElement(uint32_t i0, uint32_t i1, uint32_t i2, uint32_t i3, const std::vector<Node>& nodes)
+{
+    Element e{};
+
+    e.nodeIdxs[0] = i0;
+    e.nodeIdxs[1] = i1;
+    e.nodeIdxs[2] = i2;
+    e.nodeIdxs[3] = i3;
+
+    const auto& x0 = nodes[i0].position;
+    const auto& x1 = nodes[i1].position;
+    const auto& x2 = nodes[i2].position;
+    const auto& x3 = nodes[i3].position;
+
+    const auto a = x1 - x0;
+    const auto b = x2 - x0;
+    const auto c = x3 - x0;
+
+    const float detJ = dot(a, cross(b, c));
+
+    e.volume = std::abs(detJ) / 6.0f;
+
+    // Gradients
+    // N_i = a_i + b_i*x + c_i*y + d_i*z
+    //
+    // ∇Ni = (dNi/dx, dNi/dy, dNi/dz)
+
+    const float invDet = 1.0f / detJ;
+
+    float3 gradN[4];
+
+    gradN[0] = cross(x2 - x1, x3 - x1) * invDet;
+    gradN[1] = cross(x3 - x0, x2 - x0) * invDet;
+    gradN[2] = cross(x1 - x0, x3 - x0) * invDet;
+    gradN[3] = cross(x2 - x0, x1 - x0) * invDet;
+
+    // B = 6x12
+    //
+    // [ dN/dx   0      0   ]
+    // [ 0       dN/dy  0   ]
+    // [ 0       0      dN/dz]
+    // [ dN/dy   dN/dx  0   ]
+    // [ 0       dN/dz  dN/dy]
+    // [ dN/dz   0      dN/dx]
+
+    for (int i = 0; i < 4; ++i)
+    {
+        const int j = i * 3;
+
+        const float dx = gradN[i].x;
+        const float dy = gradN[i].y;
+        const float dz = gradN[i].z;
+
+        e.B[0][j + 0] = dx;
+        e.B[0][j + 1] = 0.0f;
+        e.B[0][j + 2] = 0.0f;
+
+        e.B[1][j + 0] = 0.0f;
+        e.B[1][j + 1] = dy;
+        e.B[1][j + 2] = 0.0f;
+
+        e.B[2][j + 0] = 0.0f;
+        e.B[2][j + 1] = 0.0f;
+        e.B[2][j + 2] = dz;
+
+        e.B[3][j + 0] = dy;
+        e.B[3][j + 1] = dx;
+        e.B[3][j + 2] = 0.0f;
+
+        e.B[4][j + 0] = 0.0f;
+        e.B[4][j + 1] = dz;
+        e.B[4][j + 2] = dy;
+
+        e.B[5][j + 0] = dz;
+        e.B[5][j + 1] = 0.0f;
+        e.B[5][j + 2] = dx;
+    }
+
+    return e;
+}
 
 void UpdateCamera2()
 {
@@ -73,35 +202,29 @@ void initLettuce()
     };
     device = std::make_unique<Device>(deviceCI);
 
-        glfwGetFramebufferSize(window, (int*)&width, (int*)&height);
-        std::println("glfw fb size: {},{}", width, height);
+    glfwGetFramebufferSize(window, (int*)&width, (int*)&height);
+    std::println("glfw fb size: {},{}", width, height);
     swapchain = device->CreateSwapchain(GetSwapchainDesc(window));
 
     CommandAllocatorDesc cmdAllocDesc = {
         .queueType = QueueType::Graphics,
     };
     cmdAlloc = device->CreateCommandAllocator(cmdAllocDesc);
+
+    cmdAllocDesc.queueType = QueueType::Copy;
+    copyCmdAlloc = device->CreateCommandAllocator(cmdAllocDesc);
 }
 
 void createRenderingObjects()
 {
     // load buffers
     sceneViewData = GpuUniquePtr<SceneViewData>(*device);
-    pickInstanceData = GpuUniquePtr<uint32_t>(*device);
-
-    RenderTargetDesc pickDesc = {
-        .width = width,
-        .height = height,
-        .type = RenderTargetType::ColorRGB_R32UInt,
-        .defaultClearValue = ColorClear{},
-    };
-    tPickTexture = device->CreateTextureView(pickDesc);
 
     RenderTargetDesc depthDesc = {
         .width = width,
         .height = height,
         .type = RenderTargetType::Depth_D32,
-        .defaultClearValue = DepthStencilClear {1.0f, 0},
+        .defaultClearValue = DepthStencilClear{ 1.0f, 0 },
     };
     tDepthTarget = device->CreateTextureView(depthDesc);
 
@@ -109,30 +232,287 @@ void createRenderingObjects()
     DescriptorTableDesc descriptorTableDesc = { 4,4,4 };
     descriptorTable = device->CreateDescriptorTable(descriptorTableDesc);
 
-    Debug::DebugPassDesc debugPassDesc = {
-        .device = *device,
+    std::array<Format, 1> formatArr = { device->GetRenderTargetFormat(swapchain) };
+
+    auto shadersPath = "samples/fem/fem.spv";
+    auto shaders = Lettuce::Utils::AssetLoader::LoadSpirv(device.get(), shadersPath);
+
+    ComputePipelineDesc pFemDesc = {
+        .compEntryPoint = "compMain",
+        .compShaderBinary = shaders,
         .descriptorTable = descriptorTable,
-        .maxCulledInstances = 10,
-        .colorOutputFormat = device->GetRenderTargetFormat(swapchain),
     };
-    debugPass = std::make_unique<Debug::DebugPass>(debugPassDesc);
+    pFiniteElements = device->CreatePipeline(pFemDesc);
+
+    PrimitiveShadingPipelineDesc pRenderDesc = {
+        .vertEntryPoint = "vertMain",
+        .fragEntryPoint = "fragMain",
+        .vertShaderBinary = shaders,
+        .fragShaderBinary = shaders,
+        .colorAttachmentFormats = std::span(formatArr),
+        .depthStencilAttachmentFormat = Format::Universal_Depth_D32_SFloat,
+        .descriptorTable = descriptorTable,
+    };
+    pRender = device->CreatePipeline(pRenderDesc);
+
+    device->Destroy(shaders);
 }
+
+struct Triangle
+{
+    uint32_t v[3];
+
+    bool operator==(const Triangle&) const = default;
+};
+
+struct TriangleHash
+{
+    size_t operator()(const Triangle& t) const
+    {
+        size_t h = t.v[0];
+        h ^= size_t(t.v[1]) * 0x9e3779b9;
+        h ^= size_t(t.v[2]) * 0x85ebca6b;
+        return h;
+    }
+};
 
 void loadModel()
 {
-    std::filesystem::path modelPath = "../../../../external/models/DragonAttenuation.glb";
+    simulationInfo = GpuUniquePtr<SimulationInfo>(*device);
 
-    auto srcs = std::vector<GeometrySource>();
-    srcs.push_back(Lettuce::Utils::AssetLoader::LoadGtlfAsGeometry(device.get(), modelPath.string()));
+    std::filesystem::path modelPath = "../../../../external/models/connectingRod.stl";
+    std::vector<float3> tempPositions;
+    std::vector<uint32_t> tempIndices;
 
-    SceneViewDesc sceneDesc = {
-        .device = *device,
-        .sources = srcs,
-        .maxInstanceCount = 20,
+    try {
+        stl_reader::StlMesh<float, uint32_t> mesh(modelPath.string());
+        tempPositions.resize(mesh.num_vrts());
+        memcpy((void*)tempPositions.data(), (void*)mesh.raw_coords(), mesh.num_vrts() * sizeof(float3));
+
+        tempIndices.resize(mesh.num_tris() * 3);
+        memcpy((void*)tempIndices.data(), (void*)mesh.raw_tris(), mesh.num_tris() * 3 * sizeof(uint32_t));
+    }
+    catch (std::exception& e) {
+        std::cout << "bad copy | " << e.what() << std::endl;
+        std::abort();
+    }
+
+    // create tetrahedralized representation
+    Eigen::MatrixXd V;
+    Eigen::MatrixXi F;
+    Eigen::MatrixXd B;
+
+    Eigen::MatrixXd TV;
+    Eigen::MatrixXi TT;
+    Eigen::MatrixXi TF;
+
+    V.resize(tempPositions.size(), 3);
+    for (size_t i = 0; i < tempPositions.size(); ++i)
+    {
+        V(i, 0) = tempPositions[i].x;
+        V(i, 1) = tempPositions[i].y;
+        V(i, 2) = tempPositions[i].z;
+    }
+
+    F.resize(tempIndices.size() / 3, 3);
+    for (size_t i = 0; i < tempIndices.size(); i += 3)
+    {
+        F(i / 3, 0) = tempIndices[i];
+        F(i / 3, 1) = tempIndices[i + 1];
+        F(i / 3, 2) = tempIndices[i + 2];
+    }
+
+    // Tetrahedralize the interior
+    igl::copyleft::tetgen::tetrahedralize(V, F, "pq1.414Y", TV, TT, TF);
+    // Compute barycenters
+    igl::barycenter(TV, TT, B);
+
+    std::vector<Node> tempNodes(TV.rows());
+    std::vector<Element> tempElements(TT.rows());
+
+    for (Eigen::Index i = 0; i < TV.rows(); ++i)
+    {
+        tempNodes[i].position = {
+            static_cast<float>(TV(i, 0)),
+            static_cast<float>(TV(i, 1)),
+            static_cast<float>(TV(i, 2))
+        };
+
+        tempNodes[i].displacement = { 0.0f, 0.0f, 0.0f };
+        tempNodes[i].force = { 0.0f, 0.0f, 0.0f };
+    }
+
+    for (Eigen::Index i = 0; i < TT.rows(); ++i)
+    {
+        tempElements[i] = makeElement(
+            static_cast<uint32_t>(TT(i, 0)),
+            static_cast<uint32_t>(TT(i, 1)),
+            static_cast<uint32_t>(TT(i, 2)),
+            static_cast<uint32_t>(TT(i, 3)),
+            tempNodes
+        );
+    }
+
+    // get surface of volume
+    std::unordered_map<Triangle, uint32_t, TriangleHash> triangleCounter;
+    std::vector<uint32_t> boundaryIndices;
+
+    /* creates a map of triangle-counter */
+    for (const auto& e : tempElements)
+    {
+        Triangle tris[4] =
+        {
+            { e.nodeIdxs[0], e.nodeIdxs[1], e.nodeIdxs[2] },
+            { e.nodeIdxs[0], e.nodeIdxs[1], e.nodeIdxs[3] },
+            { e.nodeIdxs[0], e.nodeIdxs[2], e.nodeIdxs[3] },
+            { e.nodeIdxs[1], e.nodeIdxs[2], e.nodeIdxs[3] },
+        };
+
+        for (auto& tri : tris)
+        {
+            std::sort(std::begin(tri.v), std::end(tri.v));
+            triangleCounter[tri]++;
+        }
+    }
+
+    /* triangle is in the surface if counter equals 1 */
+    for (const auto& [tri, count] : triangleCounter)
+    {
+        if (count == 1)
+        {
+            boundaryIndices.push_back(tri.v[0]);
+            boundaryIndices.push_back(tri.v[1]);
+            boundaryIndices.push_back(tri.v[2]);
+        }
+    }
+
+    // calc AABB
+    float minX = 1e10f, minY = 1e10f, minZ = 1e10f;
+    float maxX = -1e10f, maxY = -1e10f, maxZ = -1e10f;
+
+    for (const auto& n : tempNodes) {
+        if (n.position.x < minX) minX = n.position.x;
+        if (n.position.y < minY) minY = n.position.y;
+        if (n.position.z < minZ) minZ = n.position.z;
+
+        if (n.position.x > maxX) maxX = n.position.x;
+        if (n.position.y > maxY) maxY = n.position.y;
+        if (n.position.z > maxZ) maxZ = n.position.z;
+    }
+
+    float sizeX = maxX - minX;
+    float sizeY = maxY - minY;
+    float sizeZ = maxZ - minZ;
+
+    float maxLength = std::max({ sizeX, sizeY, sizeZ }); // rod axis
+    float tolerance = maxLength * 0.05f;
+    float3 totalForce = { 0.0f, 0.0f, 0.0f };
+
+    constexpr auto force = 5000.0f;
+    if (maxLength == sizeX) totalForce.y = force; // x -> y
+    else if (maxLength == sizeY) totalForce.x = force; // y -> x
+    else totalForce.x = force; // z -> x
+
+    int nodesAtFreeEnd = 0;
+    for (const auto& n : tempNodes) {
+        bool isAtMaxEnd = (maxLength == sizeX && n.position.x >= maxX - tolerance) ||
+            (maxLength == sizeY && n.position.y >= maxY - tolerance) ||
+            (maxLength == sizeZ && n.position.z >= maxZ - tolerance);
+        if (isAtMaxEnd) nodesAtFreeEnd++;
+    }
+
+    float3 forcePerNode = {
+        totalForce.x / std::max(1, nodesAtFreeEnd),
+        totalForce.y / std::max(1, nodesAtFreeEnd),
+        totalForce.z / std::max(1, nodesAtFreeEnd)
     };
-    scene = std::make_unique<SceneView>(sceneDesc);
 
-    sceneViewData->instanceCount = scene->GetInstanceTable().size();
+    for (auto& n : tempNodes) {
+        bool isAtMinEnd = (maxLength == sizeX && n.position.x <= minX + tolerance) ||
+            (maxLength == sizeY && n.position.y <= minY + tolerance) ||
+            (maxLength == sizeZ && n.position.z <= minZ + tolerance);
+
+        if (isAtMinEnd) {
+            n.constraints = 7; // 1 (X) | 2 (Y) | 4 (Z)
+        }
+
+        // Lado Máximo: Libre, pero con la fuerza externa aplicada
+        bool isAtMaxEnd = (maxLength == sizeX && n.position.x >= maxX - tolerance) ||
+            (maxLength == sizeY && n.position.y >= maxY - tolerance) ||
+            (maxLength == sizeZ && n.position.z >= maxZ - tolerance);
+
+        if (isAtMaxEnd) {
+            n.force = forcePerNode;
+        }
+    }
+
+    elements = GpuUploadVector<Element>(*device, tempElements.size());
+    nodes = GpuUploadVector<Node>(*device, tempNodes.size());
+    positions = GpuUploadVector<float3>(*device, tempPositions.size());
+    indices = GpuUploadVector<uint32_t>(*device, boundaryIndices.size());
+
+    elements.append(tempElements);
+    nodes.append(tempNodes);
+    positions.append(tempPositions);
+    indices.append(boundaryIndices);
+
+    elements.Upload(copyCmdAlloc);
+    nodes.Upload(copyCmdAlloc);
+    positions.Upload(copyCmdAlloc);
+    indices.Upload(copyCmdAlloc);
+
+    // aluminium ISO 6061-T6 (not at all)
+    simulationInfo->elementCount = elements.size();
+    simulationInfo->nodeCount = nodes.size();
+    simulationInfo->iterationCount = 5000;
+    simulationInfo->material.density = 7850; // kg/m3
+    simulationInfo->material.young = 2.1e+4; // N/m2
+    simulationInfo->material.poisson = 0.3; // dimensionless
+}
+
+void execFem()
+{
+    auto query = device->CreateQueryHeap({ PipelineBindPoint::Compute, 1 });
+
+    auto allocs = std::vector<PushAllocationBinding>{
+          sceneViewData.getView(),
+          simulationInfo.getView(),
+          nodes.getView(),
+          elements.getView(),
+    };
+    PushAllocationsDesc pushDesc = {
+        .allocations = allocs,
+        .descriptorTable = descriptorTable,
+    };
+
+    for (uint32_t elementsPerThread = 1; elementsPerThread < 2; ++elementsPerThread)
+    {
+        simulationInfo->elementsPerThread = elementsPerThread;
+        auto dispatchCount = (elements.size() + 32 * elementsPerThread - 1) / (32 * elementsPerThread);
+
+        auto cmd = device->AllocateCommandBuffer(cmdAlloc);
+        cmd.ResetQueryHeap(query);
+        cmd.BindDescriptorTable(descriptorTable, PipelineBindPoint::Compute);
+        cmd.BindPipeline(pFiniteElements);
+        cmd.PushAllocations(pushDesc);
+        cmd.Dispatch(dispatchCount, 1, 1, QueryRecord{ query, 0 });
+
+        std::array<std::span<CommandBuffer>, 1> cmds = { std::span(&cmd, 1) };
+
+        CommandBufferSubmitDesc submitDesc = {
+            .queueType = QueueType::Graphics,
+            .commandBuffers = std::span(cmds),
+            .presentSwapchain = swapchain,
+        };
+
+        device->Submit(submitDesc);
+        device->WaitFor(QueueType::Graphics);
+        auto stats = device->GetResult(query, PipelineBindPoint::Compute, 0);
+        std::println("mark| elements per thread       : {:<10}", elementsPerThread);
+        std::println("mark| simulation time on gpu    : {:<8.3f} ms", stats.ellapsedTime * 1e-6); // ns to ms
+        std::println("mark| compute shader invocations: {:<10}", stats.computeShaderInvocations);
+    }
+    device->Destroy(query);
 }
 
 uint32_t oldFbWidth = width;
@@ -171,21 +551,12 @@ void mainLoop()
         {
             device->WaitFor(QueueType::Graphics);
             device->Destroy(tDepthTarget);
-            device->Destroy(tPickTexture);
-
-            RenderTargetDesc pickDesc = {
-                .width = fbSize.width,
-                .height = fbSize.height,
-                .type = RenderTargetType::ColorRGB_R32UInt,
-                .defaultClearValue = ColorClear{},
-            };
-            tPickTexture = device->CreateTextureView(pickDesc);
 
             RenderTargetDesc depthDesc = {
                 .width = fbSize.width,
                 .height = fbSize.height,
                 .type = RenderTargetType::Depth_D32,
-                .defaultClearValue = DepthStencilClear {1.0f, 0},
+                .defaultClearValue = DepthStencilClear{ 1.0f, 0 },
             };
             tDepthTarget = device->CreateTextureView(depthDesc);
 
@@ -197,20 +568,43 @@ void mainLoop()
         auto frame = device->GetCurrentRenderTarget(swapchain);
         auto cmd = device->AllocateCommandBuffer(cmdAlloc);
 
-        Debug::DebugPassRecordDesc record = {
-            .fbWidth = fbSize.width,
-            .fbHeight = fbSize.height,
-            .sceneViewData = GpuSpan(sceneViewData),
-            .positions = scene->GetPositionsView(),
-            .indices = scene->GetIndicesView(),
-            .clusters = scene->GetClustersView(),
-            .meshes = scene->GetMeshesView(),
-            .culledInstances = scene->GetInstanceTable(),
-            .rtColorOutput = frame,
-            .rtDepth = tDepthTarget,
-            .rtPick = tPickTexture,
+        std::vector<AttachmentDesc> colorAttachments = { {
+            .renderTarget = frame,
+            .loadOp = LoadOp::Clear,
+        } };
+
+        AttachmentDesc depthAttachment = {
+            .renderTarget = tDepthTarget,
+            .loadOp = LoadOp::Clear,
         };
-        debugPass->Record(cmd, record);
+
+        RenderPassDesc renderPassDesc = {
+            .width = fbSize.width,
+            .height = fbSize.height,
+            .colorAttachments = std::span(colorAttachments),
+            .depthStencilAttachment = depthAttachment,
+            .presentAttachmentIdx = 0,
+        };
+
+        auto allocs = std::vector<PushAllocationBinding>{
+            sceneViewData.getView(),
+            simulationInfo.getView(),
+            nodes.getView(),
+            elements.getView(),
+            positions.getView(),
+            indices.getView(),
+        };
+        PushAllocationsDesc pushDesc = {
+            .allocations = allocs,
+            .descriptorTable = descriptorTable,
+        };
+
+        cmd.BeginRendering(renderPassDesc);
+        cmd.BindDescriptorTable(descriptorTable, PipelineBindPoint::Graphics);
+        cmd.BindPipeline(pRender);
+        cmd.PushAllocations(pushDesc);
+        cmd.Draw(indices.size(), 1);
+        cmd.EndRendering();
 
         std::array<std::span<CommandBuffer>, 1> cmds = { std::span(&cmd, 1) };
 
@@ -233,18 +627,21 @@ void cleanupLettuce()
 {
     device->WaitFor(QueueType::Graphics);
 
-    scene.reset();
-    debugPass.reset();
+    simulationInfo.reset();
 
-    sceneViewData.reset();
-    pickInstanceData.reset();
-
+    device->Destroy(pRender);
+    device->Destroy(pFiniteElements);
     device->Destroy(descriptorTable);
     device->Destroy(tDepthTarget);
-    device->Destroy(tPickTexture);
+    sceneViewData.reset();
 
+    device->Destroy(copyCmdAlloc);
     device->Destroy(cmdAlloc);
     device->Destroy(swapchain);
+    elements.reset();
+    nodes.reset();
+    positions.reset();
+    indices.reset();
     device.reset();
 }
 
@@ -267,8 +664,9 @@ int main()
     std::setvbuf(stdout, nullptr, _IONBF, 0);
     initWindow();
     initLettuce();
-    createRenderingObjects();
     loadModel();
+    createRenderingObjects();
+    execFem();
     mainLoop();
     cleanupLettuce();
     cleanupWindow();
