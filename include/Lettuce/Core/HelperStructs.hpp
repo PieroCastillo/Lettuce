@@ -129,7 +129,7 @@ namespace Lettuce::Core
         MemoryView memView;
     };
 
-    constexpr std::array<std::uint8_t, 64> kFormatTable = {
+    constexpr std::array<std::uint8_t, 66> kFormatTable = {
         9, 10, 13, 14, 16, 17, 20, 21,
         37, 38, 41, 42,
         44, 50, 51, 55,
@@ -141,7 +141,7 @@ namespace Lettuce::Core
         101, 102, 103,
         107, 108, 109,
         110, 111,
-        122, 123,
+        122, 123, 124, 126,
         130,
         131, 132, 133, 134,
         135, 136, 137, 138,
@@ -173,6 +173,90 @@ namespace Lettuce::Core
             return Format::Undefined;
 
         return static_cast<Format>(vkFormat);
+    }
+
+    constexpr VkColorComponentFlags GetComponents(Format format) noexcept
+    {
+        switch (format)
+        {
+            // 1 component: R
+        case Format::Raw_R8_UInt:
+        case Format::Raw_R8_SInt:
+        case Format::Raw_R8_UNorm:
+        case Format::Raw_R8_SNorm:
+        case Format::Raw_R16_UInt:
+        case Format::Raw_R16_SInt:
+        case Format::Raw_R16_UNorm:
+        case Format::Raw_R16_SNorm:
+        case Format::Raw_R16_SFloat:
+        case Format::Raw_R32_UInt:
+        case Format::Raw_R32_SInt:
+        case Format::Raw_R32_SFloat:
+        case Format::Atomic_R64_UInt:
+        case Format::Atomic_R64_SInt:
+        case Format::Compressed_BC4_UNorm:
+        case Format::Compressed_BC4_SNorm:
+            return VK_COLOR_COMPONENT_R_BIT;
+            // 2 components: RG
+        case Format::Raw_RG8_UInt:
+        case Format::Raw_RG8_SInt:
+        case Format::Raw_RG8_UNorm:
+        case Format::Raw_RG8_SNorm:
+        case Format::Raw_RG16_UInt:
+        case Format::Raw_RG16_SInt:
+        case Format::Raw_RG16_UNorm:
+        case Format::Raw_RG16_SNorm:
+        case Format::Raw_RG16_SFloat:
+        case Format::Raw_RG32_UInt:
+        case Format::Raw_RG32_SInt:
+        case Format::Raw_RG32_SFloat:
+        case Format::Compressed_BC5_UNorm:
+        case Format::Compressed_BC5_SNorm:
+            return VK_COLOR_COMPONENT_R_BIT |    VK_COLOR_COMPONENT_G_BIT;
+            // 3 components: RGB
+        case Format::Compressed_BC1_RGB_UNorm:
+        case Format::Compressed_BC1_RGB_sRGB:
+        case Format::Compressed_BC6H_UFloat:
+        case Format::Compressed_BC6H_SFloat:
+        case Format::Raw_B10G11R11_UFloat_Pack32:
+        case Format::Raw_E5B9G9R9_UFloat_Pack32:
+            return VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT;
+            // 4 components: RGBA / BGRA / packed RGBA
+        case Format::Raw_RGBA8_UInt:
+        case Format::Raw_RGBA8_SInt:
+        case Format::Raw_RGBA8_UNorm:
+        case Format::Raw_RGBA8_SNorm:
+        case Format::Raw_RGBA16_UInt:
+        case Format::Raw_RGBA16_SInt:
+        case Format::Raw_RGBA16_UNorm:
+        case Format::Raw_RGBA16_SNorm:
+        case Format::Raw_RGBA16_SFloat:
+        case Format::Raw_RGBA32_UInt:
+        case Format::Raw_RGBA32_SInt:
+        case Format::Raw_RGBA32_SFloat:
+        case Format::UniversalSurface_BGRA8_UNorm:
+        case Format::UniversalSurface_BGRA8_sRGB:
+        case Format::Raw_A2R10G10B10_UNorm_Pack32:
+        case Format::Raw_A2B10G10R10_UNorm_Pack32:
+        case Format::Raw_A2B10G10R10_UInt_Pack32:
+        case Format::Raw_A8B8G8R8_UNorm_Pack32:
+        case Format::Raw_A8B8G8R8_UInt_Pack32:
+        case Format::Compressed_BC1_RGBA_UNorm:
+        case Format::Compressed_BC1_RGBA_sRGB:
+        case Format::Compressed_BC2_UNorm:
+        case Format::Compressed_BC2_sRGB:
+        case Format::Compressed_BC3_UNorm:
+        case Format::Compressed_BC3_sRGB:
+        case Format::Compressed_BC7_UNorm:
+        case Format::Compressed_BC7_sRGB:
+            return VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
+            // Unsupported / non-color formats
+        case Format::Undefined:
+        case Format::Universal_Depth_D16_UNorm:
+        case Format::Universal_Depth_D32_SFloat:
+        default:
+            return 0;
+        }
     }
 
     constexpr VkPipelineBindPoint kPipelineBindPointTable[] =
@@ -289,7 +373,7 @@ namespace Lettuce::Core
             VK_BLEND_OP_ADD, // color op
             VK_BLEND_FACTOR_ONE, VK_BLEND_FACTOR_ZERO, // alpha srcs 
             VK_BLEND_OP_ADD, // alpha op
-        }; 
+        };
         case BlendMode::MaxBlending: return {
             VK_BLEND_FACTOR_SRC_ALPHA, VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA, // color srcs
             VK_BLEND_OP_MAX, // color op
@@ -299,5 +383,37 @@ namespace Lettuce::Core
         }
         return {};
     };
+
+    constexpr VkColorComponentFlags ToComponentMask(RenderTargetType m) {
+        switch (m) {
+        case RenderTargetType::ColorRGB_R32UInt:
+            return VK_COLOR_COMPONENT_R_BIT;
+        case RenderTargetType::ColorRGB_sRGB:
+            return VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_R_BIT;
+        case RenderTargetType::ColorRGBA_sRGB:
+            return VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_R_BIT;
+        default:
+            return {};
+        }
+    }
+
+    constexpr VkFormat TargetToFormat(RenderTargetType m)
+    {
+        switch (m)
+        {
+        case RenderTargetType::ColorRGB_R32UInt:
+            return VK_FORMAT_R32_UINT;
+        case RenderTargetType::ColorRGB_sRGB:
+            return VK_FORMAT_R32G32B32_SFLOAT;
+        case RenderTargetType::ColorRGBA_sRGB:
+            return VK_FORMAT_R32G32B32A32_SFLOAT;
+        case RenderTargetType::Depth_D32:
+            return VK_FORMAT_D32_SFLOAT;
+        case RenderTargetType::Depth_D16:
+            return VK_FORMAT_D16_UNORM;
+        default:
+            return {};
+        }
+    }
 }
 #endif // LETTUCE_CORE_HELPER_STRUCTS_HPP

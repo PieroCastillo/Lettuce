@@ -1,6 +1,7 @@
 // standard headers
-#include <memory>
 #include <array>
+#include <memory>
+#include <memory_resource>
 #include <print>
 
 // external headers
@@ -58,12 +59,14 @@ auto Device::CreatePipeline(const PrimitiveShadingPipelineDesc& desc) -> Pipelin
         depthStencilState.maxDepthBounds = 1.0f;
     }
 
-    VkPipelineColorBlendAttachmentState colorBlendAttachment = {
-        .blendEnable = VK_FALSE,
-        .colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT,
-    };
+    std::array<std::byte, 1024> memory;
+    std::pmr::monotonic_buffer_resource memPool(memory.data(), memory.size());
+    std::pmr::vector<VkPipelineColorBlendAttachmentState> colorBlendAttachments(&memPool);
 
-    std::vector<VkPipelineColorBlendAttachmentState> colorBlendAttachments(desc.colorAttachmentFormats.size(), colorBlendAttachment);
+    for (auto target : desc.colorAttachmentFormats)
+    {
+        colorBlendAttachments.push_back({ .blendEnable = VK_FALSE, .colorWriteMask = GetComponents(target) });
+    }
 
     // blending disabled, pipeline writes "directly" to the attachments
     VkPipelineColorBlendStateCreateInfo colorBlendState =
@@ -199,12 +202,14 @@ auto Device::CreatePipeline(const MeshShadingPipelineDesc& desc) -> Pipeline
         depthStencilState.maxDepthBounds = 1.0f;
     }
 
-    VkPipelineColorBlendAttachmentState colorBlendAttachment = {
-        .blendEnable = VK_FALSE,
-        .colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT,
-    };
+    std::array<std::byte, 1024> memory;
+    std::pmr::monotonic_buffer_resource memPool(memory.data(), memory.size());
+    std::pmr::vector<VkPipelineColorBlendAttachmentState> colorBlendAttachments(&memPool);
 
-    std::vector<VkPipelineColorBlendAttachmentState> colorBlendAttachments(desc.colorAttachmentFormats.size(), colorBlendAttachment);
+    for (auto target : desc.colorAttachmentFormats)
+    {
+        colorBlendAttachments.push_back({ .blendEnable = VK_FALSE, .colorWriteMask = GetComponents(target) });
+    }
 
     // blending disabled, pipeline writes "directly" to the attachments
     VkPipelineColorBlendStateCreateInfo colorBlendState =

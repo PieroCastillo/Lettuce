@@ -71,6 +71,7 @@ namespace Lettuce::Core
         UniversalSurface_BGRA8_UNorm = 44,
         UniversalSurface_BGRA8_sRGB = 50,
         // universal depth stencil: 
+        Universal_Depth_D16_UNorm = 124,
         Universal_Depth_D32_SFloat = 126,
         // storage w/ atomic: 
         Atomic_R32_UInt = 98,
