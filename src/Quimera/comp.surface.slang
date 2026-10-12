@@ -141,7 +141,6 @@ VSOutput vertMain(uint vertexID: SV_VertexID, uint instanceID: SV_InstanceID)
     return output;
 }
 
-[require(fragment, spirv_1_6)]
 [shader("fragment")]
 PSOutput fragMain(VSOutput input)
 {
@@ -175,14 +174,14 @@ PSOutput fragMain(VSOutput input)
     case 1:
     {
         var glyph = glyphs[drawCmd.geometryIdx];
-        var sd = sampledTextures[glyph.descriptorIdx].Sample(samplers[samplerSdfIndex], input.uv).x;
+        var sd = sampledTextures[NonUniformResourceIndex(glyph.descriptorIdx)].Sample(samplers[samplerSdfIndex], input.uv).x;
 
-        var smoothing = fwidth(sd) * 0.5;
-        var alpha = smoothstep(0.5 - smoothing, 0.5 + smoothing, sd);
+        var width = max(fwidth(sd), 1e-6) * 0.75;
+        var alpha = smoothstep(0.5 - width, 0.5 + width, sd);
 
         // needs hardware color blending enable
         output.color = float4(brush.color.xyz, alpha);
-        // output.color = float4(alpha, alpha, alpha, alpha);
+        //debug: output.color = float4(sd, sd, sd, alpha);
     }
     break;
     default:

@@ -43,9 +43,9 @@ VSOutput vertMain(uint vertexID: SV_VulkanVertexID, uint instanceID: SV_VulkanIn
     return output;
 }
 
-[require(fragment, spirv_1_6)]
 [shader("fragment")]
 float4 fragMain(VSOutput input) : SV_Target
 {
-    return sampledTextures[input.instanceID].Sample(samplers[0], saturate(input.uv));
+    var idx = NonUniformResourceIndex(input.instanceID);
+    return sampledTextures[idx].SampleLevel(samplers[0], saturate(input.uv), 0.0f);
 }

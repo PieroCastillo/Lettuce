@@ -22,7 +22,7 @@ auto Device::CreateSampler(const SamplerDesc& desc) -> Sampler
         .compareOp = desc.depthCompare ? VK_COMPARE_OP_LESS_OR_EQUAL : VK_COMPARE_OP_ALWAYS,
         .minLod = 0,
         .maxLod = 0,
-        .borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK,
+        .borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_BLACK,
         .unnormalizedCoordinates = VK_FALSE,
     };
 

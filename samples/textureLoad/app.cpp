@@ -74,12 +74,12 @@ void createRenderingObjects()
     // create sampler
     SamplerDesc samplerDesc = {
         .magFilter = Filter::Nearest,
-        .minFilter = Filter::Linear,
+        .minFilter = Filter::Nearest,
         .mipmap = Filter::Nearest,
-        .addressModeU = SamplerAddressMode::ClampToBorder,
-        .addressModeV = SamplerAddressMode::ClampToBorder,
-        .addressModeW = SamplerAddressMode::ClampToBorder,
-        .anisotropy = 2.0f
+        .addressModeU = SamplerAddressMode::ClampToEdge,
+        .addressModeV = SamplerAddressMode::ClampToEdge,
+        .addressModeW = SamplerAddressMode::ClampToEdge,
+        .anisotropy = 1.0f
     };
     sampler = device.CreateSampler(samplerDesc);
 
