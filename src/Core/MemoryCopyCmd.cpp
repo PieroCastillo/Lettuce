@@ -78,6 +78,20 @@ void CommandBuffer::MemoryCopy(const TextureToMemoryCopy& copy)
 
     vkCmdCopyImageToBuffer((VkCommandBuffer)impl.handle, srcImg.image, VK_IMAGE_LAYOUT_GENERAL,
         dstMemory.buffer, 1, &imageCopy);
+
+    VkMemoryBarrier2 hostReadBarrier = {
+        .sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER_2,
+        .srcStageMask = VK_PIPELINE_STAGE_2_COPY_BIT,
+        .srcAccessMask = VK_ACCESS_2_TRANSFER_WRITE_BIT,
+        .dstStageMask = VK_PIPELINE_STAGE_2_HOST_BIT,
+        .dstAccessMask = VK_ACCESS_2_HOST_READ_BIT,
+    };
+    VkDependencyInfo depInfo = {
+        .sType = VK_STRUCTURE_TYPE_DEPENDENCY_INFO,
+        .memoryBarrierCount = 1,
+        .pMemoryBarriers = &hostReadBarrier,
+    };
+    vkCmdPipelineBarrier2((VkCommandBuffer)impl.handle, &depInfo);
 }
 
 void CommandBuffer::MemoryCopy(const TextureToTextureCopy& copy)
