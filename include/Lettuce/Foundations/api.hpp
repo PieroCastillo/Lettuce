@@ -12,4 +12,5 @@ Created by @PieroCastillo on 2026-07-30
 #include "GpuStorageVector.hpp"
 #include "GpuUploadVector.hpp"
 
+#include "GpuPoolAllocator.hpp"
 #endif // LETTUCE_FOUNDATIONS_API_HPP

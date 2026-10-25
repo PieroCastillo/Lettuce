@@ -141,11 +141,11 @@ void SurfaceCommandBuffer::DrawSurface(const DrawSurfaceDesc& desc)
     auto drawCmdCount = (uint32_t)drawCmds.size();
 
     // avoid UB
-    if (drawCmds.size() >= surfImpl->bDrawCommands.maxCount)
+    if (drawCmds.size() >= surfImpl->bDrawCommands.capacity())
         return;
 
     // copy commands
-    memcpy(surfImpl->bDrawCommands.addr, drawCmds.data(), drawCmds.size() * sizeof(DrawCommand));
+    memcpy(surfImpl->bDrawCommands.data(), drawCmds.data(), drawCmds.size() * sizeof(DrawCommand));
 
     // clear immediate render info for the next frame
     surfImpl->vDrawCommands.clear();
@@ -166,18 +166,18 @@ void SurfaceCommandBuffer::DrawSurface(const DrawSurfaceDesc& desc)
     // }
 
     // set width & height
-    *(surfImpl->surfaceData) = { static_cast<uint32_t>(desc.renderArea.w), static_cast<uint32_t>(desc.renderArea.h), drawCmdCount, (uint32_t)(surfImpl->bLayouts.maxCount / sizeof(LayoutStorage)) };
+    *(surfImpl->surfaceData) = { static_cast<uint32_t>(desc.renderArea.w), static_cast<uint32_t>(desc.renderArea.h), drawCmdCount, (uint32_t)(surfImpl->bLayouts.size() / sizeof(LayoutStorage)) };
 
     auto allocs = std::array<PushAllocationBinding, 8>
     {
         surfImpl->surfaceData.getView(),
         surfImpl->vScratchTransforms.getView(),
         surfImpl->vScratchInvTransforms.getView(),
-        surfImpl->bDrawCommands.mv,
-        surfImpl->bLayouts.mv,
-        surfImpl->bImplicitGeometry.mv,
-        surfImpl->bGlyphGeometry.mv,
-        surfImpl->bSolidColorBrush.mv,
+        surfImpl->bDrawCommands.getView(),
+        surfImpl->bLayouts.getView(),
+        surfImpl->bImplicitGeometry.getView(),
+        surfImpl->bGlyphGeometry.getView(),
+        surfImpl->bSolidColorBrush.getView(),
     };
 
     BarrierDesc bCompVert[] = { {

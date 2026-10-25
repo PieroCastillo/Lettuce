@@ -147,49 +147,6 @@ namespace Lettuce::Quimera
             (uint32_t(clipped) << 31);
     }
 
-    template<typename T>
-    struct Buffer
-    {
-        MemoryView mv;
-        HostAddress addr;
-        uint32_t offset;
-        uint32_t maxCount;
-        std::vector<uint32_t> freeIndices;
-
-        static constexpr uint32_t elementSize = sizeof(T);
-
-        Buffer() = default;
-
-        explicit Buffer(Device* pDevice, uint32_t count) : offset(0), maxCount(count)
-        {
-            mv = pDevice->CreateMemoryView({ maxCount * sizeof(T), true });
-            addr = pDevice->GetMemoryViewInfo(mv).cpuAddress;
-        }
-
-        uint32_t Push(const T& value)
-        {
-            uint32_t index;
-
-            if (!freeIndices.empty())
-            {
-                index = freeIndices.back();
-                freeIndices.pop_back();
-            }
-            else
-            {
-                index = offset++;
-            }
-
-            reinterpret_cast<T*>(addr)[index] = value;
-            return index;
-        }
-
-        void Free(uint32_t index)
-        {
-            freeIndices.push_back(index);
-        }
-    };
-
     struct TextureRegistry
     {
         std::vector<TextureView> slots;
@@ -244,11 +201,11 @@ namespace Lettuce::Quimera
         GpuStorageVector<float3x3> vScratchTransforms;
         GpuStorageVector<float3x3> vScratchInvTransforms;
 
-        Buffer<DrawCommand> bDrawCommands;
-        Buffer<LayoutStorage> bLayouts;
-        Buffer<ImplicitGeometryStorage> bImplicitGeometry;
-        Buffer<GlyphGeometryStorage> bGlyphGeometry;
-        Buffer<SolidColorBrushStorage> bSolidColorBrush;
+        GpuMappedVector<DrawCommand> bDrawCommands;
+        GpuPoolAllocator<LayoutStorage> bLayouts;
+        GpuPoolAllocator<ImplicitGeometryStorage> bImplicitGeometry;
+        GpuPoolAllocator<GlyphGeometryStorage> bGlyphGeometry;
+        GpuPoolAllocator<SolidColorBrushStorage> bSolidColorBrush;
 
         std::vector<AnimationInstance> vAnimationInstances;
         std::vector<DrawCommand> vDrawCommands;

@@ -35,11 +35,11 @@ void SurfaceImpl::Create(const SurfaceDesc& desc)
     vScratchTransforms = GpuStorageVector<float3x3>(desc.device, desc.maxDrawCommands);
     vScratchInvTransforms = GpuStorageVector<float3x3>(desc.device, desc.maxDrawCommands);
 
-    bDrawCommands = Buffer<DrawCommand>(pDevice, desc.maxDrawCommands);
-    bLayouts = Buffer<LayoutStorage>(pDevice, desc.maxDrawCommands);
-    bImplicitGeometry = Buffer<ImplicitGeometryStorage>(pDevice, desc.maxImplicitGeometries);
-    bGlyphGeometry = Buffer<GlyphGeometryStorage>(pDevice, desc.maxImplicitGeometries);
-    bSolidColorBrush = Buffer<SolidColorBrushStorage>(pDevice, desc.maxBrushes);
+    bDrawCommands = GpuMappedVector<DrawCommand>(*pDevice, desc.maxDrawCommands);
+    bLayouts = GpuPoolAllocator<LayoutStorage>(*pDevice, desc.maxDrawCommands);
+    bImplicitGeometry = GpuPoolAllocator<ImplicitGeometryStorage>(*pDevice, desc.maxImplicitGeometries);
+    bGlyphGeometry = GpuPoolAllocator<GlyphGeometryStorage>(*pDevice, desc.maxImplicitGeometries);
+    bSolidColorBrush = GpuPoolAllocator<SolidColorBrushStorage>(*pDevice, desc.maxBrushes);
 
     dtSurface = pDevice->CreateDescriptorTable({ 10000, 10, 10000 });
 
@@ -98,9 +98,9 @@ void SurfaceImpl::Destroy()
 
     pDevice->Destroy(dtSurface);
 
-    pDevice->Destroy(bSolidColorBrush.mv);
-    pDevice->Destroy(bGlyphGeometry.mv);
-    pDevice->Destroy(bImplicitGeometry.mv);
-    pDevice->Destroy(bLayouts.mv);
-    pDevice->Destroy(bDrawCommands.mv);
+    bSolidColorBrush.reset();
+    bGlyphGeometry.reset();
+    bImplicitGeometry.reset();
+    bLayouts.reset();
+    bDrawCommands.reset();
 }
