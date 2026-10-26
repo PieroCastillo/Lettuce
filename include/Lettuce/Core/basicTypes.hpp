@@ -38,6 +38,10 @@ namespace Lettuce::Core
         constexpr std::array<uint32_t, 2> get() const noexcept {
             return { index, generation };
         }
+
+        constexpr explicit operator uint64_t() const noexcept {
+            return (static_cast<uint64_t>(generation) << 32) | index;
+        }
     };
 };
 #endif // LETTUCE_CORE_BASIC_TYPES_HPP

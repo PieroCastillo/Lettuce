@@ -19,21 +19,6 @@
 using namespace Lettuce::Quimera;
 using namespace Lettuce::Core;
 
-void SurfaceCommandBuffer::SetChange(Layout obj, LayoutProperties prop, float4 target, std::optional<Animation> animation)
-{
-    throw NotImplemented("SetChange is not implemented yet.");
-}
-
-void SurfaceCommandBuffer::SetChange(Geometry obj, ImplicitGeometryProperties prop, float4 target, std::optional<Animation> animation)
-{
-    throw NotImplemented("SetChange is not implemented yet.");
-}
-
-void SurfaceCommandBuffer::SetChange(Brush obj, SolidColorBrushProperties prop, float4 target, std::optional<Animation> animation)
-{
-    throw NotImplemented("SetChange is not implemented yet.");
-}
-
 void SurfaceCommandBuffer::Draw(uint32_t zOrder, Geometry geometry, Brush brush, Layout layout)
 {
     auto surfImpl = surfPtr->impl;
@@ -81,12 +66,108 @@ void SurfaceCommandBuffer::Draw(uint32_t zOrder, std::span<const Glyph> text, Br
 
 void SurfaceCommandBuffer::DrawSurface(const DrawSurfaceDesc& desc)
 {
-    constexpr auto epsilon = 1e-6f;
-
     auto surfImpl = surfPtr->impl;
+
+    applyAnimations();
+
+    // sort commands by depth
+    auto& drawCmds = surfImpl->vDrawCommands;
+    std::ranges::stable_sort(drawCmds, std::ranges::greater{}, &DrawCommand::zOrder);
+    auto drawCmdCount = (uint32_t)drawCmds.size();
+
+    // avoid UB
+    if (drawCmds.size() >= surfImpl->bDrawCommands.capacity())
+        return;
+
+    // copy commands
+    memcpy(surfImpl->bDrawCommands.data(), drawCmds.data(), drawCmds.size() * sizeof(DrawCommand));
+
+    // clear immediate render info for the next frame
+    surfImpl->vDrawCommands.clear();
+
+    // set render target
+    // if (surfImpl->twLastRenderTarget != desc.dstTexture) [[likely]]
+    // {
+    //     auto stgTextures = std::array{
+    //         std::make_pair(0u, desc.dstTexture),
+    //     };
+    //     PushResourceDescriptorsDesc pushResDesc = {
+    //         .storageTextures = std::span(stgTextures),
+    //         .descriptorTable = surfImpl->dtSurface,
+    //     };
+    //     surfImpl->pDevice->PushResourceDescriptors(pushResDesc);
+
+    //     surfImpl->twLastRenderTarget = desc.dstTexture;
+    // }
+
+    // set width & height
+    *(surfImpl->surfaceData) = { static_cast<uint32_t>(desc.renderArea.w), static_cast<uint32_t>(desc.renderArea.h), drawCmdCount, (uint32_t)(surfImpl->bLayouts.size() / sizeof(LayoutStorage)) };
+
+    auto allocs = std::array<PushAllocationBinding, 8>
+    {
+        surfImpl->surfaceData.getView(),
+            surfImpl->vScratchTransforms.getView(),
+            surfImpl->vScratchInvTransforms.getView(),
+            surfImpl->bDrawCommands.getView(),
+            surfImpl->bLayouts.getView(),
+            surfImpl->bImplicitGeometry.getView(),
+            surfImpl->bGlyphGeometry.getView(),
+            surfImpl->bSolidColorBrush.getView(),
+    };
+
+    BarrierDesc bCompVert[] = { {
+        .srcAccess = PipelineAccess::Write,
+        .srcStage = PipelineStage::ComputeShader,
+        .dstAccess = PipelineAccess::Read,
+        .dstStage = PipelineStage::VertexShader,
+    }, };
+
+    AttachmentDesc colorAttachment[2] = { {
+        .renderTarget = desc.dstTexture,
+        .loadOp = LoadOp::Load,
+        .blendMode = BlendMode::StandardAlphaBlending,
+    },
+    {
+        .renderTarget = desc.dstPickTexture,
+        .loadOp = LoadOp::Load,
+        .blendMode = BlendMode::None, // why you want to blend??? it makes no sense
+    } };
+    AttachmentDesc depthAttachment = {
+        .renderTarget = desc.dstDepthTexture,
+        .loadOp = LoadOp::Clear,
+    };
+
+    RenderPassDesc renderPassDesc = {
+        .width = desc.renderArea.w,
+        .height = desc.renderArea.h,
+        .colorAttachments = std::span(colorAttachment),
+        .depthStencilAttachment = depthAttachment,
+        .presentAttachmentIdx = 0,
+    };
+
+    // cmd->BindDescriptorTable(surfImpl->dtSurface, PipelineBindPoint::Compute);
+    // cmd->BindPipeline(surfImpl->pPreprocess);
+    // cmd->PushAllocations({ allocs, surfImpl->dtSurface });
+    // cmd->Dispatch(((drawCmdCount + 31) / 32), 1, 1);
+
+    // cmd->Barrier(bCompVert);
+
+    cmd->BeginRendering(renderPassDesc);
+    cmd->BindDescriptorTable(surfImpl->dtSurface, PipelineBindPoint::Graphics);
+    cmd->BindPipeline(surfImpl->pRasterCommands);
+    cmd->PushAllocations({ allocs, surfImpl->dtSurface });
+    cmd->Draw(6, drawCmdCount);
+    cmd->EndRendering();
+}
+
+void SurfaceCommandBuffer::applyAnimations()
+{
+    auto surfImpl = surfPtr->impl;
+    std::scoped_lock lock(surfImpl->m_animationMutex);
+    
+    constexpr auto epsilon = 1e-6f;
     auto currentTime = std::chrono::steady_clock::now();
 
-    // apply animations
     for (int i = 0; i < surfImpl->vAnimationInstances.size();)
     {
         auto& animInst = surfImpl->vAnimationInstances[i];
@@ -134,93 +215,4 @@ void SurfaceCommandBuffer::DrawSurface(const DrawSurfaceDesc& desc)
 
         ++i;
     }
-
-    // sort commands by depth
-    auto& drawCmds = surfImpl->vDrawCommands;
-    std::ranges::stable_sort(drawCmds, std::ranges::greater{}, &DrawCommand::zOrder);
-    auto drawCmdCount = (uint32_t)drawCmds.size();
-
-    // avoid UB
-    if (drawCmds.size() >= surfImpl->bDrawCommands.capacity())
-        return;
-
-    // copy commands
-    memcpy(surfImpl->bDrawCommands.data(), drawCmds.data(), drawCmds.size() * sizeof(DrawCommand));
-
-    // clear immediate render info for the next frame
-    surfImpl->vDrawCommands.clear();
-
-    // set render target
-    // if (surfImpl->twLastRenderTarget != desc.dstTexture) [[likely]]
-    // {
-    //     auto stgTextures = std::array{
-    //         std::make_pair(0u, desc.dstTexture),
-    //     };
-    //     PushResourceDescriptorsDesc pushResDesc = {
-    //         .storageTextures = std::span(stgTextures),
-    //         .descriptorTable = surfImpl->dtSurface,
-    //     };
-    //     surfImpl->pDevice->PushResourceDescriptors(pushResDesc);
-
-    //     surfImpl->twLastRenderTarget = desc.dstTexture;
-    // }
-
-    // set width & height
-    *(surfImpl->surfaceData) = { static_cast<uint32_t>(desc.renderArea.w), static_cast<uint32_t>(desc.renderArea.h), drawCmdCount, (uint32_t)(surfImpl->bLayouts.size() / sizeof(LayoutStorage)) };
-
-    auto allocs = std::array<PushAllocationBinding, 8>
-    {
-        surfImpl->surfaceData.getView(),
-        surfImpl->vScratchTransforms.getView(),
-        surfImpl->vScratchInvTransforms.getView(),
-        surfImpl->bDrawCommands.getView(),
-        surfImpl->bLayouts.getView(),
-        surfImpl->bImplicitGeometry.getView(),
-        surfImpl->bGlyphGeometry.getView(),
-        surfImpl->bSolidColorBrush.getView(),
-    };
-
-    BarrierDesc bCompVert[] = { {
-        .srcAccess = PipelineAccess::Write,
-        .srcStage = PipelineStage::ComputeShader,
-        .dstAccess = PipelineAccess::Read,
-        .dstStage = PipelineStage::VertexShader,
-    }, };
-
-    AttachmentDesc colorAttachment[2] = { {
-        .renderTarget = desc.dstTexture,
-        .loadOp = LoadOp::Load,
-        .blendMode = BlendMode::StandardAlphaBlending,
-    },
-    {
-        .renderTarget = desc.dstPickTexture,
-        .loadOp = LoadOp::Load,
-        .blendMode = BlendMode::None, // why you want to blend??? it makes no sense
-    } };
-    AttachmentDesc depthAttachment = {
-        .renderTarget = desc.dstDepthTexture,
-        .loadOp = LoadOp::Clear,
-    };
-
-    RenderPassDesc renderPassDesc = {
-        .width = desc.renderArea.w,
-        .height = desc.renderArea.h,
-        .colorAttachments = std::span(colorAttachment),
-        .depthStencilAttachment = depthAttachment,
-        .presentAttachmentIdx = 0,
-    };
-
-    // cmd->BindDescriptorTable(surfImpl->dtSurface, PipelineBindPoint::Compute);
-    // cmd->BindPipeline(surfImpl->pPreprocess);
-    // cmd->PushAllocations({ allocs, surfImpl->dtSurface });
-    // cmd->Dispatch(((drawCmdCount + 31) / 32), 1, 1);
-
-    // cmd->Barrier(bCompVert);
-
-    cmd->BeginRendering(renderPassDesc);
-    cmd->BindDescriptorTable(surfImpl->dtSurface, PipelineBindPoint::Graphics);
-    cmd->BindPipeline(surfImpl->pRasterCommands);
-    cmd->PushAllocations({ allocs, surfImpl->dtSurface });
-    cmd->Draw(6, drawCmdCount);
-    cmd->EndRendering();
 }

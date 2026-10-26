@@ -149,6 +149,10 @@ namespace Lettuce::Quimera
    
         void LoadGlyphs(CommandAllocator copyCmdAlloc, Font font, std::span<const uint32_t> glyphIDs);
 
+        void SetChange(Layout obj, LayoutProperties prop, float4 target, std::optional<Animation> animation);
+        void SetChange(Geometry obj, ImplicitGeometryProperties prop, float4 target, std::optional<Animation> animation);
+        void SetChange(Brush obj, SolidColorBrushProperties prop, float4 target, std::optional<Animation> animation);
+
         [[nodiscard]] auto GetImplementation() noexcept -> SurfaceImpl* { return impl; }
     };
 
@@ -157,12 +161,10 @@ namespace Lettuce::Quimera
     private:
         CommandBuffer* cmd;
         Surface* surfPtr;
+
+        void applyAnimations();
     public:
         explicit SurfaceCommandBuffer(Surface& surface, CommandBuffer& commandBuffer) : surfPtr(&surface), cmd(&commandBuffer) {}
-
-        void SetChange(Layout obj, LayoutProperties prop, float4 target, std::optional<Animation> animation);
-        void SetChange(Geometry obj, ImplicitGeometryProperties prop, float4 target, std::optional<Animation> animation);
-        void SetChange(Brush obj, SolidColorBrushProperties prop, float4 target, std::optional<Animation> animation);
 
         void Draw(uint32_t zOrder, Geometry geometry, Brush brush, Layout layout);
         void Draw(uint32_t zOrder, std::span<const Glyph> text, Brush brush, Layout baseLayout);

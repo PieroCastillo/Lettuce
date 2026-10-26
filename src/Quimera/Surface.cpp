@@ -76,9 +76,15 @@ void Surface::Destroy() noexcept
     impl = nullptr;
 }
 
-auto Surface::CreateAnimation(const NaturalMotionAnimationDesc&) -> Animation
+auto Surface::CreateAnimation(const NaturalMotionAnimationDesc& desc) -> Animation
 {
-    throw NotImplemented("CreateAnimation is not implemented yet.");
+    AnimationData data = {};
+    data.isNaturalMotion = true;
+    data.mass = desc.mass;
+    data.dumping = desc.dumping;
+    data.stiffness = desc.stiffness;
+
+    return impl->animations.allocate(std::move(data));
 }
 
 auto Surface::CreateGeometry(const ImplicitGeometryDesc& desc) -> Geometry

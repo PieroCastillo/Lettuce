@@ -6,6 +6,7 @@ Created by @PieroCastillo on 2026-05-29
 
 // standard headers
 #include <atomic>
+#include <mutex>
 #include <unordered_map>
 
 // project headers
@@ -13,6 +14,8 @@ Created by @PieroCastillo on 2026-05-29
 #include "../Core/ResourcePool.hpp"
 #include "../Foundations/api.hpp"
 #include "../Quimera/api.hpp"
+#include "typesAccessData.hpp"
+#include "typesStorage.hpp"
 
 // external headers
 #include "freetype/freetype.h"
@@ -31,77 +34,6 @@ namespace Lettuce::Quimera
     enum class BrushHeap : uint32_t
     {
         SolidColor = 0,
-    };
-
-    struct SurfaceData
-    {
-        uint32_t width;
-        uint32_t height;
-        uint32_t drawCommandCount;
-        uint32_t layoutCount;
-    };
-
-    struct GeometryAccessData
-    {
-        uint32_t geometryIdx;
-        uint32_t geometryHeapIdx;
-    };
-
-    struct GlyphAccessData
-    {
-        TextureView texture;
-        uint32_t descriptorIdx;
-        uint32_t storageIdx;
-    };
-
-    struct FontAccessData
-    {
-        std::unique_ptr<uint8_t[]> fontData;
-        FT_Face fontFace;
-        hb_font_t* hbFont;
-        // key: glyphID, data: TextureView | DescriptorIdx
-        std::unordered_map<uint32_t, GlyphAccessData> glyphIdxDataMap;
-    };
-
-    struct BrushAccessData
-    {
-        uint32_t brushIdx;
-        uint32_t brushHeapIdx;
-    };
-
-    struct LayoutAccessData
-    {
-        uint32_t layoutIdx;
-    };
-
-    struct ImplicitGeometryStorage
-    {
-        float ctl, ctr, cbl, cbr; // corners
-    };
-
-    struct GlyphGeometryStorage
-    {
-        uint32_t descriptorIdx;
-        // normalized values
-        float bitmapTop;
-        float bitmapLeft;
-        float bitmapWidth;
-        float bitmapHeight;
-    };
-
-    struct SolidColorBrushStorage
-    {
-        float4 color;
-    };
-
-    struct LayoutStorage
-    {
-        float2 position;
-        float2 scale;
-        float2 skew;
-        float2 anchorPoint;
-        float rotation;
-        float reserved1;
     };
 
     struct DrawCommand
@@ -183,6 +115,8 @@ namespace Lettuce::Quimera
     {
         Device* pDevice = nullptr;
         std::chrono::steady_clock::time_point m_startTime;
+        std::mutex m_animationMutex;
+        std::unordered_map<ChangeKey, float4, ChangeKeyHash> m_animationChanges;
 
         DescriptorTable dtSurface;
         TextureRegistry sampledImgRegistry;
