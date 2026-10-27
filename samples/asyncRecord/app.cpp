@@ -76,7 +76,7 @@ void initLettuce()
 
 void createRenderingObjects()
 {
-    auto shaders = Lettuce::Utils::AssetLoader::LoadSpirv(&device, "samples/asyncRecord/asyncRecord.spv");
+    auto shaders = Lettuce::Utils::AssetLoader::LoadSpirv(&device, "shaders/asyncRecord/asyncRecord.spv");
 
     DescriptorTableDesc descriptorTableDesc = { 4,4,4 };
     descriptorTable = device.CreateDescriptorTable(descriptorTableDesc);

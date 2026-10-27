@@ -50,7 +50,7 @@ void initLettuce()
 
 void createRenderingObjects()
 {
-    auto shader = Lettuce::Utils::AssetLoader::LoadSpirv(device.get(), "samples/helloTriangleMesh/helloTriangleMesh.spv");
+    auto shader = Lettuce::Utils::AssetLoader::LoadSpirv(device.get(), "shaders/helloTriangleMesh/helloTriangleMesh.spv");
 
     DescriptorTableDesc descriptorTableDesc = { 4,4,4 };
     descriptorTable = device->CreateDescriptorTable(descriptorTableDesc);

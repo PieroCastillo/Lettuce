@@ -35,6 +35,7 @@ namespace Lettuce::Rendering::Debug
         TextureView rtColorOutput;
         TextureView rtDepth;
         TextureView rtPick; // FORMAT: Atomic_R32_UInt
+        bool clearColorOutput = true;
     };
 
     class DebugPass

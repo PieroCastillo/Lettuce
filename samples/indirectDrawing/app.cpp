@@ -66,7 +66,7 @@ void initLettuce()
 
 void createRenderingObjects()
 {
-    auto shaders = Lettuce::Utils::AssetLoader::LoadSpirv(&device, "samples/indirectDrawing/indirectDrawing.spv");
+    auto shaders = Lettuce::Utils::AssetLoader::LoadSpirv(&device, "shaders/indirectDrawing/indirectDrawing.spv");
 
     DescriptorTableDesc descriptorTableDesc = { 4,4,4 };
     descriptorTable = device.CreateDescriptorTable(descriptorTableDesc);

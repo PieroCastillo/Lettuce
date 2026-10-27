@@ -64,7 +64,7 @@ void DebugPass::Create(const DebugPassDesc& desc)
     {
         // load spv
         std::vector<uint32_t> shaderBuffer;
-        auto path = std::string("./src/Rendering/Debug/DebugPass.spv");
+        auto path = std::string("./shaders/Debug/DebugPass.spv");
         auto shaderFile = std::ifstream(path, std::ios::ate | std::ios::binary);
         if (!shaderFile) throw std::runtime_error(path + " does not exist");
         auto fileSize = (uint32_t)shaderFile.tellg();
@@ -133,7 +133,7 @@ void DebugPass::Record(CommandBuffer& cmd, const DebugPassRecordDesc& desc)
     AttachmentDesc colorAttachments[2] = {
     {
         .renderTarget = desc.rtColorOutput,
-        .loadOp = LoadOp::Load,
+        .loadOp = desc.clearColorOutput ? LoadOp::Clear : LoadOp::Load,
     },
     {
         .renderTarget = desc.rtPick,

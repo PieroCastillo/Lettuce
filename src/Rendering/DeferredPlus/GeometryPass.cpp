@@ -62,7 +62,7 @@ void GeometryPass::Create(const GeometryPassDesc& desc)
     {
         // load spv
         std::vector<uint32_t> shaderBuffer;
-        auto path = std::string("./src/Rendering/Debug/GeometryPass.spv");
+        auto path = std::string("./shaders/Debug/GeometryPass.spv");
         auto shaderFile = std::ifstream(path, std::ios::ate | std::ios::binary);
         if (!shaderFile) throw std::runtime_error(path + " does not exist");
         auto fileSize = (uint32_t)shaderFile.tellg();

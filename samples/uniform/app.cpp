@@ -46,7 +46,7 @@ void initLettuce()
 
 void createRenderingObjects()
 {
-    auto shaders =Lettuce::Utils::AssetLoader::LoadSpirv(&device, "samples/uniform/uniform.spv");
+    auto shaders =Lettuce::Utils::AssetLoader::LoadSpirv(&device, "shaders/uniform/uniform.spv");
 
     DescriptorTableDesc descriptorTableDesc = { 4,4,4 };
     descriptorTable = device.CreateDescriptorTable(descriptorTableDesc);

@@ -43,7 +43,7 @@ void initLettuce()
 
 void createRenderingObjects()
 {
-    auto shaders = Lettuce::Utils::AssetLoader::LoadSpirv(&device, "samples/helloTriangle/helloTriangle.spv");
+    auto shaders = Lettuce::Utils::AssetLoader::LoadSpirv(&device, "shaders/helloTriangle/helloTriangle.spv");
 
     DescriptorTableDesc descriptorTableDesc = { 4, 4, 4 };
     descriptorTable = device.CreateDescriptorTable(descriptorTableDesc);

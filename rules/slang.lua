@@ -6,12 +6,11 @@ rule("slang")
             return
         end
 
-        local outdir = target:targetdir()
-        local relativedir = path.directory(path.relative(sourcefile, os.projectdir()))
         local filename = path.basename(sourcefile)
+        local relativedir = path.directory(sourcefile)
 
-        local shaderoutdir = path.join(outdir, relativedir)
-        local depdir = path.join(target:autogendir(), "rules", "slang", relativedir)
+        local shaderoutdir = path.join(target:targetdir(), "shaders", path.basename(relativedir))
+        local depdir = path.join(target:autogendir(), "rules", "slang", "deps")
 
         local outfile = path.join(shaderoutdir, filename .. ".spv")
         local depfile = path.join(depdir, filename .. ".d")

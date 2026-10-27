@@ -21,7 +21,7 @@ void SurfaceImpl::Create(const SurfaceDesc& desc)
     m_startTime = std::chrono::steady_clock::now();
 
     std::vector<uint32_t> shadersBuffer;
-    auto path = std::string("./src/Quimera/comp.surface.spv");
+    auto path = std::string("./shaders/Quimera/comp.surface.spv");
     auto shadersFile = std::ifstream(path, std::ios::ate | std::ios::binary);
     if (!shadersFile) throw std::runtime_error(path + " does not exist");
     auto fileSize = (uint32_t)shadersFile.tellg();

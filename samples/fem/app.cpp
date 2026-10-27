@@ -234,7 +234,7 @@ void createRenderingObjects()
 
     std::array<Format, 1> formatArr = { device->GetRenderTargetFormat(swapchain) };
 
-    auto shadersPath = "samples/fem/fem.spv";
+    auto shadersPath = "shaders/fem/fem.spv";
     auto shaders = Lettuce::Utils::AssetLoader::LoadSpirv(device.get(), shadersPath);
 
     ComputePipelineDesc pFemDesc = {

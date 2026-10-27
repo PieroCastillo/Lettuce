@@ -52,7 +52,7 @@ void initLettuce()
 void createRenderingObjects()
 {
     // load shaders
-    auto shader = AssetLoader::LoadSpirv(&device, "./samples/textureLoad/textureLoad.spv");
+    auto shader = AssetLoader::LoadSpirv(&device, "shaders/textureLoad/textureLoad.spv");
 
     DescriptorTableDesc descriptorTableDesc = { 4,4,4 };
     descriptorTable = device.CreateDescriptorTable(descriptorTableDesc);
