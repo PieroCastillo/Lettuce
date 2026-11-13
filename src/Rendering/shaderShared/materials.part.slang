@@ -18,3 +18,11 @@ struct MaterialTable
     uint32_t pbrEntriesAddrLo;
     MaterialEntry entries[];
 };
+
+struct MaterialPBRStorage
+{
+    float4 baseColor;
+    float3 emissive;
+    float metallic;
+    float roughness;
+};

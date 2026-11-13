@@ -37,7 +37,7 @@ namespace Lettuce::Rendering::DeferredPlus
         TextureView rtPick; // FORMAT: Atomic_R32_UInt
     };
 
-    class GeometryPass
+    class MaterialShadingPass
     {
     private:
         Device* m_device = nullptr;
@@ -46,16 +46,16 @@ namespace Lettuce::Rendering::DeferredPlus
         IndirectSet isPass;
         MemoryView mvIndirectDrawCommands;
     public:
-        GeometryPass() noexcept = default;
-        explicit GeometryPass(const GeometryPassDesc&);
+        MaterialShadingPass() noexcept = default;
+        explicit MaterialShadingPass(const GeometryPassDesc&);
 
-        ~GeometryPass();
+        ~MaterialShadingPass();
 
-        GeometryPass(const GeometryPass&) = delete;
-        GeometryPass& operator=(const GeometryPass&) = delete;
+        MaterialShadingPass(const MaterialShadingPass&) = delete;
+        MaterialShadingPass& operator=(const MaterialShadingPass&) = delete;
 
-        GeometryPass(GeometryPass&&) noexcept;
-        GeometryPass& operator=(GeometryPass&&) noexcept;
+        MaterialShadingPass(MaterialShadingPass&&) noexcept;
+        MaterialShadingPass& operator=(MaterialShadingPass&&) noexcept;
 
         void Create(const GeometryPassDesc&);
         void Destroy();

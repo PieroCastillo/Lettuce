@@ -71,5 +71,10 @@ namespace Lettuce::Rendering
         std::vector<MeshStorage>  meshes;
         std::vector<InstanceStorage> instances;
     };
+
+    struct MaterialStorage
+    {
+        float3 baseColor;
+    };
 };
 #endif // LETTUCE_RENDERING_TYPES_HPP

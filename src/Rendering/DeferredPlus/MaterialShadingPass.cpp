@@ -8,23 +8,24 @@
 // project headers
 #include "Lettuce/helper.hpp"
 #include "Lettuce/Core/api.hpp"
-#include "Lettuce/Rendering/DeferredPlus/GeometryPass.hpp"
+#include "Lettuce/Rendering/DeferredPlus/MaterialShadingPass.hpp"
 
 using namespace Lettuce::Core;
 using namespace Lettuce::Rendering;
 using namespace Lettuce::Rendering::DeferredPlus;
 
-GeometryPass::GeometryPass(const GeometryPassDesc& desc)
+// TODO: use a base class for passes?
+MaterialShadingPass::MaterialShadingPass(const GeometryPassDesc& desc)
 {
     Create(desc);
 }
 
-GeometryPass::~GeometryPass()
+MaterialShadingPass::~MaterialShadingPass()
 {
     Destroy();
 }
 
-GeometryPass::GeometryPass(GeometryPass&& other) noexcept
+MaterialShadingPass::MaterialShadingPass(MaterialShadingPass&& other) noexcept
     : m_device(std::exchange(other.m_device, nullptr)),
     dtPass(std::move(other.dtPass)),
     pPass(std::move(other.pPass)),
@@ -33,7 +34,7 @@ GeometryPass::GeometryPass(GeometryPass&& other) noexcept
 {
 }
 
-GeometryPass& GeometryPass::operator=(GeometryPass&& other) noexcept
+MaterialShadingPass& MaterialShadingPass::operator=(MaterialShadingPass&& other) noexcept
 {
     if (this != &other)
     {
@@ -50,10 +51,10 @@ GeometryPass& GeometryPass::operator=(GeometryPass&& other) noexcept
     return *this;
 }
 
-void GeometryPass::Create(const GeometryPassDesc& desc)
+void MaterialShadingPass::Create(const GeometryPassDesc& desc)
 {
    if (m_device)
-        throw std::logic_error("DebugPass::Create cannot be called from initizalized Device.");
+        throw std::logic_error("MaterialShadingPass::Create cannot be called from initizalized Device.");
 
     m_device = &desc.device;
     dtPass = desc.descriptorTable;
@@ -62,7 +63,7 @@ void GeometryPass::Create(const GeometryPassDesc& desc)
     {
         // load spv
         std::vector<uint32_t> shaderBuffer;
-        auto path = std::string("./shaders/Debug/GeometryPass.spv");
+        auto path = std::string("./shaders/DeferredPlus/MaterialShadingPass.spv");
         auto shaderFile = std::ifstream(path, std::ios::ate | std::ios::binary);
         if (!shaderFile) throw std::runtime_error(path + " does not exist");
         auto fileSize = (uint32_t)shaderFile.tellg();
@@ -95,7 +96,7 @@ void GeometryPass::Create(const GeometryPassDesc& desc)
     }
 }
 
-void GeometryPass::Destroy()
+void MaterialShadingPass::Destroy()
 {
     if (!m_device)
         return;
@@ -110,7 +111,7 @@ void GeometryPass::Destroy()
     mvIndirectDrawCommands = {};
 }
 
-void GeometryPass::Record(CommandBuffer& cmd, const GeometryPassRecordDesc& desc)
+void MaterialShadingPass::Record(CommandBuffer& cmd, const GeometryPassRecordDesc& desc)
 {
 
 }
