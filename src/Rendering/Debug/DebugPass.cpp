@@ -26,8 +26,7 @@ DebugPass::~DebugPass()
 }
 
 DebugPass::DebugPass(DebugPass&& other) noexcept
-    : m_device(std::exchange(other.m_device, nullptr)),
-    dtPass(std::move(other.dtPass)),
+    : BasePass(std::exchange(other.m_device, nullptr), std::move(other.m_descriptorTable)),
     pPass(std::move(other.pPass)),
     pBuildCommands(std::move(other.pBuildCommands)),
     isPass(std::move(other.isPass)),
@@ -42,8 +41,8 @@ DebugPass& DebugPass::operator=(DebugPass&& other) noexcept
         Destroy();
 
         m_device = std::exchange(other.m_device, nullptr);
+        m_descriptorTable = std::move(other.m_descriptorTable);
 
-        dtPass = std::move(other.dtPass);
         pPass = std::move(other.pPass);
         pBuildCommands = std::move(other.pBuildCommands);
         isPass = std::move(other.isPass);
@@ -59,7 +58,7 @@ void DebugPass::Create(const DebugPassDesc& desc)
         throw std::logic_error("DebugPass::Create cannot be called from initizalized Device.");
 
     m_device = &desc.device;
-    dtPass = desc.descriptorTable;
+    m_descriptorTable = desc.descriptorTable;
 
     try
     {
@@ -108,7 +107,7 @@ void DebugPass::Destroy()
     m_device->Destroy(pBuildCommands);
 
     m_device = nullptr;
-    dtPass = {};
+    m_descriptorTable = {};
     pBuildCommands = {};
     pPass = {};
     isPass = {};
@@ -159,14 +158,14 @@ void DebugPass::Record(CommandBuffer& cmd, const DebugPassRecordDesc& desc)
 
     PushAllocationsDesc pushAllocs = {
         .allocations = allocs,
-        .descriptorTable = dtPass,
+        .descriptorTable = m_descriptorTable,
     };
 
     constexpr uint32_t computeNumThreadsX = 32;
     uint32_t groupCountX = (desc.culledInstances.size() + (computeNumThreadsX - 1)) / computeNumThreadsX;
 
     cmd.BindPipeline(pBuildCommands);
-    cmd.BindDescriptorTable(dtPass, PipelineBindPoint::Compute);
+    cmd.BindDescriptorTable(m_descriptorTable, PipelineBindPoint::Compute);
     cmd.PushAllocations(pushAllocs);
     cmd.Dispatch(groupCountX, 1, 1);
 
@@ -175,7 +174,7 @@ void DebugPass::Record(CommandBuffer& cmd, const DebugPassRecordDesc& desc)
     cmd.BeginRendering(renderPassDesc);
 
     cmd.BindPipeline(pPass);
-    cmd.BindDescriptorTable(dtPass, PipelineBindPoint::Graphics);
+    cmd.BindDescriptorTable(m_descriptorTable, PipelineBindPoint::Graphics);
     cmd.PushAllocations(pushAllocs);
     cmd.ExecuteIndirect({ isPass, 0, desc.culledInstances.size() });
 

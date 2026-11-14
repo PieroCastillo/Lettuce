@@ -42,8 +42,6 @@ namespace Lettuce::Rendering::Debug
     class DebugPass : public BasePass
     {
     private:
-        Device* m_device = nullptr;
-        DescriptorTable dtPass;
         Pipeline pPass;
         Pipeline pBuildCommands;
         IndirectSet isPass;

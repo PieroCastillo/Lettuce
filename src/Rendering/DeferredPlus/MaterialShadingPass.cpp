@@ -27,11 +27,8 @@ MaterialShadingPass::~MaterialShadingPass()
 }
 
 MaterialShadingPass::MaterialShadingPass(MaterialShadingPass&& other) noexcept
-    : m_device(std::exchange(other.m_device, nullptr)),
-    dtPass(std::move(other.dtPass)),
-    pPass(std::move(other.pPass)),
-    isPass(std::move(other.isPass)),
-    mvIndirectDrawCommands(std::move(other.mvIndirectDrawCommands))
+    : BasePass(std::exchange(other.m_device, nullptr), std::move(other.m_descriptorTable)),
+    pPass(std::move(other.pPass))
 {
 }
 
@@ -42,11 +39,9 @@ MaterialShadingPass& MaterialShadingPass::operator=(MaterialShadingPass&& other)
         Destroy();
 
         m_device = std::exchange(other.m_device, nullptr);
+        m_descriptorTable = std::move(other.m_descriptorTable);
 
-        dtPass = std::move(other.dtPass);
         pPass = std::move(other.pPass);
-        isPass = std::move(other.isPass);
-        mvIndirectDrawCommands = std::move(other.mvIndirectDrawCommands);
     }
 
     return *this;
@@ -54,11 +49,11 @@ MaterialShadingPass& MaterialShadingPass::operator=(MaterialShadingPass&& other)
 
 void MaterialShadingPass::Create(const MaterialShadingPassDesc& desc)
 {
-   if (m_device)
+    if (m_device)
         throw std::logic_error("MaterialShadingPass::Create cannot be called from initizalized Device.");
 
     m_device = &desc.device;
-    dtPass = desc.descriptorTable;
+    m_descriptorTable = desc.descriptorTable;
 
     try
     {
@@ -93,14 +88,11 @@ void MaterialShadingPass::Destroy()
     if (!m_device)
         return;
 
-    m_device->Destroy(isPass);
     m_device->Destroy(pPass);
 
     m_device = nullptr;
-    dtPass = {};
+    m_descriptorTable = {};
     pPass = {};
-    isPass = {};
-    mvIndirectDrawCommands = {};
 }
 
 void MaterialShadingPass::Record(CommandBuffer& cmd, const MaterialShadingPassRecordDesc& desc)

@@ -19,6 +19,7 @@ namespace Lettuce::Rendering
         DescriptorTable m_descriptorTable;
     public:
         BasePass() = default;
+        BasePass(Device* device, DescriptorTable descriptorTable) : m_device(device), m_descriptorTable(descriptorTable) {}
         BasePass(const BasePass&) = delete;
         BasePass& operator=(const BasePass&) = delete;
     };

@@ -36,11 +36,7 @@ namespace Lettuce::Rendering::DeferredPlus
     class MaterialShadingPass : public BasePass
     {
     private:
-        Device* m_device = nullptr;
-        DescriptorTable dtPass;
         Pipeline pPass;
-        IndirectSet isPass;
-        MemoryView mvIndirectDrawCommands;
     public:
         MaterialShadingPass() noexcept = default;
         explicit MaterialShadingPass(const MaterialShadingPassDesc&);
