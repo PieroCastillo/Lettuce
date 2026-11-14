@@ -3,6 +3,11 @@ module LettuceRendering;
 __include "../shaderShared/types.part.slang";
 __include "../shaderShared/materials.part.slang";
 __include "../shaderShared/funcs.part.slang";
+__include "../shaderShared/typesLighting.part.slang";
+__include "../shaderShared/directIllumBrdfGGX.part.slang";
+__include "../shaderShared/cascadeShadowMaps.part.slang";
+__include "../shaderShared/spotLight.part.slang";
+__include "../shaderShared/sunLight.part.slang";
 
 const static uint maxTriangles = 126;
 const static uint maxIndices = maxTriangles * 3;
@@ -26,13 +31,12 @@ struct PSOutput
 struct PushConstants
 {
     uint64_t sceneViewDataAddr;
+    uint64_t materialShadingDataAddr;
     uint64_t materialStorageAddr;
+    uint64_t sunLightAddr;
+    uint64_t spotLightStorageAddr;
+    uint64_t csmDataAddr;
 };
-
-Ptr<T> loadAddr<T>(uint64_t addr, uint32_t offset = 0)
-{
-    return reinterpret<Ptr<T>>(addr + (offset * sizeof(T)));
-}
 
 [[vk::push_constant]]
 PushConstants pc;
@@ -59,19 +63,28 @@ A:         tangent space
 PSOutput fragMain(VSOutput input)
 {
     var sceneViewData = loadAddr<SceneViewData>(pc.sceneViewDataAddr)[0];
+    var passData = loadAddr<MaterialShadingData>(pc.materialShadingDataAddr)[0];
     var materialsAddr = loadAddr<MaterialPBRStorage>(pc.materialStorageAddr);
-    constexpr var pi = radians(180);
+    var sun = loadAddr<SunLightData>(pc.sunLightAddr)[0];
+    var spots = loadAddr<SpotLightStorage>(pc.spotLightStorageAddr);
+    var csm = loadAddr<CascadeShadowMapData>(pc.csmDataAddr)[0];
+    var pixelCoord = uint3(uint2(input.position.xy), 0);
+    var pi = radians(180);
 
-    float4 buffer;
-    var raw = asuint(buffer);
+    var depthTexture = sampledTextures[0]; // passData.depthTextureIdx];
+    var gbuffer = sampledTextures[passData.gbufferTextureIdx];
+    var raw = asuint(gbuffer.Load(pixelCoord));
 
+    // gbuffer decompression
+    // uv
     var uv = unpackUnorm2x16(raw.r);
 
+    // ddx, ddy
     var lenDdx = f16tof32(raw.g & 0xFFFF);
     var lenDdy = f16tof32((raw.g >> 16) & 0xFFFF);
-
     var normRotX = float(raw.b & 0xFF) / 255.0;
     var normRotY = float((raw.b >> 8) & 0xFF) / 255.0;
+    // material
     uint materialID = (raw.b >> 16) & 0xFFFF;
 
     var angleX = normRotX * (2 * pi) - pi;
@@ -81,14 +94,30 @@ PSOutput fragMain(VSOutput input)
     var uvDdy = float2(cos(angleY), sin(angleY)) * lenDdy;
 
     var q = unpackUnorm4x8(raw.a) * 2.0 - 1.0;
-    q = normalize(q); // correction for  8-bit quantization
+    q = normalize(q); // correction for 8-bit quantization
     var TBN = quaternionToTBN(q);
     var material = materialsAddr[materialID];
 
-    // here: resolve material & lighting
+    // surface data
+    float depth = depthTexture.Load(pixelCoord).r;
 
+    var worldH = mul(sceneViewData.invViewProj, float4(uv, depth, 1.0));
+    var worldPos = worldH.xyz * rcp(worldH.w);
+    var N = normalize(TBN[2]);
+    var V = normalize(sceneViewData.cameraPosition - worldPos);
+
+    float viewDepth = dot(worldPos - sceneViewData.cameraPosition, sceneViewData.cameraForward);
+
+    float3 color = material.emissive;                                                                 // PBR
+    float shadow = sampleCSM(sampledTextures, csm, worldPos, N, normalize(sun.direction), viewDepth); // Sun + CSM
+    color += evaluateSun(sun, N, V, material.baseColor.rgb, material.metallic, material.roughness, shadow);
+
+    // spot lights
+    for (uint i = 0; i < min(spots.count, MaxSpotLights); ++i)
+    {
+        color += evaluateSpot(spots, i, worldPos, N, V, material.baseColor.rgb, material.metallic, material.roughness);
+    }
     PSOutput output;
-    output.colorOutput = float4(1);
-
+    output.colorOutput = float4(color, material.baseColor.a);
     return output;
 }
