@@ -202,32 +202,32 @@ auto Device::CreateTextureView(const RenderTargetDesc& desc) -> TextureView
     {
     case RenderTargetType::ColorRGB_R32UInt:
     {
-        usageFlags = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT;// | VK_IMAGE_USAGE_STORAGE_BIT;
+        usageFlags = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;// | VK_IMAGE_USAGE_STORAGE_BIT;
         format = VK_FORMAT_R32_UINT;
         break;
     }
     case RenderTargetType::ColorRGB_sRGB:
     {
-        usageFlags = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT;// | VK_IMAGE_USAGE_STORAGE_BIT;
+        usageFlags = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT ;// | VK_IMAGE_USAGE_STORAGE_BIT;
         format = VK_FORMAT_R32G32B32_SFLOAT;
         break;
     }
     case RenderTargetType::ColorRGBA_sRGB:
     {
-        usageFlags = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT;// | VK_IMAGE_USAGE_STORAGE_BIT;
+        usageFlags = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;// | VK_IMAGE_USAGE_STORAGE_BIT;
         format = VK_FORMAT_R32G32B32A32_SFLOAT;
         break;
     }
     case RenderTargetType::Depth_D32:
     {
-        usageFlags = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT; // | VK_IMAGE_USAGE_STORAGE_BIT;
+        usageFlags = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT; // | VK_IMAGE_USAGE_STORAGE_BIT;
         format = VK_FORMAT_D32_SFLOAT;
         subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
         break;
     }
     case RenderTargetType::Depth_D16:
     {
-        usageFlags = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
+        usageFlags = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
         format = VK_FORMAT_D16_UNORM;
         subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
         break;
