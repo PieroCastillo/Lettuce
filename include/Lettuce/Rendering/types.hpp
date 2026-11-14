@@ -72,9 +72,12 @@ namespace Lettuce::Rendering
         std::vector<InstanceStorage> instances;
     };
 
-    struct MaterialStorage
+    struct MaterialPBRStorage
     {
-        float3 baseColor;
+        float4 baseColor;
+        float3 emissive;
+        float metallic;
+        float roughness;
     };
 };
 #endif // LETTUCE_RENDERING_TYPES_HPP

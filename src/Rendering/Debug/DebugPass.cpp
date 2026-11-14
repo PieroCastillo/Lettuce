@@ -8,6 +8,7 @@
 // project headers
 #include "Lettuce/helper.hpp"
 #include "Lettuce/Core/api.hpp"
+#include "Lettuce/Foundations/Loader.hpp"
 #include "Lettuce/Rendering/Debug/DebugPass.hpp"
 
 using namespace Lettuce::Core;
@@ -63,15 +64,8 @@ void DebugPass::Create(const DebugPassDesc& desc)
     try
     {
         // load spv
-        std::vector<uint32_t> shaderBuffer;
         auto path = std::string("./shaders/Debug/DebugPass.spv");
-        auto shaderFile = std::ifstream(path, std::ios::ate | std::ios::binary);
-        if (!shaderFile) throw std::runtime_error(path + " does not exist");
-        auto fileSize = (uint32_t)shaderFile.tellg();
-        shaderBuffer.resize(fileSize / sizeof(uint32_t));
-        shaderFile.seekg(0);
-        shaderFile.read((char*)shaderBuffer.data(), fileSize);
-        auto shader = m_device->CreateShader({ shaderBuffer });
+        auto shader = Loader::LoadSpirv(m_device, path);
 
         auto formats = std::array{ desc.colorOutputFormat, Format::Atomic_R32_UInt };
 
