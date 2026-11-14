@@ -1,9 +1,7 @@
 // standard headers
-#include <memory>
-#include <memory_resource>
-#include <fstream>
-#include <span>
-#include <vector>
+#include <array>
+#include <string>
+#include <stdexcept>
 
 // project headers
 #include "Lettuce/helper.hpp"

@@ -1,9 +1,7 @@
 // standard headers
-#include <memory>
-#include <memory_resource>
-#include <fstream>
-#include <span>
-#include <vector>
+#include <array>
+#include <string>
+#include <stdexcept>
 
 // project headers
 #include "Lettuce/helper.hpp"
@@ -15,7 +13,6 @@ using namespace Lettuce::Core;
 using namespace Lettuce::Rendering;
 using namespace Lettuce::Rendering::DeferredPlus;
 
-// TODO: use a base class for passes?
 MaterialShadingPass::MaterialShadingPass(const MaterialShadingPassDesc& desc)
 {
     Create(desc);

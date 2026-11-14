@@ -5,10 +5,6 @@ Created by @PieroCastillo on 2026-1-13
 #define LETTUCE_RENDERING_BASE_PASS_HPP
 
 #include "../Core/api.hpp"
-#include "../Foundations/api.hpp"
-#include "types.hpp"
-
-using namespace Lettuce::Foundations;
 
 namespace Lettuce::Rendering
 {

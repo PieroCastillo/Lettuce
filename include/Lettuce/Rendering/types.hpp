@@ -6,7 +6,6 @@ Created by @PieroCastillo on 2026-05-17
 
 // standard headers
 #include <cstdint>
-#include <span>
 
 // project headers
 #include "../Core/basicTypes.hpp"
