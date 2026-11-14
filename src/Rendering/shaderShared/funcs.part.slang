@@ -1,5 +1,10 @@
 implementing LettuceRendering;
 
+Ptr<T> loadAddr<T>(uint64_t addr, uint32_t offset = 0)
+{
+    return reinterpret<Ptr<T>>(addr + (offset * sizeof(T)));
+}
+
 float2 unpackUnorm2x16(uint packed)
 {
     uint x = packed & 0xFFFF;
