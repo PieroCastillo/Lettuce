@@ -6,30 +6,26 @@ Created by @PieroCastillo on 2026-05-17
 
 #include "../../Core/api.hpp"
 #include "../../Foundations/api.hpp"
+#include "../BasePass.hpp"
 #include "../types.hpp"
 
 using namespace Lettuce::Foundations;
 
 namespace Lettuce::Rendering::DeferredPlus
 {
-    struct GeometryPassDesc
+    struct MaterialShadingPassDesc
     {
         Device& device;
         DescriptorTable descriptorTable;
         uint32_t maxCulledInstances;
     };
 
-    struct GeometryPassRecordDesc
+    struct MaterialShadingPassRecordDesc
     {
         uint32_t fbWidth;
         uint32_t fbHeight;
         // input
         GpuSpan<SceneViewData> sceneViewData;
-        GpuSpan<float3> positions;
-        GpuSpan<uint8_t> indices;
-        GpuSpan<ClusterStorage> clusters;
-        GpuSpan<MeshStorage> meshes;
-        GpuSpan<InstanceStorage> culledInstances;
         // output
         TextureView rtColorOutput; // FORMAT: RGBA32
         TextureView rtDepth; // FORMAT: Depth32
@@ -37,7 +33,7 @@ namespace Lettuce::Rendering::DeferredPlus
         TextureView rtPick; // FORMAT: Atomic_R32_UInt
     };
 
-    class MaterialShadingPass
+    class MaterialShadingPass : public BasePass
     {
     private:
         Device* m_device = nullptr;
@@ -47,7 +43,7 @@ namespace Lettuce::Rendering::DeferredPlus
         MemoryView mvIndirectDrawCommands;
     public:
         MaterialShadingPass() noexcept = default;
-        explicit MaterialShadingPass(const GeometryPassDesc&);
+        explicit MaterialShadingPass(const MaterialShadingPassDesc&);
 
         ~MaterialShadingPass();
 
@@ -57,10 +53,10 @@ namespace Lettuce::Rendering::DeferredPlus
         MaterialShadingPass(MaterialShadingPass&&) noexcept;
         MaterialShadingPass& operator=(MaterialShadingPass&&) noexcept;
 
-        void Create(const GeometryPassDesc&);
+        void Create(const MaterialShadingPassDesc&);
         void Destroy();
 
-        void Record(CommandBuffer&, const GeometryPassRecordDesc&);
+        void Record(CommandBuffer&, const MaterialShadingPassRecordDesc&);
     };
 };
 #endif // LETTUCE_RENDERING_DEBUG_PASS_HPP

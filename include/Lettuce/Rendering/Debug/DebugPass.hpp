@@ -6,6 +6,7 @@ Created by @PieroCastillo on 2026-05-17
 
 #include "../../Core/api.hpp"
 #include "../../Foundations/api.hpp"
+#include "../BasePass.hpp"
 #include "../types.hpp"
 
 using namespace Lettuce::Foundations;
@@ -38,7 +39,7 @@ namespace Lettuce::Rendering::Debug
         bool clearColorOutput = true;
     };
 
-    class DebugPass
+    class DebugPass : public BasePass
     {
     private:
         Device* m_device = nullptr;

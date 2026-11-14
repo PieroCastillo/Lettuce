@@ -8,6 +8,7 @@
 // project headers
 #include "Lettuce/helper.hpp"
 #include "Lettuce/Core/api.hpp"
+#include "Lettuce/Foundations/Loader.hpp"
 #include "Lettuce/Rendering/DeferredPlus/MaterialShadingPass.hpp"
 
 using namespace Lettuce::Core;
@@ -15,7 +16,7 @@ using namespace Lettuce::Rendering;
 using namespace Lettuce::Rendering::DeferredPlus;
 
 // TODO: use a base class for passes?
-MaterialShadingPass::MaterialShadingPass(const GeometryPassDesc& desc)
+MaterialShadingPass::MaterialShadingPass(const MaterialShadingPassDesc& desc)
 {
     Create(desc);
 }
@@ -51,7 +52,7 @@ MaterialShadingPass& MaterialShadingPass::operator=(MaterialShadingPass&& other)
     return *this;
 }
 
-void MaterialShadingPass::Create(const GeometryPassDesc& desc)
+void MaterialShadingPass::Create(const MaterialShadingPassDesc& desc)
 {
    if (m_device)
         throw std::logic_error("MaterialShadingPass::Create cannot be called from initizalized Device.");
@@ -62,15 +63,8 @@ void MaterialShadingPass::Create(const GeometryPassDesc& desc)
     try
     {
         // load spv
-        std::vector<uint32_t> shaderBuffer;
         auto path = std::string("./shaders/DeferredPlus/MaterialShadingPass.spv");
-        auto shaderFile = std::ifstream(path, std::ios::ate | std::ios::binary);
-        if (!shaderFile) throw std::runtime_error(path + " does not exist");
-        auto fileSize = (uint32_t)shaderFile.tellg();
-        shaderBuffer.resize(fileSize / sizeof(uint32_t));
-        shaderFile.seekg(0);
-        shaderFile.read((char*)shaderBuffer.data(), fileSize);
-        auto shader = m_device->CreateShader({ shaderBuffer });
+        auto shader = Loader::LoadSpirv(m_device, path);
 
         auto formats = std::array{ Format::Raw_RGBA32_SFloat, Format::Atomic_R32_UInt };
 
@@ -85,8 +79,6 @@ void MaterialShadingPass::Create(const GeometryPassDesc& desc)
             .descriptorTable = desc.descriptorTable,
         };
         pPass = m_device->CreatePipeline(pipelineDesc);
-        isPass = m_device->CreateIndirectSet({ IndirectType::Draw, desc.maxCulledInstances, 0 });
-        mvIndirectDrawCommands = m_device->GetIndirectSetView(isPass);
 
         m_device->Destroy(shader);
     }
@@ -111,7 +103,7 @@ void MaterialShadingPass::Destroy()
     mvIndirectDrawCommands = {};
 }
 
-void MaterialShadingPass::Record(CommandBuffer& cmd, const GeometryPassRecordDesc& desc)
+void MaterialShadingPass::Record(CommandBuffer& cmd, const MaterialShadingPassRecordDesc& desc)
 {
 
 }
