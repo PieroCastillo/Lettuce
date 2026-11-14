@@ -66,7 +66,7 @@ PSOutput fragMain(VSOutput input)
     var passData = loadAddr<MaterialShadingData>(pc.materialShadingDataAddr)[0];
     var materialsAddr = loadAddr<MaterialPBRStorage>(pc.materialStorageAddr);
     var sun = loadAddr<SunLightData>(pc.sunLightAddr)[0];
-    var spots = loadAddr<SpotLightStorage>(pc.spotLightStorageAddr);
+    var spots = loadAddr<SpotLightData>(pc.spotLightStorageAddr);
     var csm = loadAddr<CascadeShadowMapData>(pc.csmDataAddr)[0];
     var pixelCoord = uint3(uint2(input.position.xy), 0);
     var pi = radians(180);

@@ -3,9 +3,9 @@ implementing LettuceRendering;
 __include "typesLighting.part.slang";
 __include "directIllumBrdfGGX.part.slang";
 
-float3 evaluateSpot(Ptr<SpotLightStorage> spots, uint index, float3 worldPos, float3 N, float3 V, float3 albedo, float metallic, float roughness)
+float3 evaluateSpot(Ptr<SpotLightData> spots, uint index, float3 worldPos, float3 N, float3 V, float3 albedo, float metallic, float roughness)
 {
-    SpotLight light = spots[0].lights[index]; // temp fix, i'm fighting with the compiler due to error[E99997]
+    SpotLightStorage light = spots[0].lights[index]; // temp fix, i'm fighting with the compiler due to error[E99997]
     var toLight = light.position - worldPos;
 
     var distanceSq = dot(toLight, toLight);

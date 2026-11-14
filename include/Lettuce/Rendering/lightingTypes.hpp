@@ -26,7 +26,7 @@ namespace Lettuce::Rendering
         float _padding;
     };
 
-    struct SpotLight
+    struct SpotLightStorage
     {
         float3 position;
         float range;
@@ -39,11 +39,11 @@ namespace Lettuce::Rendering
         float3 padding;
     };
 
-    struct SpotLightStorage
+    struct SpotLightData
     {
         uint32_t count;
         float4 padding;
-        SpotLight lights[MaxSpotLights]; // max count: MaxSpotLights
+        SpotLightStorage lights[MaxSpotLights]; // max count: MaxSpotLights
     };
 
     struct CascadeShadowMapData
@@ -58,7 +58,7 @@ namespace Lettuce::Rendering
     };
 
     // checks
-    static_assert(std::is_trivially_copyable_v<SpotLightStorage>, "SpotLightStorage MUST be trivially copyable");
+    static_assert(std::is_trivially_copyable_v<SpotLightData>, "SpotLightData MUST be trivially copyable");
     static_assert(std::is_trivially_copyable_v<CascadeShadowMapData>, "CascadeShadowMapData MUST be trivially copyable");
 };
 #endif // LETTUCE_RENDERING_LIGHTING_TYPES_HPP

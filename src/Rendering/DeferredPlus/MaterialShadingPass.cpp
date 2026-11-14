@@ -1,5 +1,6 @@
 // standard headers
 #include <array>
+#include <memory_resource>
 #include <string>
 #include <stdexcept>
 
@@ -94,5 +95,38 @@ void MaterialShadingPass::Destroy()
 
 void MaterialShadingPass::Record(CommandBuffer& cmd, const MaterialShadingPassRecordDesc& desc)
 {
+    AttachmentDesc colorAttachment = {
+        .renderTarget = desc.rtColorOutput,
+        .loadOp = LoadOp::Load,
+    };
+    AttachmentDesc depthAttachment = {
+        .renderTarget = desc.rtDepth,
+        .loadOp = LoadOp::Clear,
+    };
 
+    RenderPassDesc renderPassDesc = {
+        .width = desc.fbWidth,
+        .height = desc.fbHeight,
+        .colorAttachments = std::span(&colorAttachment, 1),
+        .depthStencilAttachment = depthAttachment,
+        .presentAttachmentIdx = 0,
+    };
+
+    std::array<std::byte, sizeof(PushAllocationBinding) * 6> buffer;
+    std::pmr::monotonic_buffer_resource pool{ buffer.data(), buffer.size() };
+    auto allocs = std::pmr::vector<PushAllocationBinding>{ {
+        desc.sceneViewData.getView(),
+        desc.materialShadingData.getView(),
+        desc.materialStorage.getView(),
+        desc.sunLightData.getView(),
+        desc.spotLightData.getView(),
+        desc.cascadeShadowMapData.getView(),
+    }, &pool };
+
+    cmd.BeginRendering(renderPassDesc);
+    cmd.BindPipeline(pPass);
+    cmd.BindDescriptorTable(m_descriptorTable, PipelineBindPoint::Graphics);
+    cmd.PushAllocations({ allocs, m_descriptorTable });
+    cmd.Draw(6, 1);
+    cmd.EndRendering();
 }

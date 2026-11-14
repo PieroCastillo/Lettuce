@@ -12,5 +12,6 @@ Created by @PieroCastillo on 2025-01-5
 #include "./SceneView.hpp"
 
 #include "./Debug/DebugPass.hpp"
+#include "./DeferredPlus/MaterialShadingPass.hpp"
 
 #endif // LETTUCE_RENDERING_API_HPP

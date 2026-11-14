@@ -1,8 +1,8 @@
 /*
 Created by @PieroCastillo on 2026-05-17
 */
-#ifndef LETTUCE_RENDERING_DEBUG_PASS_HPP
-#define LETTUCE_RENDERING_DEBUG_PASS_HPP
+#ifndef LETTUCE_RENDERING_MATERIAL_SHADING_PASS_HPP
+#define LETTUCE_RENDERING_MATERIAL_SHADING_PASS_HPP
 
 #include "../../Core/api.hpp"
 #include "../../Foundations/api.hpp"
@@ -18,7 +18,6 @@ namespace Lettuce::Rendering::DeferredPlus
     {
         Device& device;
         DescriptorTable descriptorTable;
-        uint32_t maxCulledInstances;
     };
 
     struct MaterialShadingPassRecordDesc
@@ -27,6 +26,11 @@ namespace Lettuce::Rendering::DeferredPlus
         uint32_t fbHeight;
         // input
         GpuSpan<SceneViewData> sceneViewData;
+        GpuSpan<MaterialShadingData> materialShadingData;
+        GpuSpan<MaterialPBRStorage> materialStorage;
+        GpuSpan<SunLightData> sunLightData;
+        GpuSpan<SpotLightData> spotLightData;
+        GpuSpan<CascadeShadowMapData> cascadeShadowMapData;
         // output
         TextureView rtColorOutput; // FORMAT: RGBA32
         TextureView rtDepth; // FORMAT: Depth32
@@ -56,4 +60,4 @@ namespace Lettuce::Rendering::DeferredPlus
         void Record(CommandBuffer&, const MaterialShadingPassRecordDesc&);
     };
 };
-#endif // LETTUCE_RENDERING_DEBUG_PASS_HPP
+#endif // LETTUCE_RENDERING_MATERIAL_SHADING_PASS_HPP

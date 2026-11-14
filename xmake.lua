@@ -75,6 +75,7 @@ target("Lettuce")
 
 local samples = {
     "asyncRecord",
+    "deferredSpheres",
     "fem",
     "helloTriangle",
     "helloTriangleMesh",

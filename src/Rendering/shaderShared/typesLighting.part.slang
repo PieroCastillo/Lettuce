@@ -11,7 +11,7 @@ struct SunLightData
     float _padding;
 };
 
-struct SpotLight
+struct SpotLightStorage
 {
     float3 position;
     float range;
@@ -24,11 +24,11 @@ struct SpotLight
     float3 padding;
 };
 
-struct SpotLightStorage
+struct SpotLightData
 {
     uint count;
     uint3 padding;
-    SpotLight lights[]; // max count: MaxSpotLights
+    SpotLightStorage lights[]; // max count: MaxSpotLights
 };
 
 struct CascadeShadowMapData
