@@ -8,6 +8,7 @@ Created by @PieroCastillo on 2026-05-17
 #include "../../Foundations/api.hpp"
 #include "../BasePass.hpp"
 #include "../types.hpp"
+#include "../lightingTypes.hpp"
 
 using namespace Lettuce::Foundations;
 
