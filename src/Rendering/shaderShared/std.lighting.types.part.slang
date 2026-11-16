@@ -1,8 +1,9 @@
 implementing LettuceRendering;
 
-const static uint MaxSpotLights = 64;
-const static uint MaxCascades = 4;
+__include "std.constants.part";
 
+namespace std.lighting
+{
 struct SunLightData
 {
     float3 direction; // surface to sun direction
@@ -40,4 +41,5 @@ struct CascadeShadowMapData
     uint cascadeCount;
     uint shadowTextureID;
     float4x4 worldToShadow[MaxCascades]; // max count: MaxCascades
+};
 };

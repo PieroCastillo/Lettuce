@@ -1,7 +1,9 @@
 implementing LettuceRendering;
 
-__include "constants.part.slang";
+__include "std.constants.part.slang";
 
+namespace std.lighting
+{
 float3 fresnelSchlick(float cosTheta, float3 F0)
 {
     return F0 + (1.0 - F0) * pow(1.0 - saturate(cosTheta), 5.0);
@@ -56,3 +58,4 @@ float3 evaluateBRDF(float3 N, float3 V, float3 L, float3 albedo, float metallic,
 
     return diffuse + specular;
 }
+};

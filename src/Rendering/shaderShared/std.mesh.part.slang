@@ -1,35 +1,7 @@
 implementing LettuceRendering;
 
-struct VkDrawIndirectCommand
+namespace std
 {
-    uint32_t vertexCount;
-    uint32_t instanceCount;
-    uint32_t firstVertex;
-    uint32_t firstInstance;
-};
-
-struct IndirectCommandStorage
-{
-    uint32_t count;
-    VkDrawIndirectCommand commands[];
-};
-
-struct SceneViewData
-{
-    float4x4 viewProj;
-    float4x4 invViewProj;
-    float3 cameraPosition;
-    uint32_t instanceCount;
-    float3 cameraForward;
-    float _padding;
-};
-
-struct MaterialShadingData
-{
-    uint32_t depthTextureIdx;
-    uint32_t gbufferTextureIdx;
-};
-
 struct ClusterStorage
 {
     float4 cone;
@@ -66,4 +38,5 @@ struct InstanceStorage
 {
     float4x4 localTransform;
     uint32_t meshIdx;
+};
 };

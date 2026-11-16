@@ -1,9 +1,10 @@
 implementing LettuceRendering;
 
-__include "funcs.part.slang";
-__include "typesLighting.part.slang";
-__include "directIllumBrdfGGX.part.slang";
+__include "std.lighting.aux.part.slang";
+__include "std.lighting.types.part.slang";
 
+namespace std.lighting
+{
 float sampleCSM(Texture2D<float4> textures[], CascadeShadowMapData csm, float3 worldPos, float3 N, float3 L, float viewDepth)
 {
     var cascade = csm.cascadeCount;
@@ -52,3 +53,4 @@ float sampleCSM(Texture2D<float4> textures[], CascadeShadowMapData csm, float3 w
 
     return visibility / 9.0;
 }
+};

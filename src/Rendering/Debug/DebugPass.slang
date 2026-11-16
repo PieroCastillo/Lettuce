@@ -1,6 +1,6 @@
 module LettuceRendering;
 
-__include "../shaderShared/types.part.slang";
+__include "../shaderShared/std.part.slang";
 
 const static uint computeNumThreadsX = 32;
 const static uint maxTriangles = 126;
@@ -74,18 +74,18 @@ void buildCommandsMain(uint3 gid: SV_DispatchThreadID,
     var idx = gid.x;
 
     // thread check
-    var sceneViewData = loadAddr<SceneViewData>(pc.sceneViewDataAddr)[0];
+    var sceneViewData = loadAddr<std.SceneViewData>(pc.sceneViewDataAddr)[0];
     if (idx >= sceneViewData.instanceCount)
     {
         return;
     }
 
     // in
-    var instance = loadAddr<InstanceStorage>(pc.instanceStorageAddr)[idx];
-    var mesh = loadAddr<MeshStorage>(pc.meshStorageAddr)[instance.meshIdx];
-    var cluster = loadAddr<ClusterStorage>(pc.clusterStorageAddr, mesh.clusterOffset)[0];
+    var instance = loadAddr<std.InstanceStorage>(pc.instanceStorageAddr)[idx];
+    var mesh = loadAddr<std.MeshStorage>(pc.meshStorageAddr)[instance.meshIdx];
+    var cluster = loadAddr<std.ClusterStorage>(pc.clusterStorageAddr, mesh.clusterOffset)[0];
     // out
-    var drawCmdStorage = loadAddr<IndirectCommandStorage>(pc.indirectCommandsAddr);
+    var drawCmdStorage = loadAddr<std.IndirectCommandStorage>(pc.indirectCommandsAddr);
 
     if (idx == 0)
     {
@@ -93,7 +93,7 @@ void buildCommandsMain(uint3 gid: SV_DispatchThreadID,
     }
     GroupMemoryBarrierWithGroupSync();
 
-    VkDrawIndirectCommand drawCmd;
+    std.VkDrawIndirectCommand drawCmd;
     drawCmd.vertexCount = maxIndices; // full pulling
     drawCmd.instanceCount = mesh.clusterCount;
     drawCmd.firstVertex = 0;
@@ -109,9 +109,9 @@ void buildCommandsMain(uint3 gid: SV_DispatchThreadID,
 VSOutput vertMain(uint vertexID: SV_VulkanVertexID, uint instanceID: SV_DrawIndex, uint gClusterIdx: SV_VulkanInstanceID)
 {
     // in
-    var sceneViewData = loadAddr<SceneViewData>(pc.sceneViewDataAddr)[0];
-    var instance = loadAddr<InstanceStorage>(pc.instanceStorageAddr)[instanceID];
-    var cluster = loadAddr<ClusterStorage>(pc.clusterStorageAddr)[gClusterIdx];
+    var sceneViewData = std.loadAddr<std.SceneViewData>(pc.sceneViewDataAddr)[0];
+    var instance = std.loadAddr<std.InstanceStorage>(pc.instanceStorageAddr)[instanceID];
+    var cluster = std.loadAddr<std.ClusterStorage>(pc.clusterStorageAddr)[gClusterIdx];
 
     // out
     VSOutput output;
@@ -123,8 +123,8 @@ VSOutput vertMain(uint vertexID: SV_VulkanVertexID, uint instanceID: SV_DrawInde
         return output;
     }
 
-    var index = loadAddr<uint8_t>(pc.indexBufferAddr, cluster.trianglesBaseOffset)[vertexID];
-    var position = loadAddr<float3>(pc.positionsBufferAddr, cluster.positionsBaseOffset)[index];
+    var index = std.loadAddr<uint8_t>(pc.indexBufferAddr, cluster.trianglesBaseOffset)[vertexID];
+    var position = std.loadAddr<float3>(pc.positionsBufferAddr, cluster.positionsBaseOffset)[index];
 
     var worldPos = mul(instance.localTransform, float4(position, 1.0));
     output.position = mul(sceneViewData.viewProj, float4(worldPos.xyz, 1.0));
