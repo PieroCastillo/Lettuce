@@ -88,5 +88,55 @@ namespace Lettuce::Rendering
         float metallic;
         float roughness;
     };
+
+    struct SphereStorage
+    {
+        float radius;
+        uint32_t longitudeSegments;
+        uint32_t latitudeSegments;
+        uint32_t _padding;
+    };
+
+    struct PrismStorage
+    {
+        float radius;
+        float height;
+        uint32_t sides;
+        uint32_t _padding;
+    };
+
+    struct CylinderStorage
+    {
+        float radiusTop;
+        float radiusBottom;
+        float height;
+        uint32_t radialSegments;
+    };
+
+    enum ProceduralShapeGeometryType : uint32_t
+    {
+        Sphere = 0,
+        Prism = 1,
+        Cylinder = 2
+    };
+
+    struct ProceduralInstanceStorage
+    {
+        float4x4 transform;
+        float4x4 invTransform;
+        uint32_t geometryType;
+        uint32_t geometryIdx;
+        uint32_t materialIdx;
+        uint32_t flags;
+    };
+
+    struct ProceduralInstanceData
+    {
+        uint32_t count;
+        uint32_t sphereCount;
+        uint32_t prismCount;
+        uint32_t cylinderCount;
+        // ProceduralInstanceStorage instances[];
+    };
 };
 #endif // LETTUCE_RENDERING_TYPES_HPP
