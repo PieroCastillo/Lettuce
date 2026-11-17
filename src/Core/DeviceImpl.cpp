@@ -351,14 +351,23 @@ void DeviceImpl::setupFeaturesExtensions()
         requestedExtensionsNames.push_back(VK_EXT_MESH_SHADER_EXTENSION_NAME);
     }
 
+    /*
     // raytracing extensions
-    if (exists(availableExtensionsNames, VK_KHR_RAY_TRACING_PIPELINE_EXTENSION_NAME) &&
+    if (exists(availableExtensionsNames, VK_KHR_ACCELERATION_STRUCTURE_EXTENSION_NAME)&&
+        exists(availableExtensionsNames, VK_KHR_RAY_TRACING_PIPELINE_EXTENSION_NAME) &&
         exists(availableExtensionsNames, VK_KHR_RAY_QUERY_EXTENSION_NAME) &&
         exists(availableExtensionsNames, VK_KHR_RAY_TRACING_MAINTENANCE_1_EXTENSION_NAME) &&
         exists(availableExtensionsNames, VK_EXT_OPACITY_MICROMAP_EXTENSION_NAME) &&
         exists(availableExtensionsNames, VK_KHR_RAY_TRACING_POSITION_FETCH_EXTENSION_NAME))
     {
         features.RayTracing = true;
+
+        accelerationStructureFeature.accelerationStructure = VK_TRUE;
+        // accelerationStructureFeature.accelerationStructureIndirectBuild = VK_TRUE; // linux RTX A400 does not support this feature
+        // accelerationStructureFeature.descriptorBindingAccelerationStructureUpdateAfterBind = VK_TRUE;
+        accelerationStructureFeature.pNext = next;
+        next = &accelerationStructureFeature;
+        requestedExtensionsNames.push_back(VK_KHR_ACCELERATION_STRUCTURE_EXTENSION_NAME);
 
         rayTracingPipelineFeature.rayTracingPipeline = VK_TRUE;
         rayTracingPipelineFeature.rayTracingPipelineTraceRaysIndirect = VK_TRUE;
@@ -379,7 +388,7 @@ void DeviceImpl::setupFeaturesExtensions()
         requestedExtensionsNames.push_back(VK_KHR_RAY_TRACING_MAINTENANCE_1_EXTENSION_NAME);
 
         opacityMicromapFeature.micromap = VK_TRUE;
-        opacityMicromapFeature.micromapHostCommands = VK_TRUE;
+        opacityMicromapFeature.micromapHostCommands = VK_FALSE;
         opacityMicromapFeature.pNext = next;
         next = &opacityMicromapFeature;
         requestedExtensionsNames.push_back(VK_EXT_OPACITY_MICROMAP_EXTENSION_NAME);

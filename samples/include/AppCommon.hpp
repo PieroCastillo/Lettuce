@@ -35,9 +35,12 @@ auto GetSwapchainDesc(GLFWwindow* window) -> Lettuce::Core::SwapchainDesc
 
 void InitGlfw()
 {
+    glfwSetErrorCallback([](int error, const char* description) noexcept {
+        std::println(stderr, "GLFW Error ({}): {}", error, description ? description : "No Description");
+    });
 #ifdef __linux__
     glfwInitHint(GLFW_PLATFORM, GLFW_PLATFORM_WAYLAND);
-    glfwInitHint(GLFW_WAYLAND_LIBDECOR, GLFW_WAYLAND_DISABLE_LIBDECOR);
+    // glfwInitHint(GLFW_WAYLAND_LIBDECOR, GLFW_WAYLAND_DISABLE_LIBDECOR);
 #endif
     glfwInit();
     glfwWindowHint(GLFW_DECORATED, GLFW_TRUE);

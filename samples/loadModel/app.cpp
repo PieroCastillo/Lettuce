@@ -74,8 +74,8 @@ void initLettuce()
     };
     device = std::make_unique<Device>(deviceCI);
 
-        glfwGetFramebufferSize(window, (int*)&width, (int*)&height);
-        std::println("glfw fb size: {},{}", width, height);
+    glfwGetFramebufferSize(window, (int*)&width, (int*)&height);
+    std::println("glfw fb size: {},{}", width, height);
     swapchain = device->CreateSwapchain(GetSwapchainDesc(window));
 
     CommandAllocatorDesc cmdAllocDesc = {
@@ -253,6 +253,11 @@ void initWindow()
 {
     InitGlfw();
     window = glfwCreateWindow(width, height, "My Lettuce Window", NULL, NULL);
+    if(!window)
+    {
+        std::println("Failed to create GLFW window.");
+        throw;
+    }
     glfwPollEvents();
 }
 
