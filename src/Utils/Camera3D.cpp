@@ -11,9 +11,10 @@ void Camera3D::Rotate(const RotateDesc& desc)
     m_Orientation = glm::normalize(pitch * yaw * m_Orientation);
 }
 
-auto Camera3D::Update(const CameraUpdateDesc& desc) -> glm::mat4
+auto Camera3D::Update(const CameraUpdateDesc& desc) -> Lettuce::Rendering::SceneViewData
 {
-    float speed = 5.0f * desc.deltaTime;
+    constexpr float movementSpeed = 5.0f;
+    float speed = movementSpeed * desc.deltaTime;
 
     auto forward = m_Orientation * glm::vec3(0.0f, 0.0f, -1.0f);
     auto right = m_Orientation * glm::vec3(1.0f, 0.0f, 0.0f);
@@ -30,7 +31,17 @@ auto Camera3D::Update(const CameraUpdateDesc& desc) -> glm::mat4
 
     projection[1][1] *= -1.0f;
 
-    return projection * view;
+    auto viewProj = projection * view;
+
+    Lettuce::Rendering::SceneViewData result{};
+
+    result.viewProj = viewProj;
+    result.invViewProj = glm::inverse(viewProj);
+    result.cameraPosition = m_Position;
+    result.cameraForward = forward;
+    result.instanceCount = 0;
+
+    return result;
 }
 
 void Camera3D::SetAspect(float aspect) noexcept

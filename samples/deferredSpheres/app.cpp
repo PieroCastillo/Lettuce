@@ -93,7 +93,8 @@ void App::UpdateCamera2()
         camera2.Rotate({ static_cast<float>(xpos - xprev), static_cast<float>(ypos - yprev) });
     }
 
-    sceneViewData->viewProj = camera2.Update({ wKeyPressed,aKeyPressed,sKeyPressed, dKeyPressed,static_cast<float>(dt) });
+    // Do not forget to update instance count :p
+    *sceneViewData = camera2.Update({ wKeyPressed,aKeyPressed,sKeyPressed, dKeyPressed,static_cast<float>(dt) });
 
     xprev = xpos;
     yprev = ypos;

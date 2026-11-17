@@ -8,6 +8,7 @@ Created by @PieroCastillo on 2026-06-01
 #include <glm/gtc/matrix_transform.hpp>
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/quaternion.hpp>
+#include "Lettuce/Rendering/types.hpp"
 
 namespace Lettuce::Utils
 {
@@ -60,7 +61,7 @@ namespace Lettuce::Utils
         }
 
         void Rotate(const RotateDesc& desc);
-        auto Update(const CameraUpdateDesc& desc) -> glm::mat4;
+        auto Update(const CameraUpdateDesc& desc) -> Lettuce::Rendering::SceneViewData;
 
         void SetAspect(float aspect) noexcept;
     };
