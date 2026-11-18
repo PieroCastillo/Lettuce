@@ -18,6 +18,7 @@ namespace Lettuce::Rendering::DeferredPlus
     {
         Device& device;
         DescriptorTable descriptorTable;
+        uint32_t maxCommands;
     };
 
     struct ShapeRenderPassRecordDesc
@@ -27,21 +28,26 @@ namespace Lettuce::Rendering::DeferredPlus
         // input
         GpuSpan<SceneViewData> sceneViewData;
         GpuSpan<MaterialShadingData> materialShadingData;
-        GpuSpan<MaterialPBRStorage> materialStorage;
-        GpuSpan<SunLightData> sunLightData;
-        GpuSpan<SpotLightData> spotLightData;
-        GpuSpan<CascadeShadowMapData> cascadeShadowMapData;
+        GpuSpan<ProceduralInstanceData> instanceData;
+        GpuSpan<MaterialPBRStorage> materials;
+        GpuSpan<ProceduralInstanceStorage> instances;
+        GpuSpan<SphereStorage> spheres;
+        GpuSpan<PrismStorage> prisms;
+        GpuSpan<CylinderStorage> cylinders;
         // output
         TextureView rtColorOutput; // FORMAT: RGBA32
         TextureView rtDepth; // FORMAT: Depth32
-        TextureView rtMaterial; // FORMAT: Depth16
         TextureView rtPick; // FORMAT: Atomic_R32_UInt
+        LoadOp rtLoadOp;
     };
 
     class ShapeRenderPass : public BasePass
     {
     private:
+        Pipeline pBuild;
         Pipeline pPass;
+        IndirectSet m_indirect;
+        MemoryView m_indirectCommands;
     public:
         ShapeRenderPass() noexcept = default;
         explicit ShapeRenderPass(const ShapeRenderPassDesc&);

@@ -26,7 +26,10 @@ ShapeRenderPass::~ShapeRenderPass()
 
 ShapeRenderPass::ShapeRenderPass(ShapeRenderPass&& other) noexcept
     : BasePass(std::exchange(other.m_device, nullptr), std::move(other.m_descriptorTable)),
-    pPass(std::move(other.pPass))
+    pPass(std::move(other.pPass)),
+    pBuild(std::move(other.pBuild)),
+    m_indirect(std::move(other.m_indirect)),
+    m_indirectCommands(std::move(other.m_indirectCommands))
 {
 }
 
@@ -40,6 +43,9 @@ ShapeRenderPass& ShapeRenderPass::operator=(ShapeRenderPass&& other) noexcept
         m_descriptorTable = std::move(other.m_descriptorTable);
 
         pPass = std::move(other.pPass);
+        pBuild = std::move(other.pBuild);
+        m_indirect = std::move(other.m_indirect);
+        m_indirectCommands = std::move(other.m_indirectCommands);
     }
 
     return *this;
@@ -61,6 +67,13 @@ void ShapeRenderPass::Create(const ShapeRenderPassDesc& desc)
 
         auto formats = std::array{ Format::Raw_RGBA32_SFloat, Format::Atomic_R32_UInt };
 
+        ComputePipelineDesc compDesc = {
+            .compEntryPoint = "generateDrawCalls",
+            .compShaderBinary = shader,
+            .descriptorTable = desc.descriptorTable,
+        };
+        pBuild = m_device->CreatePipeline(compDesc);
+
         PrimitiveShadingPipelineDesc pipelineDesc = {
             .fragmentShadingRate = false,
             .vertEntryPoint = "vertMain",
@@ -74,6 +87,9 @@ void ShapeRenderPass::Create(const ShapeRenderPassDesc& desc)
         pPass = m_device->CreatePipeline(pipelineDesc);
 
         m_device->Destroy(shader);
+
+        m_indirect = m_device->CreateIndirectSet({ IndirectType::Draw, desc.maxCommands, 0 });
+        m_indirectCommands = m_device->GetIndirectSetView(m_indirect);
     }
     catch (...)
     {
@@ -86,47 +102,79 @@ void ShapeRenderPass::Destroy()
     if (!m_device)
         return;
 
+    m_device->Destroy(m_indirect);
     m_device->Destroy(pPass);
+    m_device->Destroy(pBuild);
 
     m_device = nullptr;
     m_descriptorTable = {};
+    pBuild = {};
     pPass = {};
+    m_indirect = {};
+    m_indirectCommands = {};
 }
 
 void ShapeRenderPass::Record(CommandBuffer& cmd, const ShapeRenderPassRecordDesc& desc)
 {
-    AttachmentDesc colorAttachment = {
+    BarrierDesc bCompInd = {
+        .srcAccess = PipelineAccess::Write,
+        .srcStage = PipelineStage::ComputeShader,
+        .dstAccess = PipelineAccess::Read,
+        .dstStage = PipelineStage::DrawIndirect,
+    };
+
+    AttachmentDesc colorAttachments[2] = {
+    {
         .renderTarget = desc.rtColorOutput,
-        .loadOp = LoadOp::Load,
+        .loadOp = desc.rtLoadOp,
+    },
+    {
+        .renderTarget = desc.rtPick,
+        .loadOp = desc.rtLoadOp,
+    }
     };
     AttachmentDesc depthAttachment = {
         .renderTarget = desc.rtDepth,
-        .loadOp = LoadOp::Clear,
+        .loadOp = desc.rtLoadOp,
     };
 
     RenderPassDesc renderPassDesc = {
         .width = desc.fbWidth,
         .height = desc.fbHeight,
-        .colorAttachments = std::span(&colorAttachment, 1),
+        .colorAttachments = std::span(colorAttachments),
         .depthStencilAttachment = depthAttachment,
         .presentAttachmentIdx = 0,
     };
 
-    std::array<std::byte, sizeof(PushAllocationBinding) * 6> buffer;
+    std::array<std::byte, sizeof(PushAllocationBinding) * 9> buffer;
     std::pmr::monotonic_buffer_resource pool{ buffer.data(), buffer.size() };
     auto allocs = std::pmr::vector<PushAllocationBinding>{ {
         desc.sceneViewData.getView(),
         desc.materialShadingData.getView(),
-        desc.materialStorage.getView(),
-        desc.sunLightData.getView(),
-        desc.spotLightData.getView(),
-        desc.cascadeShadowMapData.getView(),
+        desc.instanceData.getView(),
+        desc.materials.getView(),
+        desc.instances.getView(),
+        desc.spheres.getView(),
+        desc.prisms.getView(),
+        desc.cylinders.getView(),
+        m_indirectCommands,
     }, &pool };
+
+    constexpr uint32_t computeNumThreadsX = 32;
+    uint32_t groupCountX = (desc.instances.size() + (computeNumThreadsX - 1)) / computeNumThreadsX;
+
+    cmd.BindPipeline(pBuild);
+    cmd.BindDescriptorTable(m_descriptorTable, PipelineBindPoint::Compute);
+    cmd.PushAllocations({ allocs, m_descriptorTable });
+    cmd.Dispatch(groupCountX, 1, 1);
+
+    cmd.Barrier({ bCompInd });
 
     cmd.BeginRendering(renderPassDesc);
     cmd.BindPipeline(pPass);
     cmd.BindDescriptorTable(m_descriptorTable, PipelineBindPoint::Graphics);
     cmd.PushAllocations({ allocs, m_descriptorTable });
-    cmd.Draw(6, 1);
+    // TODO: apply culling
+    cmd.ExecuteIndirect({ m_indirect, 0, desc.instances.size() });
     cmd.EndRendering();
 }
