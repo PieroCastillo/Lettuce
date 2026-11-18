@@ -1,7 +1,9 @@
 implementing LettuceRendering;
 
-__include "std.procedural.part.slang";
 __include "std.constants.part.slang";
+__include "std.procedural.part.slang";
+__include "std.quat.part.slang";
+__include "std.packing.part.slang";
 
 namespace std
 {
