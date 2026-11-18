@@ -132,7 +132,7 @@ auto Device::CreateTextureView(const TextureViewDesc& desc) -> TextureView
         .tiling = VK_IMAGE_TILING_OPTIMAL,
         .usage = usageFlags,
         .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
-        .initialLayout = VK_IMAGE_LAYOUT_PREINITIALIZED,
+        .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
     };
 
     VkImageViewCreateInfo viewCI = {
@@ -249,7 +249,7 @@ auto Device::CreateTextureView(const RenderTargetDesc& desc) -> TextureView
         .tiling = VK_IMAGE_TILING_OPTIMAL,
         .usage = usageFlags,
         .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
-        .initialLayout = VK_IMAGE_LAYOUT_PREINITIALIZED,
+        .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
     };
     VmaAllocationCreateInfo allocCI = {
         .flags = desc.cpuVisible ? VMA_ALLOCATION_CREATE_MAPPED_BIT : (VmaAllocationCreateFlags)0,
