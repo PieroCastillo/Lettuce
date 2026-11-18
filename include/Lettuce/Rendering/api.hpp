@@ -13,5 +13,6 @@ Created by @PieroCastillo on 2025-01-5
 
 #include "./Debug/DebugPass.hpp"
 #include "./DeferredPlus/MaterialShadingPass.hpp"
+#include "./Shapes/ShapeRenderPass.hpp"
 
 #endif // LETTUCE_RENDERING_API_HPP

@@ -12,7 +12,7 @@
 
 using namespace Lettuce::Core;
 using namespace Lettuce::Rendering;
-using namespace Lettuce::Rendering::DeferredPlus;
+using namespace Lettuce::Rendering::Shapes;
 
 ShapeRenderPass::ShapeRenderPass(const ShapeRenderPassDesc& desc)
 {

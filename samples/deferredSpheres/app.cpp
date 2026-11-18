@@ -23,6 +23,7 @@ private:
 
     std::unique_ptr<SceneView> scene;
     std::unique_ptr<Debug::DebugPass> debugPass;
+    std::unique_ptr<Shapes::ShapeRenderPass> shapesPass;
     std::unique_ptr<DeferredPlus::MaterialShadingPass> materialShadingPass;
     GpuUniquePtr<SceneViewData> sceneViewData;
     GpuUniquePtr<uint32_t> pickInstanceData;
@@ -151,6 +152,13 @@ void App::createRenderingObjects()
         .colorOutputFormat = device->GetRenderTargetFormat(swapchain),
     };
     debugPass = std::make_unique<Debug::DebugPass>(debugPassDesc);
+
+    Shapes::ShapeRenderPassDesc shapePassDesc = {
+        .device = *device,
+        .descriptorTable = descriptorTable,
+        .maxCommands = 999,
+    };
+    shapesPass = std::make_unique<Shapes::ShapeRenderPass>(shapePassDesc);
 
     DeferredPlus::MaterialShadingPassDesc matPassDesc = {
         .device = *device,

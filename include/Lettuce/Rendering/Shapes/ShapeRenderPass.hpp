@@ -12,7 +12,7 @@ Created by @PieroCastillo on 2026-11-15
 
 using namespace Lettuce::Foundations;
 
-namespace Lettuce::Rendering::DeferredPlus
+namespace Lettuce::Rendering::Shapes
 {
     struct ShapeRenderPassDesc
     {
