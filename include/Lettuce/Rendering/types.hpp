@@ -136,7 +136,6 @@ namespace Lettuce::Rendering
         uint32_t sphereCount;
         uint32_t prismCount;
         uint32_t cylinderCount;
-        // ProceduralInstanceStorage instances[];
     };
 };
 #endif // LETTUCE_RENDERING_TYPES_HPP

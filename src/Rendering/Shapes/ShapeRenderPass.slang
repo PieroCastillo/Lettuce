@@ -13,13 +13,13 @@ struct PushConstants
 {
     uint64_t sceneViewDataAddr;
     uint64_t materialShadingDataAddr;
+    uint64_t proceduralInstanceDataAddr;
     uint64_t materialStorageAddr;
     uint64_t proceduralInstanceStorageAddr;
-    uint64_t indirectCommandsStorageAddr;
-
     uint64_t sphereStorageAddr;
     uint64_t prismStorageAddr;
     uint64_t cylinderStorageAddr;
+    uint64_t indirectCommandsStorageAddr;
 };
 
 [[vk::push_constant]]
@@ -31,7 +31,8 @@ void generateDrawCalls(uint3 dispatchThreadID: SV_DispatchThreadID)
 {
     uint index = dispatchThreadID.x;
     var scene = std.loadAddr<std.SceneViewData>(pc.sceneViewDataAddr);
-    var instancesData = std.loadAddr<std.ProceduralInstanceData>(pc.proceduralInstanceStorageAddr);
+    var instancesData = std.loadAddr<std.ProceduralInstanceData>(pc.proceduralInstanceDataAddr);
+    var instanceStorage = std.loadAddr<std.ProceduralInstanceStorage>(pc.proceduralInstanceStorageAddr);
     var indirectData = std.loadAddr<std.IndirectCommandStorage>(pc.indirectCommandsStorageAddr);
 
     // only one thread writes the draw count
@@ -45,7 +46,7 @@ void generateDrawCalls(uint3 dispatchThreadID: SV_DispatchThreadID)
 
     GroupMemoryBarrierWithGroupSync();
 
-    var instance = instancesData->instances[index];
+    var instance = instanceStorage[index];
     uint vertexCount = 0;
 
     switch (instance.geometryType)
@@ -99,12 +100,13 @@ void generateDrawCalls(uint3 dispatchThreadID: SV_DispatchThreadID)
 std.DeferredVSOutput vertMain(uint vertexID: SV_VulkanVertexID, uint instanceID: SV_DrawIndex)
 {
     var sceneViewData = std.loadAddr<std.SceneViewData>(pc.sceneViewDataAddr);
-    var instancesData = std.loadAddr<std.ProceduralInstanceData>(pc.proceduralInstanceStorageAddr);
+    var instancesData = std.loadAddr<std.ProceduralInstanceData>(pc.proceduralInstanceDataAddr);
+    var instanceStorage = std.loadAddr<std.ProceduralInstanceStorage>(pc.proceduralInstanceStorageAddr);
     var indirectData = std.loadAddr<std.IndirectCommandStorage>(pc.indirectCommandsStorageAddr);
     var spheres = std.loadAddr<std.SphereStorage>(pc.sphereStorageAddr);
     var prisms = std.loadAddr<std.PrismStorage>(pc.prismStorageAddr);
     var cylinders = std.loadAddr<std.CylinderStorage>(pc.cylinderStorageAddr);
-    var instance = instancesData->instances[instanceID];
+    var instance = instanceStorage[instanceID];
 
     std.DeferredVSOutput output;
     var localPosition = float3(0, 0, 0);

@@ -25,7 +25,6 @@ struct ProceduralInstanceData
     uint32_t sphereCount;
     uint32_t prismCount;
     uint32_t cylinderCount;
-    ProceduralInstanceStorage instances[];
 };
 
 struct DeferredVSOutput
