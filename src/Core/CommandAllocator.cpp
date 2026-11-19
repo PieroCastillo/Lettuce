@@ -87,56 +87,79 @@ void Device::Submit(const CommandBufferSubmitDesc& desc)
 
 auto Device::SubmitAsync(const CommandBufferSubmitDesc& desc) -> WaitToken
 {
-    VkQueue queue;
-    VkSemaphore semaphore;
-    uint64_t currentValue;
+    VkQueue queue = VK_NULL_HANDLE;
+    VkSemaphore semaphore = VK_NULL_HANDLE;
+    uint64_t currentValue = 0;
 
     switch (desc.queueType)
     {
     case QueueType::Graphics:
         queue = impl->m_graphicsQueue;
         semaphore = impl->graphicsSemaphore;
-        currentValue = impl->graphicsCurrentValue; break;
+        currentValue = impl->graphicsCurrentValue;
+        break;
+
     case QueueType::Compute:
         queue = impl->m_computeQueue;
         semaphore = impl->computeSemaphore;
-        currentValue = impl->computeCurrentValue; break;
+        currentValue = impl->computeCurrentValue;
+        break;
+
     case QueueType::Copy:
         queue = impl->m_transferQueue;
         semaphore = impl->transferSemaphore;
-        currentValue = impl->transferCurrentValue; break;
+        currentValue = impl->transferCurrentValue;
+        break;
     }
 
-    constexpr uint32_t maxCmdLevels = 16;
-    constexpr uint32_t maxCmdCountPerLevel = 16;
+    const size_t levelCount = desc.commandBuffers.size();
+    const bool hasPresent = desc.presentSwapchain.has_value();
+
+    // Count all command buffers
+    size_t totalCommandCount = 0;
+
+    for (const auto& level : desc.commandBuffers)
+        totalCommandCount += level.size();
+
     std::byte buffer[4096];
     std::pmr::monotonic_buffer_resource arena(buffer, sizeof(buffer));
 
     std::pmr::vector<VkSubmitInfo2> submits(&arena);
-    submits.resize(desc.commandBuffers.size() + (desc.presentSwapchain ? 1 : 0));
     std::pmr::vector<VkCommandBufferSubmitInfo> cmdInfos(&arena);
-    cmdInfos.resize(maxCmdLevels * maxCmdCountPerLevel);
     std::pmr::vector<VkSemaphoreSubmitInfo> semInfos(&arena);
-    semInfos.resize((2 * desc.commandBuffers.size()) + (desc.presentSwapchain ? 2 : 0));
+    std::pmr::vector<size_t> cmdOffsets(&arena);
 
-    // per level
-    auto waitValue = currentValue;
-    auto signalValue = currentValue + 1;
-    for (int i = 0; i < desc.commandBuffers.size(); ++i)
+    submits.resize(levelCount + (hasPresent ? 1 : 0));
+    cmdInfos.resize(totalCommandCount);
+    semInfos.resize((levelCount * 2) + (hasPresent ? 2 : 0));
+    cmdOffsets.resize(levelCount);
+
+    // Build command buffer information
+    size_t cmdOffset = 0;
+
+    for (size_t i = 0; i < levelCount; ++i)
     {
-        // per cmd
-        for (int j = 0; j < desc.commandBuffers[i].size(); ++j)
+        cmdOffsets[i] = cmdOffset;
+
+        for (const auto& commandBuffer : desc.commandBuffers[i])
         {
-            auto cmd = (VkCommandBuffer)(desc.commandBuffers[i][j].impl.handle);
+            auto cmd = (VkCommandBuffer)commandBuffer.impl.handle;
             handleResult(vkEndCommandBuffer(cmd));
 
-            cmdInfos[(i * maxCmdCountPerLevel) + j] = {
+            cmdInfos[cmdOffset++] = {
                 .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_SUBMIT_INFO,
                 .commandBuffer = cmd,
                 .deviceMask = 0,
             };
         }
-        // wait
+    }
+
+    // Build submissions, one per level
+    for (size_t i = 0; i < levelCount; ++i)
+    {
+        const uint64_t waitValue = currentValue + i;
+        const uint64_t signalValue = currentValue + i + 1;
+
         semInfos[2 * i] = {
             .sType = VK_STRUCTURE_TYPE_SEMAPHORE_SUBMIT_INFO,
             .semaphore = semaphore,
@@ -144,7 +167,7 @@ auto Device::SubmitAsync(const CommandBufferSubmitDesc& desc) -> WaitToken
             .stageMask = VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT,
             .deviceIndex = 0,
         };
-        // signal
+
         semInfos[2 * i + 1] = {
             .sType = VK_STRUCTURE_TYPE_SEMAPHORE_SUBMIT_INFO,
             .semaphore = semaphore,
@@ -153,56 +176,69 @@ auto Device::SubmitAsync(const CommandBufferSubmitDesc& desc) -> WaitToken
             .deviceIndex = 0,
         };
 
+        const size_t commandCount = desc.commandBuffers[i].size();
+
         submits[i] = {
             .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO_2,
-            .waitSemaphoreInfoCount = 1u,
+            .waitSemaphoreInfoCount = 1,
             .pWaitSemaphoreInfos = &semInfos[2 * i],
-            .commandBufferInfoCount = (uint32_t)(desc.commandBuffers[i].size()),
-            .pCommandBufferInfos = &cmdInfos[i * maxCmdLevels],
+            .commandBufferInfoCount = (uint32_t)commandCount,
+            .pCommandBufferInfos = commandCount > 0 ? &cmdInfos[cmdOffsets[i]] : nullptr,
             .signalSemaphoreInfoCount = 1,
             .pSignalSemaphoreInfos = &semInfos[2 * i + 1],
         };
-
-        waitValue = signalValue;
-        ++signalValue;
     }
 
-    if (desc.presentSwapchain)
+    // Optional presentation submission.
+    if (hasPresent)
     {
-        // wait timeline semaphore
-        semInfos[semInfos.size() - 2] = {
+        const size_t submitIdx = levelCount;
+        const size_t semIdx = levelCount * 2;
+        const uint64_t waitValue = currentValue + levelCount;
+
+        auto& swp = impl->swapchains.get(*desc.presentSwapchain);
+
+        semInfos[semIdx] = {
             .sType = VK_STRUCTURE_TYPE_SEMAPHORE_SUBMIT_INFO,
             .semaphore = semaphore,
             .value = waitValue,
             .stageMask = VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT,
             .deviceIndex = 0,
         };
-        // signal binary semaphore
-        auto& swp = impl->swapchains.get(*desc.presentSwapchain);
-        semInfos[semInfos.size() - 1] = {
+
+        semInfos[semIdx + 1] = {
             .sType = VK_STRUCTURE_TYPE_SEMAPHORE_SUBMIT_INFO,
-            .semaphore = swp.presentSemaphores[(int)(swp.currentImageIndex)],
+            .semaphore =
+                swp.presentSemaphores[(int)swp.currentImageIndex],
+            .value = 0,
             .stageMask = VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT,
             .deviceIndex = 0,
         };
 
-        submits[submits.size() - 1] = {
+        submits[submitIdx] = {
             .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO_2,
             .waitSemaphoreInfoCount = 1,
-            .pWaitSemaphoreInfos = &semInfos[semInfos.size() - 2],
+            .pWaitSemaphoreInfos = &semInfos[semIdx],
+            .commandBufferInfoCount = 0,
+            .pCommandBufferInfos = nullptr,
             .signalSemaphoreInfoCount = 1,
-            .pSignalSemaphoreInfos = &semInfos[semInfos.size() - 1],
+            .pSignalSemaphoreInfos = &semInfos[semIdx + 1],
         };
     }
 
-    handleResult(vkQueueSubmit2(queue, (uint32_t)submits.size(), submits.data(), VK_NULL_HANDLE));
+    if (!submits.empty())
+        handleResult(vkQueueSubmit2(queue, (uint32_t)submits.size(), submits.data(), VK_NULL_HANDLE));
+
+    const uint64_t finalValue = currentValue + levelCount;
 
     switch (desc.queueType)
     {
-    case QueueType::Graphics: impl->graphicsCurrentValue = signalValue - 1; break;
-    case QueueType::Compute: impl->computeCurrentValue = signalValue - 1; break;
-    case QueueType::Copy: impl->transferCurrentValue = signalValue - 1; break;
+    case QueueType::Graphics: impl->graphicsCurrentValue = finalValue;
+        break;
+    case QueueType::Compute: impl->computeCurrentValue = finalValue;
+        break;
+    case QueueType::Copy: impl->transferCurrentValue = finalValue;
+        break;
     }
-
-    return impl->waitTokens.allocate({ signalValue - 1, desc.queueType });
+    return impl->waitTokens.allocate({ finalValue,desc.queueType });
 }
