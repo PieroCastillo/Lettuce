@@ -465,54 +465,115 @@ void DeviceImpl::setupFeaturesExtensions()
 
 void DeviceImpl::setupDevice()
 {
-    // get queue families
+    // Get queue families
     uint32_t queueFamiliesCount = 0;
     vkGetPhysicalDeviceQueueFamilyProperties(m_physicalDevice, &queueFamiliesCount, nullptr);
+
     std::vector<VkQueueFamilyProperties> queueFamiliesVec(queueFamiliesCount);
     vkGetPhysicalDeviceQueueFamilyProperties(m_physicalDevice, &queueFamiliesCount, queueFamiliesVec.data());
 
-    VkQueueFlags graphicsFlags = VK_QUEUE_GRAPHICS_BIT | VK_QUEUE_COMPUTE_BIT | VK_QUEUE_TRANSFER_BIT | VK_QUEUE_SPARSE_BINDING_BIT;
-    VkQueueFlags transferFlags = VK_QUEUE_TRANSFER_BIT | VK_QUEUE_SPARSE_BINDING_BIT;
-    VkQueueFlags computeFlags = VK_QUEUE_COMPUTE_BIT | VK_QUEUE_TRANSFER_BIT | VK_QUEUE_SPARSE_BINDING_BIT;
+    constexpr uint32_t InvalidFamily = VK_QUEUE_FAMILY_IGNORED;
 
+    uint32_t graphicsQueueFamilyIndex = InvalidFamily;
+    uint32_t computeQueueFamilyIndex = InvalidFamily;
+    uint32_t transferQueueFamilyIndex = InvalidFamily;
+
+    // Graphics: any family supporting graphics
+    for (uint32_t i = 0; i < queueFamiliesCount; ++i)
+    {
+        const auto& family = queueFamiliesVec[i];
+
+        if (family.queueCount > 0 && (family.queueFlags & VK_QUEUE_GRAPHICS_BIT))
+        {
+            graphicsQueueFamilyIndex = i;
+            break;
+        }
+    }
+
+    if (graphicsQueueFamilyIndex == InvalidFamily)
+        throw std::runtime_error("No graphics queue family available");
+
+    // Compute: prefer a family without graphics
+    for (uint32_t i = 0; i < queueFamiliesCount; ++i)
+    {
+        const auto& family = queueFamiliesVec[i];
+
+        if (family.queueCount > 0 &&
+            (family.queueFlags & VK_QUEUE_COMPUTE_BIT) &&
+            !(family.queueFlags & VK_QUEUE_GRAPHICS_BIT))
+        {
+            computeQueueFamilyIndex = i;
+            break;
+        }
+    }
+
+    // Fallback: graphics family, if it supports compute
+    if (computeQueueFamilyIndex == InvalidFamily && (queueFamiliesVec[graphicsQueueFamilyIndex].queueFlags & VK_QUEUE_COMPUTE_BIT))
+        computeQueueFamilyIndex = graphicsQueueFamilyIndex;
+
+    if (computeQueueFamilyIndex == InvalidFamily)
+        throw std::runtime_error("No compute queue family available");
+
+    // Transfer: prefer a dedicated transfer-only family
+    for (uint32_t i = 0; i < queueFamiliesCount; ++i)
+    {
+        const auto& family = queueFamiliesVec[i];
+
+        if (family.queueCount > 0 && (family.queueFlags & VK_QUEUE_TRANSFER_BIT) && !(family.queueFlags & (VK_QUEUE_GRAPHICS_BIT | VK_QUEUE_COMPUTE_BIT)))
+        {
+            transferQueueFamilyIndex = i;
+            break;
+        }
+    }
+
+    // Fallback: any transfer-capable family
+    if (transferQueueFamilyIndex == InvalidFamily)
+    {
+        for (uint32_t i = 0; i < queueFamiliesCount; ++i)
+        {
+            const auto& family = queueFamiliesVec[i];
+
+            if (family.queueCount > 0 && (family.queueFlags & VK_QUEUE_TRANSFER_BIT))
+            {
+                transferQueueFamilyIndex = i;
+                break;
+            }
+        }
+    }
+
+    // Graphics and compute queues also support transfer operations according to Vulkan's implicit queue capability rules
+    if (transferQueueFamilyIndex == InvalidFamily)
+    {
+        if (queueFamiliesVec[graphicsQueueFamilyIndex].queueFlags & VK_QUEUE_GRAPHICS_BIT)
+            transferQueueFamilyIndex = graphicsQueueFamilyIndex;
+        else
+            throw std::runtime_error("No transfer queue family available");
+    }
+
+    // Create one VkDeviceQueueCreateInfo per unique family
     std::vector<VkDeviceQueueCreateInfo> queueCIs;
 
-    // find queue family indices
-    float priority = 1.0f; // stack value, used one time before destruction
-    VkDeviceQueueCreateInfo queueCI = {
-        .sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
-        .queueCount = 1,
-        .pQueuePriorities = &priority,
-    };
+    float priority = 1.0f;
 
-    uint32_t graphicsQueueFamilyIndex;
-    uint32_t computeQueueFamilyIndex;
-    uint32_t transferQueueFamilyIndex;
-    uint32_t familyIdx = 0;
-    for (const auto& queueFamily : queueFamiliesVec)
+    std::vector<uint32_t> familyIndices = { graphicsQueueFamilyIndex,computeQueueFamilyIndex,transferQueueFamilyIndex };
+    for (const auto familyIndex : familyIndices)
     {
-        if (queueFamily.queueFlags == graphicsFlags)
-        {
-            graphicsQueueFamilyIndex = familyIdx;
-        }
-        else if (queueFamily.queueFlags == computeFlags)
-        {
-            computeQueueFamilyIndex = familyIdx;
-        }
-        else if (queueFamily.queueFlags == transferFlags)
-        {
-            transferQueueFamilyIndex = familyIdx;
-        }
-        familyIdx++;
-    }
-    queueCI.queueFamilyIndex = graphicsQueueFamilyIndex;
-    queueCIs.push_back(queueCI);
-    queueCI.queueFamilyIndex = computeQueueFamilyIndex;
-    if (graphicsQueueFamilyIndex != computeQueueFamilyIndex)
-        queueCIs.push_back(queueCI);
-    queueCI.queueFamilyIndex = transferQueueFamilyIndex;
-    if (graphicsQueueFamilyIndex != transferQueueFamilyIndex)
-        queueCIs.push_back(queueCI);
+        const auto it = std::ranges::find_if(queueCIs, [familyIndex](const VkDeviceQueueCreateInfo& info)
+            {
+                return info.queueFamilyIndex == familyIndex;
+            }
+        );
+
+        if (it != queueCIs.end())
+            return;
+
+        queueCIs.push_back({
+            .sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
+            .queueFamilyIndex = familyIndex,
+            .queueCount = 1,
+            .pQueuePriorities = &priority,
+            });
+    };
 
     VkPhysicalDeviceFeatures features = {
         .multiDrawIndirect = VK_TRUE,
@@ -617,7 +678,7 @@ void DeviceImpl::setupAllocators()
     VkCommandPoolCreateInfo cmdPoolCI = {
         .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
         .flags = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT,
-        .queueFamilyIndex = props.transferQueueFamilyIdx,
+        .queueFamilyIndex = props.graphicsQueueFamilyIdx,
     };
     handleResult(vkCreateCommandPool(m_device, &cmdPoolCI, nullptr, &m_copyCmdAlloc));
 }
@@ -669,8 +730,8 @@ void DeviceImpl::layoutTransition(VkImage image, VkImageAspectFlags aspect, uint
         .pCommandBufferInfos = &cmdSubmit,
         .signalSemaphoreInfoCount = 0,
     };
-    handleResult(vkQueueSubmit2(m_transferQueue, 1, &submit, VK_NULL_HANDLE));
-    handleResult(vkQueueWaitIdle(m_transferQueue));
+    handleResult(vkQueueSubmit2(m_graphicsQueue, 1, &submit, VK_NULL_HANDLE));
+    handleResult(vkQueueWaitIdle(m_graphicsQueue));
 
     vkFreeCommandBuffers(m_device, m_copyCmdAlloc, 1, &cmd);
 }

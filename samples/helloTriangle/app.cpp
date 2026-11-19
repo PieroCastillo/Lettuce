@@ -94,9 +94,9 @@ void mainLoop()
             .presentAttachmentIdx = 0,
         };
         cmd.BeginRendering(renderPassDesc);
-        cmd.BindDescriptorTable(descriptorTable, PipelineBindPoint::Graphics);
-        cmd.BindPipeline(rgbPipeline);
-        cmd.Draw(3, 1);
+        // cmd.BindDescriptorTable(descriptorTable, PipelineBindPoint::Graphics);
+        // cmd.BindPipeline(rgbPipeline);
+        // cmd.Draw(3, 1);
         cmd.EndRendering();
 
         std::array<std::span<CommandBuffer>, 1> cmds = { std::span(&cmd, 1) };

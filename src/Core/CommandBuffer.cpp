@@ -87,7 +87,7 @@ void CommandBuffer::BeginRendering(const RenderPassDesc& desc)
             .srcAccessMask = 0,
             .dstStageMask = VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT,
             .dstAccessMask = VK_ACCESS_2_MEMORY_READ_BIT | VK_ACCESS_2_MEMORY_WRITE_BIT,
-            .oldLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+            .oldLayout = VK_IMAGE_LAYOUT_GENERAL,
             .newLayout = VK_IMAGE_LAYOUT_GENERAL,
             .image = impl.device->textures.get(impl.currentPresentTarget.value()).image,
             .subresourceRange = { VK_IMAGE_ASPECT_COLOR_BIT, 0,1,0,1 },
