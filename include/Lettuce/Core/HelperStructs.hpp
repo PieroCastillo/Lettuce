@@ -95,6 +95,7 @@ namespace Lettuce::Core
         uint32_t imageCount;
         uint32_t currentImageIndex;
         bool clipped;
+        SwapchainDesc swpInitDesc;
     };
 
     struct CommandAllocatorVK

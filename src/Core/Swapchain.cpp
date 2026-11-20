@@ -243,6 +243,7 @@ auto Device::CreateSwapchain(const SwapchainDesc& desc) -> Swapchain
 
     SwapchainVK swapchainVK = {};
     swapchainVK.currentImageIndex = 0;
+    swapchainVK.swpInitDesc = desc;
     setupVkSurface(swapchainVK, instance, desc);
     setupVkSwapchain(swapchainVK, impl, gpu, desc, 1000, 1000);
     VkFenceCreateInfo fenceCI = {
@@ -320,9 +321,8 @@ auto Device::NextFrame(Swapchain swapchain, uint32_t desiredWidth, uint32_t desi
         // recreateSwapchain
         handleResult(vkQueueWaitIdle(impl->m_graphicsQueue));
 
-        SwapchainDesc desc{ .clipped = info.clipped };
-        setupVkSwapchain(info, impl, impl->m_physicalDevice, desc, desiredWidth, desiredHeight);
-        setupImagesAndView(impl, info, desc);
+        setupVkSwapchain(info, impl, impl->m_physicalDevice, info.swpInitDesc, desiredWidth, desiredHeight);
+        setupImagesAndView(impl, info, info.swpInitDesc);
 
         // If acquire previously succeeded, its fence is signaled
         // If it returned OUT_OF_DATE, the fence is still unsignaled
