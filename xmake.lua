@@ -31,21 +31,22 @@ end
 
 add_requires("vulkansdk")
 add_requires("vulkan-memory-allocator")
-add_requires("volk")
+add_requires("volk", { configs = { header_only = true }})
 add_requires("glm")
 add_requires("fastgltf")
 add_requires("imgui")
 add_requires("ktx", { configs={ vulkan=true, ktx2=true, decoder=true}})
 add_requires("meshoptimizer")
 local use_system = not is_plat("windows")
-add_requires("glfw", { system = use_system })
 add_requires("freetype", { system = use_system })
 add_requires("harfbuzz", { system = use_system })
 add_requires("tetgen")
 add_requires("libigl")
 
-if is_plat("linux") then
-    add_requires("glfw", { system = false, configs = {wayland = true, x11 = false}})
+if is_plat("windows") then
+    add_requires("glfw", { system = false })
+elseif is_plat("linux") then
+    add_requires("glfw", { system = true, configs = {wayland = true, x11 = false}})
 end
 
 local v = ("0.0.1.0"):split("%.")
@@ -54,16 +55,18 @@ add_defines("VARIANT_VERSION=" .. (v[1] or 0),
             "MINOR_VERSION="   .. (v[3] or 0),
             "PATCH_VERSION="   .. (v[4] or 0))
 
-if is_os("windows") then
+if is_plat("windows") then
     add_links("user32", "gdi32", "kernel32")
-    add_defines("VK_USE_PLATFORM_WIN32_KHR", "_WIN32")
-else
+    add_defines("VK_USE_PLATFORM_WIN32_KHR", "_WIN32", {public=true})
+elseif is_plat("linux") then
     add_syslinks("stdc++exp")
-    add_defines("VK_USE_PLATFORM_WAYLAND_KHR")
+    add_defines("VK_USE_PLATFORM_WAYLAND_KHR", {public=true})
 end
 
 target("Lettuce")
     set_kind("shared")
+    add_defines("VK_NO_PROTOTYPES", {public = true})
+    add_defines("VMA_STATIC_VULKAN_FUNCTIONS=0", "VMA_DYNAMIC_VULKAN_FUNCTIONS=0")
     add_includedirs("include/", "external/include")
     add_headerfiles("include/Lettuce/**.hpp")
     add_files("src/**.cpp")
