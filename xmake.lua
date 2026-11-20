@@ -57,7 +57,7 @@ add_defines("VARIANT_VERSION=" .. (v[1] or 0),
 
 if is_plat("windows") then
     add_links("user32", "gdi32", "kernel32")
-    add_defines("VK_USE_PLATFORM_WIN32_KHR", "_WIN32", {public=true})
+    add_defines("VK_USE_PLATFORM_WIN32_KHR", "_WIN32", "NOMINMAX", {public=true})
 elseif is_plat("linux") then
     add_syslinks("stdc++exp")
     add_defines("VK_USE_PLATFORM_WAYLAND_KHR", {public=true})

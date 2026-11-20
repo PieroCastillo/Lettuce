@@ -17,8 +17,6 @@
 #include <volk.h>
 #include <vk_mem_alloc.h>
 
-#define NOMINMAX
-
 #ifdef __INTELLISENSE__
 #define WIN32_
 #define __linux__

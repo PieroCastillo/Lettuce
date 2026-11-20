@@ -219,14 +219,13 @@ void setupImagesAndView(DeviceImpl* impl, SwapchainVK& swapchainVK, const Swapch
     swapchainVK.swapchainViews.resize(imageCount);
     swapchainVK.renderTargets.resize(imageCount);
 
+    constexpr uint64_t timeout = UINT64_MAX;
     for (uint32_t i = 0; i < imageCount; ++i)
     {
         viewCI.image = swapchainVK.swapchainImages[i];
 
         VkImageView view = VK_NULL_HANDLE;
         handleResult(vkCreateImageView(device, &viewCI, nullptr, &view));
-
-        impl->layoutTransition(swapchainVK.swapchainImages[i], VK_IMAGE_ASPECT_COLOR_BIT, 1, 1);
 
         auto texView = textures.allocate({ swapchainVK.width, swapchainVK.height, 1, 1, swapchainVK.format, swapchainVK.swapchainImages[i], view,
                                           VK_NULL_HANDLE, 0, 0, VK_NULL_HANDLE, nullptr, true, ToVkClearValue(createInfo.targetColor) });
@@ -246,11 +245,12 @@ auto Device::CreateSwapchain(const SwapchainDesc& desc) -> Swapchain
     swapchainVK.currentImageIndex = 0;
     setupVkSurface(swapchainVK, instance, desc);
     setupVkSwapchain(swapchainVK, impl, gpu, desc, 1000, 1000);
-    setupImagesAndView(impl, swapchainVK, desc);
     VkFenceCreateInfo fenceCI = {
         .sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO,
     };
     handleResult(vkCreateFence(device, &fenceCI, nullptr, &swapchainVK.waitForAcquireFence));
+    setupImagesAndView(impl, swapchainVK, desc);
+
     VkSemaphoreCreateInfo semCI = {
         .sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO,
     };

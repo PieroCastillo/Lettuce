@@ -4,6 +4,7 @@ Created by @PieroCastillo on 2026-09-03
 #ifndef SAMPLES_APP_COMMON_HPP
 #define SAMPLES_APP_COMMON_HPP
 
+#include <print>
 #include "Lettuce/Lettuce.hpp"
 #include "GLFW/glfw3.h"
 
