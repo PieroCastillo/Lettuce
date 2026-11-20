@@ -1,5 +1,4 @@
 #include "Core/api.hpp"
-#include "Core/common.hpp"
 #include "Core/ResourcePool.hpp"
 
 // rendering

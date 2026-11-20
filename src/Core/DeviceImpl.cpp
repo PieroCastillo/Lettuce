@@ -565,7 +565,7 @@ void DeviceImpl::setupDevice()
         );
 
         if (it != queueCIs.end())
-            return;
+            continue;
 
         queueCIs.push_back({
             .sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
@@ -662,6 +662,10 @@ void DeviceImpl::setupDevice()
 
 void DeviceImpl::setupAllocators()
 {
+    assert(m_instance != VK_NULL_HANDLE);
+    assert(m_physicalDevice != VK_NULL_HANDLE);
+    assert(m_device != VK_NULL_HANDLE);
+
     VmaAllocatorCreateInfo allocatorCI = {
         .flags = VMA_ALLOCATOR_CREATE_BUFFER_DEVICE_ADDRESS_BIT | VMA_ALLOCATOR_CREATE_EXT_MEMORY_BUDGET_BIT,
         .physicalDevice = m_physicalDevice,

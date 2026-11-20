@@ -1,6 +1,9 @@
 // project headers
 #include "Lettuce/Core/common.hpp"
 
+// external headers
+#include <volk.h>
+
 uint32_t Lettuce::Core::findMemoryTypeIndex(VkDevice device, VkPhysicalDevice gpu, uint32_t typeFilter, MemoryAccess access)
 {
     VkPhysicalDeviceMemoryProperties memProperties;

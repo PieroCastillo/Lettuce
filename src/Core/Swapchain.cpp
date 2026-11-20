@@ -9,6 +9,7 @@
 #include <windows.h>
 #elifdef __linux__
 #include <wayland-client.h>
+#include <vulkan/vulkan.h>
 #endif
 
 // project headers
@@ -28,6 +29,7 @@ void setupVkSurface(SwapchainVK& swapchainVK, VkInstance instance, const Swapcha
         .hwnd = (HWND)(createInfo.windowPtr),
     };
 
+    auto vkCreateWin32SurfaceKHR = (PFN_vkCreateWin32SurfaceKHR)vkGetInstanceProcAddr(instance, "vkCreateWin32SurfaceKHR");
     handleResult(vkCreateWin32SurfaceKHR(instance, &win32surfaceCI, nullptr, &surface));
 #elifdef __linux__
     VkWaylandSurfaceCreateInfoKHR waylandsurfaceCI = {
@@ -36,6 +38,7 @@ void setupVkSurface(SwapchainVK& swapchainVK, VkInstance instance, const Swapcha
         .surface = (wl_surface*)createInfo.windowPtr,
     };
 
+    auto vkCreateWaylandSurfaceKHR = (PFN_vkCreateWaylandSurfaceKHR)vkGetInstanceProcAddr(instance, "vkCreateWaylandSurfaceKHR");
     handleResult(vkCreateWaylandSurfaceKHR(instance, &waylandsurfaceCI, nullptr, &surface));
 #endif
     swapchainVK.surface = surface;
@@ -188,8 +191,11 @@ void setupVkSwapchain(SwapchainVK& swapchainVK, DeviceImpl* impl, VkPhysicalDevi
     swapchainVK.swapchain = newSwapchain;
 }
 
-void setupImagesAndView(SwapchainVK& swapchainVK, ResourcePool<TextureView, TextureVK>& textures, VkDevice device, VkPhysicalDevice gpu, const SwapchainDesc& createInfo)
+void setupImagesAndView(DeviceImpl* impl, SwapchainVK& swapchainVK, const SwapchainDesc& createInfo)
 {
+    auto& textures = impl->textures;
+    auto device = impl->m_device;
+    auto gpu = impl->m_physicalDevice;
     auto swapchain = swapchainVK.swapchain;
 
     uint32_t imageCount = 0;
@@ -220,6 +226,8 @@ void setupImagesAndView(SwapchainVK& swapchainVK, ResourcePool<TextureView, Text
         VkImageView view = VK_NULL_HANDLE;
         handleResult(vkCreateImageView(device, &viewCI, nullptr, &view));
 
+        impl->layoutTransition(swapchainVK.swapchainImages[i], VK_IMAGE_ASPECT_COLOR_BIT, 1, 1);
+
         auto texView = textures.allocate({ swapchainVK.width, swapchainVK.height, 1, 1, swapchainVK.format, swapchainVK.swapchainImages[i], view,
                                           VK_NULL_HANDLE, 0, 0, VK_NULL_HANDLE, nullptr, true, ToVkClearValue(createInfo.targetColor) });
 
@@ -238,7 +246,7 @@ auto Device::CreateSwapchain(const SwapchainDesc& desc) -> Swapchain
     swapchainVK.currentImageIndex = 0;
     setupVkSurface(swapchainVK, instance, desc);
     setupVkSwapchain(swapchainVK, impl, gpu, desc, 1000, 1000);
-    setupImagesAndView(swapchainVK, impl->textures, device, gpu, desc);
+    setupImagesAndView(impl, swapchainVK, desc);
     VkFenceCreateInfo fenceCI = {
         .sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO,
     };
@@ -314,7 +322,7 @@ auto Device::NextFrame(Swapchain swapchain, uint32_t desiredWidth, uint32_t desi
 
         SwapchainDesc desc{ .clipped = info.clipped };
         setupVkSwapchain(info, impl, impl->m_physicalDevice, desc, desiredWidth, desiredHeight);
-        setupImagesAndView(info, impl->textures, device, impl->m_physicalDevice, desc);
+        setupImagesAndView(impl, info, desc);
 
         // If acquire previously succeeded, its fence is signaled
         // If it returned OUT_OF_DATE, the fence is still unsignaled
@@ -352,7 +360,7 @@ void Device::DisplayFrame(Swapchain swapchain)
     case VK_SUCCESS:
     case VK_SUBOPTIMAL_KHR:
     case VK_ERROR_OUT_OF_DATE_KHR:
-     //   info.currentImageIndex = (info.currentImageIndex + 1) % info.imageCount;
+        //   info.currentImageIndex = (info.currentImageIndex + 1) % info.imageCount;
         break;
 
     default:

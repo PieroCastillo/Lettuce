@@ -31,7 +31,7 @@ end
 
 add_requires("vulkansdk")
 add_requires("vulkan-memory-allocator")
-add_requires("volk", { configs = { header_only = true }})
+add_requires("volk")
 add_requires("glm")
 add_requires("fastgltf")
 add_requires("imgui")
@@ -97,7 +97,7 @@ for _, name in ipairs(samples) do
         add_deps("Lettuce")
         add_includedirs("include", "samples/include", "external/include")
         add_files("samples/" .. name .. "/app.cpp")
-        add_packages("volk", "glfw", "glm", "imgui", "fastgltf", "slang", "meshoptimizer", "freetype", "harfbuzz", "tetgen", "libigl")
+        add_packages("glfw", "glm", "imgui", "fastgltf", "slang", "meshoptimizer", "freetype", "harfbuzz", "tetgen", "libigl")
         local slangFiles = os.files("samples/" .. name .. "/**.slang")
         if #slangFiles > 0 then
             add_files(slangFiles, {rule = "slang"})
