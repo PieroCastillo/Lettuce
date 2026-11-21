@@ -61,9 +61,9 @@ namespace Lettuce::Core
     class DeviceImpl
     {
     public:
-        VkDevice m_device;
-        VkInstance m_instance;
-        VkPhysicalDevice m_physicalDevice;
+        VkDevice m_device = VK_NULL_HANDLE;
+        VkInstance m_instance = VK_NULL_HANDLE;
+        VkPhysicalDevice m_physicalDevice = VK_NULL_HANDLE;
         VkQueue m_graphicsQueue;
         VkQueue m_computeQueue;
         VkQueue m_transferQueue;

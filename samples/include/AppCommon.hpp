@@ -40,8 +40,11 @@ void InitGlfw()
         std::println(stderr, "GLFW Error ({}): {}", error, description ? description : "No Description");
     });
 #ifdef __linux__
+    unsetenv("GSETTINGS_SCHEMA_DIR");
+    unsetenv("GTK_PATH");
+    setenv("XDG_DATA_DIRS", "/usr/local/share/:/usr/share/", 1);
     glfwInitHint(GLFW_PLATFORM, GLFW_PLATFORM_WAYLAND);
-    // glfwInitHint(GLFW_WAYLAND_LIBDECOR, GLFW_WAYLAND_DISABLE_LIBDECOR);
+    glfwInitHint(GLFW_WAYLAND_LIBDECOR, GLFW_WAYLAND_PREFER_LIBDECOR);
 #endif
     glfwInit();
     glfwWindowHint(GLFW_DECORATED, GLFW_TRUE);
