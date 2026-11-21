@@ -96,6 +96,7 @@ void App::UpdateCamera2()
 
     // Do not forget to update instance count :p
     *sceneViewData = camera2.Update({ wKeyPressed,aKeyPressed,sKeyPressed, dKeyPressed,static_cast<float>(dt) });
+    sceneViewData->instanceCount = scene->GetInstanceTable().size();
 
     xprev = xpos;
     yprev = ypos;
@@ -156,7 +157,7 @@ void App::createRenderingObjects()
     Shapes::ShapeRenderPassDesc shapePassDesc = {
         .device = *device,
         .descriptorTable = descriptorTable,
-        .maxCommands = 999,
+        .maxCommands = 10000,
     };
     shapesPass = std::make_unique<Shapes::ShapeRenderPass>(shapePassDesc);
 
@@ -283,6 +284,7 @@ void App::cleanupLettuce()
     scene.reset();
     debugPass.reset();
     materialShadingPass.reset();
+    shapesPass.reset();
 
     sceneViewData.reset();
     pickInstanceData.reset();
