@@ -25,13 +25,26 @@ private:
     std::unique_ptr<Debug::DebugPass> debugPass;
     std::unique_ptr<Shapes::ShapeRenderPass> shapesPass;
     std::unique_ptr<DeferredPlus::MaterialShadingPass> materialShadingPass;
+
+    Sampler sampler;
+
     GpuUniquePtr<SceneViewData> sceneViewData;
     GpuUniquePtr<uint32_t> pickInstanceData;
+    GpuUniquePtr<MaterialShadingData> materialShadingData;
+    GpuUniquePtr<ProceduralInstanceData> instanceData;
+
     GpuUniquePtr<SunLightData> sunLightData;
     GpuUniquePtr<SpotLightData> spotLightData;
     GpuUniquePtr<CascadeShadowMapData> shadowData;
 
+    GpuMappedVector<MaterialPBRStorage> materials;
+    GpuMappedVector<ProceduralInstanceStorage> instances;
+    GpuMappedVector<SphereStorage> spheres;
+    GpuMappedVector<PrismStorage> prisms;
+    GpuMappedVector<CylinderStorage> cylinders;
+
     TextureView tDepthTarget;
+    TextureView tGeometryTarget;
     TextureView tPickTexture;
 
     Lettuce::Utils::FrameTimer timer;
@@ -46,6 +59,7 @@ private:
     void UpdateCamera2();
     void initLettuce();
     void createRenderingObjects();
+    void loadGpuPtrs();
     void loadModel();
     void mainLoop();
     void cleanupLettuce();
@@ -56,6 +70,7 @@ public:
         initWindow();
         initLettuce();
         createRenderingObjects();
+        loadGpuPtrs();
         loadModel();
     }
 
@@ -122,10 +137,7 @@ void App::initLettuce()
 
 void App::createRenderingObjects()
 {
-    // load buffers
-    sceneViewData = GpuUniquePtr<SceneViewData>(*device);
-    pickInstanceData = GpuUniquePtr<uint32_t>(*device);
-
+    // load targets
     RenderTargetDesc pickDesc = {
         .width = width,
         .height = height,
@@ -133,6 +145,14 @@ void App::createRenderingObjects()
         .defaultClearValue = ColorClear{},
     };
     tPickTexture = device->CreateTextureView(pickDesc);
+
+    RenderTargetDesc geometryDesc = {
+        .width = width,
+        .height = height,
+        .type = RenderTargetType::ColorRGBA_sRGB,
+        .defaultClearValue = ColorClear{},
+    };
+    tGeometryTarget = device->CreateTextureView(geometryDesc);
 
     RenderTargetDesc depthDesc = {
         .width = width,
@@ -166,6 +186,176 @@ void App::createRenderingObjects()
         .descriptorTable = descriptorTable,
     };
     materialShadingPass = std::make_unique<DeferredPlus::MaterialShadingPass>(matPassDesc);
+
+    // load samplers
+    sampler = device->CreateSampler({
+        Filter::Linear, Filter::Linear, Filter::Linear,
+        SamplerAddressMode::Repeat,  SamplerAddressMode::Repeat,  SamplerAddressMode::Repeat,
+        1.0f, false });
+}
+
+struct InstanceDesc
+{
+    ProceduralShapeGeometryType type;
+    uint32_t geometry;
+    uint32_t material;
+    glm::vec3 position;
+    glm::vec3 scale;
+};
+
+void App::loadGpuPtrs()
+{
+    const auto shapesCollection = std::array
+    {
+        InstanceDesc{ Sphere,   0, 1,{ -1.8f, 0.75f, 0.0f },{ 1.0f, 1.0f, 1.0f } },
+        InstanceDesc{ Prism,    0, 2,{ 0.0f, 0.65f, 0.0f },{ 1.0f, 1.0f, 1.0f } },
+        InstanceDesc{ Cylinder, 0, 3,{ 1.8f, 0.75f, 0.0f },{ 1.0f, 1.0f, 1.0f } }
+    };
+
+    sceneViewData = GpuUniquePtr<SceneViewData>(*device);
+    pickInstanceData = GpuUniquePtr<uint32_t>(*device);
+    materialShadingData = GpuUniquePtr<MaterialShadingData>(*device);
+    instanceData = GpuUniquePtr<ProceduralInstanceData>(*device);
+
+    sunLightData = GpuUniquePtr<SunLightData>(*device);
+    spotLightData = GpuUniquePtr<SpotLightData>(*device);
+    shadowData = GpuUniquePtr<CascadeShadowMapData>(*device);
+
+    materials = GpuMappedVector<MaterialPBRStorage>(*device, 4);
+    instances = GpuMappedVector<ProceduralInstanceStorage>(*device, shapesCollection.size());
+    spheres = GpuMappedVector<SphereStorage>(*device, 1);
+    prisms = GpuMappedVector<PrismStorage>(*device, 1);
+    cylinders = GpuMappedVector<CylinderStorage>(*device, 1);
+
+    uint32_t depthTexHeapIdx = 0;
+    uint32_t gbufferTexHeapIdx = 1;
+
+    materialShadingData->depthTextureIdx = depthTexHeapIdx;
+    materialShadingData->gbufferTextureIdx = gbufferTexHeapIdx;
+
+    std::array<std::pair<uint32_t, TextureView>, 2> texDescs;
+    texDescs[0] = { depthTexHeapIdx, tDepthTarget };
+    texDescs[1] = { gbufferTexHeapIdx, tGeometryTarget };
+
+    std::array<std::pair<uint32_t, Sampler>, 1> samplers;
+    // samplers[0] = { 0, sampler };
+
+    // push texture descriptors
+    PushResourceDescriptorsDesc pushDesc = {
+        .sampledTextures = std::span(texDescs),
+        .samplers = std::span(samplers),
+        .descriptorTable = descriptorTable,
+    };
+    device->PushResourceDescriptors(pushDesc);
+
+    materials[0] = {
+        .baseColor = { 0.72f, 0.72f, 0.72f, 1.0f },
+        .emissive = { 0.0f, 0.0f, 0.0f },
+        .metallic = 0.0f,
+        .roughness = 0.85f
+    };
+
+    materials[1] = {
+        .baseColor = { 0.85f, 0.08f, 0.04f, 1.0f },
+        .emissive = { 0.0f, 0.0f, 0.0f },
+        .metallic = 0.1f,
+        .roughness = 0.3f
+    };
+
+    materials[2] = {
+        .baseColor = { 0.04f, 0.25f, 0.85f, 1.0f },
+        .emissive = { 0.0f, 0.0f, 0.0f },
+        .metallic = 0.85f,
+        .roughness = 0.2f
+    };
+
+    materials[3] = {
+        .baseColor = { 0.9f, 0.65f, 0.08f, 1.0f },
+        .emissive = { 0.0f, 0.0f, 0.0f },
+        .metallic = 0.65f,
+        .roughness = 0.35f
+    };
+
+    // Procedural geometries
+    spheres[0] = {
+        .radius = 0.75f,
+        .longitudeSegments = 48,
+        .latitudeSegments = 24,
+        ._padding = 0
+    };
+
+    prisms[0] = {
+        .radius = 0.7f,
+        .height = 1.3f,
+        .sides = 6,
+        ._padding = 0
+    };
+
+    cylinders[0] = {
+        .radiusTop = 0.4f,
+        .radiusBottom = 0.4f,
+        .height = 1.5f,
+        .radialSegments = 48
+    };
+
+    for (uint32_t i = 0; i < shapesCollection.size(); ++i)
+    {
+        const auto& desc = shapesCollection[i];
+        auto transform = glm::translate(glm::mat4(1.0f), desc.position) * glm::scale(glm::mat4(1.0f), desc.scale);
+
+        instances[i] = {
+            .transform = transform,
+            .invTransform = glm::inverse(transform),
+            .geometryType = static_cast<uint32_t>(desc.type),
+            .geometryIdx = desc.geometry,
+            .materialIdx = desc.material,
+            .flags = 0,
+        };
+    }
+
+    // instance metadata
+    *instanceData = {
+        .count = shapesCollection.size(),
+        .sphereCount = 1,
+        .prismCount = 1,
+        .cylinderCount = 1
+    };
+
+    // lights
+    *sunLightData = {
+        .direction = glm::normalize(glm::vec3(-0.5f, 0.8f, 0.4f)),
+        .intensity = 3.0f,
+        .color = { 1.0f, 0.95f, 0.85f },
+        ._padding = 0.0f
+    };
+
+    *spotLightData = {};
+    spotLightData->count = 2;
+
+    spotLightData->lights[0] = {
+        .position = { -3.0f, 3.5f, 3.0f },
+        .range = 10.0f,
+        .direction = glm::normalize(glm::vec3(0.7f, -0.7f, -0.8f)),
+        .intensity = 20.0f,
+        .color = { 0.35f, 0.55f, 1.0f },
+        .innerCos = glm::cos(glm::radians(20.0f)),
+        .outerCos = glm::cos(glm::radians(35.0f)),
+        .padding = {}
+    };
+
+    spotLightData->lights[1] = {
+        .position = { 3.0f, 3.5f, 3.0f },
+        .range = 10.0f,
+        .direction = glm::normalize(glm::vec3(-0.7f, -0.7f, -0.8f)),
+        .intensity = 20.0f,
+        .color = { 1.0f, 0.55f, 0.25f },
+        .innerCos = glm::cos(glm::radians(20.0f)),
+        .outerCos = glm::cos(glm::radians(35.0f)),
+        .padding = {}
+    };
+
+    *shadowData = {};
+    shadowData->cascadeCount = 0;
 }
 
 void App::loadModel()
@@ -229,6 +419,14 @@ void App::mainLoop()
             };
             tPickTexture = device->CreateTextureView(pickDesc);
 
+            RenderTargetDesc geometryDesc = {
+                .width = fbSize.width,
+                .height = fbSize.height,
+                .type = RenderTargetType::ColorRGBA_sRGB,
+                .defaultClearValue = ColorClear{},
+            };
+            tGeometryTarget = device->CreateTextureView(geometryDesc);
+
             RenderTargetDesc depthDesc = {
                 .width = fbSize.width,
                 .height = fbSize.height,
@@ -260,6 +458,29 @@ void App::mainLoop()
         };
         debugPass->Record(cmd, record);
 
+        Shapes::ShapeRenderPassRecordDesc shapeRec = {
+            .fbWidth = fbSize.width,
+            .fbHeight = fbSize.height,
+            .sceneViewData = GpuSpan(sceneViewData),
+
+            .rtColorOutput = tGeometryTarget,
+            .rtDepth = tDepthTarget,
+            .rtPick = tPickTexture,
+            .rtLoadOp = LoadOp::Clear,
+        };
+        // shapesPass->Record(cmd, shapeRec);
+
+        DeferredPlus::MaterialShadingPassRecordDesc materialRec = {
+            .fbWidth = fbSize.width,
+            .fbHeight = fbSize.height,
+            .sceneViewData = GpuSpan(sceneViewData),
+
+            .rtColorOutput = frame,
+            .rtDepth = tDepthTarget,
+            .rtPick = tPickTexture,
+        };
+        // materialShadingPass->Record(cmd, materialRec);
+
         std::array<std::span<CommandBuffer>, 1> cmds = { std::span(&cmd, 1) };
 
         CommandBufferSubmitDesc submitDesc = {
@@ -281,6 +502,8 @@ void App::cleanupLettuce()
 {
     device->WaitFor(QueueType::Graphics);
 
+    // TODO: add dtors for datas, storages and sampler
+    
     scene.reset();
     debugPass.reset();
     materialShadingPass.reset();
