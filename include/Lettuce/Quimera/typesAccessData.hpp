@@ -123,7 +123,7 @@ namespace Lettuce::Quimera
     };
 
     struct ChangeKeyHash {
-        size_t operator()(const ChangeKey& k) const noexcept {
+        uint64_t operator()(const ChangeKey& k) const noexcept {
             uint64_t h = k.object;
 
             h ^= uint64_t(k.property) * 0x9E3779B185EBCA87ull;
@@ -135,7 +135,7 @@ namespace Lettuce::Quimera
             h *= 0x94D049BB133111EBull;
             h ^= h >> 31;
 
-            return static_cast<size_t>(h);
+            return static_cast<uint64_t>(h);
         }
     };
 };

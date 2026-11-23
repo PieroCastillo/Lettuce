@@ -7,7 +7,7 @@ using namespace Lettuce::UI;
 using namespace Lettuce::UI::Controls;
 using namespace Lettuce::UI::Controls::Primitives;
 
-auto UIScene::alloc(size_t Tsize, size_t Talignment) -> void*
+auto UIScene::alloc(uint64_t Tsize, uint64_t Talignment) -> void*
 {
     return impl->m_allocator.allocate(Tsize, Talignment);
 }

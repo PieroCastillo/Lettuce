@@ -10,7 +10,6 @@ Created by @PieroCastillo on 2026-09-03
 
 #if defined(WIN32_) || defined(_WIN32) || defined(WIN32)
 #define GLFW_EXPOSE_NATIVE_WIN32
-#define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #undef CreateFont
 #elifdef __linux__

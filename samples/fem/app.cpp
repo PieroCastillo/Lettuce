@@ -267,11 +267,11 @@ struct Triangle
 
 struct TriangleHash
 {
-    size_t operator()(const Triangle& t) const
+    uint64_t operator()(const Triangle& t) const
     {
-        size_t h = t.v[0];
-        h ^= size_t(t.v[1]) * 0x9e3779b9;
-        h ^= size_t(t.v[2]) * 0x85ebca6b;
+        uint64_t h = t.v[0];
+        h ^= uint64_t(t.v[1]) * 0x9e3779b9;
+        h ^= uint64_t(t.v[2]) * 0x85ebca6b;
         return h;
     }
 };
@@ -307,7 +307,7 @@ void loadModel()
     Eigen::MatrixXi TF;
 
     V.resize(tempPositions.size(), 3);
-    for (size_t i = 0; i < tempPositions.size(); ++i)
+    for (uint64_t i = 0; i < tempPositions.size(); ++i)
     {
         V(i, 0) = tempPositions[i].x;
         V(i, 1) = tempPositions[i].y;
@@ -315,7 +315,7 @@ void loadModel()
     }
 
     F.resize(tempIndices.size() / 3, 3);
-    for (size_t i = 0; i < tempIndices.size(); i += 3)
+    for (uint64_t i = 0; i < tempIndices.size(); i += 3)
     {
         F(i / 3, 0) = tempIndices[i];
         F(i / 3, 1) = tempIndices[i + 1];

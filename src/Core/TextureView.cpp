@@ -15,7 +15,7 @@
 
 using namespace Lettuce::Core;
 
-[[nodiscard]] constexpr size_t alignUp(size_t v, size_t a) noexcept
+[[nodiscard]] constexpr uint64_t alignUp(uint64_t v, uint64_t a) noexcept
 {
     return (v + a - 1) / a * a;
 }

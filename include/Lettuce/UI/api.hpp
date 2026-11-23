@@ -34,7 +34,7 @@ namespace Lettuce::UI
     {
     private:
         UISceneImpl* impl = nullptr;
-        auto alloc(size_t Tsize, size_t Talignment) -> void*;
+        auto alloc(uint64_t Tsize, uint64_t Talignment) -> void*;
         auto getDefStyle() -> std::shared_ptr<Style>;
     public:
         UIScene() = default;

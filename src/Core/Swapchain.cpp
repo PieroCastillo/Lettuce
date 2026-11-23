@@ -175,7 +175,7 @@ void setupVkSwapchain(SwapchainVK& swapchainVK, DeviceImpl* impl, VkPhysicalDevi
     // Destroy old resources only after successful creation.
     if (oldSwapchain != VK_NULL_HANDLE)
     {
-        for (size_t i = 0; i < swapchainVK.swapchainViews.size(); ++i)
+        for (uint64_t i = 0; i < swapchainVK.swapchainViews.size(); ++i)
         {
             vkDestroyImageView(device, swapchainVK.swapchainViews[i], nullptr);
             impl->textures.release(swapchainVK.renderTargets[i]);

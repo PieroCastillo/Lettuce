@@ -112,11 +112,11 @@ auto Device::SubmitAsync(const CommandBufferSubmitDesc& desc) -> WaitToken
         break;
     }
 
-    const size_t levelCount = desc.commandBuffers.size();
+    const uint64_t levelCount = desc.commandBuffers.size();
     const bool hasPresent = desc.presentSwapchain.has_value();
 
     // Count all command buffers
-    size_t totalCommandCount = 0;
+    uint64_t totalCommandCount = 0;
 
     for (const auto& level : desc.commandBuffers)
         totalCommandCount += level.size();
@@ -127,7 +127,7 @@ auto Device::SubmitAsync(const CommandBufferSubmitDesc& desc) -> WaitToken
     std::pmr::vector<VkSubmitInfo2> submits(&arena);
     std::pmr::vector<VkCommandBufferSubmitInfo> cmdInfos(&arena);
     std::pmr::vector<VkSemaphoreSubmitInfo> semInfos(&arena);
-    std::pmr::vector<size_t> cmdOffsets(&arena);
+    std::pmr::vector<uint64_t> cmdOffsets(&arena);
 
     submits.resize(levelCount + (hasPresent ? 1 : 0));
     cmdInfos.resize(totalCommandCount);
@@ -135,9 +135,9 @@ auto Device::SubmitAsync(const CommandBufferSubmitDesc& desc) -> WaitToken
     cmdOffsets.resize(levelCount);
 
     // Build command buffer information
-    size_t cmdOffset = 0;
+    uint64_t cmdOffset = 0;
 
-    for (size_t i = 0; i < levelCount; ++i)
+    for (uint64_t i = 0; i < levelCount; ++i)
     {
         cmdOffsets[i] = cmdOffset;
 
@@ -155,7 +155,7 @@ auto Device::SubmitAsync(const CommandBufferSubmitDesc& desc) -> WaitToken
     }
 
     // Build submissions, one per level
-    for (size_t i = 0; i < levelCount; ++i)
+    for (uint64_t i = 0; i < levelCount; ++i)
     {
         const uint64_t waitValue = currentValue + i;
         const uint64_t signalValue = currentValue + i + 1;
@@ -176,7 +176,7 @@ auto Device::SubmitAsync(const CommandBufferSubmitDesc& desc) -> WaitToken
             .deviceIndex = 0,
         };
 
-        const size_t commandCount = desc.commandBuffers[i].size();
+        const uint64_t commandCount = desc.commandBuffers[i].size();
 
         submits[i] = {
             .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO_2,
@@ -192,8 +192,8 @@ auto Device::SubmitAsync(const CommandBufferSubmitDesc& desc) -> WaitToken
     // Optional presentation submission.
     if (hasPresent)
     {
-        const size_t submitIdx = levelCount;
-        const size_t semIdx = levelCount * 2;
+        const uint64_t submitIdx = levelCount;
+        const uint64_t semIdx = levelCount * 2;
         const uint64_t waitValue = currentValue + levelCount;
 
         auto& swp = impl->swapchains.get(*desc.presentSwapchain);

@@ -314,7 +314,7 @@ auto AssetLoader::LoadGtlfAsGeometry(Device* pDevice, std::string_view pathStr) 
 
         auto inst = InstanceStorage{
             .localTransform = transform,
-            .meshIdx = (uint32_t)(node.meshIndex.value_or(std::numeric_limits<size_t>::max())),
+            .meshIdx = (uint32_t)(node.meshIndex.value_or(std::numeric_limits<uint64_t>::max())),
         };
         source.instances.push_back(inst);
     }

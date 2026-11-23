@@ -41,13 +41,13 @@ Created by @PieroCastillo on 2025-01-9
     #define DebugAssert(...) ((void)0)
 #endif
 
-inline std::string hexData(const void* ptr, std::size_t size)
+inline std::string hexData(const void* ptr, uint64_t size)
 {
-    auto bytes = static_cast<const std::uint8_t*>(ptr);
+    auto bytes = static_cast<const uint8_t*>(ptr);
     std::string out;
     out.reserve(size * 3);
 
-    for (std::size_t i = 0; i < size; ++i)
+    for (uint64_t i = 0; i < size; ++i)
     {
         out += std::format("{:02X}", bytes[i]);
         if (i + 1 < size)

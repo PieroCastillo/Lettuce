@@ -91,8 +91,8 @@ using VkIndirectExecutionSetEXT = VkHandle<VkIndirectExecutionSetEXT_T>::type;
 using VmaAllocation = VkHandle<VmaAllocation_T>::type;
 using VmaAllocator = VkHandle<VmaAllocator_T>::type;
 
-using VkDeviceSize = std::uint64_t;
-using VkFlags = std::uint32_t;
+using VkDeviceSize = uint64_t;
+using VkFlags = uint32_t;
 using VkShaderStageFlags = VkFlags;
 using VkImageUsageFlags = VkFlags;
 
@@ -154,7 +154,7 @@ namespace Lettuce::Core
     template <typename First, typename... Rest>
     bool haveSameSize(const First& first, const Rest&... rest)
     {
-        size_t size = first.size();
+        uint64_t size = first.size();
         return ((rest.size() == size) && ...);
     }
 

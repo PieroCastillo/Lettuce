@@ -130,7 +130,7 @@ namespace Lettuce::Core
         MemoryView memView;
     };
 
-    constexpr std::array<std::uint8_t, 66> kFormatTable = {
+    constexpr std::array<uint8_t, 66> kFormatTable = {
         9, 10, 13, 14, 16, 17, 20, 21,
         37, 38, 41, 42,
         44, 50, 51, 55,
@@ -159,7 +159,7 @@ namespace Lettuce::Core
         return lut;
     }
     constexpr auto format_lut = make_format_lut();
-    constexpr bool is_valid_format_value(std::uint8_t v) noexcept {
+    constexpr bool is_valid_format_value(uint8_t v) noexcept {
         return format_lut[v];
     }
 
