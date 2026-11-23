@@ -37,15 +37,15 @@ add_requires("fastgltf")
 add_requires("imgui")
 add_requires("ktx", { configs={ vulkan=true, ktx2=true, decoder=true}})
 add_requires("meshoptimizer")
-local use_system = not is_plat("windows")
 add_requires("freetype", { system = use_system })
-add_requires("harfbuzz", { system = use_system })
 add_requires("tetgen")
 add_requires("libigl")
 
 if is_plat("windows") then
     add_requires("glfw", { system = false })
+    add_requires("harfbuzz ~13.1.1", { system = false })
 elseif is_plat("linux") then
+    add_requires("harfbuzz", { system = true })
     add_requires("glfw", { system = true, configs = {wayland = true, x11 = false}})
 end
 
@@ -57,7 +57,7 @@ add_defines("VARIANT_VERSION=" .. (v[1] or 0),
 
 if is_plat("windows") then
     add_links("user32", "gdi32", "kernel32")
-    add_defines("VK_USE_PLATFORM_WIN32_KHR", "_WIN32", "NOMINMAX", {public=true})
+    add_defines("VK_USE_PLATFORM_WIN32_KHR", "_WIN32", "NOMINMAX", "NOGDI", "WIN32_LEAN_AND_MEAN", { public=true })
 elseif is_plat("linux") then
     add_syslinks("stdc++exp")
     add_defines("VK_USE_PLATFORM_WAYLAND_KHR", {public=true})
