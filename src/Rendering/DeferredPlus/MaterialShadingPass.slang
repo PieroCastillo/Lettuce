@@ -64,7 +64,7 @@ PSOutput fragMain(VSOutput input)
     var pixelCoord = uint3(uint2(input.position.xy), 0);
     var pi = radians(180);
 
-    var depthTexture = sampledTextures[0]; // passData.depthTextureIdx];
+    var depthTexture = sampledTextures[passData.depthTextureIdx];
     var gbuffer = sampledTextures[passData.gbufferTextureIdx];
     var raw = asuint(gbuffer.Load(pixelCoord));
 
