@@ -26,8 +26,8 @@ namespace Lettuce::Rendering
 
     struct MaterialShadingData
     {
-        uint32_t depthTextureIdx;
-        uint32_t gbufferTextureIdx;
+        uint32_t depthTextureIdx; // must be on sampled texture heap
+        uint32_t gbufferTextureIdx; // must be on sampled texture heap
     };
 
     struct ClusterStorage
