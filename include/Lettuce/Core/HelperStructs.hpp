@@ -213,7 +213,7 @@ namespace Lettuce::Core
         case Format::Raw_RG32_SFloat:
         case Format::Compressed_BC5_UNorm:
         case Format::Compressed_BC5_SNorm:
-            return VK_COLOR_COMPONENT_R_BIT |    VK_COLOR_COMPONENT_G_BIT;
+            return VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT;
             // 3 components: RGB
         case Format::Compressed_BC1_RGB_UNorm:
         case Format::Compressed_BC1_RGB_sRGB:

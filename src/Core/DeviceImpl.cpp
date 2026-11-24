@@ -631,6 +631,8 @@ void DeviceImpl::setupDevice()
     };
     vkGetPhysicalDeviceProperties2(m_physicalDevice, &props2);
 
+    std::println("Selected GPU name: {}", props2.properties.deviceName);
+
     props.sampledImageDescriptorSize = dbProps.sampledImageDescriptorSize;
     props.samplerDescriptorSize = dbProps.samplerDescriptorSize;
     props.storageImageDescriptorSize = dbProps.storageImageDescriptorSize;

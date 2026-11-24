@@ -175,7 +175,7 @@ auto Device::CreatePipeline(const MeshShadingPipelineDesc& desc) -> Pipeline
         .depthClampEnable = VK_FALSE,
         .rasterizerDiscardEnable = VK_FALSE,
         .polygonMode = VK_POLYGON_MODE_FILL,
-        .cullMode = VK_CULL_MODE_BACK_BIT,
+        .cullMode = VK_CULL_MODE_NONE,
         .frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE,
         //.lineWidth // dynamic;
     };
@@ -249,7 +249,7 @@ auto Device::CreatePipeline(const MeshShadingPipelineDesc& desc) -> Pipeline
 
     VkPipelineRenderingCreateInfo renderingCI = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO,
-        .pNext = desc.fragmentShadingRate ? &fragmentShadingRate : nullptr,
+        //.pNext = desc.fragmentShadingRate ? &fragmentShadingRate : nullptr,
         .viewMask = 0, // multiview disabled
         .colorAttachmentCount = (uint32_t)tmp.size(),
         .pColorAttachmentFormats = tmp.data(),
